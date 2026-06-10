@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第1章：量子力学简史——从普朗克到费曼 | 《量子计算》">
+
+  <title>第1章：量子力学简史 | 量子计算</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="../../assets/css/book.css">
+  <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html" class="active">第1章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER PAGE ==================== -->
+  <div class="chapter-page">
+    <div class="chapter-container">
+      <!-- Main Content -->
+      <article class="chapter-content">
+
+        <!-- Chapter Header -->
+        <header class="chapter-header">
+          <div class="chapter-breadcrumb">
+            <a href="../index.html">首页</a> / <a href="../index.html#chapters">章节总览</a> / 第1章
+          </div>
+          <h1>第1章 量子力学简史——从普朗克到费曼</h1>
+          <div class="chapter-epigraph">
+            &ldquo;自然界的伟大戏剧，只有那些懂得它的语言的人才能读懂。&rdquo;
+            <cite>—— 伽利略·伽利莱</cite>
+          </div>
+        </header>
+
+        <!-- ===== 1.1 ===== -->
+        <section>
+          <h2 id="section-1">1.1 引言：19世纪末物理学的"两朵乌云"</h2>
+
+          <p>1900年4月27日，英国皇家研究所，一位年逾七旬的苏格兰物理学家登上了讲台。他是威廉·汤姆逊——更广为人知的名号是<strong>开尔文勋爵</strong>（Lord Kelvin），热力学绝对温标的命名者，当时物理学界最具权威的声音之一。</p>
+
+          <p>在这篇题为《在热和光的动力理论上的19世纪乌云》的著名演讲中，开尔文用自信而优雅的语气宣布：经典物理学的宏伟大厦已经基本完工，未来的物理学家只需要做一些修补补的工作。然而，他也坦诚地指出了"明朗的物理学天空中，还有两朵小小的、令人不安的乌云"。</p>
+
+          <p>第一朵乌云，关乎<strong>迈克尔逊-莫雷实验</strong>——这个旨在探测"以太风"的实验得出了令人困惑的零结果，动摇了光在以太中传播的经典假设。第二朵乌云，则指向<strong>黑体辐射</strong>的能量分布问题——经典理论在解释实验数据时遭遇了灾难性的失败。</p>
+
+          <p>开尔文未曾料到，这两朵"小小的乌云"将很快化作两场革命风暴：前者催生了<strong>狭义相对论</strong>，后者则打开了<strong>量子力学</strong>的大门。从此，人类对物质世界的理解被彻底重塑。</p>
+
+          <p>截至1900年，经典物理学的成就无疑堪称辉煌。牛顿力学在三个世纪中预言了从苹果落地到行星轨道的几乎所有宏观运动；麦克斯韦方程组以优雅的数学形式统一了电、磁和光；热力学和统计力学为理解热现象提供了坚实的微观基础。拉普拉斯式的决定论宇宙观深入人心——如果你能知道宇宙中每一个粒子的位置和动量，你就能预言其全部过去和未来。</p>
+
+          <p>然而，正是在那些经典理论无法触及的微观角落里——原子尺度、高频辐射、基本粒子的行为——大自然正准备上演一场颠覆性的戏剧。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>19世纪末经典物理学取得了辉煌成就，但在黑体辐射和以太漂移两个问题上遭遇根本性困难</li>
+              <li>开尔文勋爵1900年著名的"两朵乌云"演讲预示了物理学即将到来的革命</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.2 ===== -->
+        <section>
+          <h2 id="section-2">1.2 普朗克与黑体辐射（1900）：能量量子化的诞生</h2>
+
+          <h3>1.2.1 黑体辐射的困境</h3>
+
+          <p>一个"黑体"是理想的吸收体和辐射体——它能吸收所有照射到其上的电磁辐射，并且其辐射光谱只取决于温度，与物质成分无关。实验物理学家们已精确测量了黑体辐射的光谱能量密度分布曲线，发现在低频区符合<strong>瑞利-金斯公式</strong>，但在高频区却偏离到荒谬的程度——经典理论预言高频辐射的能量密度趋于无穷大，史称"紫外灾难"（ultraviolet catastrophe）。</p>
+
+          <h3>1.2.2 普朗克的惊人假设</h3>
+
+          <p>马克斯·普朗克（Max Planck，1858-1947）并非一个革命者。这位严谨、保守的德国物理学家最初只想"修补"经典理论——找到一个能拟合实验数据的数学公式。1900年10月19日，他提出了一个经验公式：</p>
+
+          <div class="math-block">
+            $$u(\nu, T) = \frac{8\pi h\nu^3}{c^3} \frac{1}{e^{h\nu/k_B T} - 1}$$
+          </div>
+
+          <p>这个公式完美地匹配了实验数据。但普朗克很快意识到，要从理论上推导出这个公式，他必须做出一个令人不安的假设：<strong>黑体腔壁上的谐振子只能以离散的、不连续的方式吸收和发射能量</strong>。具体而言，每个频率为 $\nu$ 的谐振子的能量是某个最小能量单元 $h\nu$ 的整数倍：</p>
+
+          <div class="math-block">
+            $$E = nh\nu,\quad n = 0, 1, 2, 3, \dots$$
+          </div>
+
+          <p>式中，$h$ 是一个前所未见的基本常数——<strong>普朗克常数</strong>，其值为 $6.626 \times 10^{-34}\ \mathrm{J\cdot s}$。普朗克后来将自己的假设称为"一个绝望的行动"（an act of despair），因为当时没有任何实验证据支持能量不连续的观点，经典物理学坚定地认为能量是连续变化的。</p>
+
+          <p>1900年12月14日，普朗克在德国物理学会上宣读了他的论文——《论正常光谱的能量分布定律的理论》。这一天被公认为<strong>量子物理学的诞生日</strong>。</p>
+
+          <div class="chapter-figure">
+            <div class="fig-placeholder">
+              📊 图1.1：黑体辐射能量密度曲线——实验数据与瑞利-金斯公式、普朗克公式的对比
+            </div>
+            <figcaption>图1.1：黑体辐射光谱能量密度。实验曲线（实线）与瑞利-金斯公式（虚线）在高频区域的严重偏离清晰可见。</figcaption>
+          </div>
+
+          <h3>1.2.3 普朗克常数的深远意义</h3>
+
+          <p>普朗克常数 $h$ 是自然界最基本的常数之一，它标定了量子效应出现的尺度。粗略来说，当一个系统的<strong>作用量</strong>（能量×时间，或动量×距离）接近 $h$ 的量级时，量子效应就变得显著。在日常生活中，我们接触的宏观物体的作用量远远大于 $h$，因此经典物理学看起来完美无缺。</p>
+
+          <p>普朗克的研究第一次揭示了<strong>能量的离散性</strong>，但普朗克本人并不完全理解自己发现的意义。他花费了数年时间试图将量子假说"纳回"经典物理学的框架内，却始终未能成功。真正迈出下一步的是另一位更年轻的物理学家——阿尔伯特·爱因斯坦。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>普朗克通过引入能量量子化假说，成功推导出黑体辐射公式，解决了"紫外灾难"</li>
+              <li>普朗克常数 $h$ 是量子世界的核心标尺，标志着能量不连续性的尺度</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.3 ===== -->
+        <section>
+          <h2 id="section-3">1.3 爱因斯坦与光电效应（1905）：光量子假说</h2>
+
+          <h3>1.3.1 光的本质之争</h3>
+
+          <p>光究竟是波还是粒子？这场争论贯穿了整整两个世纪的物理学史。惠更斯认为光是波，牛顿主张光是粒子，杨氏的双缝实验（1801）似乎一锤定音地支持了波动说。到19世纪末，麦克斯韦方程组已将光描述为电磁波，波动说的地位牢不可破。</p>
+
+          <p>然而，光电效应实验揭示了一个波动说无法解释的现象：当光照射到金属表面时，会打发出电子（称为"光电子"）。经典波动理论预言，光的强度越大（振幅越大），电子的动能就应该越大。但实验恰恰相反——光电子的<strong>动能取决于光的频率</strong>，而不是强度；只要光的频率低于某个阈值，无论光多么强烈，都不会打出电子。</p>
+
+          <h3>1.3.2 爱因斯坦的革命性洞见</h3>
+
+          <p>1905年——被后世称为"爱因斯坦奇迹年"——当时还是瑞士伯尔尼专利局三级技术员的阿尔伯特·爱因斯坦（Albert Einstein，1879-1955），在短短几个月内发表了四篇改变物理学面貌的论文，其中一篇关于光电效应的论文提出了<strong>光量子假说</strong>。</p>
+
+          <p>爱因斯坦的推理简洁而大胆：如果普朗克的能量量子化不仅是谐振子吸收/发射能量时的数学技巧，而是辐射场本身的真实属性呢？他提出，光本身就是由一个个离散的能量"包"——即<strong>光量子</strong>（light quanta），后来被称为<strong>光子</strong>（photon）——组成的。每个光量子的能量与其频率成正比：</p>
+
+          <div class="math-block">
+            $$E = h\nu$$
+          </div>
+
+          <p>光电效应的解释随之而来：一个电子要么吸收一个完整的光量子（获得能量 $h\nu$），要么根本不吸收。电子逸出金属表面需要克服一个最小能量（称为<strong>功函数</strong> $W$），因此光电子的最大动能为：</p>
+
+          <div class="math-block">
+            $$\frac{1}{2}mv_{\text{max}}^2 = h\nu - W$$
+          </div>
+
+          <p>这个简洁的公式完美解释了实验事实：频率低于 $\nu_0 = W/h$ 的光无法打出电子，而一旦高于阈值，电子动能随频率线性增加，与光强无关。光强只影响光子的数量，从而影响光电流的大小。</p>
+
+          <h3>1.3.3 波粒二象性的萌芽</h3>
+
+          <p>爱因斯坦的假说无异于在波动说的堡垒中投下了一颗炸弹。光怎么能同时是波（表现出干涉、衍射）又同时是粒子（在光电效应中表现出离散性）呢？爱因斯坦本人也承认这一矛盾，并称之为"光的波粒二象性"——这个词后来成为了量子力学最核心的哲学概念之一。</p>
+
+          <p>值得注意的是，爱因斯坦因光电效应的工作（而非相对论）获得了1921年诺贝尔物理学奖。即使在获奖时，物理学界对光量子假说仍存有相当大的疑虑——毕竟，谁愿意接受光既是波又是粒子这种"矛盾"的说法呢？</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>爱因斯坦的光量子假说 $E = h\nu$ 解释了光电效应，揭示了光的粒子性</li>
+              <li>波粒二象性的矛盾第一次被清晰地提出，成为理解量子世界的核心线索</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.4 ===== -->
+        <section>
+          <h2 id="section-4">1.4 玻尔原子模型（1913）：定态假设与量子跃迁</h2>
+
+          <h3>1.4.1 原子结构的谜团</h3>
+
+          <p>1911年，欧内斯特·卢瑟福（Ernest Rutherford，1871-1937）通过α粒子散射实验（著名的"金箔实验"）发现，原子的质量几乎全部集中在中心一个极小的原子核上，而电子则绕着核运动——这就是<strong>行星式原子模型</strong>。</p>
+
+          <p>但卢瑟福模型有一个致命的缺陷：根据经典电动力学，加速运动的电子会持续辐射能量，其轨道会不断衰缩减小，最终在 $10^{-11}$ 秒内落入原子核。显然，这个"原子坍缩"并没有发生，我们的世界是稳定的。此外，原子光谱是分立的线状谱，而不是经典理论预言的连续谱。</p>
+
+          <h3>1.4.2 玻尔的量子化原子</h3>
+
+          <p>年仅28岁的丹麦物理学家尼尔斯·玻尔（Niels Bohr，1885-1962）在1913年提出了一个兼具革命性和折中性的原子模型。他大胆地引入了两个与经典物理完全相悖的假设：</p>
+
+          <p><strong>第一，定态假设：</strong> 电子只能在一系列特定的、离散的轨道上运动，在这些轨道上，电子<strong>不辐射能量</strong>。这些轨道的角动量 $L$ 是 $\hbar = h/2\pi$ 的整数倍：</p>
+
+          <div class="math-block">
+            $$L = n\hbar,\quad n = 1, 2, 3, \dots$$
+          </div>
+
+          <p><strong>第二，跃迁假设：</strong> 当电子从一个定态轨道 $E_m$ 跃迁到另一个定态轨道 $E_n$ 时，会以光子的形式发射或吸收能量，光子频率满足：</p>
+
+          <div class="math-block">
+            $$\nu = \frac{|E_m - E_n|}{h}$$
+          </div>
+
+          <p>基于这两个假设，玻尔推导出了氢原子的能级公式：</p>
+
+          <div class="math-block">
+            $$E_n = -\frac{me^4}{8\epsilon_0^2 h^2}\cdot\frac{1}{n^2}$$
+          </div>
+
+          <p>以及里德伯公式——氢原子光谱线的频率可以精确地表示为：</p>
+
+          <div class="math-block">
+            $$\frac{1}{\lambda} = R\left(\frac{1}{n_f^2} - \frac{1}{n_i^2}\right)$$
+          </div>
+
+          <p>玻尔模型取得了惊人的成功。它精确地预言了氢原子光谱谱线的位置（包括巴耳末系、莱曼系、帕邢系等），解释了原子稳定性的根源，并第一次将量子化概念系统性地应用于原子结构。</p>
+
+          <div class="chapter-figure">
+            <div class="fig-placeholder">
+              ⚛️ 图1.2：玻尔原子模型示意图——电子在分立的量子化轨道上跃迁，发射特定频率的光子
+            </div>
+            <figcaption>图1.2：玻尔氢原子模型中，电子在不同能级 $E_n$ 间的跃迁对应于不同波长的光谱线。</figcaption>
+          </div>
+
+          <h3>1.4.3 模型的意义与局限</h3>
+
+          <p>玻尔模型是"半经典半量子"的过渡产物——它在旧量子论和新生的量子力学之间建立了一座关键的桥梁。但它无法解释多电子原子的光谱，无法解释谱线的强度差异，也无法解释反常塞曼效应。这些局限说明，量子理论还需要一次更为彻底的革命。</p>
+
+          <p>1914年，弗兰克（James Franck）和赫兹（Gustav Hertz）通过电子轰击汞蒸气的实验，直接证实了原子能级量子化的存在——电子只有在能量恰好等于原子能级差时才能激发原子。这一实验为玻尔模型提供了坚实的实验支持。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>玻尔引入定态和量子跃迁两个假设，成功解释了氢原子光谱和原子稳定性</li>
+              <li>玻尔模型是经典到量子过渡期的里程碑，但也揭示了旧量子论的局限性</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.5 ===== -->
+        <section>
+          <h2 id="section-5">1.5 德布罗意物质波（1924）：波粒二象性的对称性</h2>
+
+          <h3>1.5.1 对称性的美感</h3>
+
+          <p>1923年，一位法国贵族出身的物理学博士生路易·德布罗意（Louis de Broglie，1892-1987）提出了一个极为大胆的对称性猜想：既然光（通常被认为是波）在光电效应中表现出粒子性，那么电子（通常被认为是粒子）是否也应该表现出波动性？</p>
+
+          <p>德布罗意的推理充满了物理学的对称美感。如果光子具有动量 $p = h/\lambda$（由康普顿散射实验确认），那么反过来，一个具有动量 $p$ 的粒子也应该具有一个对应的波长：</p>
+
+          <div class="math-block">
+            $$\lambda = \frac{h}{p}$$
+          </div>
+
+          <p>这就是著名的<strong>德布罗意物质波假说</strong>。对于静质量为 $m$、速度为 $v$ 的粒子，其德布罗意波长 $\lambda = h/(mv)$。</p>
+
+          <h3>1.5.2 从假说到实验验证</h3>
+
+          <p>德布罗意在他的博士论文中提出了这一假说，论文评审人之一、物理学家郎之万（Paul Langevin）将论文寄给了爱因斯坦，爱因斯坦评价说："他揭开了大幕的一角。"</p>
+
+          <p>实验验证来得比预期更快。1927年，美国物理学家戴维森（Clinton Davisson）和革末（Lester Germer）在贝尔实验室进行电子射向镍晶体表面的实验时，意外观察到了电子衍射图样——这正是德布罗意波存在的直接证据。同年，英国物理学家汤姆孙（George Paget Thomson）也在电子穿过金属薄膜的实验中观察到了电子衍射。</p>
+
+          <p>巧合的是，J.J.汤姆孙（George Paget Thomson的父亲）在1897年发现了电子的粒子性，而他的儿子在30年后证实了电子的波动性——波粒二象性以一种近乎戏剧性的方式在父子之间完成了完整的循环。</p>
+
+          <p>德布罗意的假说将波粒二象性从光现象推广到了所有物质粒子，为薛定谔建立波动力学提供了直接的思想基础。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>德布罗意提出物质波假说 $\lambda = h/p$，将波粒二象性推广到所有物质粒子</li>
+              <li>戴维森-革末实验（1927）以电子衍射验证了物质波的存在</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.6 ===== -->
+        <section>
+          <h2 id="section-6">1.6 海森堡矩阵力学与薛定谔波动方程（1925-1926）：两种等价的革命</h2>
+
+          <h3>1.6.1 海森堡的矩阵力学：抛弃不可观测的量</h3>
+
+          <p>1925年，24岁的德国物理学家维尔纳·海森堡（Werner Heisenberg，1901-1976）因严重花粉过敏前往北海的黑尔戈兰岛休养。正是在这个与世隔绝的小岛上，他完成了一项彻底颠覆量子理论的思考。</p>
+
+          <p>海森堡的方法论受到了马赫实证主义哲学的深刻影响：物理学应该只讨论<strong>可观测的量</strong>。玻尔模型中电子的"轨道"位置和"轨道半径"是<strong>不可观测</strong>的——我们从未见过电子轨道，我们只观察到原子发出的光谱线的频率和强度。因此，海森堡决定从根本上抛弃"轨道"这样的经典概念，直接用可观测的光谱数据来构建新的理论。</p>
+
+          <p>他构建了一个量子理论，其中物理量（如位置 $x$ 和动量 $p$）被表示为一组数的阵列——用数学语言说，就是<strong>矩阵</strong>。在经典力学中，$x(t)p(t) = p(t)x(t)$（乘法交换），但在海森堡的量子力学中：</p>
+
+          <div class="math-block">
+            $$x p \neq p x$$
+          </div>
+
+          <p>这个非交换性——两个可观测量的乘积依赖于顺序——是量子力学的核心数学特征。海森堡的导师马克斯·玻恩（Max Born，1882-1970）和助手约尔丹（Pascual Jordan，1902-1980）迅速将海森堡的思想形式化，建立了完整的<strong>矩阵力学</strong>（matrix mechanics）。</p>
+
+          <h3>1.6.2 薛定谔的波动方程：另一种语言</h3>
+
+          <p>几乎同时，奥地利物理学家埃尔温·薛定谔（Erwin Schrödinger，1887-1961）沿着一条完全不同的路径抵达了相同的彼岸。受到德布罗意物质波思想的启发，薛定谔思考了一个问题：如果电子是一种波，那么它应该服从什么样的波动方程？</p>
+
+          <p>1926年初，薛定谔发表了划时代的论文，提出了<strong>薛定谔方程</strong>：</p>
+
+          <div class="math-block">
+            $$i\hbar\frac{\partial}{\partial t}\Psi(\mathbf{r}, t) = \left[-\frac{\hbar^2}{2m}\nabla^2 + V(\mathbf{r}, t)\right]\Psi(\mathbf{r}, t)$$
+          </div>
+
+          <p>或者更简洁地写成：</p>
+
+          <div class="math-block">
+            $$i\hbar\frac{\partial}{\partial t}|\Psi\rangle = \hat{H}|\Psi\rangle$$
+          </div>
+
+          <p>其中 $\hat{H} = -\frac{\hbar^2}{2m}\nabla^2 + V$ 是哈密顿算符。</p>
+
+          <p>对于定态（能量不变的情况），薛定谔方程简化为不含时形式：</p>
+
+          <div class="math-block">
+            $$\hat{H}\Psi(\mathbf{r}) = E\Psi(\mathbf{r})$$
+          </div>
+
+          <p>薛定谔方程的解 $\Psi(\mathbf{r}, t)$ 称为<strong>波函数</strong>，它包含了关于量子系统的全部信息。薛定谔用他的波动方程求解氢原子的能级，得到了与玻尔模型完全一致的结果——而且不需要引入任何人为的量子化条件，能级的量子化自然而然地来源于方程的解。</p>
+
+          <h3>1.6.3 两种理论的统一</h3>
+
+          <p>表面上，海森堡的矩阵力学（用抽象的矩阵代数）和薛定谔的波动力学（用偏微分方程）看起来毫无共同之处。薛定谔本人最初也批评矩阵力学"令人望而生畏且令人反感"。</p>
+
+          <p>但薛定谔很快证明：<strong>两种表述在数学上是完全等价的</strong>。它们只是量子力学这同一座大厦的两种不同语言——一个用波函数演化的微分方程来描述，另一个用算符矩阵的代数运算来描述。今天，我们通常将薛定谔方程作为量子力学的基本方程，而将矩阵力学视为海森堡绘景（Heisenberg picture）中的等价表述。</p>
+
+          <p>这场"双轨革命"是物理学史上最引人入胜的故事之一：两位物理学家从截然不同的哲学出发，用完全不同的数学工具，却发现了同一个底层真理。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>海森堡的矩阵力学以可观测量的非交换代数为基础，构建了量子力学的代数框架</li>
+              <li>薛定谔的波动方程以物质波为出发点，用偏微分方程描述了量子系统的演化</li>
+              <li>两种表述被证明在数学上完全等价，是同一理论的两种不同语言</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.7 ===== -->
+        <section>
+          <h2 id="section-7">1.7 玻恩概率诠释与哥本哈根诠释：波函数的统计解释</h2>
+
+          <h3>1.7.1 波函数的物理意义是什么？</h3>
+
+          <p>薛定谔方程解决了"波函数如何演化"的问题，但一个更深层的问题随之而来：<strong>波函数 $\Psi$ 本身代表什么？</strong></p>
+
+          <p>起初薛定谔认为 $\Psi$ 代表电子的物质分布——电子不是"点粒子"，而是被"涂抹"在空间中的一团波动。但这种"实在论"的解释很快遇到了困难：实验中的电子总是作为一个完整的、局域化的粒子被探测到（在荧光屏上产生一个亮点），而不是被分散探测。</p>
+
+          <p>1926年，马克斯·玻恩提出了一个极为关键的思想：波函数的平方 $\left|\Psi(\mathbf{r}, t)\right|^2$ 不是电子的质量密度，而是<strong>概率密度</strong>——在时间 $t$、位置 $\mathbf{r}$ 处发现电子的概率。确切地说：</p>
+
+          <div class="math-block">
+            $$\int_{\mathcal{V}} |\Psi(\mathbf{r}, t)|^2 d^3\mathbf{r} = \text{在区域 } \mathcal{V} \text{ 中发现粒子的概率}$$
+          </div>
+
+          <p>这就是著名的<strong>玻恩规则</strong>（Born rule）。它意味着量子力学本质上是一种<strong>概率理论</strong>——我们无法精确预言单个事件的结果，只能预言大量相同实验的统计分布。</p>
+
+          <h3>1.7.2 哥本哈根诠释</h3>
+
+          <p>玻恩的概率诠释是<strong>哥本哈根诠释</strong>（Copenhagen interpretation）的核心组成部分。这一诠释由玻尔、海森堡、玻恩等在哥本哈根理论物理研究所（玻尔研究所）共同发展形成，是量子力学的标准解释框架。其核心思想包括：</p>
+
+          <ul>
+            <li><strong>波粒二象性</strong>：量子对象同时具有波动性和粒子性，两种性质互补（玻尔的<strong>互补原理</strong>）</li>
+            <li><strong>概率性</strong>：量子力学的预言本质上是概率性的</li>
+            <li><strong>观测坍缩</strong>：当对一个量子系统进行测量时，波函数"坍缩"到某个本征态</li>
+            <li><strong>不确定性原理</strong>：某些物理量对无法同时被精确测量（详见1.8节）</li>
+          </ul>
+
+          <p>哥本哈根诠释从"概率是什么"这一本体论问题转向了"我们能知道什么"这一认识论问题。它不关心在测量之前电子"真正"在哪里——它认为这个问题没有意义。</p>
+
+          <h3>1.7.3 爱因斯坦的反对：上帝不掷骰子</h3>
+
+          <p>哥本哈根诠释的概率本质让爱因斯坦深感不安。他在给玻恩的信中写下了那句著名的话：</p>
+
+          <blockquote>&ldquo;上帝不掷骰子。&rdquo;（God does not play dice.）</blockquote>
+
+          <p>爱因斯坦并不否定量子力学的实验预言——他承认理论非常成功。但他认为量子力学是<strong>不完备</strong>的，即存在某些"隐变量"（hidden variables）来解释概率背后更深层的确定性规律。这场爱因斯坦与玻尔之间的伟大争论持续了数十年，催生了著名的EPR悖论（1935）和后来的贝尔不等式（1964），最终以实验（Aspect实验等）支持量子力学的非定域性而暂时画上句号——但这已是下一章要讲述的故事了。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>玻恩提出波函数的平方 $|\Psi|^2$ 代表概率密度，将量子力学定位为概率理论</li>
+              <li>哥本哈根诠释强调互补性、概率性和观测坍缩，是量子力学的标准解释</li>
+              <li>爱因斯坦反对概率性的本质解释，认为量子力学是不完备的</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.8 ===== -->
+        <section>
+          <h2 id="section-8">1.8 海森堡不确定性原理（1927）：量子世界的根本限制</h2>
+
+          <h3>1.8.1 思想实验到数学原理</h3>
+
+          <p>1927年，海森堡通过一系列思想实验推导出了一个惊人的结论：在量子世界中，某些物理量对的测量精度存在一个根本性的上限。他最著名的不确定关系是<strong>位置与动量</strong>之间：</p>
+
+          <div class="math-block">
+            $$\Delta x \cdot \Delta p \geq \frac{\hbar}{2}$$
+          </div>
+
+          <p>其中 $\Delta x$ 是位置不确定度，$\Delta p$ 是动量不确定度，$\hbar = h/2\pi$ 是约化普朗克常数。</p>
+
+          <p>海森堡用γ射线显微镜的思想实验直观地解释了这一原理：要精确测量电子的位置，需要用短波长的光（如γ射线）照射它，但短波长的光子具有很高的动量，会扰乱电子的动量——你越准确地知道电子在哪，就越不准确地知道它在向哪里运动。</p>
+
+          <h3>1.8.2 更一般的表述</h3>
+
+          <p>不确定性原理并非仅适用于位置和动量，它其实是一般性的数学定理。对于任意两个不对易的厄米算符 $\hat{A}$ 和 $\hat{B}$，有：</p>
+
+          <div class="math-block">
+            $$\Delta A \cdot \Delta B \geq \frac{1}{2}\left|\langle[\hat{A}, \hat{B}]\rangle\right|$$
+          </div>
+
+          <p>特别重要的是<strong>能量-时间不确定关系</strong>：</p>
+
+          <div class="math-block">
+            $$\Delta E \cdot \Delta t \geq \frac{\hbar}{2}$$
+          </div>
+
+          <p>这个关系解释了为什么量子系统存在所谓的"能级宽度"——处于激发态的粒子停留时间 $\Delta t$ 越短，其能量不确定度 $\Delta E$ 就越大。</p>
+
+          <h3>1.8.3 认识论的根本转折</h3>
+
+          <p>不确定性原理不是由于测量仪器的局限性造成的（像经典物理中那样），而是<strong>自然本身的根本属性</strong>。在经典物理中，我们通常认为一个粒子同时具有确定的位置和动量，只是我们不知道而已。但在量子力学中，这样的概念本身就不成立——一个量子系统不能同时处于位置和动量都有确定值的状态。</p>
+
+          <p>这一原理彻底颠覆了拉普拉斯式的决定论宇宙观。即使你"知道"宇宙的初始条件，不确定性原理也从根本上阻止了你对未来做出精确预言。这不是因为你的知识有限，而是因为宇宙本身就在这种模糊性中运作。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>海森堡不确定性原理 $\Delta x \cdot \Delta p \geq \hbar/2$ 揭示了量子世界中互补物理量的测量极限</li>
+              <li>这是自然的根本属性，而非测量仪器的限制，标志着决定论世界观的终结</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.9 ===== -->
+        <section>
+          <h2 id="section-9">1.9 狄拉克方程与反物质（1928）：相对论与量子的统一</h2>
+
+          <h3>1.9.1 薛定谔方程的不完整性</h3>
+
+          <p>薛定谔方程是非相对论的——它将对时间的导数是一阶（$\partial/\partial t$），但对空间的导数是二阶（$\nabla^2$），不符合狭义相对论要求的时间和空间平权处理。对于处理高速运动（速度接近光速）的粒子，非相对论量子力学是不完整的。</p>
+
+          <h3>1.9.2 狄拉克方程的惊人预言</h3>
+
+          <p>1928年，26岁的英国物理学家保罗·狄拉克（Paul Dirac，1902-1984）提出了一个将量子力学与狭义相对论统一起来的方程——<strong>狄拉克方程</strong>。对于自由电子，其形式为：</p>
+
+          <div class="math-block">
+            $$(i\gamma^\mu \partial_\mu - m)\psi = 0$$
+          </div>
+
+          <p>其中 $\gamma^\mu$ 是狄拉克矩阵，$\psi$ 是旋量波函数，$m$ 是电子质量。</p>
+
+          <p>狄拉克方程有如下几个非凡的成就：</p>
+
+          <ol>
+            <li><strong>自然包含了电子的自旋</strong>：在薛定谔方程中，自旋是额外"人为添加"的属性；在狄拉克方程中，自旋从相对论和量子力学的结合中自动涌现出来。</li>
+            <li><strong>精确预言了电子的磁矩</strong>：$g$-因子精确等于2，与实验高度吻合。</li>
+            <li><strong>预言了反物质的存在</strong>：狄拉克方程的解包含两组正能解和两组负能解。狄拉克大胆地提出，那些"负能态"实际上对应着一种与电子质量相同但电荷相反的新粒子——<strong>正电子</strong>（positron）。</li>
+          </ol>
+
+          <p>1932年，卡尔·安德森（Carl Anderson）在宇宙射线实验中发现了正电子，完美验证了狄拉克的预言。这是人类历史上第一次<strong>通过纯数学推理预言了一种全新的基本粒子</strong>。狄拉克方程不仅统一了量子力学和狭义相对论，还开辟了反物质物理学这一全新领域。</p>
+
+          <h3>1.9.3 狄拉克对量子信息的影响</h3>
+
+          <p>狄拉克发明的<strong>括号符号</strong>（bra-ket notation）——$\langle\psi|$ 和 $|\phi\rangle$ ——成为了量子力学和量子信息科学中最优雅且最通用的数学语言。在本书后文中，我们将大量使用狄拉克符号来描述量子比特、量子门和量子算法。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>狄拉克方程将量子力学与狭义相对论统一，自然包含了电子自旋和磁矩</li>
+              <li>狄拉克预言了反物质（正电子）的存在，1932年被实验证实</li>
+              <li>狄拉克符号（bra-ket notation）是量子信息科学的标准数学语言</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.10 ===== -->
+        <section>
+          <h2 id="section-10">1.10 量子力学的实验验证与思想实验</h2>
+
+          <h3>1.10.1 双缝实验：量子力学的灵魂</h3>
+
+          <p>如果说有一个实验能浓缩量子力学的全部奇妙之处，那一定是<strong>双缝实验</strong>。当单个电子（或光子、中子等）依次通过两条狭缝时，在探测屏上累积出干涉图样——仿佛每个粒子都同时穿过了两条狭缝，"与自己发生了干涉"。</p>
+
+          <p>当我们在狭缝处放置探测器试图"看清"电子走的是哪条路径时，干涉图样立即消失，屏幕上只出现两条亮斑——粒子行为。实验表明，<strong>观察行为本身改变了量子系统的演化</strong>。正如费曼所说，双缝实验"包含了量子力学的全部奥秘"。</p>
+
+          <p>1961年，德国物理学家克劳斯·约恩松（Claus Jönsson）首次实现了单电子双缝实验，以无可辩驳的方式展示了电子的波粒二象性。1989年，日立公司的外村彰（Akira Tonomura）团队用更精细的实验装置拍摄了电子逐个通过双缝并逐渐形成干涉图样的过程——这是一段足以写进物理学史的视频。</p>
+
+          <div class="chapter-figure">
+            <div class="fig-placeholder">
+              🔬 图1.3：双缝实验示意图——单个电子依次通过双缝，在屏幕上累积出干涉图样
+            </div>
+            <figcaption>图1.3：双缝实验示意图。当记录单个电子的撞击位置时，初始呈现随机分布（左），但随着大量电子的累积，干涉图样逐渐显现（右）。</figcaption>
+          </div>
+
+          <h3>1.10.2 康普顿散射与EPR悖论</h3>
+
+          <p>1923年，阿瑟·康普顿（Arthur Compton）通过X射线散射实验发现，散射光的波长变化可以用光子与电子的弹性碰撞完美解释——为光具有粒子动量提供了直接证据：</p>
+
+          <div class="math-block">
+            $$\Delta\lambda = \frac{h}{m_ec}(1-\cos\theta)$$
+          </div>
+
+          <p>1935年，爱因斯坦、波多尔斯基（Boris Podolsky）和罗森（Nathan Rosen）发表了著名的 <strong>EPR悖论</strong>。他们通过一个思想实验论证：如果量子力学是完备的，那么它就必须允许"幽灵般的超距作用"（spooky action at a distance）——两个远距离分离的粒子可以瞬时影响彼此的状态。爱因斯坦认为这不可能，因而量子力学"不完备"。</p>
+
+          <p>1964年，约翰·贝尔（John Bell）推导出了<strong>贝尔不等式</strong>——一个可以被实验检验的判据。1982年，阿兰·阿斯佩（Alain Aspect）领导了里程碑式的实验，结果明确违反了贝尔不等式，支持了量子力学的非定域性预言。这些工作后来获得了2022年诺贝尔物理学奖，并为量子纠缠和量子通信开辟了道路。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>双缝实验揭示了量子力学的核心悖论：观测影响系统行为</li>
+              <li>EPR悖论和贝尔不等式检验确立了量子纠缠的非定域性，为量子信息科学奠定了实验基础</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.11 ===== -->
+        <section>
+          <h2 id="section-11">1.11 从量子力学到量子计算：费曼的远见</h2>
+
+          <h3>1.11.1 量子模拟的困境</h3>
+
+          <p>到20世纪60年代，量子力学的数学框架已经十分完善，理论物理学家可以相当精确地计算氢原子、氦原子等简单系统的性质。但当面对稍微复杂的系统时——比如一个有几十个电子的分子——计算就变得极为困难。</p>
+
+          <p>原因在于量子系统的状态空间随着粒子数量的增加呈<strong>指数增长</strong>。对于一个由 $N$ 个自旋 $\frac{1}{2}$ 粒子组成的系统，其量子态的完整描述需要 $2^N$ 个复数系数。当 $N=50$ 时，就需要约 $10^{15}$ 个系数——超出了当时任何经典计算机的存储能力。当 $N=300$ 时，所需的系数数量已经超过了可观测宇宙中的原子总数。</p>
+
+          <p>这一现象被称为"指数墙"（exponential wall）——经典计算机在模拟量子系统时遇到了不可逾越的障碍。</p>
+
+          <h3>1.11.2 费曼的天才洞见</h3>
+
+          <p>1981年5月，在美国麻省理工学院举办的第一届<strong>计算物理学</strong>会议上，物理学家理查德·费曼（Richard Feynman，1918-1988）发表了一场如今被视为量子计算诞生宣言的演讲——题为《用计算机模拟物理学》（<em>Simulating Physics with Computers</em>）。</p>
+
+          <p>费曼提出了一个简洁而深刻的观察：如果一个经典系统（经典计算机）模拟一个量子系统的行为需要指数级增长的计算资源，那么也许我们应该<strong>用量子系统来模拟量子系统</strong>——即，制造一台遵循量子力学规律的计算设备，让它来处理量子力学问题。</p>
+
+          <p>费曼的原话是：</p>
+
+          <blockquote>&ldquo;自然不是经典的，该死的，如果你想模拟自然，你最好用量子力学。顺便一提，这不只是一个可能性，而是一个你无法回避的事实。&rdquo;</blockquote>
+
+          <p>他进一步展望："我可以用量子系统来模拟另一个量子系统，并且这样做所需的计算机资源不会随着系统的复杂度呈指数增长。"费曼甚至画出了一个简要的方案：用量子比特（量子二能级系统）的演化和相互作用来表示和模拟任意量子系统的哈密顿量。</p>
+
+          <h3>1.11.3 从费曼到量子计算时代</h3>
+
+          <p>费曼1981年的演讲是量子计算概念史上的"创世时刻"。然而，从远见到实际实现还有很长的路要走：</p>
+
+          <div class="timeline-item">
+            <div class="timeline-year">1980</div>
+            <div class="timeline-content">
+              <h4>保罗·贝尼奥夫（Paul Benioff）</h4>
+              <p>提出图灵机的量子力学模型，但尚未认识到量子计算的潜在优势。</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-year">1981</div>
+            <div class="timeline-content">
+              <h4>理查德·费曼（Richard Feynman）</h4>
+              <p>发表《用计算机模拟物理学》演讲，提出"用量子系统模拟量子系统"的革命性想法。</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-year">1985</div>
+            <div class="timeline-content">
+              <h4>大卫·多伊奇（David Deutsch）</h4>
+              <p>提出了<strong>量子图灵机</strong>的概念和第一个量子算法（Deutsch算法），证明了通用量子计算机原则上是可行的。</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-year">1994</div>
+            <div class="timeline-content">
+              <h4>彼得·肖尔（Peter Shor）</h4>
+              <p>提出了大数分解的量子算法（<strong>Shor算法</strong>），能在多项式时间内完成经典计算机指数时间才能完成的因数分解，直接威胁到RSA加密体系——这是第一次有人发现量子计算机可以解决一个<strong>真正有用的、经典无法有效解决的问题</strong>。</p>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="timeline-year">1996</div>
+            <div class="timeline-content">
+              <h4>洛夫·格罗弗（Lov Grover）</h4>
+              <p>提出了无序数据库搜索的<strong>Grover算法</strong>，实现了平方加速。</p>
+            </div>
+          </div>
+
+          <p>这些开创性的工作标志着量子计算从概念走向了实用化理论的轨道。费曼1981年的那个"疯狂"的想法——用量子模拟量子——如今已经催生了一个全球性的、多学科交叉的庞大研究领域，涉及物理学、计算机科学、数学、材料科学和工程学。</p>
+
+          <h3>1.11.4 本章的结尾与下章的开端</h3>
+
+          <p>从1900年普朗克的黑体辐射论文到1981年费曼的量子计算演讲，这段81年的历史构成了人类对微观世界认知的史诗性跨越：</p>
+
+          <ul>
+            <li>我们学到了能量不是连续的，而是离散的（普朗克）</li>
+            <li>光既是波又是粒子（爱因斯坦）</li>
+            <li>电子会"同时"出现在多个地方（薛定谔）</li>
+            <li>我们无法同时知道一个粒子的位置和动量（海森堡）</li>
+            <li>每种粒子都有自己的反粒子（狄拉克）</li>
+            <li>两个远距离的粒子可以以一种"幽灵般"的方式纠缠在一起（EPR→贝尔）</li>
+            <li>如果经典计算机无法有效模拟量子系统，那就造一台量子计算机来做（费曼）</li>
+          </ul>
+
+          <p>这些思想构成了现代物理学最核心的智慧遗产，也是本书后续所有内容的基石。在下一章中，我们将从费曼的远见出发，系统性地建立量子计算的形式化理论——从量子比特开始，逐步构建量子门、量子线路和量子算法的完整框架。</p>
+
+          <div class="key-concepts">
+            <h4>📌 关键概念总结</h4>
+            <ul>
+              <li>经典计算机模拟量子系统面临"指数墙"——系统状态空间随粒子数指数增长</li>
+              <li>费曼（1981）提出"用量子系统模拟量子系统"的洞见，成为量子计算的起源</li>
+              <li>一个从普朗克到费曼、从旧量子论到量子计算的完整叙事闭环已然形成</li>
+            </ul>
+          </div>
+        </section>
+
+        <hr>
+
+        <!-- ===== Chapter Summary ===== -->
+        <section>
+          <h2 id="section-12">本章小结</h2>
+
+          <p>本章沿着历史的时间线，从1900年普朗克引入能量量子化开始，穿越了量子力学从诞生到成熟的全部关键里程：</p>
+
+          <ol>
+            <li><strong>能量量子化</strong>（普朗克，1900）：$E = nh\nu$，量子概念的始点</li>
+            <li><strong>光量子假说</strong>（爱因斯坦，1905）：$E = h\nu$，光的粒子性</li>
+            <li><strong>玻尔原子模型</strong>（玻尔，1913）：定态与量子跃迁，半经典量子论的巅峰</li>
+            <li><strong>物质波假说</strong>（德布罗意，1924）：$\lambda = h/p$，波粒二象性的对称推广</li>
+            <li><strong>矩阵力学与波动力学</strong>（海森堡/薛定谔，1925-1926）：量子力学的双重革命与统一</li>
+            <li><strong>概率诠释</strong>（玻恩，1926）：波函数的统计解释</li>
+            <li><strong>不确定性原理</strong>（海森堡，1927）：$\Delta x \cdot \Delta p \geq \hbar/2$</li>
+            <li><strong>狄拉克方程</strong>（狄拉克，1928）：相对论量子力学与反物质预言</li>
+            <li><strong>量子计算愿景</strong>（费曼，1981）：用量子系统模拟量子系统</li>
+          </ol>
+
+          <p>当我们回望这段历史，一个清晰的叙事浮现出来：量子力学不是某一位天才的独角戏，而是一代又一代物理学家——普朗克、爱因斯坦、玻尔、德布罗意、海森堡、薛定谔、玻恩、狄拉克、费曼——在争论、修正、实验验证和思想碰撞中共同建立的宏伟理论体系。每一次对经典直觉的"背叛"（不连续的能量、波粒二象性、概率本质、不确定性、反物质、量子纠缠），最终都被实验证实为自然的真实图景。</p>
+
+          <p>正是这些"反直觉"的发现，构成了量子计算的哲学和物理基础。当我们深入本书后续章节时，将会看到这些量子力学的核心原理如何在量子比特、量子门和量子算法中得到精彩的体现和应用。</p>
+
+          <blockquote>&ldquo;从普朗克的绝望到费曼的远见，量子力学走过了80年的光辉历程——而量子计算的冒险才刚刚开始。&rdquo;</blockquote>
+
+          <h3>延伸阅读</h3>
+          <ol>
+            <li><strong>经典教材</strong>：Griffiths, D. J. <em>Introduction to Quantum Mechanics</em>（中译本：《量子力学概论》）</li>
+            <li><strong>科学史</strong>：Kumar, M. <em>Quantum: Einstein, Bohr, and the Great Debate about the Nature of Reality</em></li>
+            <li><strong>量子计算入门</strong>：Nielsen, M. A. &amp; Chuang, I. L. <em>Quantum Computation and Quantum Information</em>（"米尔斯-庄"经典教材）</li>
+            <li><strong>原始文献</strong>：Feynman, R. P. "Simulating Physics with Computers." <em>International Journal of Theoretical Physics</em>, 21(6/7), 1982.</li>
+            <li><strong>传记</strong>：Farmelo, G. <em>The Strangest Man: The Hidden Life of Paul Dirac</em></li>
+          </ol>
+        </section>
+
+        <!-- ===== Chapter Navigation ===== -->
+        <nav class="chapter-nav">
+          <a href="../index.html">
+            <span>←</span>
+            <div>
+              <div class="nav-direction">上一节</div>
+              <div class="nav-title">返回首页</div>
+            </div>
+          </a>
+          <a href="#" class="nav-next">
+            <div>
+              <div class="nav-direction">下一章</div>
+              <div class="nav-title">第2章：量子力学数学基础（规划中）</div>
+            </div>
+            <span>→</span>
+          </a>
+        </nav>
+      </article>
+
+      <!-- ==================== SIDEBAR TOC ==================== -->
+      <aside class="chapter-toc" id="chapter-toc">
+        <div class="toc-card">
+          <h4>📖 本章目录</h4>
+          <ul class="toc-list">
+            <!-- Auto-populated by JS -->
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿，从理论到算法，构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="../../assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="../../assets/js/site.js"></script>
+</body>
+</html>

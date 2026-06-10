@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="《量子计算》官方网站——从量子力学基础到量子计算前沿的系统性教材">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>量子计算 | 官方网站</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <!-- Book Stylesheet (Quantum Computing) -->
+  <link rel="stylesheet" href="../../assets/css/book.css">
+  <!-- Site-level stylesheet (top navigation) -->
+  <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="index.html" class="active">首页</a></li>
+          <li><a href="#chapters">章节总览</a></li>
+          <li><a href="chapters/ch01.html">第1章</a></li>
+          <li><a href="#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO SECTION ==================== -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">📘 系统性教材 · 2026</div>
+      <h1>
+        量子计算
+        <span class="subtitle">从量子力学到量子算法的系统之路</span>
+      </h1>
+      <p>
+        一本面向未来的量子计算教材。从普朗克的能量量子化到费曼的量子模拟远见，
+        从量子比特的数学描述到 Shor 算法与 Grover 算法的深度剖析，
+        为你构建从基础理论到前沿应用的完整知识体系。
+      </p>
+      <div class="hero-actions">
+        <a href="chapters/ch01.html" class="btn btn-primary">
+          📖 开始阅读
+        </a>
+        <a href="#chapters" class="btn btn-outline">
+          📑 查看章节目录
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-number">12</div>
+          <div class="stat-label">章节</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">200+</div>
+          <div class="stat-label">公式推导</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">50+</div>
+          <div class="stat-label">代码示例</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">∞</div>
+          <div class="stat-label">量子可能性</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="mouse"></div>
+      <span>向下滚动</span>
+    </div>
+  </section>
+
+  <!-- ==================== BOOK INTRO ==================== -->
+  <section class="section book-intro" id="intro">
+    <div class="container">
+      <div class="book-intro-content">
+        <div class="book-cover-placeholder reveal reveal-delay-1">
+          <div class="cover-icon">⚛️</div>
+          <div class="cover-title">量子计算</div>
+          <div class="cover-subtitle">Quantum Computing — A Comprehensive Introduction</div>
+        </div>
+        <div class="book-description reveal reveal-delay-2">
+          <h3>关于本书</h3>
+          <p>
+            《量子计算》是一本系统性地介绍量子计算理论与实践的教材。
+            全书从量子力学的历史起源讲起，逐步构建起量子力学的数学框架，
+            然后深入量子信息与量子计算的核心——量子比特、量子门、量子线路，
+            直至 Shor 算法、Grover 算法、量子纠错和量子机器学习等前沿主题。
+          </p>
+          <p>
+            本书适合具有本科数学和物理基础的计算机科学、物理学、数学及相关专业
+            的学生和研究人员，也适合自学量子计算的工程师和科学家。
+          </p>
+          <div class="features">
+            <div class="feature-item">
+              <span class="icon">✦</span> 数学推导完整
+            </div>
+            <div class="feature-item">
+              <span class="icon">✦</span> 物理直觉并重
+            </div>
+            <div class="feature-item">
+              <span class="icon">✦</span> 代码示例丰富
+            </div>
+            <div class="feature-item">
+              <span class="icon">✦</span> 历史脉络清晰
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CHAPTERS OVERVIEW ==================== -->
+  <section class="section chapters-section" id="chapters">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2>📑 章节总览</h2>
+        <div class="section-divider"></div>
+        <p class="section-subtitle">
+          全书共12章，从量子力学的历史出发，涵盖量子计算的全部核心主题
+        </p>
+      </div>
+
+      <div class="chapters-grid">
+        <!-- Chapter 1 -->
+        <a href="chapters/ch01.html" class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-done">已完成</div>
+          <div class="chapter-number">第 1 章</div>
+          <h3>量子力学简史——从普朗克到费曼</h3>
+          <p>从1900年普朗克的能量量子化到1981年费曼的量子计算远见，追溯量子力学八十年的思想史。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">历史</span>
+            <span class="tag tag-purple">量子力学</span>
+            <span class="tag tag-green">基础</span>
+          </div>
+        </a>
+
+        <!-- Chapter 2 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 2 章</div>
+          <h3>量子力学数学基础</h3>
+          <p>线性代数、希尔伯特空间、算符与表象理论——量子力学的形式化数学语言。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">数学</span>
+            <span class="tag tag-cyan">线性代数</span>
+          </div>
+        </div>
+
+        <!-- Chapter 3 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 3 章</div>
+          <h3>量子力学基本公理</h3>
+          <p>态矢量、可观测量、测量公理、演化公理与复合系统——量子力学的五条基本公理。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">公理</span>
+            <span class="tag tag-cyan">形式化</span>
+          </div>
+        </div>
+
+        <!-- Chapter 4 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 4 章</div>
+          <h3>量子比特与量子纠缠</h3>
+          <p>量子比特的数学描述、Bloch球表示、纠缠态与贝尔不等式。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">核心</span>
+            <span class="tag tag-pink">纠缠</span>
+          </div>
+        </div>
+
+        <!-- Chapter 5 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 5 章</div>
+          <h3>量子门与量子线路</h3>
+          <p>单量子比特门、多量子比特门、通用量子门集与量子线路模型。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">门操作</span>
+            <span class="tag tag-green">线路</span>
+          </div>
+        </div>
+
+        <!-- Chapter 6 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 6 章</div>
+          <h3>量子算法（一）——基础算法</h3>
+          <p>Deutsch-Jozsa算法、Bernstein-Vazirani算法、Simon算法及量子加速的直觉。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">算法</span>
+            <span class="tag tag-cyan">量子加速</span>
+          </div>
+        </div>
+
+        <!-- Chapter 7 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 7 章</div>
+          <h3>量子算法（二）——Shor与Grover</h3>
+          <p>量子傅里叶变换、Shor大数分解算法、Grover搜索算法及量子霸权。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">Shor</span>
+            <span class="tag tag-cyan">Grover</span>
+            <span class="tag tag-purple">密码学</span>
+          </div>
+        </div>
+
+        <!-- Chapter 8 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 8 章</div>
+          <h3>量子纠错</h3>
+          <p>量子噪声、量子纠错码、表面码与容错量子计算。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">纠错</span>
+            <span class="tag tag-green">容错</span>
+          </div>
+        </div>
+
+        <!-- Chapter 9 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 9 章</div>
+          <h3>量子信息理论</h3>
+          <p>量子熵、量子信道容量、Holevo界与量子密码学。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">信息论</span>
+            <span class="tag tag-pink">密码学</span>
+          </div>
+        </div>
+
+        <!-- Chapter 10 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 10 章</div>
+          <h3>量子机器学习</h3>
+          <p>量子核方法、变分量子算法、量子神经网络与量子优势。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">机器学习</span>
+            <span class="tag tag-cyan">VQE</span>
+          </div>
+        </div>
+
+        <!-- Chapter 11 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 11 章</div>
+          <h3>量子硬件与实现</h3>
+          <p>超导量子比特、离子阱、拓扑量子计算与量子计算物理实现。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">硬件</span>
+            <span class="tag tag-purple">物理实现</span>
+          </div>
+        </div>
+
+        <!-- Chapter 12 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 12 章</div>
+          <h3>前沿与展望</h3>
+          <p>量子优势的最新进展、量子互联网、量子传感与未来方向。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">前沿</span>
+            <span class="tag tag-cyan">展望</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== READING PROGRESS ==================== -->
+  <section class="section progress-section" id="progress">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2>📊 阅读进度</h2>
+        <div class="section-divider"></div>
+        <p class="section-subtitle">追踪全书编写与阅读进度</p>
+      </div>
+
+      <div class="progress-dashboard reveal">
+        <div class="overall-progress">
+          <div class="progress-ring">
+            <div class="progress-ring-inner">
+              <span class="progress-ring-value">10%</span>
+              <span class="progress-ring-label">完成</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-bars">
+          <div class="progress-item">
+            <span class="label">第1章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="100" style="width:100%"></div>
+            </div>
+            <span class="percentage">100%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第2章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第3章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第4章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第5章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第6章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第7-12章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>
+          一本系统性的量子计算中文教材。
+          从历史到前沿，从理论到算法，构建完整的量子计算知识体系。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="index.html">首页</a></li>
+          <li><a href="#chapters">章节总览</a></li>
+          <li><a href="chapters/ch01.html">第1章</a></li>
+          <li><a href="#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum &mdash; 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="../../assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="../../assets/js/site.js"></script>
+</body>
+</html>

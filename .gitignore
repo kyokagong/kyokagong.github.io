@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node（如果将来加构建系统）
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.pyc
+
+# 日志
+*.log

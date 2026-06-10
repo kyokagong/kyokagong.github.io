@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="kyokagong 的开源电子书库 — 量子计算、机器学习、信息论等前沿学科的免费中文教材">
+  <meta name="theme-color" content="#0a0e27">
+  <title>kyokagong 书库 | 开源前沿学科教材</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body class="site-home">
+
+  <!-- ============== Header ============== -->
+  <header class="site-home-header">
+    <a href="index.html" class="brand">
+      <span class="brand-icon">📚</span>
+      <span>kyokagong 书库</span>
+    </a>
+    <nav class="header-links" aria-label="站点链接">
+      <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub</a>
+      <a href="#about">关于</a>
+    </nav>
+  </header>
+
+  <!-- ============== Hero ============== -->
+  <section class="site-home-hero">
+    <div class="site-home-hero-content">
+      <h1>开源前沿学科教材</h1>
+      <p class="tagline">
+        一座持续生长的免费电子书库。每一本都源于作者的认真写作、严格的同行审稿，
+        部署在 GitHub Pages 上，欢迎任何人阅读、反馈与贡献。
+      </p>
+      <p class="sub">⚛ 第一本《量子计算》已开放阅读 · 后续书籍陆续上线</p>
+    </div>
+  </section>
+
+  <!-- ============== Bookshelf ============== -->
+  <section class="bookshelf-section" id="bookshelf">
+    <h2>📖 当前书目</h2>
+    <p class="lead">点击书脊进入阅读 — 每本书都是独立子站点。</p>
+
+    <div class="bookshelf">
+
+      <!-- 1. 量子计算 — 已开放 -->
+      <a href="books/quantum-computing/index.html" class="book-card" style="--book-accent: linear-gradient(90deg, #00d4ff, #7c3aed); --book-accent-bg: rgba(0, 212, 255, 0.15); --book-accent-fg: #00d4ff;">
+        <span class="badge">已开放</span>
+        <div class="cover">⚛️</div>
+        <h3>量子计算</h3>
+        <div class="subtitle">Quantum Computing — A Comprehensive Introduction</div>
+        <p class="desc">
+          从普朗克的能量量子化到费曼的量子模拟远见，
+          一本系统性介绍量子计算理论与实践的中文教材。
+          全书 6 部分 28 章。
+        </p>
+        <div class="meta">
+          <span>📚 1 / 28 章</span>
+          <span class="progress-pill">3.5% 进度</span>
+        </div>
+      </a>
+
+      <!-- 2. 机器学习导论 — 占位 -->
+      <div class="book-card disabled" style="--book-accent: linear-gradient(90deg, #ec4899, #f59e0b); --book-accent-bg: rgba(236, 72, 153, 0.15); --book-accent-fg: #ec4899;">
+        <span class="badge">规划中</span>
+        <div class="cover">🧠</div>
+        <h3>机器学习导论</h3>
+        <div class="subtitle">An Introduction to Machine Learning</div>
+        <p class="desc">
+          从感知机到 Transformer，<br>
+          一本面向工程师与研究者的现代机器学习教材。
+          预计 12 章，覆盖监督/无监督/深度学习/强化学习。
+        </p>
+        <div class="meta">
+          <span>📚 0 / 12 章</span>
+          <span class="progress-pill">撰写中</span>
+        </div>
+      </div>
+
+      <!-- 3. 信息论基础 — 占位 -->
+      <div class="book-card disabled" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">规划中</span>
+        <div class="cover">📡</div>
+        <h3>信息论基础</h3>
+        <div class="subtitle">Elements of Information Theory</div>
+        <p class="desc">
+          从香农 1948 年的开创性论文出发，<br>
+          系统讲解熵、互信息、信道容量、率失真函数与 Kolmogorov 复杂度。
+          预计 10 章。
+        </p>
+        <div class="meta">
+          <span>📚 0 / 10 章</span>
+          <span class="progress-pill">撰写中</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============== About ============== -->
+  <section class="bookshelf-section" id="about" style="padding-top: 16px;">
+    <h2>🛠 关于本站</h2>
+    <p class="lead">
+      本站由 4 人"虚拟编辑部"协作维护：领班、写书人、审稿人、网页开发者。
+      所有工作日志与计划公开透明，欢迎围观。
+    </p>
+    <p class="lead" style="font-size: 0.85rem;">
+      站点源代码托管于 <a href="https://github.com/kyokagong/kyokagong.github.io" target="_blank" rel="noopener">github.com/kyokagong/kyokagong.github.io</a>。
+    </p>
+  </section>
+
+  <!-- ============== Footer ============== -->
+  <footer class="site-home-footer">
+    <p>© 2026 kyokagong 书库 · 由 GitHub Pages 托管</p>
+    <p style="margin-top: 4px;">⚛ Quantum &middot; 🧠 Machine Learning &middot; 📡 Information Theory</p>
+  </footer>
+
+  <script src="assets/js/site.js"></script>
+</body>
+</html>

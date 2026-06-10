@@ -1,0 +1,327 @@
+/* =================================================================
+   kyokagong.github.io - Site-level stylesheet
+   站点级样式：跨书导航 + 站点首页（书库）
+   ----------------------------------------------------------------
+   说明：本文件与 assets/css/book.css 配合使用。
+         book.css 负责"书内"样式（深色科技风、章节排版、公式区）
+         site.css 负责"跨书"样式（顶部跨书导航条、书库首页）
+   ================================================================= */
+
+
+/* ---------- 跨书导航：嵌入每本书的 header 顶部 ---------- */
+/*  注意：book.css 中 .site-header 是 flex + space-between，
+          我们把 site-nav 放在 .logo 和原 .nav-links 之间，
+          所以仅做 margin-left:auto 让它靠左推一些，视觉上和 logo 隔开。  */
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 28px;
+  flex-wrap: wrap;
+}
+
+.site-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary, #94a3b8);
+  text-decoration: none;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.site-nav-link:hover {
+  color: var(--text-primary, #e2e8f0);
+  background: rgba(0, 212, 255, 0.08);
+  border-color: rgba(0, 212, 255, 0.25);
+}
+
+.site-nav-link.active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(124, 58, 237, 0.25));
+  border-color: rgba(0, 212, 255, 0.5);
+  box-shadow: 0 0 16px rgba(0, 212, 255, 0.18);
+}
+
+.site-nav-home {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.site-nav-home:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.site-nav-sep {
+  color: var(--text-muted, #64748b);
+  font-weight: 700;
+  user-select: none;
+}
+
+.nav-icon { font-size: 1rem; line-height: 1; }
+
+/* 响应式：窄屏隐藏次要链接（仅保留书库 + 当前书） */
+@media (max-width: 720px) {
+  .site-nav { gap: 6px; margin-left: 12px; }
+  .site-nav-link { padding: 5px 9px; font-size: 0.82rem; }
+  .site-nav-link span:not(.nav-icon) { display: none; }
+  .site-nav-home span:not(.nav-icon) { display: none; }
+}
+
+
+/* ================================================================
+   站点首页（书库）
+   ---------------------------------------------------------------- */
+/* 复用 book.css 的 CSS 变量 (深色科技风)  */
+
+.site-home {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary, #0a0e27);
+}
+
+.site-home-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: var(--bg-nav, rgba(10, 14, 39, 0.92));
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+}
+
+.site-home-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary, #e2e8f0);
+  text-decoration: none;
+}
+
+.site-home-header .brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4ff, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+.site-home-header .header-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.site-home-header .header-links a {
+  color: var(--text-secondary, #94a3b8);
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.site-home-header .header-links a:hover {
+  color: var(--text-accent, #00d4ff);
+}
+
+/* ----- Hero 区块 ----- */
+.site-home-hero {
+  text-align: center;
+  padding: 96px 24px 64px;
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1040 40%, #0f172a 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.site-home-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(0, 212, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.12), transparent 40%);
+  pointer-events: none;
+}
+
+.site-home-hero-content { position: relative; max-width: 820px; margin: 0 auto; }
+
+.site-home-hero h1 {
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.02em;
+}
+
+.site-home-hero p.tagline {
+  font-size: 1.15rem;
+  color: var(--text-secondary, #94a3b8);
+  line-height: 1.7;
+  max-width: 640px;
+  margin: 0 auto 12px;
+}
+
+.site-home-hero p.sub {
+  font-size: 0.95rem;
+  color: var(--text-muted, #64748b);
+}
+
+/* ----- 书库 grid ----- */
+.bookshelf-section {
+  flex: 1;
+  padding: 48px 24px 80px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.bookshelf-section h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.bookshelf-section .lead {
+  color: var(--text-secondary, #94a3b8);
+  margin-bottom: 32px;
+  font-size: 0.98rem;
+}
+
+.bookshelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.book-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 24px;
+  background: var(--bg-card, rgba(18, 22, 58, 0.65));
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.book-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--book-accent, linear-gradient(90deg, #00d4ff, #7c3aed));
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-accent, rgba(0, 212, 255, 0.4));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 24px var(--accent-glow, rgba(0, 212, 255, 0.15));
+}
+
+.book-card.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.book-card .badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--book-accent-bg, rgba(0, 212, 255, 0.15));
+  color: var(--book-accent-fg, #00d4ff);
+  margin-bottom: 14px;
+  width: fit-content;
+}
+
+.book-card.disabled .badge {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+
+.book-card .cover {
+  font-size: 2.6rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.book-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-primary, #e2e8f0);
+}
+
+.book-card .subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+.book-card .desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary, #94a3b8);
+  line-height: 1.6;
+  flex: 1;
+  margin-bottom: 18px;
+}
+
+.book-card .meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  color: var(--text-muted, #64748b);
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.book-card .meta .progress-pill {
+  font-weight: 600;
+  color: var(--book-accent-fg, #00d4ff);
+}
+
+/* ----- Footer ----- */
+.site-home-footer {
+  text-align: center;
+  padding: 28px 24px;
+  border-top: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+  color: var(--text-muted, #64748b);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .site-home-header { padding: 14px 18px; }
+  .site-home-hero { padding: 64px 18px 40px; }
+  .bookshelf { grid-template-columns: 1fr; }
+}

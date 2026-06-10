@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="《信息论基础》— 撰写中的开源中文信息论教材">
+  <meta name="theme-color" content="#0a0e27">
+  <title>《信息论基础》 | kyokagong 书库</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body class="site-home">
+
+  <header class="site-home-header">
+    <a href="../../index.html" class="brand">
+      <span class="brand-icon">📚</span>
+      <span>kyokagong 书库</span>
+    </a>
+    <nav class="header-links" aria-label="站点导航">
+      <a href="../quantum-computing/index.html">量子计算</a>
+      <a href="../ml-intro/index.html">机器学习</a>
+      <a href="../information-theory/index.html" style="color: var(--book-accent-fg, #10b981);">信息论</a>
+    </nav>
+  </header>
+
+  <section class="site-home-hero">
+    <div class="site-home-hero-content">
+      <h1 style="background: linear-gradient(135deg, #10b981 0%, #00d4ff 100%); -webkit-background-clip: text; background-clip: text; color: transparent;">
+        信息论基础
+      </h1>
+      <p class="tagline">Elements of Information Theory</p>
+      <p class="sub">📡 撰写中 · 预计 10 章</p>
+    </div>
+  </section>
+
+  <section class="bookshelf-section">
+    <h2>📑 目录预告</h2>
+    <p class="lead">本书尚在规划阶段。本书以香农 1948 年开创性论文为起点，构建信息论的形式化基础。</p>
+
+    <div class="bookshelf">
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第一部分 · 熵</span>
+        <h3>1. 熵与信息测度</h3>
+        <p class="desc">香农熵的定义、性质，Jensen 不等式与最大熵原理。</p>
+        <div class="meta"><span>第 1 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第一部分 · 熵</span>
+        <h3>2. 联合熵与条件熵</h3>
+        <p class="desc">链式法则、互信息、信息图（I-Measure）的可视化技巧。</p>
+        <div class="meta"><span>第 2 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第二部分 · 信源编码</span>
+        <h3>3. 无失真信源编码</h3>
+        <p class="desc">前缀码、Kraft 不等式、Huffman 编码与 Shannon 第一定理。</p>
+        <div class="meta"><span>第 3 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第二部分 · 信源编码</span>
+        <h3>4. 率失真理论</h3>
+        <p class="desc">失真测度、率失真函数 R(D) 与 Shannon 第三定理。</p>
+        <div class="meta"><span>第 4 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第三部分 · 信道</span>
+        <h3>5. 信道容量</h3>
+        <p class="desc">离散无记忆信道、BCMAC、Gaussian 信道。</p>
+        <div class="meta"><span>第 5 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第三部分 · 信道</span>
+        <h3>6. 信道编码定理</h3>
+        <p class="desc">Shannon 第二定理、随机编码、LDPC 与 Polar 码简介。</p>
+        <div class="meta"><span>第 6 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第四部分 · 拓展</span>
+        <h3>7. Kolmogorov 复杂度</h3>
+        <p class="desc">算法信息论、可计算性与 Occam 剃刀的数学化。</p>
+        <div class="meta"><span>第 7 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+      <div class="book-card" style="--book-accent: linear-gradient(90deg, #10b981, #00d4ff); --book-accent-bg: rgba(16, 185, 129, 0.15); --book-accent-fg: #10b981;">
+        <span class="badge">第四部分 · 拓展</span>
+        <h3>8. 信息论与统计推断</h3>
+        <p class="desc">最大似然估计、贝叶斯推断与 Fisher 信息的关系。</p>
+        <div class="meta"><span>第 8 章</span><span class="progress-pill">未开始</span></div>
+      </div>
+
+    </div>
+
+    <p class="lead" style="margin-top: 32px; font-size: 0.9rem; text-align: center;">
+      🚧 本书正在筹备中 · 与《量子计算》有大量预备知识互补
+    </p>
+  </section>
+
+  <footer class="site-home-footer">
+    <p>© 2026 kyokagong 书库 · 撰写中</p>
+  </footer>
+
+  <script src="../../assets/js/site.js"></script>
+</body>
+</html>
