@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第2章：量子态与狄拉克符号 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第2章：量子态与狄拉克符号 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="../../assets/css/book.css">
+  <link rel="stylesheet" href="../../assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第一部分 · 量子力学基础</span>
+        <span class="chapter-day-tag">Day 3 · 2026-06-10</span>
+      </div>
+      <h1 class="chapter-title">第 2 章 量子态与狄拉克符号</h1>
+      <p class="chapter-subtitle">从波函数到态矢量 — 一把打开量子计算大门的钥匙</p>
+      <div class="chapter-stats">
+        <span class="stat-item">📐 ~7000 字</span>
+        <span class="stat-item">🧮 23 个公式</span>
+        <span class="stat-item">📚 11 节</span>
+        <span class="stat-item">⏱ 约 35 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <!-- 主内容区 -->
+    <main class="chapter-main">
+      <article class="chapter-content">
+
+        <!-- ===== 2.0 ===== -->
+        <section>
+          <h2 id="section-0">2.0 引言</h2>
+          <p>第 1 章我们沿着 1900 年普朗克到 1982 年费曼的历史脉络,梳理了量子力学从"修补经典物理"到"重新定义实在"的演进。但历史只是故事——要把量子力学用在工程上(尤其是造一台量子计算机),我们必须掌握<strong>一套精确、可计算、形式上自洽的数学语言</strong>。</p>
+          <p>这套语言就是本章的主角:<strong>狄拉克符号(Dirac notation)</strong>,也叫 <strong>bra-ket 符号</strong>。它是物理学家保罗·狄拉克在 1939 年的《量子力学原理》里系统引入的,目的是把希尔伯特空间里那些"又像矩阵又像函数"的对象,用一个统一、好读、可线性操作的记号表示。</p>
+          <div class="key-concepts">
+            <h4>🎯 学完本章,你将掌握</h4>
+            <ul>
+              <li>量子态如何抽象为希尔伯特空间中的矢量</li>
+              <li>右矢 $|\\psi\\rangle$ 与左矢 $\\langle\\psi|$ 的对偶关系</li>
+              <li>内积、外积、张量积三件套</li>
+              <li>算符与可观测量的对应</li>
+              <li>密度矩阵如何描述"我们并不确知"的混合态</li>
+            </ul>
+          </div>
+          <p>这些是后面所有量子算法(从 Deutsch-Jozsa 到 Shor)的语法基础。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.1 ===== -->
+        <section>
+          <h2 id="section-1">2.1 量子态的数学抽象:从波函数到态矢量</h2>
+
+          <h3>2.1.1 薛定谔的波函数</h3>
+          <p>回顾第 1 章薛定谔 1926 年给出的方程:</p>
+          $$i\hbar \frac{\partial}{\partial t}|\psi(t)\rangle = \hat{H}|\psi(t)\rangle$$
+          <p>我们这里直接写成 $|\\psi(t)\\rangle$,而不是常见的 $\\psi(x,t)$。<strong>两种写法等价</strong>—— $|\\psi(t)\\rangle$ 是抽象的"态矢量",而 $\\psi(x,t) = \\langle x|\\psi(t)\\rangle$ 是它在"位置本征基"上的展开系数。两者关系是:</p>
+          $$|\psi(t)\rangle = \int \psi(x,t)\,|x\rangle\,dx$$
+          <p>这就是本章反复会用到的核心直觉:<strong>量子态是一个矢量,波函数是它在某组基下的坐标</strong>。</p>
+
+          <h3>2.1.2 态空间 = 希尔伯特空间</h3>
+          <p>量子态的集合构成一个 <strong>复数域上的希尔伯特空间 $\\mathcal{H}$</strong>。我们这一节只需要它的三条关键性质:</p>
+          <ol>
+            <li><strong>线性</strong>: $\\alpha|a\\rangle + \\beta|b\\rangle$ 仍是合法态($\\alpha,\\beta\\in\\mathbb{C}$)</li>
+            <li><strong>可加内积</strong>: $\\langle a|b\\rangle$ 是一个复数,且 $\\langle b|a\\rangle = \\langle a|b\\rangle^*$</li>
+            <li><strong>完备性</strong>:任何态都可以用一组基矢量的线性组合来表示(展开)</li>
+          </ol>
+          <p>最常见的希尔伯特空间是 $\\mathbb{C}^n$(n 维复向量空间),对应一个 <strong>n 能级系统</strong>。一个二能级系统(即 qubit)的态空间就是 $\\mathbb{C}^2$,以后第 6 章我们会专门讲它。</p>
+
+          <h3>2.1.3 抽象的代价:符号必须严谨</h3>
+          <p>把量子态抽象为"希尔伯特空间中的矢量",看起来数学化过度,但它带来的好处远大于代价:</p>
+          <ul>
+            <li><strong>不依赖具体表象</strong>:同一个态 $|\\psi\\rangle$,可以在位置表象、动量表象、自旋表象下展开,而不需要修改方程</li>
+            <li><strong>算符 = 矩阵</strong>:可观测量对应希尔伯特空间上的线性算符,本质就是矩阵</li>
+            <li><strong>合成系统 = 张量积</strong>:两粒子系统是 $\\mathcal{H}_A \\otimes \\mathcal{H}_B$,自然表示纠缠</li>
+          </ul>
+          <p>接下来逐条展开。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.2 ===== -->
+        <section>
+          <h2 id="section-2">2.2 右矢与左矢:ket 和 bra</h2>
+
+          <h3>2.2.1 ket:右矢 $|\\psi\\rangle$</h3>
+          <p>$|\\psi\\rangle$ 读作 "ket psi",代表希尔伯特空间 $\\mathcal{H}$ 中的一个矢量。它是"列向量"的推广:</p>
+          $$|\psi\rangle = \begin{pmatrix}\psi_1 \\ \psi_2 \\ \vdots \\ \psi_n \end{pmatrix},\quad \psi_i \in \mathbb{C}$$
+          <p>ket 的运算是线性的:</p>
+          $$\alpha|\psi\rangle + \beta|\phi\rangle = \begin{pmatrix}\alpha\psi_1 + \beta\phi_1 \\ \alpha\psi_2 + \beta\phi_2 \\ \vdots \end{pmatrix}$$
+          <p>物理上 ket 表达<strong>态</strong>;它不依赖于你选哪一组基来"看"它。</p>
+
+          <h3>2.2.2 bra:左矢 $\\langle\\psi|$</h3>
+          <p>$\\langle\\psi|$ 读作 "bra psi",是 ket 的<strong>对偶</strong>——技术上说是 $\\mathcal{H}$ 上的连续线性泛函,即把 $\\mathcal{H}$ 映射到 $\\mathbb{C}$ 的线性映射。<strong>它是一个行向量</strong>:</p>
+          $$\langle\psi| = (\psi_1^*,\ \psi_2^*,\ \dots,\ \psi_n^*)$$
+          <p>注意复共轭:ket 是 $\\psi_i$,bra 是 $\\psi_i^*$。这保证下面要讲的内积是 $\\mathbb{C}$ 域的。</p>
+
+          <h3>2.2.3 为什么叫 bra-ket</h3>
+          <p>狄拉克把这个对偶的组合 $\\langle\\phi|\\psi\\rangle$ 读作 "bra-ket"(bracket,括号)。整个物理学的内积记号因此被"切开"成了两半:</p>
+          <ul>
+            <li><strong>左半</strong> = bra</li>
+            <li><strong>右半</strong> = ket</li>
+            <li><strong>合起来</strong> = bra(c)ket = 内积</li>
+          </ul>
+          <p>这种"切括号"的写法看似花哨,真正的好处是<strong>它允许我们把内积之外的运算也写出来</strong>——比如外积 $|\\psi\\rangle\\langle\\phi|$、算符 $\\hat{A} = \\sum_i |i\\rangle\\langle i|$,在 bra-ket 记号下都成了自然书写。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.3 ===== -->
+        <section>
+          <h2 id="section-3">2.3 内积</h2>
+
+          <h3>2.3.1 定义</h3>
+          <p>两个态 $|\\psi\\rangle$ 和 $|\\phi\\rangle$ 的内积是:</p>
+          $$\langle\phi|\psi\rangle = \sum_i \phi_i^* \psi_i \quad (\text{离散基})$$
+          $$\langle\phi|\psi\rangle = \int \phi^*(x)\psi(x)\,dx \quad (\text{连续基})$$
+          <p>它有三条最重要的性质:</p>
+          <ol>
+            <li><strong>共轭对称性</strong>: $\\langle\\phi|\\psi\\rangle = \\langle\\psi|\\phi\\rangle^*$</li>
+            <li><strong>第一变元反线性</strong>: $\\langle\\phi|\\alpha\\psi_1 + \\beta\\psi_2\\rangle = \\alpha^*\\langle\\phi|\\psi_1\\rangle + \\beta^*\\langle\\phi|\\psi_2\\rangle$</li>
+            <li><strong>第二变元线性</strong>: $\\langle\\alpha\\phi_1 + \\beta\\phi_2|\\psi\\rangle = \\alpha\\langle\\phi_1|\\psi\\rangle + \\beta\\langle\\phi_2|\\psi\\rangle$</li>
+          </ol>
+          <p>第 2、3 条是狄拉克符号最微妙的点:<strong>bra 是反线性的,ket 是线性的</strong>。这跟我们做微积分时"左边的量先共轭再线性"一致。开始学时容易记反,务必当心。</p>
+
+          <h3>2.3.2 范数与归一化</h3>
+          <p>态 $|\\psi\\rangle$ 的范数(norm)是:</p>
+          $$\||\psi\rangle\| = \sqrt{\langle\psi|\psi\rangle}$$
+          <p>注意 $\\langle\\psi|\\psi\\rangle$ 一定是非负实数(从共轭对称性可以推出),所以可以开根号。</p>
+          <p>物理上的量子态<strong>总是</strong>取范数为 1——这叫<strong>归一化</strong>:</p>
+          $$\langle\psi|\psi\rangle = 1$$
+          <p>这背后是玻恩概率诠释: $|\\psi_i|^2$ 是在测量中得到第 $i$ 个本征值的概率,所有概率加起来必须等于 1,于是:</p>
+          $$\sum_i |\psi_i|^2 = \sum_i \psi_i^*\psi_i = \langle\psi|\psi\rangle = 1$$
+
+          <h3>2.3.3 正交性</h3>
+          <p>两个态 $|\\psi\\rangle$ 和 $|\\phi\\rangle$ 正交当且仅当:</p>
+          $$\langle\phi|\psi\rangle = 0$$
+          <p>正交是量子计算里非常常用的概念——一组<strong>两两正交 + 各自归一</strong>的矢量叫<strong>正交归一基</strong>(orthonormal basis),记作 $\\{|i\\rangle\\}$。以后所有的"基底展开""量子傅里叶变换"都建立在正交归一基上。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.4 ===== -->
+        <section>
+          <h2 id="section-4">2.4 外积</h2>
+
+          <h3>2.4.1 定义</h3>
+          <p>ket 乘 bra: $|\\psi\\rangle\\langle\\phi|$ 是一个<strong>算符</strong>(矩阵),它作用在任意态 $|\\chi\\rangle$ 上:</p>
+          $$(|\psi\rangle\langle\phi|)|\chi\rangle = |\psi\rangle(\langle\phi|\chi\rangle) = \langle\phi|\chi\rangle\cdot|\psi\rangle$$
+          <p>中间 $\\langle\\phi|\\chi\\rangle$ 是一个复数,所以整个作用的结果是<strong>把 $|\\chi\\rangle$ 投影到 $|\\psi\\rangle$ 方向上的标量倍</strong>。</p>
+
+          <h3>2.4.2 投影算符</h3>
+          <p>特别地,当 $|\\psi\\rangle$ 是归一态时:</p>
+          $$P_\psi = |\psi\rangle\langle\psi|$$
+          <p>是一个<strong>投影算符</strong>——它把任意态投影到 $|\\psi\\rangle$ 上:</p>
+          $$P_\psi|\chi\rangle = \langle\psi|\chi\rangle |\psi\rangle$$
+          <p>验证它是投影的: $P_\\psi^2 = |\\psi\\rangle\\langle\\psi|\\psi\\rangle\\langle\\psi| = |\\psi\\rangle\\langle\\psi| = P_\\psi$(用了归一性 $\\langle\\psi|\\psi\\rangle=1$)。</p>
+
+          <h3>2.4.3 完备性关系</h3>
+          <p>最常用也最重要的恒等式之一——<strong>完备性关系</strong>:</p>
+          $$\sum_i |i\rangle\langle i| = \hat{I}$$
+          <p>其中 $\\{|i\\rangle\\}$ 是 $\\mathcal{H}$ 的一组正交归一基, $\\hat{I}$ 是单位算符。</p>
+          <p>为什么叫"完备"?把任意态插进这个恒等式:</p>
+          $$|\psi\rangle = \hat{I}|\psi\rangle = \sum_i |i\rangle\langle i|\psi\rangle = \sum_i \psi_i |i\rangle$$
+          <p>其中 $\\psi_i = \\langle i|\\psi\\rangle$ 是展开系数。这正是"任何态都能用基展开"的正式写法。</p>
+          <p>完备性关系是后面推导量子门、量子线路、Shor 算法时<strong>几乎每一步都要用</strong>的工具。读者请把它记在脑子里。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.5 ===== -->
+        <section>
+          <h2 id="section-5">2.5 张量积</h2>
+
+          <h3>2.5.1 复合系统的态</h3>
+          <p>物理上,当两个量子系统 $A$ 和 $B$ 组合时,合成系统的态空间是各自态空间的<strong>张量积</strong>:</p>
+          $$\mathcal{H}_{AB} = \mathcal{H}_A \otimes \mathcal{H}_B$$
+          <p>如果 $A$ 的态是 $|\\psi\\rangle_A$, $B$ 的态是 $|\\phi\\rangle_B$,合成态写作:</p>
+          $$|\psi\rangle_A \otimes |\phi\rangle_B$$
+
+          <h3>2.5.2 矩阵表示</h3>
+          <p>在选定基下,张量积的矩阵表示是<strong>克罗内克积(Kronecker product)</strong>:</p>
+          $$A \otimes B = \begin{pmatrix}a_{11}B & a_{12}B \\ a_{21}B & a_{22}B \end{pmatrix}$$
+          <p>如果 $A$ 是 $m\\times m$ 矩阵, $B$ 是 $n\\times n$ 矩阵, $A\\otimes B$ 是 $mn\\times mn$ 矩阵。</p>
+
+          <h3>2.5.3 算符的张量积</h3>
+          <p>两个算符 $\\hat{A}$(作用在 $A$ 上)和 $\\hat{B}$(作用在 $B$ 上)可以自然地提升到合成系统上:</p>
+          $$(\hat{A}\otimes\hat{B})(|\psi\rangle_A \otimes |\phi\rangle_B) = (\hat{A}|\psi\rangle_A) \otimes (\hat{B}|\phi\rangle_B)$$
+
+          <h3>2.5.4 可分态与纠缠态</h3>
+          <p>合成态<strong>不一定</strong>能写成两个子系统态的张量积。能写出来的叫<strong>可分态(separable state)</strong>:</p>
+          $$|\psi\rangle_{AB} = |\psi\rangle_A \otimes |\phi\rangle_B$$
+          <p>写不出来的——即不能用任何方式拆成两个子系统态的乘积——叫<strong>纠缠态(entangled state)</strong>。最著名的贝尔态就是:</p>
+          $$|\Phi^+\rangle = \frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)$$
+          <p>这是两个 qubit 的最大纠缠态。</p>
+          <p>纠缠是量子信息处理的<strong>核心资源</strong>——量子隐形传态、超密编码、Shor 算法,本质上都在利用纠缠。我们会在第 4 章详细展开。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.6 ===== -->
+        <section>
+          <h2 id="section-6">2.6 算符与可观测量</h2>
+
+          <h3>2.6.1 算符作为线性映射</h3>
+          <p>量子力学里,一个<strong>可观测量(observable)</strong>对应一个<strong>厄米特算符(hermitian operator)</strong> $\\hat{A}$,满足:</p>
+          $$\hat{A}^\dagger = \hat{A}$$
+          <p>其中 $\\hat{A}^\\dagger$ 是 $\\hat{A}$ 的<strong>伴随(adjoint)</strong>:矩阵的复共轭转置。ket 上的伴随是 bra: $\\hat{A}|\\psi\\rangle$ 的对偶是 $\\langle\\psi|\\hat{A}^\\dagger$。</p>
+
+          <h3>2.6.2 厄米特 = 实数本征值</h3>
+          <p>厄米特算符的本征值一定<strong>是实数</strong>。验证:设 $\\hat{A}|a\\rangle = a|a\\rangle$,则</p>
+          $$a\langle a|a\rangle = \langle a|\hat{A}|a\rangle = \langle a|\hat{A}^\dagger|a\rangle = \langle a|\hat{A}|a\rangle^* = a^*\langle a|a\rangle$$
+          <p>所以 $a = a^*$。这与"可观测量测量结果必须是实数"的物理要求一致。</p>
+
+          <h3>2.6.3 例:泡利矩阵</h3>
+          <p>最常用的厄米特算符是 <strong>2×2 泡利矩阵</strong>,它们就是 qubit 的自旋算符:</p>
+          $$\sigma_x = \begin{pmatrix}0 & 1 \\ 1 & 0\end{pmatrix},\quad \sigma_y = \begin{pmatrix}0 & -i \\ i & 0\end{pmatrix},\quad \sigma_z = \begin{pmatrix}1 & 0 \\ 0 & -1\end{pmatrix}$$
+          <p>加上单位矩阵 $\\sigma_0 = I$,它们一起构成 2 维希尔伯特空间上所有 2×2 厄米特矩阵的基——任何一个 qubit 的可观测量都可以写成 $\\hat{A} = a_0 I + a_x\\sigma_x + a_y\\sigma_y + a_z\\sigma_z$ 的形式。</p>
+
+          <h3>2.6.4 算符的函数:从矩阵到对易</h3>
+          <p>在量子力学里,我们经常需要对算符<strong>取函数</strong>——比如哈密顿量出现在 $e^{-i\\hat{H}t/\\hbar}$ 里。算符函数的定义是:<strong>先做谱分解,再把函数作用到本征值上</strong>(见下一节)。这种"先分解再组合"的逻辑贯穿整个量子计算。</p>
+
+          <h3>2.6.5 对易子与海森堡方程</h3>
+          <p>两个算符 $\\hat{A}$ 和 $\\hat{B}$ 的<strong>对易子</strong>是:</p>
+          $$[\hat{A},\hat{B}] = \hat{A}\hat{B} - \hat{B}\hat{A}$$
+          <p>如果 $[\\hat{A},\\hat{B}]=0$,我们说 $\\hat{A}$ 和 $\\hat{B}$ <strong>对易</strong>;否则不对易。<strong>不对易的可观测量不能同时确定</strong>——这正是海森堡不确定性原理的算符版本(第 5 章我们会讲)。</p>
+          <p>算符随时间的演化满足<strong>海森堡方程</strong>:</p>
+          $$i\hbar \frac{d\hat{A}}{dt} = [\hat{A}, \hat{H}] + i\hbar\frac{\partial \hat{A}}{\partial t}\Big|_{\text{显式}}$$
+          <p>当 $\\hat{A}$ 不显含时间,简化为 $i\\hbar \\dot{\\hat{A}} = [\\hat{A}, \\hat{H}]$。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.7 ===== -->
+        <section>
+          <h2 id="section-7">2.7 本征值、本征矢、谱分解</h2>
+
+          <h3>2.7.1 本征方程</h3>
+          <p>算符 $\\hat{A}$ 的本征矢 $|a\\rangle$ 和本征值 $a$ 满足:</p>
+          $$\hat{A}|a\rangle = a|a\rangle$$
+          <p>物理上,本征值 $a$ 是<strong>测量可观测量 $\\hat{A}$ 时的可能结果</strong>,本征矢 $|a\\rangle$ 是<strong>测量后系统塌缩到的态</strong>。</p>
+
+          <h3>2.7.2 谱分解</h3>
+          <p>如果 $\\hat{A}$ 有完备的本征矢集合 $\\{|a_i\\rangle\\}$,对应的本征值 $\\{a_i\\}$,那么 $\\hat{A}$ 可以写成:</p>
+          $$\hat{A} = \sum_i a_i |a_i\rangle\langle a_i|$$
+          <p>这就是<strong>谱分解(spectral decomposition)</strong>——任何厄米特算符都可以"对角化"成这种形式。</p>
+          <p>验证: $\\hat{A}|a_j\\rangle = \\sum_i a_i |a_i\\rangle\\langle a_i|a_j\\rangle = \\sum_i a_i |a_i\\rangle \\delta_{ij} = a_j|a_j\\rangle$。</p>
+
+          <h3>2.7.3 函数 f(Â)</h3>
+          <p>利用谱分解,可以定义算符的任意函数:</p>
+          $$f(\hat{A}) = \sum_i f(a_i) |a_i\rangle\langle a_i|$$
+          <p>比如:</p>
+          <ul>
+            <li>$e^{\\hat{A}} = \\sum_i e^{a_i}|a_i\\rangle\\langle a_i|$</li>
+            <li>$\\sqrt{\\hat{A}} = \\sum_i \\sqrt{a_i}|a_i\\rangle\\langle a_i|$ (在 $a_i \\ge 0$ 时)</li>
+            <li>$\\hat{A}^{-1} = \\sum_i \\frac{1}{a_i}|a_i\\rangle\\langle a_i|$ (在 $a_i \\ne 0$ 时)</li>
+          </ul>
+          <p>这一招是后面量子相位估计、Shor 算法里 $e^{i\\hat{H}t}$ 形式出现的关键技术。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.8 ===== -->
+        <section>
+          <h2 id="section-8">2.8 投影测量与玻恩规则</h2>
+
+          <h3>2.8.1 投影测量</h3>
+          <p>一组<strong>正交归一基</strong> $\\{|m_i\\rangle\\}$ 给出一个<strong>投影测量(projective measurement)</strong>。对态 $|\\psi\\rangle$ 进行该测量:</p>
+          <ul>
+            <li><strong>结果</strong>: 出现指标 $i$ 的概率为 $p_i = |\\langle m_i|\\psi\\rangle|^2 = \\langle\\psi| m_i\\rangle\\langle m_i|\\psi\\rangle$</li>
+            <li><strong>塌缩</strong>: 测量后系统塌缩到 $\\frac{|m_i\\rangle}{\\sqrt{p_i}}$(因为要重新归一化)</li>
+          </ul>
+          <p>这就是<strong>玻恩概率规则</strong>的正式形式: <strong>测量结果是随机的,概率由内积模平方给出</strong>。</p>
+
+          <h3>2.8.2 期望值</h3>
+          <p>可观测量 $\\hat{A}$ 的期望值是:</p>
+          $$\langle \hat{A} \rangle_\psi = \langle\psi|\hat{A}|\psi\rangle$$
+          <p>把谱分解 $\\hat{A} = \\sum_i a_i|a_i\\rangle\\langle a_i|$ 代入:</p>
+          $$\langle \hat{A} \rangle_\psi = \sum_i a_i |\langle a_i|\psi\rangle|^2 = \sum_i a_i p_i$$
+          <p>正是"各本征值按其测量概率加权平均"。</p>
+
+          <h3>2.8.3 投影测量算符的"塌缩"是不是必须的?</h3>
+          <p>物理上,投影测量是<strong>破坏性的</strong>——一旦测得 $i$,态就从 $|\\psi\\rangle$ 塌缩到 $|m_i\\rangle$,<strong>原来的相位信息彻底丢失</strong>。这是量子计算里反复要规避的灾难(为什么我们要设计 Grover、Shor 这种"相干演化 + 末态才测量"的算法),也是第 5 章测量问题、量子芝诺效应等开放问题的入口。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.9 ===== -->
+        <section>
+          <h2 id="section-9">2.9 密度矩阵与混合态</h2>
+
+          <h3>2.9.1 为什么需要密度矩阵?</h3>
+          <p>到目前为止,我们假设"我们确知系统处于 $|\\psi\\rangle$"。但<strong>实际中常常不是这样</strong>——比如:</p>
+          <ul>
+            <li>系统是从大量样本里<strong>随机</strong>挑的,我们只知"70% 在 $|0\\rangle$,30% 在 $|1\\rangle$"</li>
+            <li>系统是更大的、我们无法访问的子系统(纠缠的副产品)</li>
+            <li>测量后我们只知道统计结果,不知道具体某次测量对应的态</li>
+          </ul>
+          <p><strong>纯态(pure state)</strong>用 $|\\psi\\rangle$ 描述就够;<strong>混合态(mixed state)</strong> 必须用<strong>密度矩阵</strong> $\\hat{\\rho}$ 描述。</p>
+
+          <h3>2.9.2 密度矩阵定义</h3>
+          <p>如果系统以概率 $p_i$ 处于纯态 $|\\psi_i\\rangle$,密度矩阵定义为:</p>
+          $$\hat{\rho} = \sum_i p_i |\psi_i\rangle\langle\psi_i|$$
+          <p>其中 $p_i \\ge 0$, $\\sum_i p_i = 1$。</p>
+          <p>特别地,<strong>纯态</strong>对应 $\\hat{\\rho} = |\\psi\\rangle\\langle\\psi|$——只有一项, $p_1 = 1$。</p>
+
+          <h3>2.9.3 密度矩阵的性质</h3>
+          <ol>
+            <li><strong>厄米特</strong>: $\\hat{\\rho}^\\dagger = \\hat{\\rho}$</li>
+            <li><strong>正定</strong>: 对任何 $|\\phi\\rangle$, $\\langle\\phi|\\hat{\\rho}|\\phi\\rangle \\ge 0$</li>
+            <li><strong>迹为 1</strong>: $\\text{tr}(\\hat{\\rho}) = 1$ (因为 $\\sum_i p_i = 1$)</li>
+            <li><strong>纯态判据</strong>: $\\text{tr}(\\hat{\\rho}^2) = 1$ (对纯态); $&lt; 1$ (对混合态)</li>
+          </ol>
+
+          <h3>2.9.4 约化密度矩阵与纠缠的"看见"</h3>
+          <p>最有洞察力的应用——<strong>部分求迹</strong>。如果合成态 $\\hat{\\rho}_{AB}$ 在 $\\mathcal{H}_A \\otimes \\mathcal{H}_B$ 上,我们可以"丢掉"B 子系统:</p>
+          $$\hat{\rho}_A = \text{tr}_B(\hat{\rho}_{AB}) = \sum_i \langle b_i|\hat{\rho}_{AB}|b_i\rangle$$
+          <p>其中 $\\{|b_i\\rangle\\}$ 是 $\\mathcal{H}_B$ 的任意一组基。</p>
+          <p><strong>惊人的事实</strong>: 即使合成态 $|\\psi\\rangle_{AB}$ 是纯态,如果它纠缠, $\\hat{\\rho}_A$ 也会是<strong>混合态</strong>( $\\text{tr}(\\hat{\\rho}_A^2) &lt; 1$)。<strong>纯态+部分求迹=混合态</strong>,这是纠缠的算符表达。</p>
+          <p>例:贝尔态 $|\\Phi^+\\rangle = \\frac{1}{\\sqrt{2}}(|00\\rangle + |11\\rangle)$。它的密度矩阵是:</p>
+          $$\hat{\rho}_{AB} = \frac{1}{2}(|00\rangle + |11\rangle)(\langle 00| + \langle 11|) = \frac{1}{2}(|00\rangle\langle 00| + |00\rangle\langle 11| + |11\rangle\langle 00| + |11\rangle\langle 11|)$$
+          <p>对 B 求迹后:</p>
+          $$\hat{\rho}_A = \text{tr}_B(\hat{\rho}_{AB}) = \frac{1}{2}|0\rangle\langle 0| + \frac{1}{2}|1\rangle\langle 1| = \frac{I}{2}$$
+          <p>这是<strong>完全混合态</strong>——你完全不知道 A 的状态,但 AB 合起来是<strong>纯态</strong>。这就是"纠缠"在密度矩阵语言下的精确含义。</p>
+
+          <h3>2.9.5 混合态的演化</h3>
+          <p>混合态的演化满足<strong>刘维尔方程</strong>:</p>
+          $$i\hbar \frac{d\hat{\rho}}{dt} = [\hat{H}, \hat{\rho}]$$
+          <p>形式上跟纯态的薛定谔方程一致,只不过换成密度矩阵。开放系统的演化(有耗散、退相干)需要 Lindblad 主方程来描述,我们会在第 16 章展开。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 2.10 ===== -->
+        <section>
+          <h2 id="section-10">2.10 章节总结与后续</h2>
+
+          <h3>本章要点</h3>
+          <div class="key-concepts">
+            <h4>📋 概念速查表</h4>
+            <table class="concept-table">
+              <thead>
+                <tr><th>概念</th><th>记号</th><th>物理意义</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>右矢</td><td>$|\\psi\\rangle$</td><td>希尔伯特空间中的态矢量</td></tr>
+                <tr><td>左矢</td><td>$\\langle\\psi|$</td><td>态的对偶,反线性</td></tr>
+                <tr><td>内积</td><td>$\\langle\\phi|\\psi\\rangle$</td><td>两态"重合度"的复数度量</td></tr>
+                <tr><td>外积</td><td>$|\\psi\\rangle\\langle\\phi|$</td><td>投影到 $|\\psi\\rangle$ 方向的算符</td></tr>
+                <tr><td>张量积</td><td>$|\\psi\\rangle_A \\otimes |\\phi\\rangle_B$</td><td>复合系统的态</td></tr>
+                <tr><td>厄米特算符</td><td>$\\hat{A}^\\dagger = \\hat{A}$</td><td>可观测量</td></tr>
+                <tr><td>谱分解</td><td>$\\hat{A} = \\sum_i a_i |a_i\\rangle\\langle a_i|$</td><td>把算符对角化</td></tr>
+                <tr><td>投影测量</td><td>$p_i = |\\langle m_i|\\psi\\rangle|^2$</td><td>玻恩规则</td></tr>
+                <tr><td>密度矩阵</td><td>$\\hat{\\rho} = \\sum_i p_i |\\psi_i\\rangle\\langle\\psi_i|$</td><td>描述纯态+混合态</td></tr>
+                <tr><td>部分求迹</td><td>$\\hat{\\rho}_A = \\text{tr}_B(\\hat{\\rho}_{AB})$</td><td>看见纠缠的工具</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>为后续章节铺的路</h3>
+          <ul>
+            <li><strong>第 3 章 叠加原理与量子干涉</strong>: $|\\psi\\rangle = \\alpha|0\\rangle + \\beta|1\\rangle$——这正是两能级系统的最简形式,本章定义的内积、外积、测量会立即派上用场</li>
+            <li><strong>第 4 章 量子纠缠与贝尔不等式</strong>: 张量积和密度矩阵会全程出镜</li>
+            <li><strong>第 5 章 量子测量与不确定性原理</strong>: $[\\hat{A}, \\hat{B}] \\ne 0$ 的后果</li>
+            <li><strong>第 6 章 量子比特</strong>: 本章所有抽象都聚焦到 $\\mathcal{H} = \\mathbb{C}^2$ 的二维特例——也就是 qubit</li>
+            <li><strong>第 8 章 量子电路的数学模型</strong>: 用本章语言写"对 qubit 的酉演化 + 测量"</li>
+          </ul>
+
+          <h3>推荐阅读</h3>
+          <ul>
+            <li>J. J. Sakurai, <em>Modern Quantum Mechanics</em>, 第 1 章——bra-ket 的标准入门</li>
+            <li>P. A. M. Dirac, <em>The Principles of Quantum Mechanics</em>——原始文献,狄拉克自己写的</li>
+            <li>Nielsen &amp; Chuang, <em>Quantum Computation and Quantum Information</em>, 第 2 章——为量子计算量身定做的线性代数</li>
+          </ul>
+        </section>
+
+        <hr>
+
+        <!-- 上一章 / 下一章 导航 -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch01.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 1 章 量子力学简史</span>
+          </a>
+          <a href="ch03.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 3 章 叠加原理与量子干涉</span>
+            <span class="pager-tag">即将推出</span>
+          </a>
+        </nav>
+
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="../../assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="../../assets/js/site.js"></script>
+</body>
+</html>
