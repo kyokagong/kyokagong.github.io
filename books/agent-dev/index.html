@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="《AGENT开发从入门到精通》官方网站——从 1966 ELIZA 到 2026 Agentic AI 元年的系统教材">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>AGENT开发从入门到精通 | 官方网站</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- highlight.js for code blocks -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    /* Book-specific accent: 洋红 → 橙（与量子/ML/信息论不冲突） */
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero h1 {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="index.html" class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>AGENT开发从入门到精通</span>
+      </a>
+
+      <!-- 站点级导航 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="index.html" class="site-nav-link active" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="index.html" class="active">首页</a></li>
+          <li><a href="#chapters">章节总览</a></li>
+          <li><a href="chapters/ch01.html">第1章</a></li>
+          <li><a href="#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">📘 系统性教材 · 2026</div>
+      <h1>
+        AGENT开发从入门到精通
+        <span class="subtitle">从 ELIZA 到多 Agent 浪潮的工程实战</span>
+      </h1>
+      <p>
+        一本紧贴 2024-2026 前沿的 AI Agent 开发中文教材。
+        从 LLM 大脑到工具调用、从 ReAct 思维链到多 Agent 协作协议（MCP/A2A），
+        涵盖 LangChain、LangGraph、AutoGen、CrewAI、OpenAI Agents SDK 等主流框架的实战用法，
+        带你从零到一构建生产级 Agent 系统。
+      </p>
+      <div class="hero-actions">
+        <a href="chapters/ch01.html" class="btn btn-primary">
+          📖 开始阅读
+        </a>
+        <a href="#chapters" class="btn btn-outline">
+          📑 查看章节目录
+        </a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-number">28</div>
+          <div class="stat-label">章节</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">6</div>
+          <div class="stat-label">部分</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">5+</div>
+          <div class="stat-label">实战项目</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">10+</div>
+          <div class="stat-label">框架对比</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scroll-indicator">
+      <div class="mouse"></div>
+      <span>向下滚动</span>
+    </div>
+  </section>
+
+  <!-- ==================== BOOK INTRO ==================== -->
+  <section class="section book-intro" id="intro">
+    <div class="container">
+      <div class="book-intro-content">
+        <div class="book-cover-placeholder reveal reveal-delay-1">
+          <div class="cover-icon">🤖</div>
+          <div class="cover-title">AGENT开发</div>
+          <div class="cover-subtitle">From ELIZA to Multi-Agent Systems</div>
+        </div>
+        <div class="book-description reveal reveal-delay-2">
+          <h3>关于本书</h3>
+          <p>
+            《AGENT开发从入门到精通》是一本系统性介绍 AI Agent 理论与工程实践的中文教材。
+            从 1966 年的 ELIZA 讲起，到 2024-2026 年的多 Agent 协议爆发，
+            覆盖 Agent 基础理论、核心技术、多 Agent 协作、实战项目、高级能力与前沿展望六大主题。
+          </p>
+          <p>
+            本书适合 AI 工程师、Agent 开发者、产品经理，以及任何对 Agent 技术感兴趣的研究者和学生。
+            我们假设读者已经了解 LLM 基础（什么是 GPT / Claude），
+            但对"Agent"还停留在"听过这词"的程度。
+          </p>
+          <div class="features">
+            <div class="feature-item">
+              <span class="icon">✦</span> 头部厂商定义对比
+            </div>
+            <div class="feature-item">
+              <span class="icon">✦</span> 6 大框架实战
+            </div>
+            <div class="feature-item">
+              <span class="icon">✦</span> 5 个完整项目
+            </div>
+            <div class="feature-item">
+              <span class="icon">✦</span> 紧贴 MCP 协议前沿
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CHAPTERS OVERVIEW ==================== -->
+  <section class="section chapters-section" id="chapters">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2>📑 章节总览</h2>
+        <div class="section-divider"></div>
+        <p class="section-subtitle">
+          全书共 28 章 6 大部分，从基础概念到工程实战到前沿展望
+        </p>
+      </div>
+
+      <div class="chapters-grid">
+        <!-- ===== 第一部分：基础与生态 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 24px 0 8px; padding-left: 8px; border-left: 3px solid var(--book-accent-fg, #c026d3);">
+          <h3 style="margin:0; color: var(--book-accent-fg, #c026d3);">📘 第一部分：Agent 基础与生态（5 章）</h3>
+        </div>
+
+        <!-- Chapter 1: 已完成 -->
+        <a href="chapters/ch01.html" class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-done">已完成</div>
+          <div class="chapter-number">第 1 章</div>
+          <h3>什么是 AI Agent</h3>
+          <p>从三家头部厂商的定义、Agent 五大核心特征，到一个最小可运行的 Agent——建立对 Agent 的正确认知。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">定义</span>
+            <span class="tag tag-purple">特征</span>
+            <span class="tag tag-green">入门</span>
+          </div>
+        </a>
+
+        <!-- Chapter 2-5: 占位 -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 2 章</div>
+          <h3>Agent 简史——从 ELIZA 到多 Agent 浪潮</h3>
+          <p>1966 ELIZA → 1990s 智能体研究 → 2023 AutoGPT → 2024-2026 多 Agent 协议爆发的全景时间线。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">历史</span>
+            <span class="tag tag-purple">人物</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 3 章</div>
+          <h3>Agent 的核心组件——LLM 大脑、记忆、工具、规划</h3>
+          <p>拆解 Agent 的四大组成模块，理解它们如何协同工作。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">架构</span>
+            <span class="tag tag-pink">组件</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 4 章</div>
+          <h3>主流 Agent 框架纵览</h3>
+          <p>LangChain、LangGraph、AutoGen、CrewAI、LlamaIndex、Agno、OpenAI Agents SDK 7 大框架横向对比。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">框架</span>
+            <span class="tag tag-green">对比</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 5 章</div>
+          <h3>Agent 范式对比</h3>
+          <p>ReAct、Reflexion、Plan-and-Execute、Tool-Use、Function Calling——5 大思维范式。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">范式</span>
+            <span class="tag tag-pink">架构</span>
+          </div>
+        </div>
+
+        <!-- ===== 第二部分：核心技术 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--book-accent-fg, #c026d3);">
+          <h3 style="margin:0; color: var(--book-accent-fg, #c026d3);">🛠 第二部分：核心技术（5 章）</h3>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 6 章</div>
+          <h3>Prompt 工程与系统提示词</h3>
+          <p>角色、约束、工具描述——把"提示词"写得像工程代码一样严谨。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">Prompt</span>
+            <span class="tag tag-purple">工程</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 7 章</div>
+          <h3>Function Calling / Tool Use</h3>
+          <p>OpenAI 协议、Anthropic 协议、JSON Schema 设计——Agent 的"手"。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">Tool</span>
+            <span class="tag tag-pink">协议</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 8 章</div>
+          <h3>记忆系统</h3>
+          <p>短期/长期/工作记忆；向量数据库与知识图谱在 Agent 中的角色。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">记忆</span>
+            <span class="tag tag-purple">存储</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 9 章</div>
+          <h3>RAG——检索增强生成在 Agent 中的角色</h3>
+          <p>从"查文档"到"Agent 决策"：RAG 作为 Agent 的事实依据。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">RAG</span>
+            <span class="tag tag-pink">检索</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 10 章</div>
+          <h3>规划与推理</h3>
+          <p>CoT、ToT、ReWOO、Plan-and-Execute、LATS——5 大规划方法。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">规划</span>
+            <span class="tag tag-purple">推理</span>
+          </div>
+        </div>
+
+        <!-- ===== 第三部分：多 Agent 系统 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--book-accent-fg, #c026d3);">
+          <h3 style="margin:0; color: var(--book-accent-fg, #c026d3);">👥 第三部分：多 Agent 系统（5 章）</h3>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 11 章</div>
+          <h3>多 Agent 协作模式</h3>
+          <p>Supervisor、Crew、Pipeline、Debate——4 种主流架构模式。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">多 Agent</span>
+            <span class="tag tag-pink">协作</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 12 章</div>
+          <h3>Agent 通信协议——MCP、A2A、ADK</h3>
+          <p>2024-2025 年三大协议：Model Context Protocol / Agent-to-Agent / Google ADK。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">协议</span>
+            <span class="tag tag-purple">MCP</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 13 章</div>
+          <h3>用 LangGraph 编排工作流</h3>
+          <p>图、状态、节点、边——LangGraph 的核心抽象。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">LangGraph</span>
+            <span class="tag tag-pink">图</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 14 章</div>
+          <h3>用 AutoGen 构对话式多 Agent</h3>
+          <p>Microsoft 出品的多 Agent 对话框架。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">AutoGen</span>
+            <span class="tag tag-green">对话</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 15 章</div>
+          <h3>用 CrewAI 组建"虚拟团队"</h3>
+          <p>角色化、任务化、流程化的多 Agent 协作。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">CrewAI</span>
+            <span class="tag tag-pink">团队</span>
+          </div>
+        </div>
+
+        <!-- ===== 第四部分：实战项目 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--book-accent-fg, #c026d3);">
+          <h3 style="margin:0; color: var(--book-accent-fg, #c026d3);">🚀 第四部分：实战项目（5 章）</h3>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 16 章</div>
+          <h3>项目 1 — 个人助理 Agent</h3>
+          <p>搜索、邮件、日历——你能想到的"数字助理"全功能实现。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">实战</span>
+            <span class="tag tag-cyan">助理</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 17 章</div>
+          <h3>项目 2 — 代码助手 Agent</h3>
+          <p>仓库理解、Code Review、自动 PR。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">代码</span>
+            <span class="tag tag-pink">工程</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 18 章</div>
+          <h3>项目 3 — 研究型 Agent</h3>
+          <p>多源调研、自动写综述——OpenAI Deep Research 原理复现。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">研究</span>
+            <span class="tag tag-green">调研</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 19 章</div>
+          <h3>项目 4 — 数据分析 Agent</h3>
+          <p>NL2SQL、报表生成、图表自动化。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">数据</span>
+            <span class="tag tag-purple">SQL</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 20 章</div>
+          <h3>项目 5 — Browser-Use Agent</h3>
+          <p>Playwright + LLM，让 Agent 真正"上网"。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">浏览器</span>
+            <span class="tag tag-cyan">自动化</span>
+          </div>
+        </div>
+
+        <!-- ===== 第五部分：高级能力 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--book-accent-fg, #c026d3);">
+          <h3 style="margin:0; color: var(--book-accent-fg, #c026d3);">🧠 第五部分：高级能力（5 章）</h3>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 21 章</div>
+          <h3>Computer Use 与 GUI Agent</h3>
+          <p>Anthropic Computer Use、OpenAI Operator——Agent 接管整个屏幕。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">Computer Use</span>
+            <span class="tag tag-pink">GUI</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 22 章</div>
+          <h3>Agent 评估与可观测性</h3>
+          <p>LangSmith、Langfuse、AgentOps、轨迹回放——把 Agent 当成生产系统来运维。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">可观测</span>
+            <span class="tag tag-green">评估</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 23 章</div>
+          <h3>Agent 安全与提示注入防御</h3>
+          <p>OWASP Agentic AI 威胁清单、Guardrails、提示注入攻防实战。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">安全</span>
+            <span class="tag tag-cyan">防御</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 24 章</div>
+          <h3>Agent 成本控制</h3>
+          <p>Token 预算、模型路由、缓存——让 Agent 跑得起。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">成本</span>
+            <span class="tag tag-purple">优化</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 25 章</div>
+          <h3>Agent 强化学习与自我改进</h3>
+          <p>RLHF、DPO、AgentRL、Self-Rewarding——让 Agent 越用越聪明。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">RL</span>
+            <span class="tag tag-pink">自进化</span>
+          </div>
+        </div>
+
+        <!-- ===== 第六部分：前沿与未来 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--book-accent-fg, #c026d3);">
+          <h3 style="margin:0; color: var(--book-accent-fg, #c026d3);">🔭 第六部分：前沿与未来（3 章）</h3>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 26 章</div>
+          <h3>Agent + MCP 生态</h3>
+          <p>工具市场、Skills 体系——Agent 的"应用商店"已经成型。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">MCP</span>
+            <span class="tag tag-purple">生态</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 27 章</div>
+          <h3>Agent 在企业落地的现状与挑战</h3>
+          <p>2026 真实案例：从初创到 500 强，Agent 落地的失败模式与成功模式。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">企业</span>
+            <span class="tag tag-cyan">落地</span>
+          </div>
+        </div>
+
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">撰写中</div>
+          <div class="chapter-number">第 28 章</div>
+          <h3>AGI 之路上 Agent 的角色</h3>
+          <p>OpenAI o1/o3、DeepSeek-R1、Agentic Reasoning——通向 AGI 的最后几公里。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">AGI</span>
+            <span class="tag tag-pink">未来</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== READING PROGRESS ==================== -->
+  <section class="section progress-section" id="progress">
+    <div class="container">
+      <div class="section-header reveal">
+        <h2>📊 阅读进度</h2>
+        <div class="section-divider"></div>
+        <p class="section-subtitle">追踪全书编写与阅读进度（每日更新）</p>
+      </div>
+
+      <div class="progress-dashboard reveal">
+        <div class="overall-progress">
+          <div class="progress-ring">
+            <div class="progress-ring-inner">
+              <span class="progress-ring-value">3.6%</span>
+              <span class="progress-ring-label">完成</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="progress-bars">
+          <div class="progress-item">
+            <span class="label">第1章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="100" style="width:100%"></div>
+            </div>
+            <span class="percentage">100%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第2章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第3章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第4章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第5章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第6-15章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+          <div class="progress-item">
+            <span class="label">第16-28章</span>
+            <div class="bar-track">
+              <div class="bar-fill" data-progress="0"></div>
+            </div>
+            <span class="percentage">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>
+          一本系统性的 AI Agent 开发中文教材。
+          从 1966 ELIZA 到 2026 多 Agent 协议爆发，
+          覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="index.html">首页</a></li>
+          <li><a href="#chapters">章节总览</a></li>
+          <li><a href="chapters/ch01.html">第1章</a></li>
+          <li><a href="#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">配套代码</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《AGENT开发从入门到精通》. 保留所有权利.</p>
+      <p>Powered by 🤖 Agentic AI &mdash; 让 LLM 真正"动手做事"</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>

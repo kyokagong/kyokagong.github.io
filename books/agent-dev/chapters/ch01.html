@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第1章：什么是 AI Agent | 《AGENT开发从入门到精通》">
+
+  <title>第1章：什么是 AI Agent | AGENT开发从入门到精通</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- highlight.js for code blocks -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+  </style>
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>AGENT开发从入门到精通</span>
+      </a>
+
+      <!-- 站点级导航 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../index.html" class="site-nav-link active" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html" class="active">第1章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER PAGE ==================== -->
+  <div class="chapter-page">
+    <div class="chapter-container">
+      <article class="chapter-content">
+
+        <header class="chapter-header">
+          <div class="chapter-breadcrumb">
+            <a href="../index.html">首页</a> / <a href="../index.html#chapters">章节总览</a> / 第1章
+          </div>
+          <h1>第1章 什么是 AI Agent</h1>
+          <div class="chapter-epigraph">
+            &ldquo;从一个会聊天的窗口，到一个会替你做事的同事——这是过去两年 AI 行业最值得讲清楚的变化。&rdquo;
+          </div>
+        </header>
+
+        <!-- ===== 1.1 ===== -->
+        <section>
+          <h2 id="section-1">1.1 引子：从 ChatGPT 到 Agent——一个被反复念叨的"下一步"</h2>
+          <p>2022 年 11 月，ChatGPT 发布。两个半月，月活用户突破 1 亿——这是人类历史上消费级软件扩张最快的一次。</p>
+          <p>但如果你仔细回想 2023 年整个 AI 行业最热闹的词，它不是 GPT-4，不是 GPTs，也不是 Sora。<strong>它是 Agent。</strong></p>
+          <p>从 2023 年 3 月的 AutoGPT，到 4 月的 BabyAGI，再到 2024 年 Anthropic 的 Computer Use、OpenAI 的 Operator、Google 的 Gemini Agent……每隔几个月，就有一家公司站出来说："我们做出了真正的 Agent。" 但每家公司对"真正"的定义又都不太一样。</p>
+          <p>2026 年的今天，Agent 这个词已经渗透到了 AI 行业的每一个角落。翻开任何一家大厂的发布会幻灯片、招聘 JD、GitHub README，你都会看到它。但与此同时，<strong>它也是被滥用得最严重的词</strong>——</p>
+          <ul>
+            <li>一个加了"工具调用"（function calling）的 ChatGPT 接口，可以被叫做 Agent。</li>
+            <li>一个预设了若干 if-else 分支的工作流，也会被叫 Agent。</li>
+            <li>一个能在浏览器里点鼠标的脚本，同样叫 Agent。</li>
+          </ul>
+          <p>所以在我们深入到第 28 章的 AGI 远景之前，我们得先把一件事讲清楚——</p>
+          <blockquote>
+            <p><strong>到底什么是 AI Agent？它和 LLM 有什么区别？它和"传统的"软件程序又有什么不一样？</strong></p>
+          </blockquote>
+          <p>这是这一章的全部任务。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.2 ===== -->
+        <section>
+          <h2 id="section-2">1.2 Agent 的工作定义——三家头部厂商的口径对比</h2>
+          <p>定义这种东西，普通人写出来叫"个人观点"，<strong>头部厂商写出来的才叫"行业事实"</strong>。下面我们看三家——Anthropic、OpenAI、Google——在 2024-2026 年陆续给出的官方定义。</p>
+
+          <h3>1.2.1 Anthropic 的定义</h3>
+          <p>Anthropic 在 2024 年 12 月发表的工程博客 <em>Building Effective Agents</em> 中这样描述：</p>
+          <blockquote>
+            <p><strong>Agents are systems where LLMs dynamically direct their own processes and tool usage, maintaining control over how they accomplish tasks.</strong></p>
+          </blockquote>
+          <p>翻译过来就是：<strong>Agent 是让 LLM 动态决定自己的处理流程和工具使用、掌控任务完成方式的一类系统。</strong></p>
+          <p>Anthropic 特别强调了一个关键区分：</p>
+          <ul>
+            <li><strong>Workflow</strong>：开发者预先定义好"先 A 再 B 再 C"的固定路径，LLM 只是流水线上的一个执行者。</li>
+            <li><strong>Agent</strong>：开发者只给目标，<strong>具体怎么走由 LLM 现场决定</strong>。</li>
+          </ul>
+          <p>举例：用户说"帮我订一家今晚 7 点、距离我公司 3 公里内、人均 200 块以内、有包间的川菜馆"。</p>
+          <ul>
+            <li>Workflow 版的做法：先调地图 API 拿 3 公里内餐厅列表 → 再调筛选 API 按价格过滤 → 再调评论 API 选评分最高的 → 再调预订 API 下单。每一步都写死。</li>
+            <li>Agent 版的做法：模型自己思考"我需要先拿到候选列表"→ 调地图 API → 拿到结果后思考"接下来要按价格筛"→ 调筛选工具 → 继续思考"包间这个信息可能在评论里"→ 调评论 API → ……<strong>整个决策链是模型自己生成的</strong>。</li>
+          </ul>
+
+          <h3>1.2.2 OpenAI 的定义</h3>
+          <p>OpenAI 在 2025 年发布的 <em>A Practical Guide to Building Agents</em> 中给出这样的描述：</p>
+          <blockquote>
+            <p><strong>Agents are AI systems that can independently work towards goals by combining language models with tools.</strong></p>
+          </blockquote>
+          <p>OpenAI 的定义比 Anthropic 短得多，但多了一个关键词：<strong>goal（目标）</strong>。OpenAI 把 Agent 拆成三个核心要素：</p>
+          <ol>
+            <li><strong>Model（模型）</strong>——驱动推理的 LLM。</li>
+            <li><strong>Tools（工具）</strong>——模型可以调用的函数、API、代码执行环境。</li>
+            <li><strong>Instructions / Guardrails（指令与护栏）</strong>——告诉模型"你是什么、你的目标是什么、什么不能做"。</li>
+          </ol>
+          <p>OpenAI 还在文档中专门指出，<strong>很多被叫 Agent 的东西其实只是 Workflow</strong>——这一点和 Anthropic 看法完全一致。</p>
+
+          <h3>1.2.3 Google / DeepMind 的定义</h3>
+          <p>Google 在 2024-2025 年陆续发布的 Agent 文档中，倾向于使用"agentic systems"（能动系统）这个稍微学究的术语，强调 Agent 是<strong>一个连续运行的能动实体</strong>，而不是一次性函数调用。</p>
+          <p>DeepMind 的论文 <em>Levels of AGI</em>（Morris et al., 2023）主要讨论"AGI 的层级（Level 0-5）"，虽不直接定义 Agent，但为"什么算自主系统"提供了一些思考；Google Cloud 在 2025 年发布的 <em>Agents Companion</em> 白皮书则更直接地把 Agent 定义为"能感知环境、做出决策、并在世界中行动的 AI 系统"（"AI systems that can perceive their environment, make decisions, and take actions in the world"）。</p>
+
+          <h3>1.2.4 一个综合定义</h3>
+          <p>把三家放在一起，我们可以拼出一个折中的工作定义：</p>
+          <blockquote>
+            <p><strong>AI Agent 是一个由 LLM 驱动的、能够根据用户目标自主决策、调用工具、维护状态、并完成多步任务的软件系统。</strong></p>
+          </blockquote>
+          <p>这个定义里有 <strong>5 个关键词</strong>：</p>
+          <ul>
+            <li><strong>LLM 驱动</strong>——大脑。</li>
+            <li><strong>自主决策</strong>——不是被脚本牵着走。</li>
+            <li><strong>调用工具</strong>——能伸手碰外部世界。</li>
+            <li><strong>维护状态</strong>——有记忆。</li>
+            <li><strong>多步任务</strong>——能连续做事。</li>
+          </ul>
+          <p>任何系统只要缺了其中之一，它要么是"带 LLM 的 workflow"，要么是"加了 prompt 的传统软件"，<strong>不是我们这本书要讲的 Agent</strong>。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.3 ===== -->
+        <section>
+          <h2 id="section-3">1.3 Agent 五大核心特征</h2>
+          <p>抽象的定义看完了，我们来拆得再细一点。一个真正"够格"的 Agent，必须具备以下 5 个核心特征。</p>
+
+          <h3>1.3.1 特征一：自主性（Autonomy）</h3>
+          <p>Agent 收到一个目标后，<strong>可以自己决定</strong>要分几步走、用什么工具、中间如果失败要不要重试。</p>
+          <p>这是和"传统软件"最大的区别。传统软件里，每一行代码、每一个分支都是程序员写死的；Agent 里，<strong>至少有一部分决策权是让给 LLM 的</strong>。</p>
+          <p>举一个更具体的例子。一个"自动订机票 Agent"，用户说"下周去上海开个会"：</p>
+          <ul>
+            <li>自主性弱的版本：按"查航班 → 比价 → 出票"固定三步走。如果航班全卖完了，它就<strong>停在那里报错</strong>。</li>
+            <li>自主性强的版本：航班卖完了，<strong>自己决定</strong>改查高铁、查附近机场、甚至问用户"要不要把会议挪一天"。</li>
+          </ul>
+          <p><strong>自主性不是"无约束"，而是"在约束下自己选路径"</strong>。你仍然可以给 Agent 加"不许自行下单超过 500 块"这种护栏，但护栏之内的部分，模型是有自由度的。</p>
+
+          <h3>1.3.2 特征二：目标驱动（Goal-driven）</h3>
+          <p>Agent 是被<strong>目标</strong>驱动的，不是被<strong>指令</strong>驱动的。</p>
+          <ul>
+            <li>指令驱动的对话（ChatGPT）："请把这段话翻译成英文。"</li>
+            <li>目标驱动的 Agent："帮我把这份季度报告做好。"</li>
+          </ul>
+          <p>用户给的是终点，路径由 Agent 自己规划。</p>
+          <p>这个区别听起来抽象，但它直接决定了<strong>用户体验的天差地别</strong>。</p>
+          <ul>
+            <li>指令式：你需要自己知道"季度报告要先列大纲、再填数据、再画图"，然后一条条告诉 ChatGPT。</li>
+            <li>目标式：你只需要说"做季度报告"——Agent 自己会<strong>追问</strong>你"Q3 的数据用哪份？需要包含哪些竞品对比？"</li>
+          </ul>
+          <p>好的 Agent 在目标驱动的同时还会<strong>主动澄清模糊目标</strong>（clarification），而不是一接到目标就闷头乱跑。这一能力在 2025 年后的 Agent 框架（OpenAI Agents SDK、LangGraph）里已经被产品化。</p>
+
+          <h3>1.3.3 特征三：工具使用（Tool Use）</h3>
+          <p>光靠 LLM 本身什么都做不了——它只会"说话"。Agent 必须能调用外部工具：</p>
+          <ul>
+            <li>搜索引擎</li>
+            <li>数据库查询</li>
+            <li>代码执行环境</li>
+            <li>文件读写</li>
+            <li>第三方 API（订餐、发邮件、订机票）</li>
+            <li>甚至<strong>真实的键盘鼠标</strong>（Computer Use）</li>
+          </ul>
+          <p>工具是 Agent 的"手"。</p>
+          <p>值得展开说的是：<strong>工具的设计本身就是 Agent 工程的核心难点</strong>。</p>
+          <p>一个反例：你给 Agent 写一个工具叫 <code>book_flight(from, to, date)</code>。模型传进来的 <code>date</code> 是 "next Friday"。<strong>你的工具崩了</strong>——因为它要 <code>YYYY-MM-DD</code>。一个好的 Agent 工具，应该把"自然语言 → 工具参数"这一步也做掉，定义成 <code>book_flight(from_city, to_city, natural_date, ...)</code>，内部用 LLM 把 "next Friday" 解析成 "2026-06-13"。</p>
+          <p>我们会在第 7 章详细讲"如何设计一个好的 Agent 工具"。</p>
+          <p>⚠️ <strong>关于"代码执行环境"特别提醒</strong>：这是列表中<strong>安全风险最高</strong>的工具——它让 Agent 拥有"自我编程"的能力，但也是攻击面最大的入口。<strong>任何允许 Agent 跑代码的系统，都必须做沙箱隔离</strong>（Docker / Firecracker / gVisor / Wasm）。2024-2025 年多起 Agent 安全事件（Vanna AI 提示注入导致数据外泄、Replit 误删生产数据库）都和这个工具有关。第 23 章会深入讲 Agent 安全。</p>
+
+          <h3>1.3.4 特征四：记忆（Memory）</h3>
+          <p>LLM 单次对话是"金鱼脑"——超过上下文窗口就忘。Agent 需要<strong>显式地管理记忆</strong>：</p>
+          <ul>
+            <li>短期记忆：当前对话上下文。</li>
+            <li>长期记忆：跨会话的用户偏好、历史任务记录。</li>
+            <li>工作记忆：任务执行到第几步、已经查过哪些数据。</li>
+          </ul>
+          <p>记忆是 Agent 的"经验"。</p>
+          <p>记忆的工程实现有 3 种主流方案：</p>
+          <ol>
+            <li><strong>全量塞进上下文窗口</strong>——最简单，超过限制就崩。</li>
+            <li><strong>滑动窗口 + 摘要压缩</strong>——保留最近 N 轮 + 早期对话的 LLM 摘要。</li>
+            <li><strong>向量数据库 + 检索</strong>——把历史消息存成 embedding，必要时按相似度检索回来。</li>
+          </ol>
+          <p>第 8 章会专门讲记忆系统。</p>
+
+          <h3>1.3.5 特征五：规划（Planning）</h3>
+          <p>一个复杂任务不能一锤子搞定。Agent 需要<strong>先规划、后执行</strong>：</p>
+          <ul>
+            <li>把"做一份市场调研报告"拆成 5 步：列大纲 → 搜数据 → 写各章节 → 校对 → 出 PDF。</li>
+            <li>任务执行中如果某一步失败，要能<strong>重新规划</strong>（replan）。</li>
+          </ul>
+          <p>规划是 Agent 的"脑子"。</p>
+          <p>规划有两种实现方式：</p>
+          <ul>
+            <li><strong>静态规划</strong>（Plan-and-Execute）：先一次性把整个计划生成好，然后按计划走。优点是<strong>可解释</strong>；缺点是<strong>遇到意外不灵活</strong>。</li>
+            <li><strong>动态规划</strong>（ReAct / Reflexion）：每执行一步就重新决定下一步。优点是<strong>灵活</strong>；缺点是<strong>容易跑偏、容易死循环</strong>。</li>
+          </ul>
+          <p>实际生产中，<strong>大多数 Agent 框架都用"先静态规划一个大框架，过程中允许局部动态调整"的混合方式</strong>。第 10 章会展开。</p>
+
+          <blockquote>
+            <p><strong>一个常见的误区</strong>是觉得"加了 function calling 就算 Agent"。但如果你把决策树全部写死、工具调用顺序由代码控制、模型没有任何自主权——那只是一个带 LLM 的传统程序。<strong>真正的 Agent 至少要在"决策链"上让出部分控制权。</strong></p>
+          </blockquote>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.4 ===== -->
+        <section>
+          <h2 id="section-4">1.4 Agent vs. LLM：本质差异</h2>
+          <p>很多人初学 Agent 时的第一个困惑：LLM 本身不就是对话的吗？Agent 和 LLM 到底是什么关系？</p>
+          <p>我们用一个表格讲清楚：</p>
+          <table>
+            <thead><tr><th>维度</th><th>LLM</th><th>Agent</th></tr></thead>
+            <tbody>
+              <tr><td>核心能力</td><td>文本生成、推理</td><td>在 LLM 之上加自主行动</td></tr>
+              <tr><td>输入</td><td>一段 prompt</td><td>一个目标</td></tr>
+              <tr><td>输出</td><td>一段文字</td><td>一连串动作 + 最终结果</td></tr>
+              <tr><td>工具使用</td><td>取决于 API 本身（GPT-4 可以做 function calling，但模型本身不会主动调）</td><td>模型自己决定何时调、调哪个</td></tr>
+              <tr><td>状态管理</td><td>上下文窗口（受 token 限制）</td><td>显式的记忆系统</td></tr>
+              <tr><td>典型交互</td><td>"写一首关于秋天的诗"</td><td>"帮我组织一次秋季团建"</td></tr>
+              <tr><td>失败处理</td><td>模型"尽力"回答</td><td>能重试、回滚、换工具</td></tr>
+            </tbody>
+          </table>
+          <p><strong>一句话总结</strong>：LLM 是大脑，Agent 是大脑 + 手 + 眼睛 + 记忆组成的一个完整的人。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.5 ===== -->
+        <section>
+          <h2 id="section-5">1.5 Agent vs. Chatbot：交互范式差异</h2>
+          <p>我们日常用的 ChatGPT、文心一言、Claude.ai……它们是 Chatbot。Chatbot 和 Agent 的区别，<strong>本质是"会话轮次"和"任务深度"的差异</strong>。</p>
+          <ul>
+            <li><strong>Chatbot</strong> 的核心单位是"一次对话"。你说一句，它答一句。整段对话结束时，任务通常就完成了。</li>
+            <li><strong>Agent</strong> 的核心单位是"一个目标"。目标完成前，Agent 可以做无数次工具调用、跨多个系统、跨很长时间。</li>
+          </ul>
+          <p><strong>经典场景对比</strong>：</p>
+          <blockquote>
+            <p>用户："帮我订明天早上 8 点去北京的高铁票，要靠窗。"</p>
+          </blockquote>
+          <ul>
+            <li>Chatbot 的回答："建议您使用 12306 购买。常见车次有 G1、G3……"</li>
+            <li>Agent 的反应：自动登录 12306 → 查询明早 8 点车次 → 筛选靠窗座位 → 询问用户"已为您找到 3 个车次，确认下单 G3（08:00 北京西，座位 12A）吗？" → 用户确认 → 自动下单 → 返回订单号。</li>
+          </ul>
+          <p>差别巨大。一个是"告诉你怎么办"，另一个是"替你办"。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.6 ===== -->
+        <section>
+          <h2 id="section-6">1.6 Agent vs. 传统软件程序</h2>
+          <p>这一节是给"程序员"写的。</p>
+          <p>传统软件程序（一个 HTTP 服务、一个 CLI 工具、一个桌面 App）它的本质是：</p>
+          <blockquote>
+            <p><strong>程序员预定义了所有可能的情况，并为每种情况写了处理代码。</strong></p>
+          </blockquote>
+          <p>传统软件的优势是<strong>确定性强、可测试、可审计</strong>；劣势是<strong>遇到没预设的情况就崩</strong>。</p>
+          <p>Agent 的本质则是：</p>
+          <blockquote>
+            <p><strong>程序员只预定义了"目标"和"可用工具"，具体路径由 LLM 现场生成。</strong></p>
+          </blockquote>
+          <p>Agent 的优势是<strong>灵活、能处理开放性问题</strong>；劣势是<strong>不可预测、需要护栏、需要可观测性</strong>。</p>
+          <p>两者不是替代关系，而是<strong>互补关系</strong>。一个生产环境的 Agent 系统几乎一定是"传统软件 + Agent 模块"组合：核心业务流程还是确定性代码（订单系统、支付系统），只有"理解用户意图、调用决策"这种开放性环节才交给 Agent。</p>
+          <p>举一个<strong>真实生产架构</strong>的例子。一个电商客服 Agent：</p>
+          <ul>
+            <li><strong>传统软件部分（确定性强）</strong>：订单查询 API、支付状态 API、退款流程、退款金额校验、欺诈检测。</li>
+            <li><strong>Agent 部分（开放性强）</strong>：理解用户抱怨、识别用户意图（是要查订单？要投诉？要退货？）、决定是否需要追问、向用户解释处理结果。</li>
+          </ul>
+          <p>这种<strong>"传统软件搭骨架、Agent 做皮肉"</strong>的混合架构，是 2026 年工业界 Agent 落地的主流形态。第 27 章我们会用更多真实案例来拆解这种架构。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.7 ===== -->
+        <section>
+          <h2 id="section-7">1.7 一个最小可运行的 Agent</h2>
+          <p>光说不练假把式。这一节我们写一个<strong>真的能跑</strong>的最简 Agent。</p>
+          <p>它不依赖任何外部 API、不调 OpenAI 或 Claude——我们手写一个"假 LLM"，演示 Agent 的核心循环：<strong>观察 → 思考 → 行动</strong>。</p>
+          <p>在写代码之前，我们先讲讲它背后的"<strong>Agent 循环</strong>"（Agent Loop）思想。<strong>几乎所有 Agent 框架（LangChain、LangGraph、AutoGen、CrewAI、Agno、OpenAI Agents SDK）底层都是这个循环的某种变体。</strong></p>
+          <p>Agent 循环的本质是 4 件事：把"我现在的状态 + 我的目标 + 我的工具"喂给 LLM；让 LLM 决定下一步做什么；执行这一步；把执行结果塞回状态，再喂给 LLM——直到 LLM 认为任务完成。看起来简单，但<strong>工程上的所有难点都藏在这 4 步里</strong>：怎么管理状态、怎么压缩历史、怎么处理工具错误、怎么防止 LLM 跑偏、怎么让循环停下来、怎么记录每一步做审计……这本书的后 27 章，会逐一拆开这些难点。</p>
+
+          <pre><code class="language-python">"""
+minimal_agent.py
+一个最小可运行的 Agent 演示
+不需要任何外部依赖，python3 直接跑
+"""
+
+import json  # noqa: F401  # 保留以示 JSON 化输出
+import re  # noqa: F401  # 实际工程中常用 re 解析 LLM 输出
+from typing import Callable
+
+
+# ============ 1. 假 LLM：用规则模拟模型思考 ============
+class FakeLLM:
+    """一个完全用规则驱动的'假 LLM'，用来演示 Agent 思考链"""
+
+    def __init__(self):
+        self.step = 0
+        self.answers = ["北京", "晴天", "今天北京晴天"]
+
+    def think(self, history: list, tools: list) -> dict:
+        """模型看到历史和可用工具，'思考'后返回 JSON"""
+        self.step += 1
+
+        if self.step == 1:
+            return {
+                "thought": "用户想知道天气，我需要先查城市对应的天气代码",
+                "action": "lookup_weather_code",
+                "action_input": {"city": "北京"}
+            }
+        elif self.step == 2:
+            return {
+                "thought": "拿到城市代码后，我需要去查实时天气",
+                "action": "query_weather",
+                "action_input": {"code": "BJ"}
+            }
+        else:
+            return {
+                "thought": "我已经拿到结果，可以直接回答用户",
+                "action": "FINISH",
+                "action_input": {"answer": self.answers[2]}
+            }
+
+
+# ============ 2. 工具集：模型可以调用的'手' ============
+TOOLS: dict[str, Callable] = {
+    "lookup_weather_code": lambda city: "BJ" if city == "北京" else "UNKNOWN",
+    "query_weather": lambda code: "晴天" if code == "BJ" else "未知",
+}
+
+
+# ============ 3. Agent 主循环 ============
+class MinimalAgent:
+    """Agent 的核心循环：观察 → 思考 → 行动 → 观察 → ... → 完成"""
+
+    def __init__(self, llm, tools, max_steps=10):
+        self.llm = llm
+        self.tools = tools
+        self.max_steps = max_steps
+        self.history = []  # 记忆：所有历史动作
+
+    def run(self, goal: str) -> str:
+        print(f"\n🎯 目标: {goal}\n")
+        self.history.append({"role": "user", "content": goal})
+
+        for step in range(1, self.max_steps + 1):
+            print(f"───── Step {step} ─────")
+
+            # 1. 思考：让 LLM 决定下一步
+            decision = self.llm.think(self.history, list(self.tools.keys()))
+            print(f"🤔 思考: {decision['thought']}")
+
+            # 2. 是否结束
+            if decision["action"] == "FINISH":
+                answer = decision["action_input"]["answer"]
+                print(f"✅ 完成: {answer}")
+                return answer
+
+            # 3. 行动：调用工具
+            action = decision["action"]
+            params = decision["action_input"]
+            print(f"🛠  行动: {action}({params})")
+
+            if action not in self.tools:
+                result = f"错误：未知工具 {action}"
+            else:
+                try:
+                    result = self.tools[action](**params)
+                except Exception as e:
+                    result = f"错误：{e}"
+
+            print(f"👀 观察: {result}")
+
+            # 4. 把这一轮记到记忆里
+            self.history.append({
+                "role": "assistant",
+                "thought": decision["thought"],
+                "action": action,
+                "action_input": params,
+                "observation": result,
+            })
+
+        raise RuntimeError("达到最大步数仍未完成目标")
+
+
+# ============ 4. 跑起来 ============
+if __name__ == "__main__":
+    llm = FakeLLM()
+    agent = MinimalAgent(llm, TOOLS)
+    final = agent.run("北京今天天气怎么样？")
+    print(f"\n📝 最终答案: {final}")
+</code></pre>
+
+          <p>跑一下你会看到这样的输出：</p>
+          <pre><code>🎯 目标: 北京今天天气怎么样？
+
+───── Step 1 ─────
+🤔 思考: 用户想知道天气，我需要先查城市对应的天气代码
+🛠  行动: lookup_weather_code({&#39;city&#39;: &#39;北京&#39;})
+👀 观察: BJ
+───── Step 2 ─────
+🤔 思考: 拿到城市代码后，我需要去查实时天气
+🛠  行动: query_weather({&#39;code&#39;: &#39;BJ&#39;})
+👀 观察: 晴天
+───── Step 3 ─────
+🤔 思考: 我已经拿到结果，可以直接回答用户
+✅ 完成: 今天北京晴天
+
+📝 最终答案: 今天北京晴天
+</code></pre>
+
+          <p><strong>核心循环就 3 步</strong>：</p>
+          <ol>
+            <li><strong>思考</strong>（LLM 决策）</li>
+            <li><strong>行动</strong>（调用工具）</li>
+            <li><strong>观察</strong>（工具结果回填到记忆）</li>
+          </ol>
+          <p>下一轮再循环，直到模型说 "FINISH"。</p>
+          <p>这个最小例子里的"假 LLM"在真实工程中换成 GPT-4 / Claude / DeepSeek 即可，<strong>其他部分完全不变</strong>。这是几乎所有 Agent 框架（LangChain、LangGraph、AutoGen、CrewAI）底层共同的模式。</p>
+
+          <h3>1.7.1 这段代码里学到的工程模式</h3>
+          <p>仔细看这段 60 行的最小 Agent，其实已经包含了所有真实 Agent 框架的几个核心工程模式：</p>
+          <ol>
+            <li><strong>JSON Schema 化的输出</strong>——LLM 每次 <code>think</code> 返回 <code>{"thought", "action", "action_input"}</code> 的结构化 JSON，而不是一段自由文本。<strong>真实工程中你应该用 <code>response_format={"type": "json_schema", ...}</code> 强制约束输出格式</strong>（OpenAI 和 Anthropic 都支持）。</li>
+            <li><strong>显式的工具注册表</strong>——<code>TOOLS: dict[str, Callable]</code>。这就是 LangChain 的 <code>@tool</code> 装饰器、OpenAI Agents SDK 的 <code>function_tool</code> 在做的事——把 Python 函数包装成 LLM 能看到的"工具描述"。</li>
+            <li><strong>轨迹记录</strong>（trace）——<code>self.history</code> 这个 list 记录了所有"思考-行动-观察"三元组。LangSmith、Langfuse 这些可观测性平台干的就是把这个 list 持久化、可视化、可回放。</li>
+            <li><strong>最大步数保护</strong>——<code>max_steps=10</code>。生产环境绝对必须有，否则 Agent 死循环能把你的 token 账单刷爆。</li>
+            <li><strong>结束条件</strong>——<code>action == "FINISH"</code>。这是一个特殊动作名，<strong>不是任何工具</strong>。所有 Agent 框架都需要一个明确的"结束信号"——OpenAI 用 <code>transfer_to_human</code>、LangGraph 用 END 节点。</li>
+          </ol>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.8 ===== -->
+        <section>
+          <h2 id="section-8">1.8 Agent 能做什么、不能做什么</h2>
+          <p>讲完了"是什么"，我们来现实一点：Agent 现在到底能干什么、不能干什么。</p>
+
+          <h3>1.8.1 Agent 擅长的场景</h3>
+          <ol>
+            <li><strong>开放性研究任务</strong>——"调研 2025 年 Agent 框架的对比"，模型自己规划搜索、阅读、整合。</li>
+            <li><strong>跨系统协调</strong>——"帮我在 Notion 里总结上周客户反馈、然后同步到 Slack #product 频道"。</li>
+            <li><strong>重复性文案/数据处理</strong>——"把这 200 份简历按候选人经验分类"。</li>
+            <li><strong>代码相关</strong>——代码生成、单元测试、Bug 修复、PR Review。</li>
+            <li><strong>个人助理</strong>——订餐、查邮件、安排日程、订机票。</li>
+            <li><strong>GUI 操作</strong>（Computer Use）——代替人点鼠标。</li>
+          </ol>
+          <p>一个有趣的统计：截至 2026 年初，<strong>GitHub 上 top 100 的 Agent 仓库，70%+ 都是"研究/调研"类</strong>——这反映了 LLM 在"理解并综合多源信息"上的强项。代码生成、自动化操作类增长最快。</p>
+
+          <h3>1.8.2 Agent 还不擅长的场景</h3>
+          <ol>
+            <li><strong>需要 100% 准确性的场景</strong>——医疗诊断、金融下单（<strong>Agent 只能做"建议"和"预审"</strong>）。</li>
+            <li><strong>超长链条推理</strong>（&gt;50 步）——容易在中间环节出错或遗忘早期状态。</li>
+            <li><strong>强实时性</strong>——多步工具调用累积延迟无法避免。</li>
+            <li><strong>复杂物理操作</strong>——抓杯子、修水管还得靠机器人。</li>
+            <li><strong>新颖创造</strong>——Agent 在"组合已知"上很强，在"创造全新范式"上和人类顶尖还有差距。</li>
+          </ol>
+
+          <h3>1.8.3 一个有用的判断框架</h3>
+          <p>接到一个任务时，问自己三个问题：</p>
+          <ol>
+            <li><strong>这个任务是否能被分解成 3-30 步的子任务？</strong> 如果不能（比如"想出一个全新的物理定律"），Agent 不适合。</li>
+            <li><strong>每一步子任务是否能用现有工具完成？</strong> 如果不能（"让 Agent 学会读心术"），Agent 不适合。</li>
+            <li><strong>每一步是否需要判断和决策？</strong> 如果是纯机械重复（"把 100 张图片缩放到 800x600"），传统脚本更省 token。</li>
+          </ol>
+          <p>三个问题答案都是"是"——这个任务<strong>就适合交给 Agent</strong>。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.9 ===== -->
+        <section>
+          <h2 id="section-9">1.9 2024-2026 Agent 爆发的三大推力</h2>
+          <p>为什么是 2024-2026 这三年 Agent 集中爆发？我们认为是<strong>三大推力</strong>同时到位。</p>
+
+          <h3>1.9.1 推力一：模型推理能力质变</h3>
+          <p>2024 年，OpenAI o1 把"思维链推理"做成了产品级能力；2025 年的 o3、DeepSeek-R1、Claude 3.7 Sonnet 进一步把"在脑子里多转几圈"变成日常能力。</p>
+          <p>之前的 GPT-4 在多步推理上会"走神"——做到第 5 步忘了第 1 步的目标。o 系列模型出现后，<strong>Agent 的"长链决策"才真正稳定</strong>。</p>
+          <p>一个具体数据：在 SWE-bench（衡量 Agent 修复真实 GitHub Issue 能力的基准）上，<strong>2023 年的 Agent 解决率不到 5%，2024 年底达到 20%+，2025 年 o3 模型上达到 70%+</strong>。这不是 Agent 框架的进步，是底层模型推理能力的跃迁。</p>
+
+          <h3>1.9.2 推力二：Function Calling 标准化</h3>
+          <p>2023 年 6 月 OpenAI 在 GPT-4 中加入 function calling；2024 年 Anthropic 在 Claude 中加入 tool use；2024 年 11 月 MCP（Model Context Protocol）发布，<strong>统一了"模型和外部工具对话"的协议</strong>。</p>
+          <p>这意味着：</p>
+          <ul>
+            <li>之前：每个 Agent 框架自己造一套工具调用协议，互相不兼容。</li>
+            <li>现在：写一个 MCP server，所有兼容 MCP 的客户端都能用。</li>
+          </ul>
+          <p>标准化让 Agent 生态在 2025-2026 年像当年 npm 一样爆发。</p>
+          <p><strong>MCP 的关键意义</strong>在于它和 2014 年的 HTTP、2017 年的 gRPC 类似——是"协议级"的标准化。一旦协议被采纳，所有工具开发者只需要写一份 MCP server，所有 Agent 客户端立刻就能用。Anthropic 把它类比为"AI 时代的 USB-C 接口"，这个比喻不夸张。第 12 章我们会深入 MCP 协议本身。</p>
+
+          <h3>1.9.3 推力三：框架与可观测性成熟</h3>
+          <p>2024-2025 年，LangChain、LangGraph、AutoGen、CrewAI、Agno、OpenAI Agents SDK 等框架相继稳定；同时 LangSmith、Langfuse、AgentOps 等可观测性平台成熟。</p>
+          <p>这意味着：</p>
+          <ul>
+            <li>之前：写一个 Agent，跑到第 3 步崩了，<strong>你不知道为什么</strong>。</li>
+            <li>现在：每一步的 prompt、token 用量、工具调用、耗时、错误<strong>全程可回放</strong>。</li>
+          </ul>
+          <p>可观测性是 Agent 从"能跑"走向"能上生产"的关键拼图。</p>
+          <p><strong>一个业内共识</strong>：2024 年 90% 的 Agent 失败案例都是因为"不知道哪里错了"。LangSmith、Langfuse 把这一步变成可回放的 trace 之后，<strong>调试时间从平均 4 小时降到 30 分钟</strong>。第 22 章会专门讲 Agent 可观测性。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 1.10 ===== -->
+        <section>
+          <h2 id="section-10">1.10 概念速查表 + 进一步阅读</h2>
+
+          <h3>1.10.1 概念速查表</h3>
+          <table>
+            <thead><tr><th>概念</th><th>一句话定义</th></tr></thead>
+            <tbody>
+              <tr><td><strong>LLM</strong></td><td>大语言模型，"会说话"的大脑</td></tr>
+              <tr><td><strong>Agent</strong></td><td>在 LLM 之上加了手（工具）、记忆、规划的完整系统</td></tr>
+              <tr><td><strong>Workflow</strong></td><td>路径被开发者写死的"假 Agent"，LLM 只是流水线工人</td></tr>
+              <tr><td><strong>Tool / Function Calling</strong></td><td>让 LLM 主动调用外部函数的能力</td></tr>
+              <tr><td><strong>ReAct</strong></td><td>Reason + Act，最经典的 Agent 思考范式</td></tr>
+              <tr><td><strong>MCP</strong></td><td>Model Context Protocol，2024 年 11 月发布的工具调用统一协议</td></tr>
+              <tr><td><strong>Memory</strong></td><td>Agent 的记忆系统（短期/长期/工作）</td></tr>
+              <tr><td><strong>Planning</strong></td><td>Agent 拆解目标、规划步骤的能力</td></tr>
+              <tr><td><strong>Computer Use</strong></td><td>Agent 直接控制键盘鼠标操作 GUI 的能力</td></tr>
+              <tr><td><strong>Multi-Agent</strong></td><td>多个 Agent 协作完成任务的系统</td></tr>
+            </tbody>
+          </table>
+
+          <h3>1.10.2 进一步阅读</h3>
+          <p>按重要度排序：</p>
+          <ol>
+            <li><strong>Anthropic — <em>Building Effective Agents</em></strong>（2024.12）—— Agent 概念的最清晰定义。<br>
+              <a href="https://www.anthropic.com/research/building-effective-agents" target="_blank" rel="noopener">https://www.anthropic.com/research/building-effective-agents</a>
+            </li>
+            <li><strong>OpenAI — <em>A Practical Guide to Building Agents</em></strong>（2025）—— OpenAI 视角的 Agent 实战指南。<br>
+              <a href="https://openai.com/research/a-practical-guide-to-building-agents" target="_blank" rel="noopener">https://openai.com/research/a-practical-guide-to-building-agents</a>
+            </li>
+            <li><strong>OpenAI — <em>Function Calling Guide</em></strong>（2023.6+ 持续更新）—— 工具调用的官方文档。</li>
+            <li><strong>Anthropic — <em>Model Context Protocol Specification</em></strong>（2024.11）—— MCP 协议规范。<br>
+              <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">https://modelcontextprotocol.io</a>
+            </li>
+            <li><strong>LangChain Blog — <em>LangGraph and the Rise of Stateful Agents</em></strong>（2024）—— 多 Agent 编排的实战。</li>
+            <li><strong>Google — <em>Agents Companion</em></strong>（2025）—— Google Cloud 的 Agent 白皮书。</li>
+            <li><strong>Lilian Weng — <em>LLM Powered Autonomous Agents</em></strong>（2023.6）—— 经典综述，被引爆款。<br>
+              <a href="https://lilianweng.github.io/posts/2023-06-23-agent/" target="_blank" rel="noopener">https://lilianweng.github.io/posts/2023-06-23-agent/</a>
+            </li>
+          </ol>
+        </section>
+
+        <hr>
+
+        <!-- ===== 本章小结 ===== -->
+        <section>
+          <h2 id="summary">本章小结</h2>
+          <ol>
+            <li><strong>定义</strong>：Agent 是 LLM + 工具 + 记忆 + 规划组成的、能自主决策的系统。Anthropic、OpenAI、Google 三家口径略有不同但核心一致。</li>
+            <li><strong>五大特征</strong>：自主性、目标驱动、工具使用、记忆、规划。</li>
+            <li><strong>与 LLM 区别</strong>：LLM 是大脑，Agent 是"大脑 + 手 + 记忆 + 规划"组成的完整人。</li>
+            <li><strong>与 Chatbot 区别</strong>：Chatbot 是"对话"，Agent 是"完成任务"。</li>
+            <li><strong>与 Workflow 区别</strong>：Workflow 路径写死，Agent 路径由 LLM 现场决定。</li>
+            <li><strong>最小可运行 Agent</strong>：核心循环是"思考 → 行动 → 观察 → 思考 → ... → 完成"。</li>
+            <li><strong>能力边界</strong>：Agent 擅长"3-30 步、可分解、需判断"的任务，不擅长需要 100% 准确或超长链条的场景。</li>
+            <li><strong>爆发原因</strong>：模型推理能力 + 工具调用协议标准化 + 可观测性成熟。</li>
+          </ol>
+          <p>下一章，我们顺着这条线索回到历史——看看"Agent"这个想法是怎么从 1966 年 ELIZA 一步步走到 2026 年的多 Agent 浪潮的。</p>
+        </section>
+
+        <hr>
+
+        <!-- ===== 思考题 ===== -->
+        <section>
+          <h2 id="exercises">思考题（动手做）</h2>
+          <ol>
+            <li>把你日常用 ChatGPT 的 3 个最常见任务列出来，对每个任务回答"它是否是 Agent"——为什么。</li>
+            <li>复制 1.7 节的 <code>minimal_agent.py</code>，把 <code>FakeLLM</code> 换成你自己写的"假决策逻辑"，让它能回答"北京和上海今天哪个更冷"——需要多少步？每步调什么工具？</li>
+            <li>找一个你最近做过的工作流（比如"订机票"），用 1.8.3 的判断框架看它是否适合 Agent 化。</li>
+          </ol>
+        </section>
+
+      </article>
+    </div>
+  </div>
+
+  <!-- 上一章/下一章 pager -->
+  <nav class="chapter-pager" style="display:flex; justify-content: space-between; padding: 32px 24px; max-width: 880px; margin: 0 auto; border-top: 1px solid rgba(255,255,255,0.1);">
+    <a class="pager-prev disabled" style="opacity:0.4; pointer-events:none; padding:12px 20px; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#888; text-decoration:none;">
+      ← 上一章（已是第一章）
+    </a>
+    <a href="ch02.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+      下一章：Agent 简史（第 2 章） →
+    </a>
+  </nav>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>
+          一本系统性的 AI Agent 开发中文教材。
+          从 1966 ELIZA 到 2026 多 Agent 协议爆发，
+          覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">配套代码</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《AGENT开发从入门到精通》. 保留所有权利.</p>
+      <p>Powered by 🤖 Agentic AI &mdash; 让 LLM 真正"动手做事"</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>

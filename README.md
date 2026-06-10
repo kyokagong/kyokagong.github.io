@@ -8,6 +8,7 @@
 
 | 书名 | 状态 | 链接 |
 |:---|:---|:---|
+| AGENT开发从入门到精通 | ✅ 已开放 | [`/books/agent-dev/`](./books/agent-dev/index.html) |
 | 量子计算 | ✅ 已开放 | [`/books/quantum-computing/`](./books/quantum-computing/index.html) |
 | 机器学习导论 | 📝 规划中 | [`/books/ml-intro/`](./books/ml-intro/index.html) |
 | 信息论基础 | 📝 规划中 | [`/books/information-theory/`](./books/information-theory/index.html) |
@@ -29,6 +30,10 @@
 │       ├── site.js               ← 站点级 JS（导航高亮、主题）
 │       └── book.js               ← 书内 JS（粒子背景、进度条等）
 └── books/                        ← 所有书籍的子站点
+    ├── agent-dev/                ← 《AGENT开发从入门到精通》
+    │   ├── index.html
+    │   └── chapters/
+    │       └── ch01.html
     ├── quantum-computing/        ← 《量子计算》
     │   ├── index.html
     │   └── chapters/
