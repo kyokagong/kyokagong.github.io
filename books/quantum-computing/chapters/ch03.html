@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第3章：叠加原理与量子干涉 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第3章：叠加原理与量子干涉 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第一部分 · 量子力学基础</span>
+        <span class="chapter-day-tag">Day 4 · 2026-06-11</span>
+      </div>
+      <h1 class="chapter-title">第 3 章 叠加原理与量子干涉</h1>
+      <p class="chapter-subtitle">双缝实验、单光子自干涉与 Grover 振幅放大的物理直觉</p>
+      <div class="chapter-stats">
+        <span class="stat-item">📐 ~6500 字</span>
+        <span class="stat-item">🧮 13 个公式</span>
+        <span class="stat-item">📚 9 节</span>
+        <span class="stat-item">⏱ 约 35 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <!-- 主内容区 -->
+    <main class="chapter-main">
+      <article class="chapter-content">
+
+        <!-- ===== 3.0 ===== -->
+        <section>
+          <h2 id="section-0">3.0 引言</h2>
+<p>第 2 章我们花了一整章的篇幅,把量子态抽象成希尔伯特空间中的矢量,并配齐了 bra-ket、内积、外积、张量积、谱分解、密度矩阵这一整套"语法"。<strong>但光有语法没有故事</strong>——读者或许已经接受了"$\lvert\psi\rangle = \alpha\lvert 0\rangle + \beta\lvert 1\rangle$"这种写法,心里仍然嘀咕:这个加号跟经典物理里的加法到底有什么不一样?</p>
+<p>答案就是本章要讲的两件事:<strong>叠加原理(Superposition)</strong> 和 <strong>量子干涉(Quantum Interference)</strong>。</p>
+<ul>
+  <li><strong>叠加</strong> 说的是:一个量子系统可以同时"处于多个状态的线性组合",直到测量强制它"二选一";</li>
+  <li><strong>干涉</strong> 说的是:不同"分支"的概率幅 $\alpha$、$\beta$ 不是直接相加,它们的<strong>复数相位</strong>会决定结果是增强(建设性干涉)还是相消(破坏性干涉)。</li>
+</ul>
+<p>这两件事合起来,正是量子计算威力的来源——<strong>我们用干涉把正确答案的概率推高,把错误答案的概率推低</strong>(Shor、Grover、QAOA 等算法都在用这一点)。本章我们先从物理实验讲起,再回到数学。</p>
+<p>学完本章,你将掌握:</p>
+<ul>
+  <li>叠加原理的精确数学陈述</li>
+  <li>经典概率叠加 vs 量子叠加的本质区别</li>
+  <li>双缝实验、单光子干涉的物理图像</li>
+  <li>"干涉消失"的几种方式(哪条路探测器、退相干、测量)</li>
+  <li>振幅放大(Amplitude amplification)的雏形——Grover 的物理直觉</li>
+</ul>
+<p>这些是理解第 10 章 Grover 算法、第 11 章 Shor 算法的物理基础。</p>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.1 ===== -->
+        <section>
+          <h2 id="section-1">3.1 叠加原理的精确陈述</h2>
+<h3>3.1.1 线性代数的语言</h3>
+<p>在第 2 章里我们说过,量子态是希尔伯特空间 $\mathcal{H}$ 中的归一化矢量。<strong>叠加原理</strong> 把这件事说到底:</p>
+<blockquote class="chapter-quote">💡 **定义(叠加原理)** 如果 $\lvert a\rangle$ 和 $\lvert b\rangle$ 是系统的两个可能态,那么它们的任意**复系数线性组合** $\lvert\psi\rangle = \alpha\lvert a\rangle + \beta\lvert b\rangle$ ($\alpha, \beta \in \mathbb{C}$) 也是系统的一个合法态,前提是归一化 $\lvert\alpha\rvert^2 + \lvert\beta\rvert^2 = 1$。</blockquote>
+<p>这里"合法态"的物理意义是:系统在演化过程中,或者在被测量之前,<strong>确实处于</strong> $\lvert\psi\rangle$,而不是"在 $\lvert a\rangle$ 或 $\lvert b\rangle$ 之间随机"。这是叠加跟经典概率的关键区别,我们稍后细说。</p>
+<h3>3.1.2 一个具体例子:qubit 的"一般态"</h3>
+<p>最常见的量子系统是两能级系统(qubit,详见第 6 章)。它的基矢可以取 $\lvert 0\rangle$ 和 $\lvert 1\rangle$。叠加原理告诉我们,任何态都可以写成:</p>
+$$\lvert\psi\rangle = \alpha\lvert 0\rangle + \beta\lvert 1\rangle, \quad \lvert\alpha\rvert^2 + \lvert\beta\rvert^2 = 1$$
+<p>也就是说,<strong>两个复数 $\alpha, \beta$ 描述一个 qubit</strong>——一共 4 个实参数,但归一化吃掉 1 个,再除掉一个整体相位(物理不可观测),剩下 2 个实参数。这是 Bloch 球的几何基础(第 6 章详述)。</p>
+<h3>3.1.3 叠加不是"不知道是哪个"</h3>
+<p>反复强调:叠加<strong>不是</strong>"我们不知道系统是 $\lvert 0\rangle$ 还是 $\lvert 1\rangle$"。如果是这样,经典概率就够用。<strong>叠加是系统真的同时处于两者</strong>——这一点是 1920-30 年代玻尔、海森堡、玻恩那一代人反复争论的,实验(尤其是贝尔不等式实验,第 4 章)最终判给了叠加一边。</p>
+<p>直观上:如果叠加只是"不知道",那么测量时不应该看到<strong>干涉效应</strong>——但双缝实验、单光子干涉、Mach-Zehnder 干涉仪的实验结果一致显示<strong>叠加的相位是真的物理</strong>。</p>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.2 ===== -->
+        <section>
+          <h2 id="section-2">3.2 经典概率 vs 量子叠加:掷硬币 vs 单光子偏振</h2>
+<h3>3.2.1 经典硬币:概率相加</h3>
+<p>考虑掷一枚均匀硬币,正面朝上记为 $\lvert H\rangle$,反面朝上记为 $\lvert T\rangle$。<strong>在硬币落地之前</strong>,我们不知道结果,但硬币本身<strong>客观上</strong>已经是 $\lvert H\rangle$ 或 $\lvert T\rangle$ 中的一个——这是经典物理的"实在论"假设。</p>
+<p>数学上,经典"概率混合"用分布描述:</p>
+$$P(H) = \frac{1}{2}, \quad P(T) = \frac{1}{2}$$
+<p>任何"和"的操作都是概率相加,不会出现相位抵消。</p>
+<h3>3.2.2 量子单光子:振幅相加</h3>
+<p>考虑一束单光子,通过一个 45° 的偏振分束器(它把水平偏振 $\lvert H\rangle$ 和垂直偏振 $\lvert V\rangle$ 各以 $\frac{1}{2}$ 概率反射或透射)。</p>
+<p>光子出射态是:</p>
+$$\lvert\psi\rangle = \frac{1}{\sqrt{2}}\lvert H\rangle + \frac{i}{\sqrt{2}}\lvert V\rangle$$
+<p>(注意相位 $i$——这是反射和透射的几何差异带来的,<strong>实验可观测</strong>。)</p>
+<h3>3.2.3 关键差异</h3>
+<div class="key-concepts">
+  <h4>📋 概念速查表</h4>
+  <table class="concept-table">
+    <thead><tr><th></th><th>经典硬币</th><th>量子单光子</th></tr></thead>
+    <tbody>
+      <tr><td>落地/出射前</td><td>客观为 $H$ 或 $T$</td><td>**真的**处于 $\frac{1}{\sqrt{2}}(H + iV)$</td></tr>
+      <tr><td>描述对象</td><td>概率 $P \in [0,1]$</td><td>**概率幅** $\alpha \in \mathbb{C}$</td></tr>
+      <tr><td>测量后</td><td>显示 $H$ 或 $T$</td><td>显示 $H$ 或 $V$</td></tr>
+      <tr><td>多次测量</td><td>50/50 分布</td><td>50/50 分布</td></tr>
+    </tbody>
+  </table>
+</div>
+<p><strong>两者在单次测量后看起来一样</strong>(都是 50/50),但<strong>它们的"中间状态"完全不同</strong>——经典硬币是"客观未知",量子光子是"客观叠加"。这一差异通过干涉实验可以严格区分。</p>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.3 ===== -->
+        <section>
+          <h2 id="section-3">3.3 双缝实验:量子干涉的"原型"</h2>
+<h3>3.3.1 实验装置</h3>
+<p>1909 年,杰弗里·泰勒(Geoffrey Taylor)在剑桥做了一个当时看似"无所谓"的实验:让极弱的光(实质上是一次一个光子)通过两条平行狭缝,然后在远处的感光底片上记录落点。</p>
+<p>如果光子像经典粒子,预期底片上会出现两条亮纹(对应"从缝 1 通过"和"从缝 2 通过")。<strong>但实际看到的</strong>是明暗相间的<strong>多条纹</strong>——干涉条纹。</p>
+<h3>3.3.2 干涉条纹的物理解释</h3>
+<p>设缝 1 到屏上某点 $P$ 的距离为 $r_1$,缝 2 到 $P$ 为 $r_2$。两路径的相位差是:</p>
+$$\Delta\phi = \frac{2\pi (r_1 - r_2)}{\lambda}$$
+<p>其中 $\lambda$ 是光子波长。</p>
+<p>光子态可以写成两条路径的叠加:</p>
+$$\lvert\psi_P\rangle = \frac{1}{\sqrt{2}}\left( e^{i\phi_1}\lvert \text{缝1} \rangle + e^{i\phi_2}\lvert \text{缝2} \rangle \right)$$
+<p>其中 $\phi_i = k r_i$, $k = 2\pi/\lambda$。在 $P$ 点测得光子的概率是:</p>
+$$P(P) = \lvert\langle P \rvert \psi_P\rangle\rvert^2 = \frac{1}{2}\left( 1 + \cos(\phi_1 - \phi_2) \right) = \frac{1}{2}\left( 1 + \cos\frac{2\pi(r_1 - r_2)}{\lambda} \right)$$
+<p><strong>注意</strong>:这里出现了 $\cos$ 项,而不是 $\cos^2$——<strong>这是干涉的标志</strong>。经典粒子会得到 $\frac{1}{2} + \frac{1}{2} = 1$ 之类的概率直接相加,而量子光子是<strong>复振幅先相加,再取模平方</strong>。</p>
+<h3>3.3.3 干涉的图像</h3>
+<ul>
+  <li>当 $r_1 - r_2 = n\lambda$ ($\Delta\phi = 2n\pi$):$\cos = +1$, $P = 1$——<strong>亮纹</strong>(建设性干涉)</li>
+  <li>当 $r_1 - r_2 = (n + \frac{1}{2})\lambda$ ($\Delta\phi = (2n+1)\pi$):$\cos = -1$, $P = 0$——<strong>暗纹</strong>(破坏性干涉)</li>
+  <li>其他位置:$0 < P < 1$,<strong>中间灰度</strong></li>
+</ul>
+<p>条纹间距是 $\Delta y = \frac{\lambda L}{d}$(其中 $L$ 是缝到屏的距离, $d$ 是两缝间距)——这是高中物理的双缝公式,在量子力学里自然出现。</p>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.4 ===== -->
+        <section>
+          <h2 id="section-4">3.4 单光子干涉:把双缝做到极致</h2>
+<h3>3.4.1 极弱光源</h3>
+<p>把光强调到"平均每秒不到一个光子"——也就是说,<strong>任意时刻</strong>光路上至多有一个光子。这样就排除了"两个光子互相干涉"的可能性:<strong>每个光子都在跟自己干涉</strong>。</p>
+<p>这是 1909 年泰勒、后来 1974 年 Clauser 等人的实验的核心:即使一个光子单独通过双缝,只要不"标记"它走哪条缝,屏上仍然出现干涉条纹。<strong>每个光子都是一个"自我干涉"的物质波</strong>。</p>
+<h3>3.4.2 数学描述</h3>
+<p>设 $\lvert 1\rangle$、$\lvert 2\rangle$ 是"从缝 1/缝 2 出来"两条路径。单光子通过双缝后的态是:</p>
+$$\lvert\psi\rangle = \frac{1}{\sqrt{2}}\left( \lvert 1\rangle + \lvert 2\rangle \right)$$
+<p>屏上 $P$ 点的概率幅是两条路径的相干叠加:</p>
+$$\langle P \rvert \psi\rangle = \frac{1}{\sqrt{2}}\left( \langle P \rvert 1\rangle + \langle P \rvert 2\rangle \right)$$
+<p>把 $r_i$ 替换掉后,你会重新得到 3.3.2 节的干涉条纹公式。</p>
+<h3>3.4.3 为什么单光子能"自我干涉"</h3>
+<p>这是初学者最常问的问题。答案<strong>不是"光子分成两半"</strong>——光子始终是一个整体。<strong>正确理解</strong>是:</p>
+<ul>
+  <li>在没被测量"哪条路"之前,光子的态是<strong>两条路径的叠加</strong>;</li>
+  <li>"叠加"是希尔伯特空间中的数学对象,不是"被劈开";</li>
+  <li>测量让叠加塌缩(第 2 章 2.8 投影测量):如果测"哪条路",得到 1 或 2,条纹消失;如果测"屏上落点",得到符合干涉分布的某个位置。</li>
+</ul>
+<p>费曼在他著名的《物理学讲义》第 III 卷第 1 章里说:"<strong>单电子的双缝实验是量子力学里最神秘的现象</strong>。"他讲这句话的时候,认为没有任何"经典类比"能解释这件事——它就是量子力学的硬核。</p>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.5 ===== -->
+        <section>
+          <h2 id="section-5">3.5 哪条路探测器:干涉如何"消失"</h2>
+<h3>3.5.1 思想实验</h3>
+<p>在双缝实验的缝 1、缝 2 旁边各放一个"哪条路探测器"(which-way detector)——比如一个非常敏感的弹簧,光子通过时会给弹簧一个动量 $p$。探测器会记录"光子从缝 1 出"还是"缝 2 出"。</p>
+<h3>3.5.2 数学:从纯态到混合态</h3>
+<p>设探测器有正交态 $\lvert D_1\rangle$、$\lvert D_2\rangle$,初始 $\lvert D_0\rangle$。光子 + 探测器合成系统的演化:</p>
+$$\left( \frac{1}{\sqrt{2}}\lvert 1\rangle + \frac{1}{\sqrt{2}}\lvert 2\rangle \right) \otimes \lvert D_0\rangle \longrightarrow \frac{1}{\sqrt{2}}\lvert 1\rangle \otimes \lvert D_1\rangle + \frac{1}{\sqrt{2}}\lvert 2\rangle \otimes \lvert D_2\rangle$$
+<p>(假设探测器完美分辨两个路径,无回弹误差。)</p>
+<p><strong>关键</strong>:合成态是 $\lvert 1\rangle \otimes \lvert D_1\rangle$ 和 $\lvert 2\rangle \otimes \lvert D_2\rangle$ 的<strong>叠加</strong>——但这两个分量<strong>正交</strong> ($\langle D_1 \rvert D_2\rangle = 0$),所以<strong>光子态自身</strong>已经不再是纯叠加,而是<strong>混合态</strong>(第 2 章 2.9):</p>
+$$\hat{\rho}_{\text{光子}} = \frac{1}{2}\lvert 1\rangle\langle 1\rvert + \frac{1}{2}\lvert 2\rangle\langle 2\rvert = \frac{I}{2}$$
+<p>我们再算屏上的概率分布:</p>
+$$P(P) = \langle P \rvert \hat{\rho}_{\text{光子}} \lvert P\rangle = \frac{1}{2}\lvert\langle P \rvert 1\rangle\rvert^2 + \frac{1}{2}\lvert\langle P \rvert 2\rangle\rvert^2$$
+<p><strong>没有交叉项</strong>——干涉条纹<strong>完全消失</strong>,屏上只剩两条亮纹(对应"缝 1 的像"和"缝 2 的像"叠加)。</p>
+<h3>3.5.3 玻恩互补性</h3>
+<p>这就是玻尔 1928 年提出的<strong>互补性原理(complementarity)</strong>:波(干涉)和粒子(哪条路)是同一个系统的两种<strong>互补描述</strong>,不可同时显现。<strong>一旦你获得了"哪条路"信息,干涉条纹必然消失</strong>——这是量子力学严格的数学结论,不是测量仪器的扰动。</p>
+<blockquote class="chapter-quote">💡 **重要注**:测不准原理(第 5 章)给了"为什么不能同时精确知道位置和动量"一个量化版本,而互补性是更广义的"量子相干性 vs 经典信息"二者择一。</blockquote>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.6 ===== -->
+        <section>
+          <h2 id="section-6">3.6 干涉的数学结构:相位、相干性、退相干</h2>
+<h3>3.6.1 复数相位的物理意义</h3>
+<p>量子态的复系数 $\alpha$、$\beta$ 的<strong>模长</strong> $\lvert\alpha\rvert$、$\lvert\beta\rvert$ 决定测量概率(玻恩规则),<strong>相位</strong> $\arg(\alpha)$、$\arg(\beta)$ 决定干涉模式。</p>
+<p>一个具体的态可以写成:</p>
+$$\lvert\psi\rangle = \lvert\alpha\rvert e^{i\theta_\alpha}\lvert 0\rangle + \lvert\beta\rvert e^{i\theta_\beta}\lvert 1\rangle$$
+<p>整体相位 $e^{i(\theta_\alpha + \theta_\beta)/2}$ 是不可观测的(全空间相位旋转),但<strong>相对相位</strong> $\Delta\theta = \theta_\alpha - \theta_\beta$ 决定干涉:</p>
+$$P(\text{测 } \lvert 0\rangle) = \lvert\alpha\rvert^2, \quad
+P(\text{测 } \lvert 0\rangle + e^{i\phi}\lvert 1\rangle) = \frac{1}{2} + \frac{1}{2}\lvert\alpha\rvert\lvert\beta\rvert \cos(\Delta\theta - \phi)$$
+<p>如果 $\Delta\theta$ 已知(纯态),<strong>干涉条纹对比度 = 100%</strong>;如果 $\Delta\theta$ 在各次实验中随机(混合态,每次实验 $\theta$ 不同),干涉条纹<strong>被平均掉</strong>——这就是<strong>退相干(decoherence)</strong> 的雏形。</p>
+<h3>3.6.2 纯态 vs 混合态的判据</h3>
+<p>第 2 章 2.9.3 给了密度矩阵的纯态判据 $\text{tr}(\hat{\rho}^2) = 1$。对干涉,这个判据翻译成:</p>
+<ul>
+  <li><strong>纯态</strong> ($\text{tr}(\hat{\rho}^2) = 1$):$\Delta\theta$ 固定,干涉条纹 100% 对比度</li>
+  <li><strong>混合态</strong> ($\text{tr}(\hat{\rho}^2) < 1$):$\Delta\theta$ 在不同样本里随机,干涉条纹对比度 < 100%</li>
+  <li><strong>完全混合态</strong> ($\hat{\rho} = I/2$):$\text{tr}(\hat{\rho}^2) = 1/2$,<strong>无任何干涉</strong></li>
+</ul>
+<h3>3.6.3 退相干:环境导致的干涉消失</h3>
+<p>第 5、16 章会详细讲<strong>退相干</strong>——简单说,任何真实的量子系统都跟环境(空气分子、热辐射、宇宙微波背景辐射等)纠缠。环境"测"了系统的相位信息,导致<strong>有效密度矩阵</strong>看起来是混合态,干涉条纹对比度<strong>指数衰减</strong>:</p>
+$$V(t) = V(0) e^{-t/T_2}$$
+<p>其中 $T_2$ 是<strong>退相干时间(decoherence time)</strong>。这就是为什么量子计算机要超冷、超隔离——任何跟环境的耦合都会把干涉抹平,把量子计算"经典化"。</p>
+<blockquote class="chapter-quote">💡 **粗略直觉**:把叠加比作一支交响乐团奏两个音符。纯态下两个音符是协调的(合奏),听起来是新的音;退相干后两个音符的相位随机飘,听起来就是噪音。</blockquote>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.7 ===== -->
+        <section>
+          <h2 id="section-7">3.7 量子算法里的干涉:Grover 振幅放大的雏形</h2>
+<h3>3.7.1 从"答案的振幅"角度思考</h3>
+<p>到第 10 章我们才会正式讲 Grover 算法,这里先抛一个直觉:<strong>量子算法之所以比经典快,核心是它能让正确答案的振幅越来越大,错误答案的振幅越来越小</strong>——这件事就是用干涉实现的。</p>
+<p>考虑一个搜索问题:从 $N$ 个候选里找出一个"标记"项 $\lvert w\rangle$。均匀叠加态是:</p>
+$$\lvert s\rangle = \frac{1}{\sqrt{N}}\sum_{x=0}^{N-1} \lvert x\rangle$$
+<p>经典上我们需要 $\sim N$ 次查询才能找到 $w$。<strong>Grover 的想法</strong>:对 $\lvert s\rangle$ 反复应用两个算符:</p>
+<ol>
+  <li><strong>Oracle</strong> $U_w$:<strong>翻转</strong> $w$ 那一项的振幅(从 $+\frac{1}{\sqrt{N}}$ 变 $-\frac{1}{\sqrt{N}}$)</li>
+  <li><strong>扩散算符</strong> $U_s$:<strong>关于</strong> $\lvert s\rangle$ 的均值做反射</li>
+</ol>
+<p>每做一次 $U_s U_w$, $w$ 那一项的振幅<strong>单调增加</strong>,而其他项<strong>单调减少</strong>。大约 $\sqrt{N}$ 次后, $w$ 那一项的振幅 $\approx 1$,测量几乎必然给出 $w$。</p>
+<h3>3.7.2 为什么这是干涉</h3>
+<p>如果你"展开"一次 Grover 迭代,会发现<strong>错误项的振幅被</strong>反向(从 $+\frac{1}{\sqrt{N}}$ 变 $-\frac{1}{\sqrt{N}}$),<strong>正确答案的振幅</strong>因为跟所有错误项的振幅做<strong>建设性干涉</strong>而增大。</p>
+<p>直觉上,想象水波池里同时从 $N$ 个点发射"波":Oracle 把 $w$ 那一束波的相位反了 180°,但 $w$ 这一束<strong>跟其他所有束的相位恰好一致</strong>——叠加后比原来<strong>大 $\sim \sqrt{N}$ 倍</strong>(注意不是 $N$ 倍)。</p>
+<h3>3.7.3 量子加速的本质</h3>
+<p>Grover 给出 $\sqrt{N}$ 的量子加速——不是指数加速,但<strong>对很多问题(密码学、数据库搜索、NP 问题的启发式搜索)是显著的</strong>。它的物理本质就是<strong>干涉</strong>:让"对的振幅"和"错的振幅"在数学上互相增强/抵消,从而把概率从"均匀分布"推到"集中在对的项"。</p>
+<p>我们会在第 10 章详细给出 Grover 算法的完整数学推导。本节只是把"量子算法 = 干涉"这个核心直觉先种下。</p>
+<hr>
+        </section>
+
+        <hr>
+
+        <!-- ===== 3.8 ===== -->
+        <section>
+          <h2 id="section-8">3.8 章节总结与后续</h2>
+<h3>本章要点</h3>
+<div class="key-concepts">
+  <h4>📋 概念速查表</h4>
+  <table class="concept-table">
+    <thead><tr><th>概念</th><th>记号/关键词</th><th>物理意义</th></tr></thead>
+    <tbody>
+      <tr><td>叠加原理</td><td>$\lvert\psi\rangle = \alpha\lvert a\rangle + \beta\lvert b\rangle$</td><td>量子态可以处于多个态的线性组合</td></tr>
+      <tr><td>经典概率</td><td>$P = \sum p_i$</td><td>概率直接相加,无相位</td></tr>
+      <tr><td>量子叠加</td><td>$\lvert\psi\rangle = \sum c_i \lvert i\rangle$</td><td>复振幅叠加,先相加再取模方</td></tr>
+      <tr><td>双缝干涉</td><td>$P = \frac{1}{2}(1 + \cos\Delta\phi)$</td><td>振幅相加,建设/破坏性干涉</td></tr>
+      <tr><td>单光子干涉</td><td>单粒子态的自我干涉</td><td>排除了"光子互相干涉"</td></tr>
+      <tr><td>互补性</td><td>波 vs 粒子,不可兼得</td><td>哪条路信息 = 干涉消失</td></tr>
+      <tr><td>退相干</td><td>$V(t) = V(0)e^{-t/T_2}$</td><td>环境导致相位信息泄漏</td></tr>
+      <tr><td>Grover 雏形</td><td>Oracle + 扩散,反复迭代</td><td>量子算法 = 振幅干涉</td></tr>
+    </tbody>
+  </table>
+</div>
+<h3>为后续章节铺的路</h3>
+<ul>
+  <li><strong>第 4 章 量子纠缠与贝尔不等式</strong>: 叠加的"二人以上"版本——多个粒子可以处于<strong>不可分解</strong>的叠加(纠缠态),贝尔不等式实验把"经典概率 + 局域性"和"量子叠加 + 非局域性"做了实验区分</li>
+  <li><strong>第 5 章 量子测量与不确定性原理</strong>: 互补性的量化版本——$\Delta x \cdot \Delta p \ge \hbar/2$,以及测量导致的态塌缩</li>
+  <li><strong>第 6 章 量子比特</strong>: 本章的叠加原理聚焦到 $\mathcal{H} = \mathbb{C}^2$,引入 Bloch 球几何</li>
+  <li><strong>第 7 章 量子逻辑门与量子线路</strong>: 叠加原理的"工程化"——单量子比特门、双量子比特门(CNOT)如何在物理上实现叠加和干涉</li>
+  <li><strong>第 10 章 Grover 算法</strong>: 3.7 节振幅放大直觉的完整数学化</li>
+  <li><strong>第 16 章 量子噪声与退相干</strong>: 本节"环境导致干涉消失"的具体机制——Lindblad 主方程、退相干通道、保真度</li>
+</ul>
+<h3>推荐阅读</h3>
+<ul>
+  <li><strong>费曼《物理学讲义》第 III 卷第 1 章</strong>——单电子双缝实验的经典讨论</li>
+  <li><strong>Nielsen & Chuang《Quantum Computation and Quantum Information》第 1.3 节</strong>——叠加原理在量子计算中的作用</li>
+  <li><strong>B. Greene《The Elegant Universe》第 4 章</strong>——双缝实验的科普级展开(适合推荐给非物理背景的朋友)</li>
+  <li><strong>A. Aspect, J. Dalibard, G. Roger, "Experimental Realization of Einstein-Podolsky-Rosen-Bohm Gedankenexperiment", Phys. Rev. Lett. 49, 1804 (1982)</strong>——贝尔不等式的第一个严格实验验证</li>
+</ul>
+        </section>
+
+        
+        <!-- 上一章 / 下一章 导航 -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch02.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 2 章 量子态与狄拉克符号</span>
+          </a>
+          <a href="ch04.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 4 章 量子纠缠与贝尔不等式</span>
+            <span class="pager-tag">即将推出</span>
+          </a>
+        </nav>
+
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
