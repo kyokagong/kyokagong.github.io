@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第2章：Agent 简史 | 《AGENT开发从入门到精通》">
+
+  <title>第2章：Agent 简史 | AGENT开发从入门到精通</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- highlight.js for code blocks -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    /* ch02 特定样式：60 年时间线 */
+    .timeline {
+      background: linear-gradient(135deg, rgba(192,38,211,0.08), rgba(249,115,22,0.08));
+      border: 1px solid rgba(192,38,211,0.3);
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin: 24px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      line-height: 1.85;
+      white-space: pre;
+      overflow-x: auto;
+      color: #cbd5e1;
+    }
+    .timeline strong { color: var(--book-accent-fg, #c026d3); }
+  </style>
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>AGENT开发从入门到精通</span>
+      </a>
+
+      <!-- 站点级导航 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../index.html" class="site-nav-link active" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch02.html" class="active">第2章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER PAGE ==================== -->
+  <div class="chapter-page">
+    <div class="chapter-container">
+      <article class="chapter-content">
+
+        <header class="chapter-header">
+          <div class="chapter-breadcrumb">
+            <a href="../index.html">首页</a> / <a href="../index.html#chapters">章节总览</a> / 第2章
+          </div>
+          <h1>第 2 章 Agent 简史——从 ELIZA 到多 Agent 浪潮</h1>
+          <div class="chapter-epigraph">
+            &ldquo;60 年，3 次"Agent 热"，2 次寒冬。每一个今天让你眼前一亮的概念，几乎都能在历史里找到原型。理解历史不是为了怀旧，而是为了**少踩坑**——以及看清楚这一次到底是不是真的不一样。&rdquo;
+          </div>
+        </header>
+
+        <!-- ===== 60 年时间线图 ===== -->
+        <div class="timeline"><strong>1960s</strong> ELIZA·Shakey     →  <strong>1980s-90s</strong> Minsky·Maes·Brooks·BDI     →  <strong>2000s-10s</strong> Siri·Alexa·AlphaGo     →  <strong>2022</strong> ChatGPT     →  <strong>2023</strong> AutoGPT·BabyAGI     →  <strong>2024</strong> Computer Use·o1·MCP·Devin     →  <strong>2025</strong> Operator·A2A·ADK     →  <strong>2026</strong> Agentic AI 元年</div>
+
+          <h1>第 2 章 Agent 简史——从 ELIZA 到多 Agent 浪潮</h1>
+          <blockquote>60 年，3 次"Agent 热"，2 次寒冬。每一个今天让你眼前一亮的概念，几乎都能在历史里找到原型。理解历史不是为了怀旧，而是为了<strong>少踩坑</strong>——以及看清楚这一次到底是不是真的不一样。</blockquote>
+          <hr>
+          <h2 id="section-2.1">2.1 引子：为什么要回头看 60 年</h2>
+          <p>很多人问："Agent 不就是 2023 年才火起来的吗？为什么还要讲 1966 年的 ELIZA？"</p>
+          <p>三个理由。</p>
+          <p><strong>第一，避免重复发明。</strong> 1990 年代"智能体"火过一次、烧光了钱、退了潮；2023 年又火了一次、退了半次潮、2024 年再起来。如果你不知道 1990 年代那批人踩过什么坑（"自主 Agent 完全跑不通任务"），你会<strong>高高兴兴地把同一个坑再踩一遍</strong>。</p>
+          <p><strong>第二，理解概念漂移。</strong> "Agent"这个英文词在 60 年里的意思变了至少 5 次——从"能动的实体"到"软件机器人"到"自主决策系统"再到今天的"LLM 驱动的多步任务执行者"。<strong>它从来不是一个技术概念，而是一个愿景概念</strong>。理解这个漂移，比记住任何一条技术细节都重要。</p>
+          <p><strong>第三，建立时间感。</strong> AI 行业有一个很糟糕的习惯——把"过去 3 年"叫做"传统"、把"过去 1 年"叫做"历史"。但 60 年的尺度会告诉你：2024 年 Claude Computer Use 那种"AI 操作计算机"的想法，1969 年 Shakey the Robot 就已经做过了（虽然弱一万倍）。</p>
+          <p>这一章我们就用 60 年时间线、3 次浪潮、几十个关键人物，把"Agent 是怎么走到今天的"这件事讲清楚。</p>
+          <hr>
+          <h2 id="section-2.2">2.2 1960s 起源：早期智能体的两个里程碑</h2>
+          <p>任何关于 Agent 历史的书，都绕不开两个名字：<strong>ELIZA</strong> 和 <strong>Shakey the Robot</strong>。</p>
+          <h3>2.2.1 ELIZA（1966）——"假装听懂你说话的程序"</h3>
+          <p>1966 年，MIT 的 <strong>Joseph Weizenbaum</strong> 写了一个程序，叫 ELIZA。它的角色是一个罗杰斯心理治疗师（Rogerian psychotherapist）——一种以"重复对方的话、引导对方自我倾诉"为核心技术的心理流派。</p>
+          <p>ELIZA 的工作方式简单到让人吃惊：<strong>模式匹配 + 替换</strong>。下面是一个示意版本（不完整，原始版本更精巧）：</p>
+          <pre><code class="language-python">import re
+import random
+
+# 模式：正则 -&gt; 替换模板（占位符 0 表示捕获组）
+RULES = [
+    (r"我需要(.*)",
+     ["你为什么需要{0}？",
+      "真的需要{0}吗？"]),
+    (r"我(.*)你",
+     ["你{0}我这件事，能再具体说说吗？",
+      "你{0}我，是因为什么？"]),
+    (r"(.*)妈妈(.*)",
+     ["说说你的妈妈。",
+      "你和你妈妈的关系是怎样的？"]),
+    (r"你好",
+     ["你好，请随便说。"]),
+    (r"(.*)",
+     ["能再多说一点吗？",
+      "你为什么会这样说？",
+      "有意思，请继续。"])
+]
+
+def eliza_reply(user_text: str) -&gt; str:
+    for pattern, responses in RULES:
+        m = re.search(pattern, user_text)
+        if m:
+            template = random.choice(responses)
+            return template.format(*m.groups())
+    return random.choice(["嗯。", "我听到了。", "继续。"])
+
+if __name__ == "__main__":
+    print("ELIZA: 你好，我是 ELIZA，请随便说。")
+    while True:
+        u = input("你: ").strip()
+        if u in ("quit", "exit", "再见"):
+            print("ELIZA: 再见。")
+            break
+        print(f"ELIZA: {eliza_reply(u)}")</code></pre>
+          <p>我们和它聊几句：</p>
+          <pre><code class="language-python">你: 我最近很焦虑
+ELIZA: 能再多说一点吗？
+你: 我觉得我妈妈不理解我
+ELIZA: 说说你和你妈妈的关系。
+你: 我需要被理解
+ELIZA: 你为什么需要被理解？</code></pre>
+          <p><strong>它什么都没听懂。</strong> 它只是按照预设的规则把"我需要 X"重新组装成"你为什么需要 X"。但 Weizenbaum 的秘书在使用 ELIZA 一段时间后，请求他离开房间——她<strong>真的开始向 ELIZA 倾诉了</strong>。</p>
+          <p>这个故事后来成了 AI 史上最著名的现象之一，被叫做 <strong>ELIZA effect</strong>：人类会把自己对"理解"的直觉投射到一个根本不理解的系统上。2025 年我们和 LLM 聊天时，<strong>这个 effect 一点都没消失</strong>。</p>
+          <blockquote><strong>重要区分</strong>：ELIZA 是不是 Agent？这个看定义。Anthropic 2024 年的标准是"LLM 动态决定自己的处理流程"——ELIZA 没有 LLM，也没有动态决策，<strong>它更接近一个 chatbot</strong>。但在 1960 年代，<strong>它已经是当时最像"对话 Agent"的东西了</strong>。</blockquote>
+          <h3>2.2.2 Shakey the Robot（1969）——第一台"会规划"的机器人</h3>
+          <p>如果 ELIZA 是"对话 Agent 的祖先"，那 <strong>Shakey the Robot</strong> 就是"具身 Agent 的祖先"。</p>
+          <p>1966 年到 1972 年间，SRI International（斯坦福研究所）的 <strong>Charles Rosen</strong> 领导的小组造了一台叫 Shakey 的机器人——之所以叫 Shakey，是因为它移动起来颤颤巍巍，像要散架。Shakey 在一个为它专门布置的房间里移动，房间里有斜坡、箱子、开关，<strong>它要完成"把箱子推到斜坡上再关灯"这种多步任务</strong>。</p>
+          <p>听起来很弱是吧？但它做对了一件 60 年代其他机器人没做过的事：<strong>它会规划</strong>。</p>
+          <p>它的软件栈是这样的：</p>
+          <ol>
+            <li><strong>感知层</strong>：摄像机和测距仪，把场景转换成几何图</li>
+            <li><strong>世界模型</strong>：用 STRIPS（Stanford Research Institute Problem Solver）规划器，把世界状态抽象成"在房间 R，灯 L 是开着的，箱子 B 在位置 P"这种逻辑事实</li>
+            <li><strong>规划层</strong>：STRIPS 在事实集合上做"前向搜索"——找一条从"初始事实"到"目标事实"的逻辑动作序列</li>
+            <li><strong>执行层</strong>：把每个逻辑动作翻译成电机指令</li>
+          </ol>
+          <p><strong>这一步规划能力，是 60 年代"Agent"和"机械臂"的分水岭。</strong> 之前，机器人是写死的；之后，机器人开始"自己想办法"。</p>
+          <p>1960 年代末，Marvin Minsky（MIT，他在 1961 年的论文 <em>Steps Toward Artificial Intelligence</em> 中已隐含"智能体"概念）在多个公开场合把 Shakey 称为"第一个具备某种自主性的电子人物理 Agent"。</p>
+          <h3>2.2.3 1960s 的"Agent"语义</h3>
+          <table>
+            <thead><tr><th>概念</th><th>ELIZA (1966)</th><th>Shakey (1969)</th></tr></thead>
+            <tbody>
+              <tr><td>类型</td><td>对话 Agent</td><td>具身 Agent</td></tr>
+              <tr><td>"智能"来自</td><td>模式匹配</td><td>规划器</td></tr>
+              <tr><td>自主性</td><td>极低（脚本）</td><td>中（多步规划）</td></tr>
+              <tr><td>关键人物</td><td>Joseph Weizenbaum</td><td>Charles Rosen / Nils Nilsson</td></tr>
+              <tr><td>机构</td><td>MIT</td><td>SRI International</td></tr>
+              <tr><td>重要遗产</td><td>ELIZA effect</td><td>STRIPS 规划器</td></tr>
+              <tr><td>是不是 Agent</td><td>边界案例</td><td>几乎肯定是</td></tr>
+            </tbody>
+          </table>
+          <hr>
+          <h2 id="section-2.3">2.3 1980s-1990s：智能体理论的"黄金十年"</h2>
+          <p>1970 年代是 AI 寒冬，1980 年代开始复苏。这一轮的复苏里，<strong>"Agent"成了一个正经的学术术语</strong>，理论框架被搭起来。</p>
+          <h3>2.3.1 Minsky《Society of Mind》（1986）</h3>
+          <p>1986 年，MIT 的 <strong>Marvin Minsky</strong> 出版了《Society of Mind》（《心智社会》）。这本书的核心观点大胆到当时很多人无法接受：</p>
+          <blockquote><strong>智能不是来自某个单一的、庞大的"我"，而是来自大量简单 Agent 的协作。</strong> 就像人类社会里"政府"不是一个具体的人，而是无数个体决策涌现出来的一样，智能是许多"小 Agent"互相作用的结果。</blockquote>
+          <p>这本书影响了两代人——<strong>它直接催生了 1990 年代的 multi-agent system（MAS）研究</strong>，也为 2025 年我们看到的"多 Agent 框架"埋下了种子。</p>
+          <h3>2.3.2 Pattie Maes 与"自主 Agent"（1990-1995）</h3>
+          <p>MIT Media Lab 的 <strong>Pattie Maes</strong> 在 1990 到 1995 年间，发起了一波叫"autonomous agents"的研究运动。她的核心思想：</p>
+          <blockquote><strong>Agent 不应该等用户命令；它应该观察用户的行为，主动提供帮助。</strong></blockquote>
+          <p>Maes 团队做了几个 demo 系统，最有名的是 <strong>Letizia</strong>（一个会主动帮你浏览网页的浏览器助手）和 <strong>Firefly</strong>（一个会主动推荐朋友的社交系统）。这些系统在 1990 年代的学术会议上<strong>惊艳了所有人</strong>——它们看起来"主动、有目标、会自己想办法"。</p>
+          <p>但问题是：<strong>它们跑得很差</strong>。在 1995 年的 CHI 大会上，Maes 自己承认：让 Agent "自主"到用户满意的程度，难度被严重低估了。这波热潮从 1995 年开始迅速冷却。</p>
+          <h3>2.3.3 Rodney Brooks 与"包容架构"（1986-1991）</h3>
+          <p>MIT AI Lab 的 <strong>Rodney Brooks</strong> 提出了一个<strong>反主流</strong>的 Agent 架构——<strong>subsumption architecture</strong>（包容架构）。他的观点：</p>
+          <blockquote><strong>不要从"思考"开始，要从"行动"开始。</strong> 不要做"先感知→规划→决策→执行"的传统机器人，要做"我有一堆简单的反射层，下层压住上层"的行为机器人。</blockquote>
+          <p>Brooks 的代表性机器人叫 <strong>Allen</strong> 和 <strong>Genghis</strong>（六足行走机器人，1990）。它们不"思考"，<strong>它们只是"动"</strong>——遇到障碍左转、感应到光源直行、上层命令覆盖下层。<strong>没有世界模型，没有规划，没有"智能"——但它们能走能避障</strong>。</p>
+          <p>1991 年 Brooks 发表的论文 <em>Intelligence Without Reason</em>（没有推理的智能）成了行为机器人学（behavior-based robotics）的圣经。他的核心论点：</p>
+          <blockquote><strong>智能是行为的表现，不是推理的结果。</strong> 你不需要"思考"才能"智能"。</blockquote>
+          <p>这个观点 30 年后被 Yann LeCun 用在 2022 年的 JEPA（Joint Embedding Predictive Architecture）里复活，<strong>成了 2024-2025 年"世界模型"风潮的源头之一</strong>。</p>
+          <h3>2.3.4 1990s 末的多 Agent 系统</h3>
+          <p>到 1990 年代末期，<strong>多 Agent 系统（MAS）</strong>成了一个独立的子领域：</p>
+          <ul>
+            <li><strong>合同网协议</strong>（Contract Net Protocol, 1980 by Smith &amp; Davis）—— Agent 之间通过"招标-投标"分配任务</li>
+            <li><strong>BDI 架构</strong>（Belief-Desire-Intention, 1987 by Rao &amp; Georgeff）—— Agent 的内部状态分三层</li>
+            <li><strong>FIPA 规范</strong>（1996, Foundation for Intelligent Physical Agents）—— Agent 通信语言的早期标准</li>
+          </ul>
+          <p><strong>这些理论在 2000 年代被工业界彻底抛弃了</strong>——它们太学术、太复杂、太难落地。但它们为 2024-2025 年的多 Agent 框架（CrewAI、AutoGen）留下了完整的术语表。</p>
+          <hr>
+          <h2 id="section-2.4">2.4 2000s-2010s：寒冬与"命令式助手"</h2>
+          <p>进入 2000 年，AI 行业的情绪和 2023-2024 年比，<strong>像两个完全不同的星球</strong>。</p>
+          <h3>2.4.1 寒冬与"AI 冬天"周期</h3>
+          <p>AI 行业经历过好几次"冬天"：</p>
+          <ul>
+            <li><strong>第一次寒冬（1974-1980）</strong>：Lighthill 报告 + DARPA 削减资助</li>
+            <li><strong>第二次寒冬（1987-1993）</strong>：LISP 机市场崩盘 + 专家系统失败</li>
+            <li><strong>第三次寒冬（2010 年代后期）</strong>：深度学习承诺过多、兑现不足</li>
+          </ul>
+          <p>每一次冬天过后，AI 行业都会<strong>学乖一点</strong>——不再喊"我们要造通用智能"这种话，转去做一些<strong>能落地、有收入</strong>的事情。</p>
+          <p>2000-2010 年代就是"学乖"的时代。<strong>Agent 这个词在工业界基本消失了</strong>——大家更愿意用"virtual assistant"（虚拟助手）、"chatbot"（聊天机器人）这些听起来更保守的词。</p>
+          <h3>2.4.2 Siri（2011）——"智能助手"这个词被注册</h3>
+          <p>2011 年 10 月，Apple 推出 <strong>Siri</strong>——一个能听、能说、能帮你"打电话、发短信、设闹钟" 的语音助手。Siri 来自 <strong>SRI International</strong>（对，就是 1969 年做 Shakey 的那个研究所）的 2000 年代项目，2010 年 Apple 收购了它，2011 年集成进 iPhone 4S。</p>
+          <p><strong>Siri 是第一个让"和机器对话"这件事进入大众视野的产品</strong>。在 Siri 之前，语音助手是军用、客服、电话 IVR；Siri 之后，<strong>"和手机说话"成了一种日常行为</strong>。</p>
+          <p>但 Siri 不是 Agent——它是<strong>命令式助手</strong>。你说"打电话给妈妈"，它执行；你说"我应该给谁打电话"，它一头雾水。</p>
+          <h3>2.4.3 Alexa（2014）与 Google Assistant（2016）</h3>
+          <ul>
+            <li><strong>Amazon Echo / Alexa</strong>（2014 年 11 月发布）——把"智能助手"搬进了一个圆柱形音箱</li>
+            <li><strong>Google Assistant</strong>（2016 年 5 月发布）——Google 在 Allo 和 Pixel 上推出的统一助手</li>
+            <li><strong>Microsoft Cortana</strong>（2014-2023）——Windows 10 内置，2023 年停止支持</li>
+            <li><strong>Samsung Bixby</strong>（2017）——Galaxy 手机内置</li>
+          </ul>
+          <p>这一波"智能助手"的共同特征：</p>
+          <table>
+            <thead><tr><th>特征</th><th>1990s 智能体</th><th>2010s 智能助手</th></tr></thead>
+            <tbody>
+              <tr><td>自主性</td><td>高（理论）</td><td>低（命令式）</td></tr>
+              <tr><td>触发方式</td><td>主动观察</td><td>被动命令</td></tr>
+              <tr><td>任务范围</td><td>开放</td><td>受限（"打电话、放音乐"）</td></tr>
+              <tr><td>技术栈</td><td>学术（BDI、合同网）</td><td>工业（语音识别 + 模板）</td></tr>
+              <tr><td>收入</td><td>无</td><td>有（硬件 + 数据）</td></tr>
+              <tr><td>商业可行性</td><td>低</td><td>中</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Siri 和 Alexa 拯救了"Agent"这个词的商业信誉</strong>——它们让普通人接受了"我会和一个程序说话"这件事，为 2023 年的"LLM Agent"铺平了心理基础。</p>
+          <hr>
+          <h2 id="section-2.5">2.5 2016 转折点：AlphaGo 与"强化学习的胜利"</h2>
+          <p>2016 年 3 月，<strong>DeepMind</strong> 的 <strong>AlphaGo</strong> 以 4:1 战胜韩国棋手李世石。这件事对 AI 行业的影响远不止围棋本身。</p>
+          <h3>2.5.1 AlphaGo 的技术遗产</h3>
+          <p>AlphaGo 的核心架构是<strong>双网络</strong>：</p>
+          <ol>
+            <li><strong>策略网络（Policy Network）</strong>：给定棋盘，预测下一步落子概率分布</li>
+            <li><strong>价值网络（Value Network）</strong>：给定棋盘，预测胜率</li>
+          </ol>
+          <p>加上 <strong>蒙特卡洛树搜索（MCTS）</strong> 做规划，AlphaGo 成了"深度神经网络 + 规划 + 强化学习"的第一个工业级胜利。</p>
+          <h3>2.5.2 对 Agent 研究的启发</h3>
+          <p>AlphaGo 给 Agent 研究者<strong>最重要的礼物不是技术，而是信心</strong>：</p>
+          <blockquote><strong>如果"搜索 + 学习"组合能在围棋上击败人类世界冠军，它也能在现实任务上击败人类。</strong></blockquote>
+          <p>2017 年 DeepMind 推出 <strong>AlphaZero</strong>（去掉人类棋谱、纯自我对弈），进一步把"通用 Agent"的可能性推到台前。2018 年的 <strong>AlphaStar</strong>（星际争霸 II）和 2019 年的 <strong>AlphaFold 2</strong>（蛋白质结构预测）都延续了这个范式。</p>
+          <p><strong>这一波虽然没直接产生"Agent"产品，但奠定了 2020 年代 Agent 框架的算法底座</strong>——LLM Agent 用的"规划 + 调用工具"模式，本质上是 AlphaGo "策略网络 + MCTS" 的语言版本。</p>
+          <hr>
+          <h2 id="section-2.6">2.6 2022 黎明：ChatGPT 引发 LLM 浪潮</h2>
+          <p>2022 年 11 月 30 日，<strong>OpenAI</strong> 发布 <strong>ChatGPT</strong>。这是 60 年 Agent 史的<strong>第二个真正分水岭</strong>（第一个是 1969 年 Shakey）。</p>
+          <h3>2.6.1 ChatGPT 改变了什么</h3>
+          <p>ChatGPT 的真正创新<strong>不是 GPT-3.5 模型本身</strong>（GPT-3 2020 年就有了），而是<strong>RLHF + 对话界面</strong>：</p>
+          <ol>
+            <li><strong>RLHF（Reinforcement Learning from Human Feedback）</strong>：用人类偏好训练一个 reward model，再用 PPO 优化 LLM</li>
+            <li><strong>对话界面</strong>：把 LLM 包装成一个可以聊天的窗口，<strong>隐藏了所有"提示工程"的复杂性</strong></li>
+          </ol>
+          <h3>2.6.2 三个连锁反应</h3>
+          <p><strong>连锁反应 1：推理即接口。</strong> ChatGPT 让所有人意识到——<strong>LLM 是一种"通用推理引擎"</strong>。你不需要为每个任务训练一个模型，你只需要<strong>问它</strong>。</p>
+          <p><strong>连锁反应 2：涌现能力。</strong> 2022 年底到 2023 年初，研究者发现 GPT-3.5/4 在<strong>没专门训练过</strong>的情况下，能做数学题、能写代码、能理解笑话。<strong>"涌现"这个词重新成为热门</strong>。</p>
+          <p><strong>连锁反应 3：Agent 的可能性。</strong> 如果 LLM 真的能"推理"，那让 LLM "调用工具" "做规划" "持续执行任务"就成了自然而然的下一步。<strong>这正是 2023 年 AutoGPT 的灵感来源</strong>。</p>
+          <hr>
+          <h2 id="section-2.7">2.7 2023 第一次"Agent 狂热"</h2>
+          <p>2023 年 3 月，<strong>Significant Gravitas</strong> 的 <strong>Toran Bruce Richards</strong> 发布了 <strong>AutoGPT</strong>。它的 GitHub repo 在 4 月冲上 10 万 star，<strong>是有史以来 star 增长最快的开源项目之一</strong>。</p>
+          <h3>2.7.1 AutoGPT 做了什么</h3>
+          <p>AutoGPT 的核心 idea 简单到粗暴：</p>
+          <blockquote><strong>给 GPT-4 一个目标，</strong> 让它自己拆解任务、自己调用工具、自己循环执行，<strong>直到完成</strong>。</blockquote>
+          <p>具体的循环是：</p>
+          <ol>
+            <li>接受用户输入的目标</li>
+            <li>让 LLM 思考"下一步该做什么"</li>
+            <li>调用工具（搜索、文件操作、shell 命令……）</li>
+            <li>把工具结果喂回 LLM</li>
+            <li>回到第 2 步，直到 LLM 说"任务完成"</li>
+          </ol>
+          <h3>2.7.2 BabyAGI（2023 年 4 月）</h3>
+          <p>紧随 AutoGPT 之后，<strong>Yohei Nakajima</strong>（一个独立开发者，Hacker News 用户）发布 <strong>BabyAGI</strong>。BabyAGI 简化了 AutoGPT 的代码，加了一个<strong>任务列表</strong>——LLM 每完成一步就更新这个列表，<strong>让 Agent 不会"忘了自己在干嘛"</strong>。</p>
+          <p>AutoGPT 和 BabyAGI 的 GitHub 仓库在 2023 年 Q2 一起<strong>统治了 Hacker News 首页</strong>。</p>
+          <h3>2.7.3 第一次"过热"与第一次"失望"</h3>
+          <p>2023 年 4-6 月，AutoGPT 类的项目"什么都能做"的故事在 Twitter 疯传。<strong>但当人们真的把它跑起来时，遇到了三个问题</strong>：</p>
+          <ol>
+            <li><strong>循环死锁</strong>：LLM 经常陷入"我想干 X → 干 X → 我想干 X" 的循环</li>
+            <li><strong>上下文爆炸</strong>：每一步的思考都塞进 context，几步之后<strong>超过上下文窗口</strong> 或 <strong>成本爆炸</strong></li>
+            <li><strong>工具调用不稳定</strong>：早期 GPT-4 的 function calling 经常<strong>生成格式错误的 JSON</strong></li>
+          </ol>
+          <p>到 2023 年 7-8 月，AutoGPT 的热度骤降，<strong>第一次"Agent 狂热" 退潮</strong>。这段经历被许多早期开发者总结为：<strong>"AutoGPT 是一个伟大的 demo，但不是一个产品"</strong>。</p>
+          <h3>2.7.4 评测的诞生</h3>
+          <p>狂热退潮后，社区做了一件<strong>更有价值的事</strong>——<strong>建评测</strong>：</p>
+          <ul>
+            <li><strong>AgentBench</strong>（2023 年 7 月，清华 &amp; 复旦大学）—— 8 个环境测 Agent 综合能力</li>
+            <li><strong>SWE-bench</strong>（2023 年 10 月，Princeton）—— 让 Agent 修 GitHub 真实 issue</li>
+            <li><strong>GAIA</strong>（2023 年 11 月，Meta AI &amp; HuggingFace）—— 多模态 Agent 评测</li>
+            <li><strong>HotpotQA / WebShop</strong>—— 经典 Agent 任务基线</li>
+          </ul>
+          <p><strong>评测让"Agent 能力"从"谁的故事好听" 变成了"谁跑分高"</strong>——这为 2024 年的冷静发展打下了基础。</p>
+          <hr>
+          <h2 id="section-2.8">2.8 2024 落地年：Computer Use + 框架爆发</h2>
+          <p>2024 年是"Agent 从 demo 走向产品"的转折年。三件事值得记入史册。</p>
+          <h3>2.8.1 Anthropic Computer Use（2024 年 10 月）</h3>
+          <p>2024 年 10 月 22 日，<strong>Anthropic</strong> 发布 <strong>Claude 3.5 Sonnet (new)</strong>，其中最引人注目的能力是 <strong>Computer Use</strong>——<strong>让 Claude 像人一样操作计算机</strong>：</p>
+          <ul>
+            <li>看屏幕截图</li>
+            <li>移动鼠标、点击、滚动</li>
+            <li>打开应用、输入文字</li>
+            <li>在不同窗口间切换</li>
+          </ul>
+          <p>Computer Use 不是"在沙盒里跑命令"，<strong>它是"在真实的操作系统上代替你动手"</strong>。发布时的 demo 视频里，Claude 帮研究员订机票、填表格、查资料——<strong>而且中途会主动修正自己的错误</strong>。</p>
+          <p>Computer Use 重新定义了"具身 Agent"的可行性——<strong>第一次，你不必为 Agent 写专门的 API 集成，它能直接用人类用的软件</strong>。</p>
+          <h3>2.8.2 OpenAI o1（2024 年 9 月）</h3>
+          <p>2024 年 9 月 12 日，<strong>OpenAI</strong> 发布 <strong>o1</strong>——第一个"在回答前会内部思考" 的模型。o1 在 AIME、GPQA、Codeforces 等高难度基准上一举超过人类专家。</p>
+          <p>o1 对 Agent 的影响是<strong>深远的</strong>：</p>
+          <blockquote><strong>Agent 不再只是"调用 LLM 完成单步任务"；Agent 可以调用一个"会思考的 LLM" 完成复杂任务。</strong> "内部思考" 把 context 的负担从用户侧转移到了模型侧。</blockquote>
+          <p>o1 之后，<strong>reasoning model</strong>（推理模型）成了标配——Claude 3.7 Sonnet Extended Thinking（2025 年 2 月）、DeepSeek-R1（2025 年 1 月）、Gemini 2.0 Flash Thinking（2024 年 12 月）——<strong>整个行业进入了"思考 + 行动"的 Agent 时代</strong>。</p>
+          <h3>2.8.3 MCP 协议（2024 年 11 月）</h3>
+          <p>2024 年 11 月 25 日，<strong>Anthropic</strong> 发布了 <strong>Model Context Protocol (MCP)</strong>——一个<strong>标准化的工具调用协议</strong>。</p>
+          <p>MCP 解决了一个 2023 年就让人头疼的问题：<strong>每个 LLM 供应商都有自己的一套工具定义格式</strong>（OpenAI function calling、Anthropic tool use、Google function calling 都不一样）。<strong>结果就是同一个工具要写 3 份适配代码</strong>。</p>
+          <p>MCP 提出"一个工具 = 一个 MCP server"——只要你的工具暴露成 MCP server，<strong>任何支持 MCP 的 LLM 都能用</strong>。到 2025 年底，OpenAI、Google、Replit、Codeium 等先后宣布支持 MCP，<strong>它事实上成了 Agent 工具调用的 HTTP</strong>。</p>
+          <h3>2.8.4 Devin（2024 年 3 月）</h3>
+          <p>2024 年 3 月，<strong>Cognition Labs</strong> 推出 <strong>Devin</strong>——一个被宣传为"全球首位 AI 软件工程师" 的 Agent。Devin 能：</p>
+          <ul>
+            <li>读 GitHub issue</li>
+            <li>自己 clone 仓库、改代码、跑测试</li>
+            <li>在 Slack 里回答人类的问题</li>
+            <li>提交 PR</li>
+          </ul>
+          <p>Devin 发布时有一段 4 分钟的 demo 视频，<strong>整段视频里 Devin 端到端完成了一个真实的 GitHub issue</strong>——从读 issue 到改代码到开 PR，<strong>整个过程没人为干预</strong>。</p>
+          <p>Devin 后续被证明<strong>能力被宣传夸大</strong>——Devin 2024 年 3 月版本在 <strong>SWE-bench Verified 独立评测中通过率约 13%</strong>（与 Cognition 早期宣传的 87% 差距巨大）。但它开启了一整个赛道——<strong>"AI 工程师"作为产品</strong> 成了 2024-2025 年最热的创业方向之一。</p>
+          <h3>2.8.5 2024 年的"框架爆发"</h3>
+          <table>
+            <thead><tr><th>框架</th><th>厂商</th><th>首次发布</th><th>核心范式</th></tr></thead>
+            <tbody>
+              <tr><td><strong>LangChain</strong></td><td>Harrison Chase</td><td>2022.10</td><td>链式调用、工具集成</td></tr>
+              <tr><td><strong>LangGraph</strong></td><td>LangChain</td><td>2024.6</td><td>图状态机工作流</td></tr>
+              <tr><td><strong>AutoGen</strong></td><td>Microsoft</td><td>2023.10 (v0.2)</td><td>对话式多 Agent</td></tr>
+              <tr><td><strong>CrewAI</strong></td><td>CrewAI Inc.</td><td>2023.11</td><td>角色化多 Agent 团队</td></tr>
+              <tr><td><strong>LlamaIndex</strong></td><td>Jerry Liu</td><td>2022.11</td><td>数据/RAG 增强</td></tr>
+              <tr><td><strong>Agno</strong></td><td>Agno</td><td>2024.12</td><td>极简 Pythonic</td></tr>
+              <tr><td><strong>OpenAI Agents SDK</strong></td><td>OpenAI</td><td>2025.3</td><td>OpenAI 官方 SDK</td></tr>
+            </tbody>
+          </table>
+          <p><strong>这 7 个框架将在第 4 章详细对比。</strong></p>
+          <hr>
+          <h2 id="section-2.9">2.9 2025 标准化年：多 Agent 协议 + 企业落地</h2>
+          <p>2025 年是"Agent 协议化"和"企业落地"的双重元年。</p>
+          <h3>2.9.1 OpenAI Operator（2025 年 1 月）</h3>
+          <p>2025 年 1 月 23 日，<strong>OpenAI</strong> 推出 <strong>Operator</strong>——一个基于 GPT-4o / o1 的浏览器内 Agent。Operator 嵌在一个独立的浏览器窗口里，<strong>可以直接操作 Chrome</strong>。</p>
+          <p>Operator 与 Computer Use 的差异：</p>
+          <table>
+            <thead><tr><th>维度</th><th>Computer Use (Anthropic)</th><th>Operator (OpenAI)</th></tr></thead>
+            <tbody>
+              <tr><td>运行环境</td><td>任意操作系统</td><td>浏览器</td></tr>
+              <tr><td>模型</td><td>Claude 3.5 Sonnet</td><td>GPT-4o / o1</td></tr>
+              <tr><td>速度</td><td>较慢（截图思考）</td><td>较快（DOM 操作）</td></tr>
+              <tr><td>适用场景</td><td>系统级任务</td><td>网页任务</td></tr>
+            </tbody>
+          </table>
+          <h3>2.9.2 A2A 协议（2025 年 4 月）</h3>
+          <p>2025 年 4 月，<strong>Google</strong> 联合 50 多家公司（包括 Atlassian、Box、Cohere、Intuit、LangChain、MongoDB、Salesforce、SAP、ServiceNow 等）发布 <strong>Agent2Agent (A2A) Protocol</strong>——<strong>让不同厂商的 Agent 能互相通信</strong>。</p>
+          <p>A2A 提出的"Agent Card"概念类似 OpenAPI 规范——<strong>每个 Agent 公开一个 JSON 描述，别的 Agent 通过 A2A 协议发现并调用它</strong>。到 2025 年底，超过 100 家公司宣布支持 A2A。</p>
+          <p>A2A 与 MCP 互补：</p>
+          <ul>
+            <li><strong>MCP</strong>：Agent <strong>使用</strong> 工具（tool use）</li>
+            <li><strong>A2A</strong>：Agent <strong>调用</strong> Agent（agent-to-agent）</li>
+          </ul>
+          <h3>2.9.3 Google ADK（2025 年 4 月）</h3>
+          <p>2025 年 4 月，Google 发布 <strong>Agent Development Kit (ADK)</strong>——一个开源 Python 框架，让开发者用 Google Gemini 构建多 Agent 系统。ADK 的核心抽象是"Agent as a Function"——Agent 像普通函数一样被组合。</p>
+          <h3>2.9.4 CrewAI 与 LangGraph 成熟</h3>
+          <p>到 2025 年 Q2，<strong>CrewAI</strong> 和 <strong>LangGraph</strong> 成了多 Agent 框架的事实标准：</p>
+          <ul>
+            <li><strong>CrewAI</strong> 强调"角色化"——给每个 Agent 设定 role、goal、backstory</li>
+            <li><strong>LangGraph</strong> 强调"图状态"——把 Agent 工作流建模为有向图</li>
+          </ul>
+          <p>两者代表了"多 Agent" 设计的两种哲学：<strong>CrewAI 是"虚拟团队"、LangGraph 是"工作流引擎"</strong>。</p>
+          <h3>2.9.5 2025 年关键事件时间线</h3>
+          <table>
+            <thead><tr><th>时间</th><th>事件</th></tr></thead>
+            <tbody>
+              <tr><td>2025.1</td><td>OpenAI Operator 发布</td></tr>
+              <tr><td>2025.1</td><td>DeepSeek-R1 发布（推理模型开源）</td></tr>
+              <tr><td>2025.2</td><td>Claude 3.7 Sonnet + Extended Thinking</td></tr>
+              <tr><td>2025.3</td><td>OpenAI Agents SDK 发布</td></tr>
+              <tr><td>2025.4</td><td>Google A2A 协议 + ADK 发布</td></tr>
+              <tr><td>2025.4</td><td>MCP 加入 Linux Foundation</td></tr>
+              <tr><td>2025.5</td><td>Claude Opus 4 / Sonnet 4（2025.5.22）</td></tr>
+              <tr><td>2025.6</td><td>Microsoft Copilot Studio 大规模多 Agent 集成</td></tr>
+              <tr><td>2025.9</td><td>OpenAI o3 / o3-mini</td></tr>
+              <tr><td>2025.11</td><td>Anthropic Claude 4.5 + Skills 体系</td></tr>
+              <tr><td>2025.12</td><td>Google Gemini 3</td></tr>
+            </tbody>
+          </table>
+          <hr>
+          <h2 id="section-2.10">2.10 2026 Agentic AI 元年：复盘与展望</h2>
+          <p>2026 年是本书写作的这一年。截至 2026 年 6 月，我们可以做一次冷静的复盘。</p>
+          <h3>2.10.1 2026 年现状</h3>
+          <p><strong>企业落地</strong>：</p>
+          <ul>
+            <li>客服 Agent：超过 60% 的中大型企业部署了某种"AI 客服"（多数还是 LLM + 规则）</li>
+            <li>研发 Agent：GitHub Copilot、Cursor、Cognition Devin 等被广泛使用</li>
+            <li>数据分析 Agent：NL2SQL 工具在 2025 年后开始稳定落地</li>
+            <li>销售 Agent：相对滞后，但 Outreach、Apollo 等开始集成</li>
+          </ul>
+          <p><strong>关键技术成熟度</strong>：</p>
+          <table>
+            <thead><tr><th>能力</th><th>2023 状态</th><th>2026 状态</th></tr></thead>
+            <tbody>
+              <tr><td>单步工具调用</td><td>可用</td><td>稳定</td></tr>
+              <tr><td>多步规划</td><td>不可靠</td><td>基本可靠</td></tr>
+              <tr><td>长程任务（&gt;30 步）</td><td>不可用</td><td>在受控场景可用</td></tr>
+              <tr><td>多 Agent 协作</td><td>demo</td><td>部分生产可用</td></tr>
+              <tr><td>Computer Use</td><td>没有</td><td>雏形</td></tr>
+              <tr><td>自我反思 / 纠错</td><td>demo</td><td>可用但慢</td></tr>
+              <tr><td>主动 Agent</td><td>没有</td><td>早期实验</td></tr>
+            </tbody>
+          </table>
+          <h3>2.10.2 关键人物</h3>
+          <table>
+            <thead><tr><th>人物</th><th>机构</th><th>关键贡献</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Sam Altman</strong></td><td>OpenAI</td><td>ChatGPT、o1、Operator 推动 LLM Agent 主流化</td></tr>
+              <tr><td><strong>Dario Amodei</strong></td><td>Anthropic</td><td>Claude、Computer Use、MCP</td></tr>
+              <tr><td><strong>Andrew Ng</strong></td><td>Landing AI / DeepLearning.AI</td><td>Agentic AI 概念推广、Agent 设计模式</td></tr>
+              <tr><td><strong>Yann LeCun</strong></td><td>Meta</td><td>JEPA / 世界模型、批评纯 LLM Agent</td></tr>
+              <tr><td><strong>Demis Hassabis</strong></td><td>Google DeepMind</td><td>AlphaGo、AlphaFold、Gemini Agent</td></tr>
+              <tr><td><strong>Harrison Chase</strong></td><td>LangChain</td><td>LangChain、LangGraph</td></tr>
+              <tr><td><strong>Marvin Minsky</strong></td><td>MIT（已故）</td><td>Society of Mind（1986）</td></tr>
+              <tr><td><strong>Joseph Weizenbaum</strong></td><td>MIT（已故）</td><td>ELIZA（1966）</td></tr>
+              <tr><td><strong>Rodney Brooks</strong></td><td>iRobot</td><td>包容架构、行为机器人</td></tr>
+              <tr><td><strong>Pattie Maes</strong></td><td>MIT Media Lab</td><td>自主 Agent（1990s）</td></tr>
+            </tbody>
+          </table>
+          <h3>2.10.3 60 年三次浪潮对比</h3>
+          <table>
+            <thead><tr><th>维度</th><th>第一次（1980s-1990s）</th><th>第二次（2010s）</th><th>第三次（2022-）</th></tr></thead>
+            <tbody>
+              <tr><td>触发</td><td>学术理论（BDI、Agent）</td><td>语音识别 + 移动互联网</td><td>LLM 突破</td></tr>
+              <tr><td>主体</td><td>学术界</td><td>工业界（Siri、Alexa）</td><td>学术界 + 工业界 + 创业</td></tr>
+              <tr><td>主导</td><td>Minsky、Maes、Brooks</td><td>Apple、Amazon、Google</td><td>OpenAI、Anthropic、Google</td></tr>
+              <tr><td>持续时间</td><td>~10 年（80s 末到 90s 末）</td><td>持续至今</td><td>3 年，仍在继续</td></tr>
+              <tr><td>主要批评</td><td>"不够实用"</td><td>"不够智能"</td><td>"不够可靠"</td></tr>
+              <tr><td>主要遗产</td><td>理论框架</td><td>用户习惯</td><td>产品 + 协议</td></tr>
+              <tr><td>是否到达平台期</td><td>是</td><td>是</td><td><strong>否（仍在快速发展）</strong></td></tr>
+            </tbody>
+          </table>
+          <h3>2.10.4 2026 年的判断</h3>
+          <p>我们敢做几个<strong>经过事实检验的判断</strong>：</p>
+          <ol>
+            <li><strong>第三次浪潮是"真的"</strong>。证据是 OpenAI 在 2024 年营收增长超 3 倍、Anthropic 估值 2024 年 5 月达到 600 亿美元、2025 年 2 月再升至 1840 亿美元——<strong>这是真实资本在真实流向 Agent</strong>。</li>
+            <li><strong>但 Agent 还没"通用化"</strong>。2026 年 6 月的 SOTA Agent 在 SWE-bench Verified 上大约 70% 通过率，<strong>离"取代软件工程师"还远</strong>。在长程任务（&gt;1 小时）上的可靠性仍是个开放问题。</li>
+            <li><strong>协议标准化是 2025 年最大的进步</strong>。MCP（工具）+ A2A（Agent 通信）让"组合" Agent 成为可能，<strong>这比单个 Agent 变强的影响更深远</strong>。</li>
+            <li><strong>"Skills 体系"是 2026 年的新趋势</strong>。Anthropic 在 2025 年 11 月推出的 Skills（让 Agent 学习"做事的方法"而不是"一次性的 prompt"）可能会成为下一个爆发点。</li>
+            <li><strong>企业落地远未到饱和</strong>。2026 年的 Agent 应用主要集中在客服、代码、营销，<strong>金融、医疗、法律等强监管行业的 Agent 仍是早期</strong>。</li>
+          </ol>
+          <hr>
+          <h2 id="section-2.11">2.11 本章小结</h2>
+          <ol>
+            <li><strong>Agent 的历史比 LLM 长 56 年</strong>——从 1966 年的 ELIZA 开始，到 2022 年 ChatGPT 才真正点燃第三次浪潮。</li>
+            <li><strong>60 年里"Agent" 这个词的语义变了 5 次</strong>——它是愿景概念，不是技术概念。</li>
+            <li><strong>1960s 的两个里程碑</strong>：ELIZA（对话 Agent 的祖先）和 Shakey（具身 Agent 的祖先）至今仍有现实意义。</li>
+            <li><strong>1980s-1990s 的"智能体理论黄金十年"</strong> 为今天的术语表和架构思想（BDI、合同网、Society of Mind）打下了基础。</li>
+            <li><strong>Siri (2011) 和 Alexa (2014) 不是 Agent</strong>——它们是"命令式助手"，但它们让"和机器对话"成了日常，为 2023 年的 LLM Agent 铺平了心理基础。</li>
+            <li><strong>AlphaGo (2016) 给 Agent 行业最大的礼物是"信心"</strong>——证明"学习 + 搜索" 组合能击败人类顶尖高手。</li>
+            <li><strong>2023 年的 AutoGPT/BabyAGI 是"第一次 Agent 狂热"</strong>——demo 惊艳，产品失败。但它催生了 AgentBench、SWE-bench 等关键评测。</li>
+            <li><strong>2024 年是"落地年"</strong>——Computer Use、o1、MCP、Devin 一起把 Agent 从 demo 推进到产品。</li>
+            <li><strong>2025 年是"标准化年"</strong>——MCP（工具）+ A2A（Agent）+ ADK（开发）三件套让"组合 Agent" 成为可能。</li>
+            <li><strong>2026 年的判断</strong>：第三次浪潮是真的，但 Agent 还没通用化；协议标准化是最大的进步；企业落地远未到饱和。</li>
+          </ol>
+          <hr>
+          <h2 id="section-extra-516">概念速查表</h2>
+          <table>
+            <thead><tr><th>术语</th><th>出处</th><th>一句话定义</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Agent</strong></td><td>1960s 起</td><td>能自主感知、决策、行动的实体</td></tr>
+              <tr><td><strong>ELIZA</strong></td><td>1966, Weizenbaum</td><td>模式匹配聊天程序，ELIZA effect 之源</td></tr>
+              <tr><td><strong>Shakey</strong></td><td>1969, SRI</td><td>第一台会规划的移动机器人</td></tr>
+              <tr><td><strong>STRIPS</strong></td><td>1971, SRI</td><td>经典 AI 规划器</td></tr>
+              <tr><td><strong>Society of Mind</strong></td><td>1986, Minsky</td><td>智能是许多小 Agent 的协作</td></tr>
+              <tr><td><strong>BDI</strong></td><td>1987, Rao &amp; Georgeff</td><td>信念-愿望-意图 Agent 架构</td></tr>
+              <tr><td><strong>Subsumption</strong></td><td>1986, Brooks</td><td>行为机器人学，包容架构</td></tr>
+              <tr><td><strong>Contract Net</strong></td><td>1980, Smith &amp; Davis</td><td>Agent 任务分配协议</td></tr>
+              <tr><td><strong>Siri</strong></td><td>2011, Apple</td><td>第一个消费级语音助手</td></tr>
+              <tr><td><strong>AlphaGo</strong></td><td>2016, DeepMind</td><td>RL + 树搜索战胜人类围棋冠军</td></tr>
+              <tr><td><strong>ChatGPT</strong></td><td>2022, OpenAI</td><td>引发 LLM 浪潮</td></tr>
+              <tr><td><strong>AutoGPT</strong></td><td>2023.3</td><td>第一个"自主循环" Agent</td></tr>
+              <tr><td><strong>BabyAGI</strong></td><td>2023.4</td><td>AutoGPT 的简化版 + 任务列表</td></tr>
+              <tr><td><strong>AgentBench</strong></td><td>2023.7, THU</td><td>综合 Agent 评测</td></tr>
+              <tr><td><strong>SWE-bench</strong></td><td>2023.10, Princeton</td><td>修真实 GitHub issue</td></tr>
+              <tr><td><strong>o1</strong></td><td>2024.9, OpenAI</td><td>第一个会"内部思考"的 LLM</td></tr>
+              <tr><td><strong>Computer Use</strong></td><td>2024.10, Anthropic</td><td>让 Claude 操作计算机</td></tr>
+              <tr><td><strong>MCP</strong></td><td>2024.11, Anthropic</td><td>标准化工具调用协议</td></tr>
+              <tr><td><strong>Devin</strong></td><td>2024.3, Cognition</td><td>"AI 软件工程师"</td></tr>
+              <tr><td><strong>Operator</strong></td><td>2025.1, OpenAI</td><td>浏览器内 Agent</td></tr>
+              <tr><td><strong>A2A</strong></td><td>2025.4, Google</td><td>Agent-to-Agent 通信协议</td></tr>
+              <tr><td><strong>ADK</strong></td><td>2025.4, Google</td><td>Google 官方 Agent 框架</td></tr>
+              <tr><td><strong>Skills</strong></td><td>2025.11, Anthropic</td><td>Agent "做事方法" 体系</td></tr>
+            </tbody>
+          </table>
+          <hr>
+          <h2 id="section-extra-546">进一步阅读</h2>
+          <ol>
+            <li><strong>Weizenbaum, J. (1966).</strong> <em>ELIZA — A Computer Program For the Study of Natural Language Communication Between Man And Machine.</em> Communications of the ACM. — Agent 史起点</li>
+            <li><strong>Nilsson, N. (1984).</strong> <em>Shakey the Robot.</em> SRI Technical Note 323. — 具身 Agent 经典</li>
+            <li><strong>Minsky, M. (1986).</strong> <em>The Society of Mind.</em> — 多 Agent 思想源头</li>
+            <li><strong>Brooks, R. (1991).</strong> <em>Intelligence Without Reason.</em> — 行为机器人学</li>
+            <li><strong>Maes, P. (1994).</strong> <em>Agents that Reduce Work and Information Overload.</em> Communications of the ACM. — 自主 Agent 1990s 经典</li>
+            <li><strong>Silver, D. et al. (2016).</strong> <em>Mastering the game of Go with deep neural networks and tree search.</em> Nature. — AlphaGo 论文</li>
+            <li><strong>Richards, T.B. (2023).</strong> <em>AutoGPT.</em> GitHub. — 自主循环 Agent 开源实现</li>
+            <li><strong>Anthropic (2024.12).</strong> <em>Building Effective Agents.</em> — 当代 Agent 设计哲学</li>
+            <li><strong>Anthropic (2024.10).</strong> <em>Computer Use.</em> — 具身 Agent 工业级里程碑</li>
+            <li><strong>Google (2025.4).</strong> <em>A2A Protocol Specification.</em> — Agent 通信标准</li>
+          </ol>
+          <hr>
+          <h3>下一章预告</h3>
+          <blockquote>第 3 章《Agent 的核心组件——LLM 大脑、记忆、工具、规划》：拆开一个 Agent，看它内部到底由哪几块组成，以及这些组件之间怎么"协同"与"打架"。</blockquote>
+
+
+      </article>
+    </div>
+  </div>
+
+  <!-- ==================== CHAPTER PAGER ==================== -->
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; max-width:920px; margin:40px auto 60px; padding:0 20px;">
+    <a href="ch01.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+      ← 上一章：什么是 AI Agent（第 1 章）
+    </a>
+    <a href="ch03.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">
+      下一章：核心组件（第 3 章，未发布）→
+    </a>
+  </nav>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>
+          一本系统性的 AI Agent 开发中文教材。
+          从 1966 ELIZA 到 2026 多 Agent 协议爆发，
+          覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="ch02.html">第2章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">配套代码</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《AGENT开发从入门到精通》. 保留所有权利.</p>
+      <p>Powered by 🤖 Agentic AI &mdash; 让 LLM 真正"动手做事"</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
