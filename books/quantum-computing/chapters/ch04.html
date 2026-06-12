@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第4章：量子纠缠与贝尔不等式 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第4章：量子纠缠与贝尔不等式 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第一部分 · 量子力学基础</span>
+        <span class="chapter-day-tag">Day 5 · 2026-06-12</span>
+      </div>
+      <h1 class="chapter-title">第 4 章 量子纠缠与贝尔不等式</h1>
+      <p class="chapter-subtitle">从 EPR 思想实验到 Aspect 实验判决——纠缠作为物理事实</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,500 字</span>
+        <span class="stat">🔢 22 公式 / 234 内联</span>
+        <span class="stat">📑 10 节</span>
+        <span class="stat">⏱ ~40 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+
+        <!-- 4.0 引言 -->
+        <h2>4.0 引言</h2>
+        <p>第 3 章我们讲过,一个量子比特可以处于 $\lvert\psi\rangle = \alpha\lvert 0\rangle + \beta\lvert 1\rangle$ 的叠加态。这个"叠加"如果只发生在一个粒子上,我们可以把它看成"单粒子内部的不确定性"——<strong>但如果两个粒子共享一个叠加呢?</strong></p>
+
+        <p>这就是本章的主角:<strong>量子纠缠(quantum entanglement)</strong>。1935 年,爱因斯坦、波多尔斯基、罗森(EPR)在著名的《能认为量子力学对物理实在的描述是完备的吗?》一文中,首次指出了这种"共享叠加"带来的困惑。他们认为,这种"幽灵般的超距作用"(spooky action at a distance)说明量子力学不完备——<strong>一定还隐藏着我们没看到的"隐变量"</strong>。</p>
+
+        <p>30 年后,贝尔(John Stewart Bell)用一个<strong>不等式</strong>把这个哲学争论变成了<strong>可实验判定</strong>的问题。1982 年,阿斯佩(Alain Aspect)等人的实验给出了明确判决:<strong>隐变量不存在,量子力学是对的</strong>。纠缠从此不再是哲学,而是<strong>物理事实</strong>——也是量子计算、量子通信、量子密码学的核心资源。</p>
+
+        <p>学完本章,你将掌握:</p>
+        <ul>
+          <li>纠缠的精确定义:可分态(separable) vs 不可分态(entangled)</li>
+          <li>四种贝尔态(Bell states)的性质</li>
+          <li>EPR 思想实验的精确形式化</li>
+          <li>贝尔不等式(CHSH 形式)的推导与物理意义</li>
+          <li>Aspect 1982 实验及其后续"无漏洞"版本</li>
+          <li>量子隐形传态(quantum teleportation)的雏形——为后续章节铺路</li>
+        </ul>
+
+        <p>这是本书"科普性最高峰"的一章。我们不回避数学,但<strong>所有推导的目的都是让一个直觉问题(纠缠是什么)变得精确</strong>。</p>
+
+        <hr>
+
+        <!-- 4.1 -->
+        <h2>4.1 两体系统:希尔伯特空间是张量积</h2>
+
+        <h3>4.1.1 单粒子回顾</h3>
+        <p>第 2 章我们说过,单粒子量子态的态空间是希尔伯特空间 $\mathcal{H}$——通常取 $\mathbb{C}^n$。最常见的是 $\mathbb{C}^2$ (一个量子比特)。</p>
+
+        <h3>4.1.2 两粒子的态空间:张量积</h3>
+        <p>如果粒子 A 在 $\mathcal{H}_A$ 中,粒子 B 在 $\mathcal{H}_B$ 中,那么<strong>联合系统</strong>的态空间是:</p>
+        <p>$$\mathcal{H}_{AB} = \mathcal{H}_A \otimes \mathcal{H}_B$$</p>
+        <p>具体来说,如果 $\lvert i\rangle_A$ 是 A 的一组基,$\lvert j\rangle_B$ 是 B 的一组基,那么 $\mathcal{H}_{AB}$ 的基是<strong>所有形如</strong> $\lvert i\rangle_A \otimes \lvert j\rangle_B$ 的"乘积态"(product states)。我们经常把 $\lvert i\rangle_A \otimes \lvert j\rangle_B$ 简写为 $\lvert ij\rangle_{AB}$ 或 $\lvert i, j\rangle$。</p>
+        <p><strong>例</strong>:两个量子比特,各取计算基 $\{|0\rangle, |1\rangle\}$。联合态空间是 $\mathbb{C}^2 \otimes \mathbb{C}^2 \cong \mathbb{C}^4$,有 4 个基矢:$\lvert 00\rangle$、$\lvert 01\rangle$、$\lvert 10\rangle$、$\lvert 11\rangle$。</p>
+        <p><strong>关键</strong>:$\mathcal{H}_{AB}$ 的维数是 $\dim \mathcal{H}_A \times \dim \mathcal{H}_B$ (乘积,不是求和)。两 qubit 给出 4 维,十 qubit 给出 $2^{10} = 1024$ 维——这正是量子计算威力的来源。</p>
+
+        <h3>4.1.3 一般的两体态:不一定可分</h3>
+        <p>联合空间 $\mathcal{H}_{AB}$ 中的<strong>任意</strong>态 $\lvert\psi\rangle_{AB}$ 都可以写成这组基的线性组合:</p>
+        <p>$$\lvert\psi\rangle_{AB} = \sum_{i,j} c_{ij} \lvert i\rangle_A \otimes \lvert j\rangle_B, \quad \sum_{i,j} |c_{ij}|^2 = 1$$</p>
+        <p>这里 $c_{ij}$ 是一个 $2 \times 2$ 的复数矩阵(对两 qubit 来说)——这给"纠缠的数学判定"埋下伏笔(见 4.2.2)。</p>
+
+        <h3>4.1.4 指数优势:50 qubit 等于 1000 万亿个经典状态</h3>
+        <p>让这个数字<strong>直观</strong>一点:一个 $n$-qubit 系统的希尔伯特空间是 $\mathbb{C}^{2^n}$,<strong>维数指数增长</strong>。</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>量子比特数 $n$</th><th>态空间维数 $2^n$</th><th>经典等价状态数</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>2</td><td>2</td></tr>
+            <tr><td>10</td><td>1,024</td><td>~10³</td></tr>
+            <tr><td>50</td><td>~$10^{15}$</td><td>千万亿(超过最强超算)</td></tr>
+            <tr><td>100</td><td>~$10^{30}$</td><td>比宇宙原子数还多</td></tr>
+            <tr><td>300</td><td>~$10^{90}$</td><td>比可观测宇宙中粒子数还多</td></tr>
+          </tbody>
+        </table>
+        <p><strong>关键</strong>:一台 50-qubit 量子计算机,它的态矢量<strong>不能</strong>被经典计算机精确表示(需要 $2 \times 2^{50}$ 个复数 ≈ 18 PB 内存)。这就是为什么"量子计算"可能比"经典计算"快——它<strong>自然</strong>在指数大的空间里操作,而经典需要指数多的资源才能描述。</p>
+        <p><strong>警告</strong>:这<strong>不</strong>意味着量子计算机<strong>解决所有问题都指数快</strong>。它只是意味着它在"高维空间里自由移动"。<strong>怎么利用</strong>这个空间(让干涉把正确答案的振幅放大)是算法的核心——Grover、Shor、VQE 等都是这么做的。</p>
+
+        <hr>
+
+        <!-- 4.2 -->
+        <h2>4.2 什么叫"纠缠":可分态 vs 不可分态</h2>
+
+        <h3>4.2.1 可分态(product state)</h3>
+        <p>如果联合态 $\lvert\psi\rangle_{AB}$ 可以写成两个单粒子态的张量积:</p>
+        <p>$$\lvert\psi\rangle_{AB} = \lvert\phi\rangle_A \otimes \lvert\chi\rangle_B$$</p>
+        <p>那么我们说它是一个<strong>可分态(separable state)</strong>,或称<strong>乘积态</strong>。</p>
+        <p><strong>物理意义</strong>:A 和 B 是<strong>独立的</strong>——对 A 的任何测量结果跟 B 完全无关,反之亦然。即使我们在 A 上做测量、塌缩到某个态,B 上的态不受影响(更准确地说,B 的约化密度矩阵不变)。</p>
+        <p><strong>例</strong>:</p>
+        <ul>
+          <li>$\lvert 0\rangle_A \otimes \lvert 0\rangle_B = \lvert 00\rangle$ — 经典意义上的"两个粒子都在 0"</li>
+          <li>$\frac{1}{\sqrt{2}}(\lvert 0\rangle + \lvert 1\rangle)_A \otimes \lvert 0\rangle_B$ — A 处于叠加,B 是确定的 0</li>
+          <li>$\frac{1}{2}(\lvert 00\rangle + \lvert 01\rangle + \lvert 10\rangle + \lvert 11\rangle) = \left(\frac{|0\rangle+|1\rangle}{\sqrt{2}}\right)_A \otimes \left(\frac{|0\rangle+|1\rangle}{\sqrt{2}}\right)_B$ — 两个独立的均匀叠加</li>
+        </ul>
+
+        <h3>4.2.2 不可分态(纠缠态)</h3>
+        <p>如果 $\lvert\psi\rangle_{AB}$ <strong>不能</strong>写成单粒子态的张量积,那么它就是<strong>纠缠态(entangled state)</strong>。</p>
+        <p><strong>最常见的纠缠态——贝尔态</strong>:</p>
+        <p>$$\lvert\Phi^+\rangle = \frac{1}{\sqrt{2}}(\lvert 00\rangle + \lvert 11\rangle)$$</p>
+        <p><strong>直观尝试分离</strong> $\lvert\Phi^+\rangle$:假设 $\lvert\Phi^+\rangle = (a\lvert 0\rangle + b\lvert 1\rangle)_A \otimes (c\lvert 0\rangle + d\lvert 1\rangle)_B$,展开得到:</p>
+        <p>$$ac \lvert 00\rangle + ad \lvert 01\rangle + bc \lvert 10\rangle + bd \lvert 11\rangle$$</p>
+        <p>要让它等于 $\frac{1}{\sqrt{2}}(\lvert 00\rangle + \lvert 11\rangle)$,我们需要 $ad = bc = 0$,但 $ac = bd = 1/\sqrt{2}$——这两者矛盾。所以<strong>贝尔态不可分</strong>。</p>
+
+        <h3>4.2.3 纠缠的算符表达:部分求迹</h3>
+        <p>第 2 章 2.9.4 介绍过:如果合成态 $\lvert\psi\rangle_{AB}$ 是纯态,<strong>如果它纠缠</strong>,那么约化密度矩阵 $\hat{\rho}_A = \text{tr}_B(\lvert\psi\rangle\langle\psi\rvert)$ 是<strong>混合态</strong>。</p>
+        <p><strong>具体计算</strong> 对贝尔态 $\lvert\Phi^+\rangle$:</p>
+        <p>$$\hat{\rho}_{AB} = \frac{1}{2}(\lvert 00\rangle + \lvert 11\rangle)(\langle 00\rvert + \langle 11\rvert) = \frac{1}{2}(\lvert 00\rangle\langle 00\rvert + \lvert 00\rangle\langle 11\rvert + \lvert 11\rangle\langle 00\rvert + \lvert 11\rangle\langle 11\rvert)$$</p>
+        <p>对 B 求迹:</p>
+        <p>$$\hat{\rho}_A = \text{tr}_B(\hat{\rho}_{AB}) = \frac{1}{2}\lvert 0\rangle\langle 0\rvert + \frac{1}{2}\lvert 1\rangle\langle 1\rvert = \frac{I}{2}$$</p>
+        <p>这是<strong>最大混合态</strong>——你<strong>完全不知道</strong> A 的状态($\text{tr}(\hat{\rho}_A^2) = 1/2 < 1$)。但 AB 合起来是<strong>纯态</strong>!</p>
+        <p><strong>反直觉点</strong>:单独看 A,信息全无;<strong>但 AB 之间有完美的关联</strong>——测 A 得 0,一定得 B=0;测 A 得 1,一定得 B=1。这种"完全关联+完全局部无知"正是纠缠的本质。</p>
+
+        <hr>
+
+        <!-- 4.3 -->
+        <h2>4.3 四种贝尔态</h2>
+        <p>利用 4 个泡利矩阵 $\sigma_x, \sigma_y, \sigma_z$ 和恒等 $I$ 的不同本征态组合,可以构造<strong>四类最大纠缠态</strong>:</p>
+        <p>$$
+        \begin{aligned}
+        \lvert\Phi^+\rangle &= \frac{1}{\sqrt{2}}(\lvert 00\rangle + \lvert 11\rangle) \\
+        \lvert\Phi^-\rangle &= \frac{1}{\sqrt{2}}(\lvert 00\rangle - \lvert 11\rangle) \\
+        \lvert\Psi^+\rangle &= \frac{1}{\sqrt{2}}(\lvert 01\rangle + \lvert 10\rangle) \\
+        \lvert\Psi^-\rangle &= \frac{1}{\sqrt{2}}(\lvert 01\rangle - \lvert 10\rangle)
+        \end{aligned}
+        $$</p>
+        <p>这四个态构成 $\mathcal{H}_{AB} = \mathbb{C}^2 \otimes \mathbb{C}^2$ 的一组<strong>正交归一基</strong>(叫做<strong>贝尔基 Bell basis</strong>),跟计算基 $\{|00\rangle, |01\rangle, |10\rangle, |11\rangle\}$ 一样好用。</p>
+        <p><strong>常用制备方法</strong>:</p>
+        <ul>
+          <li>初始 $\lvert 00\rangle$ → 哈达玛门 $H$ 作用在 A 上 → $\frac{1}{\sqrt{2}}(\lvert 0\rangle + \lvert 1\rangle)\lvert 0\rangle$ → CNOT 门(A 控制 B)→ $\frac{1}{\sqrt{2}}(\lvert 00\rangle + \lvert 11\rangle) = \lvert\Phi^+\rangle$</li>
+          <li>这就是<strong>量子电路制造纠缠</strong>的标准流程,第 7 章会详细讲。</li>
+        </ul>
+        <p><strong>四态之间的关系</strong>:</p>
+        <ul>
+          <li>对其中一个 qubit 施加泡利门,可以在四态间相互转换:
+            <ul>
+              <li>$I \otimes \sigma_x \lvert\Phi^+\rangle = \lvert\Psi^+\rangle$</li>
+              <li>$I \otimes \sigma_z \lvert\Phi^+\rangle = \lvert\Phi^-\rangle$</li>
+              <li>$I \otimes i\sigma_y \lvert\Phi^+\rangle = \lvert\Psi^-\rangle$</li>
+            </ul>
+          </li>
+          <li>所以"产生纠缠"是容易的(一次 CNOT 就够),区分四态需要<strong>贝尔态测量</strong>(Bell state measurement, BSM),这是量子隐形传态、量子纠缠交换、超密编码的核心操作。</li>
+        </ul>
+
+        <!-- 4.3 速查表 -->
+        <h4>📋 章末速查:四种贝尔态一览</h4>
+        <table class="concept-table">
+          <thead>
+            <tr><th>贝尔态</th><th>数学形式</th><th>关联特性</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$\lvert\Phi^+\rangle$</td><td>$\frac{1}{\sqrt{2}}(\lvert 00\rangle + \lvert 11\rangle)$</td><td>测 A 得 0 → B 必为 0;测 A 得 1 → B 必为 1</td></tr>
+            <tr><td>$\lvert\Phi^-\rangle$</td><td>$\frac{1}{\sqrt{2}}(\lvert 00\rangle - \lvert 11\rangle)$</td><td>测 A 得 0 → B 必为 0;测 A 得 1 → B 必为 1(相位不同)</td></tr>
+            <tr><td>$\lvert\Psi^+\rangle$</td><td>$\frac{1}{\sqrt{2}}(\lvert 01\rangle + \lvert 10\rangle)$</td><td>测 A 得 0 → B 必为 1;测 A 得 1 → B 必为 0</td></tr>
+            <tr><td>$\lvert\Psi^-\rangle$</td><td>$\frac{1}{\sqrt{2}}(\lvert 01\rangle - \lvert 10\rangle)$</td><td>测 A 得 0 → B 必为 1;测 A 得 1 → B 必为 0(相位不同)</td></tr>
+          </tbody>
+        </table>
+
+        <hr>
+
+        <!-- 4.4 -->
+        <h2>4.4 EPR 思想实验:1935 年的"完备性"质疑</h2>
+
+        <h3>4.4.1 思想实验设置</h3>
+        <p>考虑一个粒子源,产生两个<strong>自旋 1/2</strong> 粒子 A 和 B,沿相反方向飞向两个相距很远的实验室(可以相距几十米、几百米、几公里)。假设它们产生时的联合态是贝尔态 $\lvert\Phi^+\rangle = \frac{1}{\sqrt{2}}(\lvert 00\rangle + \lvert 11\rangle)$。</p>
+
+        <!-- inline SVG 图示 1: EPR 实验装置 -->
+        <figure class="chapter-figure">
+          <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;background:rgba(20,25,55,0.5);border-radius:8px;padding:8px;">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/>
+              </marker>
+              <marker id="arrow-dim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#a78bfa" opacity="0.6"/>
+              </marker>
+            </defs>
+            <!-- 源 S -->
+            <circle cx="360" cy="110" r="32" fill="none" stroke="#a78bfa" stroke-width="2.5"/>
+            <text x="360" y="116" text-anchor="middle" fill="#a78bfa" font-size="20" font-family="serif" font-weight="bold">S</text>
+            <text x="360" y="160" text-anchor="middle" fill="#94a3b8" font-size="13">纠缠源 |Φ⁺⟩</text>
+
+            <!-- 飞向 Alice 的箭头 -->
+            <line x1="330" y1="105" x2="100" y2="105" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow)"/>
+            <!-- 飞向 Bob 的箭头 -->
+            <line x1="390" y1="105" x2="620" y2="105" stroke="#7dd3fc" stroke-width="2" marker-end="url(#arrow)"/>
+
+            <!-- Alice 端 -->
+            <rect x="40" y="70" width="80" height="70" rx="8" fill="rgba(125,211,252,0.12)" stroke="#7dd3fc" stroke-width="2"/>
+            <text x="80" y="100" text-anchor="middle" fill="#7dd3fc" font-size="16" font-weight="bold">Alice</text>
+            <text x="80" y="120" text-anchor="middle" fill="#cbd5e1" font-size="12">自旋测量</text>
+
+            <!-- Bob 端 -->
+            <rect x="600" y="70" width="80" height="70" rx="8" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" stroke-width="2"/>
+            <text x="640" y="100" text-anchor="middle" fill="#a78bfa" font-size="16" font-weight="bold">Bob</text>
+            <text x="640" y="120" text-anchor="middle" fill="#cbd5e1" font-size="12">自旋测量</text>
+
+            <!-- 距离标注 -->
+            <line x1="120" y1="170" x2="600" y2="170" stroke="#64748b" stroke-width="1" stroke-dasharray="4 3"/>
+            <text x="360" y="190" text-anchor="middle" fill="#94a3b8" font-size="12">距离 L(几十米 ~ 几公里)</text>
+
+            <!-- 标签 A / B 粒子 -->
+            <text x="200" y="100" text-anchor="middle" fill="#fef3c7" font-size="14" font-weight="bold">|A⟩</text>
+            <text x="520" y="100" text-anchor="middle" fill="#fef3c7" font-size="14" font-weight="bold">|B⟩</text>
+          </svg>
+          <figcaption>图 4.1:EPR 思想实验装置。源 S 在中央产生纠缠粒子对,A 飞向 Alice(左),B 飞向 Bob(右)。两实验室距离任意远。</figcaption>
+        </figure>
+
+        <h3>4.4.2 量子力学的预测</h3>
+        <p>如果 Alice 沿 $z$ 方向测 A 的自旋:</p>
+        <ul>
+          <li>50% 概率得 $\lvert 0\rangle$ → 联合态塌缩到 $\lvert 00\rangle$ → <strong>B 一定也是 $\lvert 0\rangle$</strong></li>
+          <li>50% 概率得 $\lvert 1\rangle$ → 联合态塌缩到 $\lvert 11\rangle$ → <strong>B 一定也是 $\lvert 1\rangle$</strong></li>
+        </ul>
+        <p>类似地,如果 Alice 沿 $x$ 方向测 A 的自旋(需要先做 $H$ 门把 $x$ 基转到 $z$ 基再测):</p>
+        <ul>
+          <li>B 仍然以 50/50 得到 $0$ 或 $1$,<strong>且与 A 完全关联</strong>。</li>
+        </ul>
+        <p><strong>关键</strong>:无论 Alice 选 $z$ 还是 $x$ 方向,B 的测量结果都跟 A <strong>完美关联</strong>。这意味着 <strong>A 和 B 之间有某种"跨越空间的关联"</strong>。</p>
+
+        <h3>4.4.3 爱因斯坦的质疑:不完备</h3>
+        <p>EPR 论文(1935)的核心论证:</p>
+        <ol>
+          <li><strong>实在性元素</strong>:如果能在不扰动系统的情况下<strong>确定地预言</strong>某物理量的值,那么这个量对应一个"实在性元素"(element of reality)</li>
+          <li><strong>定域性</strong>:如果两次测量在类空分离(无因果联系),那么对 B 的测量不应影响 A</li>
+        </ol>
+        <p>EPR 的论证:在 Alice 选择 $z$ 测量的瞬间,<strong>B 沿 $z$ 方向的自旋就已经确定</strong>(否则 Alice 怎么能"在不扰动 B 的情况下"确定知道 B 的 $z$ 分量?)。同理,Alice 选 $x$ 测量时,B 沿 $x$ 方向的自旋<strong>也已经确定</strong>。所以 B <strong>同时</strong>有确定的 $z$ 和 $x$ 分量——但量子力学说 $\sigma_x, \sigma_z$ 不对易,不能同时有确定值!</p>
+        <p><strong>EPR 的结论</strong>:量子力学的描述<strong>不完备</strong>。一定存在"隐变量"(hidden variables)——一些我们没看到的物理量——预先编码了 A 和 B 的所有结果。<strong>纠缠只是我们无知</strong>(类似经典硬币的 50/50)。</p>
+        <p>爱因斯坦称之为"幽灵般的超距作用",并坚信<strong>真实世界不可能这样运作</strong>。</p>
+
+        <h3>4.4.4 玻尔的回应:互补性</h3>
+        <p>玻尔(1935)的反驳立场:量子力学的形式是自洽的,问题出在 EPR 对"物理实在"的定义过于经典。在量子世界,<strong>测量装置的选择本身</strong>就是物理实在的一部分,不能脱离上下文谈"客观属性"。</p>
+        <p>玻尔用<strong>互补性(complementarity)</strong> 概念回应:EPR 论点暗中假设了"客观属性独立于测量",但<strong>波动性</strong>和<strong>粒子性</strong>是互补的——你选择了一种测量装置(比如用狭缝看干涉),就<strong>同时决定了</strong>你看不到"哪条路"(粒子性)。物理量的"实在性"是<strong>语境化的</strong>——它跟测量设置绑定,而不是独立于测量存在。</p>
+        <p>这个争论哲学上很有意思,但<strong>实验上不可判定</strong>——它停留在诠释层面。</p>
+        <blockquote class="chapter-quote">30 年后,贝尔把这个哲学争论变成了<strong>可实验检验的物理问题</strong>。</blockquote>
+
+        <h3>4.4.5 玻姆版本:让 EPR 更"可实验"</h3>
+        <p>1960 年代,玻姆(David Bohm) 把 EPR 思想实验<strong>具体化</strong>为<strong>两自旋 1/2 粒子</strong>的版本:考虑一个<strong>自旋单态(singlet)</strong></p>
+        <p>$$\lvert S \rangle = \frac{1}{\sqrt{2}}(\lvert \uparrow\downarrow\rangle - \lvert \downarrow\uparrow\rangle)$$</p>
+        <p>这个态的"反关联"性质:沿任何方向测量,两粒子结果<strong>严格相反</strong>。这个版本是后来贝尔不等式实验(Aspect 1982 等)直接使用的形式。</p>
+        <p><strong>注</strong>:$\lvert S \rangle$ 跟 4.3 节的 $\lvert\Psi^-\rangle = \frac{1}{\sqrt{2}}(\lvert 01\rangle - \lvert 10\rangle)$ 形式上一样(只是基矢标签 $\uparrow/\downarrow$ vs $1/0$ 略有不同)——它也是四贝尔态之一,只是带"反关联"特性。</p>
+
+        <h3>4.4.6 不可克隆定理:为什么 EPR 论证让人不安</h3>
+        <p>EPR 论点还有一层更深的物理意义,跟<strong>量子不可克隆定理(no-cloning theorem)</strong> 有关。</p>
+        <p><strong>Wootters-Zurek 定理(1982)</strong>:对<strong>未知</strong>量子态 $\lvert\psi\rangle$,<strong>不存在</strong>通用物理过程能产生 $\lvert\psi\rangle \otimes \lvert\psi\rangle$——也就是说,<strong>量子态不能被完美复制</strong>。</p>
+        <p>直觉证明:假设存在酉算符 $U$ 使得 $U(\lvert\psi\rangle \otimes \lvert 0\rangle) = \lvert\psi\rangle \otimes \lvert\psi\rangle$。那么对<strong>任意</strong>两态 $\lvert\psi\rangle, \lvert\phi\rangle$:</p>
+        <p>$$
+        U(\lvert\psi\rangle \otimes \lvert 0\rangle) = \lvert\psi\rangle \otimes \lvert\psi\rangle \\
+        U(\lvert\phi\rangle \otimes \lvert 0\rangle) = \lvert\phi\rangle \otimes \lvert\phi\rangle
+        $$</p>
+        <p>但因为 $U$ 是酉的,<strong>内积不变</strong>:</p>
+        <p>$$\langle \psi \rvert \phi \rangle = \langle \psi \rvert \phi \rangle^2$$</p>
+        <p>要使这个对<strong>所有</strong> $\lvert\psi\rangle, \lvert\phi\rangle$ 成立,只有 $\langle \psi \rvert \phi \rangle = 0$ 或 $1$——即"任意两态都能被克隆"<strong>矛盾</strong>。</p>
+        <p><strong>跟 EPR 的关系</strong>:Alice 想"复制"未知态 $\lvert\psi\rangle$ 给 Bob——这在量子力学里<strong>严格不可能</strong>。这就是为什么 EPR 论证让人<strong>不安</strong>:如果 Alice 能"瞬时知道" Bob 那一半的某个分量,而 Bob 那边又<strong>严格地无法被复制</strong>——那么"信息"在某种意义上必须<strong>已经存在</strong>于 Bob 那里(无论 Alice 是否测量),还是它"瞬时创造"?</p>
+        <p>EPR 取前者(隐变量),贝尔不等式实验取后者(量子关联是真实物理),<strong>两者等价</strong>——只要量子力学是对的。</p>
+
+        <hr>
+
+        <!-- 4.5 -->
+        <h2>4.5 贝尔不等式:CHSH 形式</h2>
+
+        <h3>4.5.1 隐变量假设的形式化</h3>
+        <p>贝尔(1964)的思路:<strong>假设</strong>有隐变量 $\lambda$ 决定了 Alice 和 Bob 的所有测量结果。具体来说:</p>
+        <ul>
+          <li>当 Alice 选测量方向 $\mathbf{a}$ 时,她的结果 $A(\mathbf{a}, \lambda) = \pm 1$</li>
+          <li>当 Bob 选测量方向 $\mathbf{b}$ 时,他的结果 $B(\mathbf{b}, \lambda) = \pm 1$</li>
+          <li>$\lambda$ 在粒子产生时被随机赋值,以后固定</li>
+        </ul>
+        <p><strong>定域性要求</strong>:$A$ 不依赖于 Bob 选什么方向;$B$ 不依赖于 Alice 选什么方向(在隐变量已经被确定后)。</p>
+
+        <h3>4.5.2 CHSH 不等式</h3>
+        <p>Clauser-Horne-Shimony-Holt (1969) 把贝尔的原始推导推广成一个<strong>易于实验检验</strong>的形式:</p>
+        <p>Alice 选方向 $\mathbf{a}$ 或 $\mathbf{a}'$;Bob 选方向 $\mathbf{b}$ 或 $\mathbf{b}'$。定义<strong>关联函数</strong>:</p>
+        <p>$$E(\mathbf{a}, \mathbf{b}) = \langle A(\mathbf{a}) B(\mathbf{b}) \rangle$$</p>
+        <p>其中 $\langle\cdot\rangle$ 是对多次实验(或对隐变量 $\lambda$)的平均。<strong>注意</strong>:关联函数是两个"独立选择的实验结果"乘积的平均——它测量的是<strong>统计关联</strong>的强度,不是单次实验的细节。</p>
+        <p><strong>CHSH 量</strong>:</p>
+        <p>$$S = E(\mathbf{a}, \mathbf{b}) - E(\mathbf{a}, \mathbf{b}') + E(\mathbf{a}', \mathbf{b}) + E(\mathbf{a}', \mathbf{b}')$$</p>
+        <p><strong>贝尔(CHSH)不等式</strong>:在任何定域隐变量理论中,</p>
+        <p>$$|S| \le 2$$</p>
+        <blockquote class="chapter-quote"><strong>直觉推导</strong>:对<strong>单次</strong>实验,定义 $C = A(\mathbf{a})[B(\mathbf{b}) - B(\mathbf{b}')] + A(\mathbf{a}')[B(\mathbf{b}) + B(\mathbf{b}')]$。由于 $A, B$ 各取 $\pm 1$,括号里每个因子 $\in \{-2, 0, +2\}$,所以 $|C| = 2$。对 $\lambda$ 取平均后 $|S| = |\langle C\rangle| \le \langle |C| \rangle = 2$。<strong>关键</strong>:在定域隐变量里,每次实验有<strong>确定</strong>的 $A(\mathbf{a}, \lambda), B(\mathbf{b}, \lambda)$(虽然我们不知道),因此 $C$ 每次都恰好等于 $\pm 2$,平均后 $|S| \le 2$。</blockquote>
+        <p><strong>这为什么"深刻"</strong>:CHSH 不等式把"是否存在隐变量"从哲学层面拉到了<strong>实验室</strong>层面——你只需要测 4 个关联函数,看 $S$ 是否大于 2 即可。<strong>没有引号,没有诠释,只有数字</strong>。</p>
+
+        <h3>4.5.3 量子力学的预测:违反贝尔不等式</h3>
+        <p>对贝尔态 $\lvert\Phi^+\rangle$,量子力学计算(假设测量是沿任意单位矢量 $\mathbf{a}, \mathbf{b}$ 方向的自旋测量)给出:</p>
+        <p>$$E(\mathbf{a}, \mathbf{b}) = -\mathbf{a} \cdot \mathbf{b}$$</p>
+        <p>如果选<strong>最优方向</strong>(例如 $\mathbf{a}, \mathbf{a}'$ 夹角 45°,$\mathbf{b}, \mathbf{b}'$ 夹角 45°,且 $\mathbf{a}, \mathbf{b}$ 夹角 22.5°),计算给出:</p>
+        <p>$$S = 2\sqrt{2} \approx 2.83$$</p>
+        <p><strong>$S = 2\sqrt{2}$ 叫做 Tsirelson 边界</strong>——量子力学允许的最大值,严格大于定域隐变量上限 2。</p>
+        <p><strong>经典直觉</strong>:对每个 $(\mathbf{a}, \mathbf{a}', \mathbf{b}, \mathbf{b}')$ 的"确定赋值"组合,$S$ 永远 $\le 2$。<strong>量子关联</strong>则能"作弊"到 $2\sqrt{2}$。</p>
+
+        <h3>4.5.4 图示:CHSH 几何</h3>
+
+        <!-- inline SVG 图示 2: CHSH 几何 -->
+        <figure class="chapter-figure">
+          <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;background:rgba(20,25,55,0.5);border-radius:8px;padding:8px;">
+            <defs>
+              <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+              </marker>
+            </defs>
+            <!-- 坐标轴 -->
+            <line x1="50" y1="280" x2="560" y2="280" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow2)"/>
+            <line x1="300" y1="310" x2="300" y2="30" stroke="#94a3b8" stroke-width="1" marker-end="url(#arrow2)"/>
+            <text x="555" y="305" text-anchor="end" fill="#94a3b8" font-size="12">E(a, b)</text>
+            <text x="315" y="40" fill="#94a3b8" font-size="12">E(a, b')</text>
+
+            <!-- 经典盒(4 个角) -->
+            <rect x="200" y="80" width="200" height="200" fill="none" stroke="#f87171" stroke-width="2.5" stroke-dasharray="6 3"/>
+            <circle cx="200" cy="80" r="6" fill="#f87171"/>
+            <circle cx="400" cy="80" r="6" fill="#f87171"/>
+            <circle cx="200" cy="280" r="6" fill="#f87171"/>
+            <circle cx="400" cy="280" r="6" fill="#f87171"/>
+            <text x="430" y="85" fill="#f87171" font-size="13" font-weight="bold">经典盒</text>
+            <text x="430" y="100" fill="#fca5a5" font-size="11">|S| ≤ 2</text>
+            <text x="430" y="115" fill="#fca5a5" font-size="11">4 角 ±1</text>
+
+            <!-- 量子圆 -->
+            <circle cx="300" cy="180" r="141" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="3 2"/>
+            <text x="300" y="20" text-anchor="middle" fill="#34d399" font-size="14" font-weight="bold">量子可达圆</text>
+            <text x="300" y="36" text-anchor="middle" fill="#6ee7b7" font-size="11">|S| ≤ 2√2 (Tsirelson 边界)</text>
+            <text x="300" y="50" text-anchor="middle" fill="#6ee7b7" font-size="11">E²(a,b) + E²(a,b') = 1</text>
+
+            <!-- 对角线 2√2 ≈ 282.84px(画 280 示意) -->
+            <line x1="100" y1="180" x2="500" y2="180" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="2 2" opacity="0.6"/>
+            <text x="300" y="175" text-anchor="middle" fill="#a78bfa" font-size="10">对角线 2√2 ≈ 2.83</text>
+          </svg>
+          <figcaption>图 4.2:CHSH 关联平面上的"经典盒" vs "量子盒"。红色方块 4 角是定域隐变量的可达值,绿色圆周是量子关联的可达值。</figcaption>
+        </figure>
+
+        <p><strong>几何直觉</strong>:CHSH 不等式 $|S| \le 2$ 可以用 <strong>Bell 盒的几何</strong> 来可视化。考虑一个二维"关联平面",其坐标是 $(E(\mathbf{a}, \mathbf{b}), E(\mathbf{a}, \mathbf{b}'))$。对定域隐变量,每次实验产生一个<strong>确定点</strong> $(A(\mathbf{a})B(\mathbf{b}), A(\mathbf{a})B(\mathbf{b}')) = (\pm 1, \pm 1)$——也就是说,关联平面上的可能点只有 4 个<strong>角</strong> $(\pm 1, \pm 1)$。任何定域隐变量理论的 CHSH 量 $|S| \le 2$ 来自"凸包"的 4 个角的限制。</p>
+        <p>而对量子关联 $E(\mathbf{a}, \mathbf{b}) = -\mathbf{a} \cdot \mathbf{b}$(贝尔态对应的关联函数),<strong>关联平面上的可达区域是一个圆</strong> $E^2(\mathbf{a}, \mathbf{b}) + E^2(\mathbf{a}, \mathbf{b}') = 1$——这个圆的"凸包"对角线长度为 $2\sqrt{2}$,正好给出 Tsirelson 边界。</p>
+
+        <hr>
+
+        <!-- 4.6 -->
+        <h2>4.6 实验判决:Aspect 1982 及后续</h2>
+
+        <h3>4.6.1 Aspect 实验(1982)</h3>
+        <p>阿斯佩(Alain Aspect)等人的实验是<strong>第一个严格验证贝尔不等式违反</strong>的实验,用的是钙原子级联跃迁产生的纠缠光子对,飞向两个偏振分析器(间隔 12 米)。</p>
+        <p><strong>结果</strong>:在最优方向上,实验测得 $S \approx 2.70$,<strong>与量子力学预测一致</strong>,<strong>违反经典上限 2</strong>——隐变量假说被否决。</p>
+
+        <h3>4.6.2 三大漏洞</h3>
+        <p>Aspect 实验虽然有说服力,但还有三个<strong>潜在漏洞</strong>:</p>
+        <ol>
+          <li><strong>定域性漏洞(locality loophole)</strong>:两个偏振分析器的方向<strong>是否在光子飞行途中才被选定</strong>?Aspect 用的是周期性切换的偏振器(每 10 ns 切换一次),但严格说切换是"准周期"的,且光子的飞行时间(~40 ns)与切换时间相当,有人认为不够严格。</li>
+          <li><strong>检测漏洞(detection loophole)</strong>:真实探测器的效率有限(&lt; 30%),如果丢失的光子"恰好是那些违反贝尔不等式的",<strong>结论可能不成立</strong>——这叫"公平抽样假设"(fair sampling assumption)。</li>
+          <li><strong>自由选择漏洞(freedom-of-choice loophole)</strong>:Alice 和 Bob 的"随机"方向选择可能受某种共同的"前因"影响(虽然是弱论证)。</li>
+        </ol>
+
+        <h3>4.6.3 后续"无漏洞"实验</h3>
+        <p>21 世纪以来,多个实验同时关闭了多个漏洞:</p>
+        <ul>
+          <li><strong>2015 年 Hensen et al. (Delft)</strong>:用 NV 色心 + 纠缠光子,定域性 + 检测同时关闭</li>
+          <li><strong>2015 年 Shalm et al. (NIST)</strong>:高效探测器(~75%) 关闭检测漏洞</li>
+          <li><strong>2017 年</strong> 多个团队:<strong>"宇宙大尺度"自由选择漏洞</strong>——用遥远类星体的光来决定测量方向,排除任何"前因"</li>
+        </ul>
+        <p><strong>共识</strong>:贝尔不等式的违反已经<strong>严格地、无可争议地</strong>被验证。<strong>定域隐变量理论被否决</strong>。</p>
+
+        <p><strong>几个里程碑实验的数据对比</strong>:</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>实验</th><th>年份</th><th>测得 S</th><th>量子预测</th><th>标准差倍数</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Aspect (Orsay)</td><td>1982</td><td>2.697 ± 0.015</td><td>2.828</td><td>~9σ</td></tr>
+            <tr><td>Weihs (Innsbruck)</td><td>1998</td><td>2.73 ± 0.02</td><td>2.828</td><td>~16σ</td></tr>
+            <tr><td>Hensen (Delft)</td><td>2015</td><td>2.42 ± 0.20</td><td>2.828</td><td>~2σ (无漏洞版)</td></tr>
+            <tr><td>Shalm (NIST)</td><td>2015</td><td>2.41 ± 0.18</td><td>2.828</td><td>~2.4σ</td></tr>
+            <tr><td>Handsteiner (维也纳)</td><td>2017</td><td>2.50 ± 0.18</td><td>2.828</td><td>~1.8σ (宇宙尺度自由选择)</td></tr>
+          </tbody>
+        </table>
+        <blockquote class="chapter-quote"><strong>注</strong>:$\sigma$ 数看起来"小",是因为这些新一代实验要在更严格条件下同时关闭多个漏洞,系统误差更大。<strong>重要的是</strong>——所有实验都跟量子预测一致,跟 $S=2$ 的经典上限至少差 $7\sigma$ 以上。σ 是标准差,9σ 表示偏离量子预测的概率 $p \sim 10^{-19}$。</blockquote>
+
+        <h3>4.6.4 留下的疑问:非局域性的精确含义</h3>
+        <p>贝尔不等式的违反告诉我们:<strong>任何定域隐变量都不可能</strong>。但它<strong>没有</strong>告诉我们:</p>
+        <ul>
+          <li>量子关联是否允许"超光速通信"?(答:<strong>不能</strong>——no-signaling 定理保证,见 4.7.3)</li>
+          <li>量子关联的"非局域性"具体意味着什么?(物理学家仍在争论)</li>
+        </ul>
+        <p><strong>主流诠释</strong>(哥本哈根):测量导致态塌缩,但塌缩<strong>不传递可用信息</strong>——所以与相对论不矛盾。</p>
+        <p><strong>主流诠释</strong>(多世界):不存在"塌缩",所有结果都在平行世界实现——非局域性是表象。</p>
+        <p><strong>主流诠释</strong>(玻姆力学):保留隐变量,但<strong>放弃定域性</strong>——非局域的隐变量。</p>
+
+        <h3>4.6.5 量子非局域性的"量化"</h3>
+        <p>贝尔不等式的违反是一种<strong>二元</strong>判决(满足/不满足)。但<strong>违反多少</strong>也是有意义的物理量。</p>
+        <p><strong>CHSH 违反强度</strong> $\Delta = |S_{\text{exp}}| - 2$。Aspect 1982 测得 $\Delta \approx 0.70$;2015 年 Hensen 测得 $\Delta = 0.74$, 跟 Tsirelson 边界 $\Delta_{\max} = 2\sqrt{2} - 2 \approx 0.83$ 越来越接近。</p>
+        <p><strong>多体推广</strong>:对 $N$ 体系统,有<strong>多个不同的贝尔不等式</strong>:</p>
+        <ul>
+          <li><strong>Mermin-Ardehali-Belinskii (MAB)</strong> 不等式:对 $N$ qubit 系统,量子力学违反随 $N$ 指数增长</li>
+          <li><strong>Svetlichny 不等式</strong>:检测"真正多体非局域性"(三体或更多粒子的非局域性,不只是"两两关联")</li>
+        </ul>
+        <p>这些不深入——它们展示的是<strong>贝尔非局域性在不同尺度系统中的丰富结构</strong>。第 15 章复杂性理论会再回到"非局域性 + 复杂度"的连接。</p>
+
+        <hr>
+
+        <!-- 4.7 -->
+        <h2>4.7 纠缠的物理意义</h2>
+
+        <h3>4.7.1 不可分解性:不能写成子系统态的张量积</h3>
+        <p>这是<strong>定义</strong>——但也是<strong>核心</strong>。纠缠态<strong>不存在"子系统属性"</strong>——单独谈 A 的态是<strong>没有意义的</strong>。这种"非个体性"是量子世界跟经典世界最深刻的区别之一。</p>
+
+        <h3>4.7.2 非局域性:贝尔关联的物理内容</h3>
+        <p>贝尔不等式的违反是<strong>可实验验证的非局域性</strong>——经典定域实在论无法再现。但要注意:这种非局域性是<strong>统计的</strong>(关联函数),<strong>不传递信号</strong>(见 4.7.3)。</p>
+
+        <h3>4.7.3 No-signaling 定理:纠缠不违反相对论</h3>
+        <p><strong>重要</strong>:即使 A 和 B 共享纠缠态,<strong>Alice 选择不同的测量方向</strong>并不能让 Bob 看到不同的统计分布。Bob 一侧的约化密度矩阵 $\hat{\rho}_B = \text{tr}_A(\hat{\rho}_{AB})$ 跟 Alice 选什么<strong>完全无关</strong>——所以 Bob <strong>无法察觉</strong> Alice 在做什么。</p>
+        <p><strong>形式化</strong>(对贝尔态):</p>
+        <p>$$\hat{\rho}_B = \text{tr}_A(\lvert\Phi^+\rangle\langle\Phi^+\rvert) = \frac{I}{2}$$</p>
+        <p>无论 Alice 测不测、沿哪个方向测——Bob 这边的密度矩阵<strong>永远是最大混合态</strong>。所以<strong>没有超光速信号</strong>。</p>
+        <blockquote class="chapter-quote"><strong>注意</strong>:虽然 no-signaling 成立,但<strong>关联</strong>(correlation)是非局域的——Alice 测得 0 之后,她<strong>知道</strong> Bob 一定测得 0(但 Bob 测得 0 之前<strong>不知道</strong>自己会得 0,直到自己测)。<strong>信息在 Alice 测之前没有传递</strong>——所以不违反相对论,但关联<strong>是真实的</strong>。</blockquote>
+        <p><strong>形式化 no-signaling 证明</strong>:对贝尔态 $\lvert\Phi^+\rangle_{AB}$,Bob 的约化密度矩阵</p>
+        <p>$$\hat{\rho}_B = \text{tr}_A(\lvert\Phi^+\rangle\langle\Phi^+\rvert) = \frac{1}{2}\lvert 0\rangle\langle 0\rvert + \frac{1}{2}\lvert 1\rangle\langle 1\rvert = \frac{I}{2}$$</p>
+        <p>无论 Alice 是否测量(测 $\sigma_z, \sigma_x$ 或者不测)都<strong>不变</strong>。所以 Bob 这边的物理预测完全一样——<strong>他无法察觉 Alice 是否在测量</strong>。这是 no-signaling 的<strong>完整证明</strong>。</p>
+        <p><strong>为什么这件事不平凡</strong>:直觉上,Alice 测 $\sigma_z$ 时 Bob 的态"应该是" $\lvert 0\rangle$ 或 $\lvert 1\rangle$,Alice 测 $\sigma_x$ 时 Bob 的态"应该是" $\lvert +\rangle$ 或 $\lvert -\rangle$——如果是这样,Bob 的统计分布会变!但实际计算显示<strong>两种情况下 Bob 看到的是同一个</strong> $\hat{\rho}_B = I/2$——因为 Alice 的测量结果<strong>对 Bob 来说</strong>仍是随机的(50/50),只是<strong>和 Alice 测的结果相关</strong>(完美关联)。</p>
+
+        <h3>4.7.4 纠缠的"度量"</h3>
+        <p>对两 qubit 纯态,纠缠度可以用<strong>concurrence</strong> 或<strong>熵</strong>度量。但我们这里不深入——第 14 章量子信息论会详细讲。</p>
+
+        <h3>4.7.5 纠缠作为资源</h3>
+        <p>纠缠<strong>不仅仅是哲学问题</strong>——它是<strong>可计算的资源</strong>。对两 qubit 纯态,<strong>Schmidt 分解</strong>给出一个简洁的描述:对任何两体纯态 $\lvert\psi\rangle_{AB}$,存在正交基 $\{|u_i\rangle_A\}, \{|v_i\rangle_B\}$ 和正实数 $\lambda_i$ 使得</p>
+        <p>$$\lvert\psi\rangle_{AB} = \sum_i \sqrt{\lambda_i} \lvert u_i\rangle_A \otimes \lvert v_i\rangle_B, \quad \sum_i \lambda_i = 1$$</p>
+        <p>$\lambda_i$ 叫<strong>Schmidt 系数</strong>。<strong>Schmidt 秩</strong>是 $\lambda_i > 0$ 的个数——纠缠态的 Schmidt 秩 $\ge 2$,可分态的 Schmidt 秩 = 1。</p>
+        <p><strong>纠缠熵</strong>(von Neumann 熵)定义为</p>
+        <p>$$E(\lvert\psi\rangle) = -\sum_i \lambda_i \log_2 \lambda_i$$</p>
+        <p>对最大纠缠态(如 $\lvert\Phi^+\rangle$),$\lambda_1 = \lambda_2 = 1/2$,所以 $E = 1$ bit。对可分态,$E = 0$。这个熵度量<strong>转化成多少经典比特</strong>可以描述这个纠缠(粗略地说)。</p>
+
+        <h3>4.7.6 为什么经典物理没有纠缠</h3>
+        <p>这是一个值得回答的问题:在经典力学里,两粒子系统的态是 $(x_1, p_1, x_2, p_2)$,<strong>总可以</strong>写成 $(x_1, p_1) \otimes (x_2, p_2)$——也就是说,经典态<strong>总是可分的</strong>。为什么量子力学就不行?</p>
+        <p><strong>根本原因</strong>:量子力学的态空间是希尔伯特空间,具有<strong>线性结构</strong>——所以两粒子态可以是非平凡的线性组合(就像 $\frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)$)。而经典物理的相空间是 $\mathbb{R}^{2N}$ 上的一个<strong>点</strong>(不具有线性结构),所以两粒子"态"始终是两个单粒子态的笛卡尔积。</p>
+        <p><strong>反过来</strong>:如果让经典概率有"复振幅",经典概率论就<strong>自动变成量子力学</strong>——这是 Feynman 路径积分的精华:经典物理是"破坏性干涉极限下的量子力学"(路径求和中的相位全部对齐,没有干涉)。</p>
+        <p><strong>哲学含义</strong>:纠缠不是"量子力学的奇怪特征",而是<strong>线性 + 复数</strong>这两个假设的自然结果。如果你接受希尔伯特空间 + 复概率幅,纠缠就<strong>不可避免</strong>。</p>
+
+        <h3>4.7.7 贯穿举例:三粒子 GHZ 态的"非局域性"</h3>
+        <p>纠缠的最强展示不是两粒子,而是<strong>三粒子 GHZ 态</strong>(Greenberger-Horne-Zeilinger, 1989):</p>
+        <p>$$\lvert GHZ \rangle = \frac{1}{\sqrt{2}}(\lvert 000\rangle + \lvert 111\rangle)$$</p>
+        <p><strong>神奇性质</strong>:这个态不能用"两两纠缠 + 经典随机"来解释——它是<strong>真正三体</strong>的纠缠(对三 qubit 系统,GHZ 态被 Svetlichny 不等式判定为"三体非局域")。</p>
+        <p><strong>直觉</strong>:三粒子 A, B, C 各取 $\sigma_x$ 测量,量子力学预测 $\sigma_x^A \sigma_x^B \sigma_x^C = +1$(总是)。三粒子各取 $\sigma_y$ 测量,也得到 $\sigma_y^A \sigma_y^B \sigma_y^C = +1$(总是)。但<strong>任何</strong>定域隐变量理论都不能同时满足这两个条件(经典盒子容不下三粒子完美关联)。这叫"GHZ 定理"——贝尔不等式的<strong>无不等式</strong>版本。</p>
+        <p>GHZ 态在量子算法里有应用(纠错、分布式计算、量子互联网),第 17、26 章会再讲。</p>
+
+        <hr>
+
+        <!-- 4.8 -->
+        <h2>4.8 量子算法里的纠缠:Bell 测量与量子隐形传态</h2>
+
+        <h3>4.8.1 贝尔态测量(Bell State Measurement, BSM)</h3>
+        <p>给定两个 qubit,<strong>能否区分</strong>四种贝尔态 $\lvert\Phi^\pm\rangle$、$\lvert\Psi^\pm\rangle$?</p>
+        <p>答案是<strong>可以,但需要辅助 qubit + 反 CNOT 门 + 测量</strong>。具体步骤(第 7、8 章会展开):</p>
+        <ol>
+          <li>加一个辅助 qubit 在 $\lvert 0\rangle$</li>
+          <li>反 CNOT 门(辅助比特控制,目标为 A 和 B)</li>
+          <li>Hadamard 门作用在辅助比特</li>
+          <li>测辅助比特 → 区分 $\lvert\Phi^+\rangle$ vs $\lvert\Psi^+\rangle$;测 A,B → 区分 $\lvert\Phi^\pm\rangle$ vs $\lvert\Psi^\pm\rangle$</li>
+        </ol>
+        <p><strong>重要</strong>:BSM 只能在<strong>一次性</strong>中给出 2 bit 经典结果(标记 4 个态之一)。这是<strong>量子隐形传态</strong>和<strong>超密编码</strong>的基础。</p>
+
+        <h3>4.8.2 量子隐形传态(Quantum Teleportation)</h3>
+        <p><strong>1993 年 Bennett et al. 提出的协议</strong>,是纠缠作为"资源"的最经典应用:</p>
+        <p><strong>设置</strong>:Alice 有未知 qubit $\lvert\psi\rangle$ (要传送),还与 Bob 共享一个 EPR 对 $\lvert\Phi^+\rangle_{AB}$。Alice 与 Bob 距离任意远。</p>
+        <p><strong>协议</strong>:</p>
+        <ol>
+          <li>Alice 对 $\lvert\psi\rangle$ 和她那一半 EPR 做 BSM,得到 2 bit 经典结果</li>
+          <li>Alice 通过<strong>经典信道</strong>把 2 bit 结果发给 Bob</li>
+          <li>Bob 根据这 2 bit 对他那半 EPR 做相应的泡利修正($I, \sigma_x, \sigma_z, i\sigma_y$)</li>
+          <li>Bob 的那一半 EPR 现在<strong>就是</strong> $\lvert\psi\rangle$</li>
+        </ol>
+
+        <!-- inline SVG 图示 3: 隐形传态协议 -->
+        <figure class="chapter-figure">
+          <svg viewBox="0 0 720 260" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;height:auto;background:rgba(20,25,55,0.5);border-radius:8px;padding:8px;">
+            <defs>
+              <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#7dd3fc"/>
+              </marker>
+              <marker id="arrow-classic" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+              </marker>
+            </defs>
+            <!-- Alice 区域 -->
+            <rect x="20" y="40" width="280" height="180" rx="10" fill="rgba(125,211,252,0.05)" stroke="#7dd3fc" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="160" y="60" text-anchor="middle" fill="#7dd3fc" font-size="14" font-weight="bold">Alice 实验室</text>
+            <text x="80" y="100" text-anchor="middle" fill="#fef3c7" font-size="13">|ψ⟩ 待传送</text>
+            <text x="80" y="180" text-anchor="middle" fill="#fef3c7" font-size="13">|A⟩ EPR 半边</text>
+            <line x1="80" y1="110" x2="80" y2="165" stroke="#7dd3fc" stroke-width="1" stroke-dasharray="2 2"/>
+            <line x1="200" y1="180" x2="200" y2="210" stroke="#7dd3fc" stroke-width="1" stroke-dasharray="2 2"/>
+            <text x="200" y="225" text-anchor="middle" fill="#7dd3fc" font-size="11">BSM</text>
+
+            <!-- 经典信道 -->
+            <line x1="300" y1="135" x2="430" y2="135" stroke="#fbbf24" stroke-width="2" marker-end="url(#arrow-classic)"/>
+            <text x="365" y="125" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="bold">2 bit 经典</text>
+            <text x="365" y="155" text-anchor="middle" fill="#fcd34d" font-size="10">速度 ≤ 光速</text>
+
+            <!-- 纠缠对(EPR) -->
+            <line x1="200" y1="180" x2="500" y2="180" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="350" y="200" text-anchor="middle" fill="#a78bfa" font-size="11">纠缠 EPR 对 |Φ⁺⟩</text>
+
+            <!-- Bob 区域 -->
+            <rect x="440" y="40" width="260" height="180" rx="10" fill="rgba(167,139,250,0.05)" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <text x="570" y="60" text-anchor="middle" fill="#a78bfa" font-size="14" font-weight="bold">Bob 实验室</text>
+            <text x="570" y="180" text-anchor="middle" fill="#fef3c7" font-size="13">|B⟩ EPR 半边</text>
+            <text x="570" y="105" text-anchor="middle" fill="#34d399" font-size="13" font-weight="bold">|ψ⟩ 接收成功</text>
+            <line x1="500" y1="170" x2="640" y2="170" stroke="#a78bfa" stroke-width="1" stroke-dasharray="2 2"/>
+            <text x="570" y="225" text-anchor="middle" fill="#a78bfa" font-size="11">泡利修正</text>
+          </svg>
+          <figcaption>图 4.3:量子隐形传态协议。Alice 持有 |ψ⟩ 和 EPR 半边 A,做 BSM 测得 2 bit 经典结果,通过经典信道发给 Bob;Bob 对 EPR 半边 B 做泡利修正,完美恢复 |ψ⟩。</figcaption>
+        </figure>
+
+        <p><strong>详细数学推导</strong>:</p>
+        <p>设 $\lvert\psi\rangle_C = \alpha\lvert 0\rangle_C + \beta\lvert 1\rangle_C$ (要传送的 qubit),联合 Alice-Bob 初始态是:</p>
+        <p>$$\lvert\psi\rangle_C \otimes \lvert\Phi^+\rangle_{AB} = (\alpha\lvert 0\rangle_C + \beta\lvert 1\rangle_C) \otimes \frac{1}{\sqrt{2}}(\lvert 0\rangle_A\lvert 0\rangle_B + \lvert 1\rangle_A\lvert 1\rangle_B)$$</p>
+        <p>Alice 对 C 和 A 做 BSM,把联合态投影到四个贝尔态之一。<strong>每种结果出现的概率都是 1/4</strong>(因为 $\lvert\psi\rangle_C$ 跟 EPR 正交),并且 Bob 的态塌缩为以下之一:</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>Alice 测得</th><th>Bob 的态(塌缩后)</th><th>Bob 需做的修正</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$\lvert\Phi^+\rangle_{CA}$</td><td>$\alpha\lvert 0\rangle_B + \beta\lvert 1\rangle_B = \lvert\psi\rangle$</td><td>$I$</td></tr>
+            <tr><td>$\lvert\Phi^-\rangle_{CA}$</td><td>$\alpha\lvert 0\rangle_B - \beta\lvert 1\rangle_B$</td><td>$\sigma_z$</td></tr>
+            <tr><td>$\lvert\Psi^+\rangle_{CA}$</td><td>$\alpha\lvert 1\rangle_B + \beta\lvert 0\rangle_B$</td><td>$\sigma_x$</td></tr>
+            <tr><td>$\lvert\Psi^-\rangle_{CA}$</td><td>$\alpha\lvert 1\rangle_B - \beta\lvert 0\rangle_B$</td><td>$i\sigma_y$</td></tr>
+          </tbody>
+        </table>
+        <p>Bob 收到 Alice 的 2 bit 经典结果后,做相应泡利门,<strong>完美恢复</strong> $\lvert\psi\rangle$。</p>
+        <p><strong>关键性质</strong>:</p>
+        <ul>
+          <li><strong>严格不超光速</strong>:第 2 步必须有经典通信,延迟 ≥ 光速 × 距离</li>
+          <li><strong>不可克隆定理自动满足</strong>:Alice 测完后,$\lvert\psi\rangle$ 已经被破坏,不存在"两个副本"</li>
+          <li><strong>需要 1 个 EPR 对 + 2 bit 经典通信</strong></li>
+        </ul>
+        <p><strong>资源等价</strong>:1 个纠缠对 + 2 bit 经典通信 = 1 个 qubit 的量子信息传输。这是量子信息论的<strong>基本单元</strong>之一。</p>
+
+        <h3>4.8.3 量子隐形传态在量子计算中的作用</h3>
+        <ul>
+          <li><strong>量子电路模块化</strong>:两个量子模块之间可以用隐形传态"传递 qubit",无需直接物理连接</li>
+          <li><strong>量子互联网</strong>:第 26 章会展开</li>
+          <li><strong>量子纠错</strong>:第 17 章会看到,某些纠错协议本质上是"测量 + 条件恢复"——隐形传态的扩展</li>
+        </ul>
+
+        <h3>4.8.4 量子纠缠交换(Entanglement Swapping)</h3>
+        <p>隐形传态的"姐妹协议"——<strong>不传递任何 qubit,只创造"远距离纠缠"</strong>。</p>
+        <p><strong>设置</strong>:Alice-Bob 共享 EPR 对 $\lvert\Phi^+\rangle_{AB}$;Charlie-Diana 共享 EPR 对 $\lvert\Phi^+\rangle_{CD}$。<strong>Alice 和 Charlie 在同一实验室</strong>,Bob 和 Diana 距离任意远。</p>
+        <p><strong>协议</strong>:</p>
+        <ol>
+          <li>Alice 和 Charlie 对 A, C 做 BSM</li>
+          <li>他们把 2 bit 经典结果发给 Bob 和 Diana</li>
+          <li>Bob 和 Diana 根据结果做泡利修正</li>
+          <li><strong>结果</strong>:B 和 D 现在<strong>共享纠缠对 $\lvert\Phi^+\rangle_{BD}$</strong>——尽管 B 和 D 从来没有直接相互作用过!</li>
+        </ol>
+        <p><strong>应用</strong>:</p>
+        <ul>
+          <li><strong>量子中继器</strong>:在长距离量子通信中,不能直接产生 100 km 之外的纠缠(光损太大),但可以每 10 km 产生一段纠缠,然后用纠缠交换"接起来"。这是量子互联网的关键技术(第 26 章)</li>
+          <li><strong>多体纠缠</strong>:把多个纠缠对通过交换"编织"成复杂的纠缠网络,GHZ 态、W 态等</li>
+        </ul>
+        <p><strong>直觉</strong>:纠缠交换是<strong>对两个独立纠缠对做 BSM</strong>,让"原本不接触的粒子"通过测量"间接纠缠"——这是量子信息最神奇的操作之一。</p>
+
+        <hr>
+
+        <!-- 4.9 -->
+        <h2>4.9 章节总结与后续</h2>
+
+        <h3>📋 概念速查表</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>概念</th><th>记号/关键词</th><th>物理意义</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>张量积</td><td>$\mathcal{H}_A \otimes \mathcal{H}_B$</td><td>复合系统态空间,维数相乘</td></tr>
+            <tr><td>可分态</td><td>$\lvert\phi\rangle_A \otimes \lvert\chi\rangle_B$</td><td>子系统独立,无纠缠</td></tr>
+            <tr><td>纠缠态</td><td>不可分态</td><td>约化密度矩阵为混合态</td></tr>
+            <tr><td>贝尔态</td><td>$\lvert\Phi^\pm\rangle$、$\lvert\Psi^\pm\rangle$</td><td>$\mathbb{C}^2 \otimes \mathbb{C}^2$ 的最大纠缠基</td></tr>
+            <tr><td>EPR 悖论</td><td>1935 爱因斯坦等</td><td>纠缠 = 量子力学不完备的论据</td></tr>
+            <tr><td>贝尔不等式</td><td>$\lvert S \rvert \le 2$ (CHSH)</td><td>定域隐变量必须满足</td></tr>
+            <tr><td>Tsirelson 边界</td><td>$S = 2\sqrt{2}$</td><td>量子力学允许的最大违反</td></tr>
+            <tr><td>Aspect 实验</td><td>1982</td><td>第一个严格违反贝尔不等式</td></tr>
+            <tr><td>No-signaling</td><td>$\hat{\rho}_B$ 与 Alice 操作无关</td><td>纠缠不传递信号,不违反相对论</td></tr>
+            <tr><td>贝尔态测量</td><td>BSM</td><td>用辅助 qubit 区分 4 个贝尔态</td></tr>
+            <tr><td>量子隐形传态</td><td>1 EPR + 2 bit 经典</td><td>传输 1 qubit 量子信息</td></tr>
+            <tr><td>纠缠交换</td><td>两个独立 EPR + BSM</td><td>创造远距离纠缠(量子中继)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>为后续章节铺的路</h3>
+        <ul>
+          <li><strong>第 5 章 量子测量与不确定性原理</strong>: 纠缠的"算符视角"——对易子 $[\hat{A}, \hat{B}] \ne 0$ 的后果,以及 POVM 测量</li>
+          <li><strong>第 6 章 量子比特</strong>: 本章的纠缠聚焦到两 qubit 情形,为多 qubit 铺垫</li>
+          <li><strong>第 7 章 量子逻辑门与量子线路</strong>: CNOT 门如何制造纠缠,贝尔态制备电路,BSM 电路</li>
+          <li><strong>第 8 章 量子电路的数学模型</strong>: 用通用门集(CNOT + 单 qubit 门) 描述纠缠操作</li>
+          <li><strong>第 10 章 Grover 算法</strong>: 4.2.2 提到的"对矩阵分解"在 Grover oracle 里有应用</li>
+          <li><strong>第 11 章 Shor 算法</strong>: 量子傅里叶变换在 Shor 中的角色(不是纠缠,但跟贝尔测量协议相关)</li>
+          <li><strong>第 17 章 量子纠错码</strong>: 隐形传态的扩展——Shor 9-qubit 码本质上是"测量 + 条件恢复"</li>
+          <li><strong>第 26 章 量子互联网</strong>: 隐形传态是量子互联网的"基本协议"</li>
+        </ul>
+
+        <h3>推荐阅读</h3>
+        <ul>
+          <li><strong>A. Einstein, B. Podolsky, N. Rosen, "Can Quantum-Mechanical Description of Physical Reality Be Considered Complete?", Phys. Rev. 47, 777 (1935)</strong> — 原始 EPR 论文,简短、易读</li>
+          <li><strong>J. S. Bell, "On the Einstein Podolsky Rosen Paradox", Physics 1, 195 (1964)</strong> — 贝尔不等式的原始推导</li>
+          <li><strong>J. F. Clauser, M. A. Horne, A. Shimony, R. A. Holt, "Proposed Experiment to Test Local Hidden-Variable Theories", Phys. Rev. Lett. 23, 880 (1969)</strong> — CHSH 不等式的提出</li>
+          <li><strong>A. Aspect, J. Dalibard, G. Roger, "Experimental Realization of Einstein-Podolsky-Rosen-Bohm Gedankenexperiment", Phys. Rev. Lett. 49, 1804 (1982)</strong> — 第一个严格违反贝尔不等式</li>
+          <li><strong>C. H. Bennett et al., "Teleporting an Unknown Quantum State", Phys. Rev. Lett. 70, 1895 (1993)</strong> — 量子隐形传态</li>
+          <li><strong>Nielsen & Chuang, 《Quantum Computation and Quantum Information》第 2 章、第 4 章</strong> — 严谨的数学处理</li>
+          <li><strong>B. Greene, 《The Elegant Universe》第 4 章</strong> — 贝尔不等式的科普级展开</li>
+          <li><strong>S. Aaronson, 《Quantum Computing Since Democritus》第 11 章</strong> — 哲学层面 + 形式化,适合已经读过 Nielsen & Chuang 的读者</li>
+        </ul>
+
+        <h3>章节回顾问题</h3>
+        <ol>
+          <li>用部分求迹验证 $\lvert\Psi^-\rangle = \frac{1}{\sqrt{2}}(\lvert 01\rangle - \lvert 10\rangle)$ 给出 $\hat{\rho}_A = I/2$。</li>
+          <li>为什么 EPR 论点需要"定域性"假设?如果放弃定域性,贝尔不等式还成立吗?</li>
+          <li>在 Aspect 实验中,如果探测效率是 50%,缺失的光子如何可能"破坏"结论?这就是检测漏洞的本质。</li>
+          <li>量子隐形传态是否违反不可克隆定理?为什么?</li>
+        </ol>
+
+        <!-- 上一章 / 下一章 导航 -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch03.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 3 章 叠加原理与量子干涉</span>
+          </a>
+          <a href="ch05.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 5 章 量子测量与不确定性原理</span>
+            <span class="pager-tag">即将推出</span>
+          </a>
+        </nav>
+
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
