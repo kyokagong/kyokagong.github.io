@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第5章：量子测量与不确定性原理 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第5章：量子测量与不确定性原理 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航:返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第一部分 · 量子力学基础 <span class="part-done" style="color:#10b981;font-size:0.85em;margin-left:0.5em;">✅ 完结章</span></span>
+        <span class="chapter-day-tag">Day 6 · 2026-06-13</span>
+      </div>
+      <h1 class="chapter-title">第 5 章 量子测量与不确定性原理</h1>
+      <p class="chapter-subtitle">从投影测量到弱测量——量子力学的第五公理</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,500 字</span>
+        <span class="stat">🔢 29 公式 / 218 内联</span>
+        <span class="stat">📑 10 节 · 45 子节</span>
+        <span class="stat">⏱ ~40 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+
+        <!-- 5.0 引言 -->
+        <h2>5.0 引言:测量的"角色"——为什么是物理的,不是数学的附录</h2>
+        <p>前 4 章我们建立了一个<strong>完整的量子力学骨架</strong>:</p>
+        <ul>
+          <li>第 1 章历史——量子力学怎么来的</li>
+          <li>第 2 章数学工具——bra-ket、算符、密度矩阵</li>
+          <li>第 3 章叠加原理——单粒子干涉</li>
+          <li>第 4 章纠缠——多粒子共享叠加</li>
+        </ul>
+        <p>但还有一个<strong>关键角色</strong>没登场:<strong>测量</strong>。</p>
+        <p>在经典力学里,测量不是"基本"概念——温度计放在水里,温度读数告诉你水的温度,水本身<strong>完全没被扰动</strong>。但在量子力学里,测量<strong>是</strong>基本公理之一——它<strong>不可被推导</strong>,只能<strong>被形式化</strong>。</p>
+        <p>更深刻的是:<strong>某些测量会改变系统本身</strong>。这是量子世界跟经典世界最戏剧性的差异之一。Schrödinger 方程告诉我们一个<strong>封闭系统</strong>怎么演化(酉演化,可逆),但<strong>测量</strong>告诉我们怎么从一个量子态得到一个经典读数(投影,<strong>不可逆</strong>)。</p>
+        <p>本章我们将回答几个核心问题:</p>
+        <ol>
+          <li><strong>测量的形式化</strong>是什么?(投影测量 + 玻恩规则)</li>
+          <li><strong>不确定性原理</strong>跟"测量扰动"是什么关系?(数学严格版 vs 直觉)</li>
+          <li><strong>POVM</strong> 怎么推广投影测量?(为什么需要它)</li>
+          <li><strong>弱测量</strong>怎么在不彻底"塌缩"的情况下获得部分信息?(为 ch17 铺垫)</li>
+          <li><strong>测量跟纠缠的连接</strong>是什么?(关联塌缩)</li>
+        </ol>
+        <p>学完本章,你将掌握:</p>
+        <ul>
+          <li>投影测量的完整数学(可观测量、本征矢、谱)</li>
+          <li>玻恩规则的精确陈述</li>
+          <li>期望值、方差、不确定度的计算</li>
+          <li>不确定性原理的<strong>算符版本</strong>(对易子形式)</li>
+          <li>三个常见误解的澄清($\Delta E \Delta t$、"测量扰动"、EPR 反驳)</li>
+          <li>POVM 的定义与例子</li>
+          <li>弱测量的直觉</li>
+        </ul>
+        <p>本章是<strong>第一部分的最后一章</strong>——它把 ch01-ch04 的概念"落地"成"实验里能做什么"。完成本章后,我们就<strong>完成了量子力学基础的 5 章</strong>,可以进入<strong>第二部分:量子计算基础</strong>——从 ch06 的"量子比特"开始。</p>
+
+        <hr>
+
+        <!-- 5.1 -->
+        <h2>5.1 测量的形式化:投影测量</h2>
+
+        <h3>5.1.1 投影测量的公理(postulate 3)</h3>
+        <p>量子力学第 3 公理(测量公理):</p>
+        <blockquote class="chapter-quote">
+          <p><strong>给定一个可观测量 $\hat{A}$</strong>(厄米算符),其<strong>谱分解</strong>是
+          $$\hat{A} = \sum_i a_i \lvert a_i \rangle \langle a_i \rvert$$
+          当系统处于态 $\lvert \psi \rangle$ 时,测量 $\hat{A}$ 得到结果 $a_i$ 的<strong>概率</strong>是
+          $$P(a_i) = \lvert \langle a_i \rvert \psi \rangle \rvert^2$$
+          测量后,系统<strong>塌缩</strong>到
+          $$\lvert \psi \rangle \to \frac{\hat{P}_i \lvert \psi \rangle}{\sqrt{P(a_i)}} = \lvert a_i \rangle$$</p>
+        </blockquote>
+        <p>其中 $\hat{P}_i = \lvert a_i \rangle \langle a_i \rvert$ 是投影算符。</p>
+        <p><strong>几个关键词</strong>:</p>
+        <ul>
+          <li><strong>可观测量(observable)</strong>: 物理量(位置、动量、自旋、能量),数学上是<strong>厄米算符</strong></li>
+          <li><strong>谱分解(spectral decomposition)</strong>: 厄米算符可写成"本征值 × 投影算符"之和</li>
+          <li><strong>玻恩规则(Born rule)</strong>: 概率 = 振幅的模方</li>
+          <li><strong>塌缩(collapse)</strong>: 测量后,系统从叠加态变成<strong>单一</strong>本征态</li>
+        </ul>
+
+        <h3>5.1.2 例:计算基测量</h3>
+        <p>最简单的可观测量:Pauli $Z$ 算符 $\hat{Z} = \lvert 0 \rangle \langle 0 \rvert - \lvert 1 \rangle \langle 1 \rvert$。本征值 $+1$ 对应 $\lvert 0 \rangle$,本征值 $-1$ 对应 $\lvert 1 \rangle$。</p>
+        <p>对态 $\lvert \psi \rangle = \alpha \lvert 0 \rangle + \beta \lvert 1 \rangle$ 测 $\hat{Z}$:</p>
+        <ul>
+          <li>$P(+1) = \lvert \alpha \rvert^2$</li>
+          <li>$P(-1) = \lvert \beta \rvert^2$</li>
+          <li>测得 $+1$ 后,系统塌缩到 $\lvert 0 \rangle$;测得 $-1$ 后,塌缩到 $\lvert 1 \rangle$</li>
+        </ul>
+        <p><strong>验证</strong> $\lvert \alpha \rvert^2 + \lvert \beta \rvert^2 = 1$(因为态归一化)——玻恩规则跟态归一化<strong>自洽</strong>。</p>
+
+        <h3>5.1.3 测量的"不可逆性"</h3>
+        <p><strong>关键</strong>: 投影测量是<strong>不可逆</strong>的——一旦系统塌缩到 $\lvert a_i \rangle$,<strong>原来的相位信息 $\alpha, \beta$ 全部丢失</strong>。这跟酉演化(Schrödinger 方程)形成鲜明对比:酉演化是<strong>可逆</strong>的,投影测量是<strong>不可逆</strong>的。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>为什么测量不可逆?</strong> 因为 $\lvert \psi \rangle = \sum_i c_i \lvert a_i \rangle$ 跟 $\lvert a_i \rangle$ 之间的转换涉及"丢失振幅"——经典信息论里,这相当于"擦除比特",而 Landauer 原理告诉我们:<strong>擦除 1 bit 至少耗散 $k_B T \ln 2$ 的能量</strong>。量子测量在物理实现上也满足这个热力学下界。</p>
+        </blockquote>
+
+        <h3>5.1.4 投影算符的代数性质</h3>
+        <p>投影算符 $\hat{P}_i = \lvert a_i \rangle \langle a_i \rvert$ 满足:</p>
+        <ul>
+          <li><strong>厄米性</strong>: $\hat{P}_i^\dagger = \hat{P}_i$</li>
+          <li><strong>幂等性</strong>: $\hat{P}_i^2 = \hat{P}_i$</li>
+          <li><strong>正交性</strong>: $\hat{P}_i \hat{P}_j = \delta_{ij} \hat{P}_i$</li>
+          <li><strong>完备性</strong>: $\sum_i \hat{P}_i = I$</li>
+        </ul>
+        <p>这四条性质定义了<strong>投影测量(projective measurement)</strong>——它是 POVM(5.7 节)的一个特例。</p>
+
+        <h3>5.1.5 投影测量跟"塌缩"的物理解释</h3>
+        <p><strong>为什么测量导致"塌缩"?</strong> 这是一个<strong>诠释问题</strong>——量子力学的形式化只规定<strong>概率</strong>和<strong>塌缩后的态</strong>,<strong>不</strong>解释"为什么"。</p>
+        <p><strong>哥本哈根诠释</strong>(主流): 测量是<strong>基本的、不可约的</strong>过程——在测量前,系统处于叠加;测量<strong>瞬间</strong>让叠加"塌缩"到单一结果。这个"瞬间"是<strong>公理</strong>,不可推导。</p>
+        <p><strong>多世界诠释</strong>(Everett, 1957): 不存在"塌缩"——每次测量,宇宙<strong>分裂</strong>成多个分支,每个分支对应一个结果。<strong>我们</strong>只<strong>体验</strong>一个分支,但<strong>所有</strong>分支<strong>都</strong>存在。</p>
+        <p><strong>退相干诠释</strong>(现代主流): 测量时,系统跟<strong>大量环境自由度</strong>纠缠(ch03.6 提到过)。<strong>表面</strong>看是"塌缩",<strong>实际</strong>是"信息泄漏到环境"——我们看不到那些自由度,所以<strong>有效</strong>看起来像塌缩。</p>
+        <p><strong>玻姆力学</strong>(隐变量): 隐变量<strong>预先</strong>决定结果,测量<strong>只是揭示</strong>——没有"塌缩"。</p>
+        <p><strong>实用观点</strong>(工程学/量子计算): 选<strong>哥本哈根</strong>——它预言概率,而<strong>概率就是实验给出的</strong>。<strong>诠释</strong>留给哲学家,工程师<strong>用公理</strong>。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>关键</strong>: 选哪种诠释<strong>不影响</strong>量子力学的<strong>预测</strong>——它们都给出<strong>同样的</strong>概率。差别只在"物理实在"的本体论陈述。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 5.2 -->
+        <h2>5.2 玻恩规则的精确陈述</h2>
+
+        <h3>5.2.1 玻恩规则(Max Born, 1926)</h3>
+        <blockquote class="chapter-quote">
+          <p>对<strong>纯态</strong> $\lvert \psi \rangle$,测可观测量 $\hat{A}$ 得到 $a_i$ 的概率是
+          $$P(a_i) = \lvert \langle a_i \rvert \psi \rangle \rvert^2 = \langle \psi \rvert \hat{P}_i \rvert \psi \rangle$$</p>
+          <p>对<strong>混合态</strong> $\hat{\rho} = \sum_k p_k \lvert \psi_k \rangle \langle \psi_k \rvert$,概率是
+          $$P(a_i) = \text{tr}(\hat{P}_i \hat{\rho}) = \sum_k p_k \lvert \langle a_i \rvert \psi_k \rangle \rvert^2$$</p>
+        </blockquote>
+
+        <h3>5.2.2 为什么是"模方"?</h3>
+        <p>直觉:<strong>内积</strong> $\langle a_i \rvert \psi \rangle$ 是一个<strong>复数</strong>,叫<strong>概率幅(amplitude)</strong>;它的<strong>模方</strong>是<strong>实数</strong>,且<strong>总和为 1</strong>——满足概率公理。</p>
+        <p>为什么不是 $|\langle a_i \rvert \psi \rangle|$?因为如果概率正比于 $|\langle a_i \rvert \psi \rangle|$,那<strong>相位信息就丢了</strong>——而相位是产生<strong>干涉</strong>(ch03)的核心。我们需要 $|\cdot|^2$ 而不是 $|\cdot|$ 来保留"相位可以相消"(干涉)的可能性。</p>
+
+        <h3>5.2.3 玻恩规则的"经验证据"</h3>
+        <p>为什么我们相信这个规则?因为它<strong>让所有量子力学的预测跟实验匹配</strong>:</p>
+        <ul>
+          <li>单光子双缝干涉条纹(ch01.3, ch03.3)</li>
+          <li>氢原子光谱(玻尔模型 + 玻恩规则)</li>
+          <li>量子隧穿概率</li>
+          <li>量子隐形传态的 1/4 概率</li>
+          <li>贝尔不等式违反的统计(ch04.5)</li>
+        </ul>
+        <p><strong>没有其他合理的规则</strong>能同时解释所有这些现象。</p>
+
+        <h3>5.2.4 玻恩规则跟"无知诠释"的关系</h3>
+        <p><strong>重要澄清</strong>: 玻恩规则<strong>不是</strong>说"我们对系统状态无知"。<strong>叠加态是真实的</strong>(ch03 已经讲过),不是"我们不知道哪个本征态"。测量后<strong>真的</strong>发生态塌缩——这是量子力学的本体论,不是认识论。</p>
+        <p>对比经典统计:经典硬币的 50/50 来自"我们不知道正面还是反面";量子叠加的 $\alpha, \beta$ 是<strong>物理真实</strong>的振幅,不是"未知的硬币"。</p>
+
+        <hr>
+
+        <!-- 5.3 -->
+        <h2>5.3 期望值、方差、不确定度</h2>
+
+        <h3>5.3.1 期望值</h3>
+        <p>对可观测量 $\hat{A}$ 在态 $\lvert \psi \rangle$ 上的<strong>期望值</strong>:
+        $$\langle \hat{A} \rangle = \langle \psi \rvert \hat{A} \rvert \psi \rangle = \sum_i a_i P(a_i)$$</p>
+        <p>第二个等号把"量子期望"还原成"经典加权平均"——$\hat{A}$ 跟态的"内积"展开成本征值 × 概率。</p>
+
+        <h3>5.3.2 方差与不确定度</h3>
+        <p><strong>方差</strong>:
+        $$(\Delta A)^2 = \langle (\hat{A} - \langle \hat{A} \rangle)^2 \rangle = \langle \hat{A}^2 \rangle - \langle \hat{A} \rangle^2$$</p>
+        <p><strong>不确定度(standard deviation)</strong>:
+        $$\Delta A = \sqrt{\langle \hat{A}^2 \rangle - \langle \hat{A} \rangle^2}$$</p>
+        <p>对<strong>本征态</strong> $\lvert a_i \rangle$, $\Delta A = 0$(确定值);对<strong>叠加态</strong>, $\Delta A > 0$(有涨落)。</p>
+
+        <h3>5.3.3 例:位置和动量</h3>
+        <p>对一维自由粒子的高斯波包(高斯分布的"动量分布"对应经典中心极限定理的"最小不确定度态"):
+        $$\psi(x) = \left(\frac{1}{2\pi \sigma_x^2}\right)^{1/4} \exp\left(-\frac{(x - x_0)^2}{4\sigma_x^2}\right)$$</p>
+        <p>计算:</p>
+        <ul>
+          <li>$\langle \hat{x} \rangle = x_0$</li>
+          <li>$\Delta x = \sigma_x$</li>
+          <li>$\Delta p = \frac{\hbar}{2 \sigma_x}$(傅里叶变换的"展宽关系")</li>
+        </ul>
+        <p>注意 $\Delta x \cdot \Delta p = \frac{\hbar}{2}$——刚好<strong>等于</strong>不确定性原理的下界!这种"最小不确定度态"叫<strong>相干态(coherent state)</strong>——它<strong>最接近</strong>经典点粒子,广泛用于量子光学。</p>
+
+        <h3>5.3.4 期望值的时间演化(Ehrenfest 定理)</h3>
+        <p><strong>Ehrenfest 定理(1927)</strong>: 对任意(不显含 $t$ 的)可观测量 $\hat{A}$:
+        $$\frac{d}{dt} \langle \hat{A} \rangle = \frac{1}{i\hbar} \langle [\hat{A}, \hat{H}] \rangle + \left\langle \frac{\partial \hat{A}}{\partial t} \right\rangle$$</p>
+        <p>对 $\hat{H}$ <strong>自身</strong>, $[\hat{H}, \hat{H}] = 0$,所以 $\frac{d}{dt}\langle \hat{H} \rangle = 0$——<strong>能量守恒</strong>!</p>
+        <p><strong>对 $\hat{x}$</strong> (取 $\hat{H} = \hat{p}^2/2m + V(\hat{x})$): $[\hat{x}, \hat{H}] = i\hbar \hat{p}/m$,所以
+        $$m \frac{d^2}{dt^2} \langle \hat{x} \rangle = -\left\langle \frac{dV}{dx} \right\rangle$$</p>
+        <p><strong>物理意义</strong>: <strong>期望值</strong>遵循<strong>经典</strong>牛顿方程!这是<strong>经典极限</strong>的桥梁——对<strong>宏观</strong>系统($\Delta x$ 极小),$\langle \hat{x} \rangle$ <strong>近似</strong> $x(t)$,看起来像经典轨道。<strong>这正是玻尔对应原理的定量版</strong>。</p>
+
+        <hr>
+
+        <!-- 5.4 -->
+        <h2>5.4 不确定性原理:对易子版本</h2>
+
+        <h3>5.4.1 海森堡 1927 的原始陈述</h3>
+        <blockquote class="chapter-quote">
+          <p><strong>海森堡不确定性原理(Heisenberg, 1927)</strong>:
+          对位置 $\hat{x}$ 和动量 $\hat{p}$,<strong>同时</strong>测准它们是不可能的:
+          $$\Delta x \cdot \Delta p \ge \frac{\hbar}{2}$$</p>
+        </blockquote>
+        <p>直观解释:波长 $\lambda$ 的光子,动量 $p = h/\lambda$ 涨落 $\Delta p \sim h/\Delta \lambda$。要"看清"位置 $\Delta x$,需要波长 $\lambda \lesssim \Delta x$ 的光子——但这给系统<strong>注入</strong>动量涨落 $\Delta p \sim h/\Delta x$。<strong>位置越准,动量越不准</strong>(反之亦然)。</p>
+
+        <h3>5.4.2 严格算符版本(Robertson-Schrödinger, 1929-1930)</h3>
+        <p><strong>Robertson 推广(1929)</strong>:对<strong>任意</strong>两个可观测量 $\hat{A}, \hat{B}$(不必是 $x, p$):
+        $$\Delta A \cdot \Delta B \ge \frac{1}{2} \lvert \langle [\hat{A}, \hat{B}] \rangle \rvert$$</p>
+        <p>其中 $[\hat{A}, \hat{B}] = \hat{A}\hat{B} - \hat{B}\hat{A}$ 是<strong>对易子(commutator)</strong>。</p>
+        <p><strong>对</strong> $x, p$: $[\hat{x}, \hat{p}] = i\hbar$,所以 $\lvert \langle [\hat{x}, \hat{p}] \rangle \rvert = \hbar$,给出 $\Delta x \cdot \Delta p \ge \hbar/2$。✅</p>
+        <p><strong>Schrödinger 进一步推广(1930)</strong>:
+        $$\Delta A \cdot \Delta B \ge \sqrt{\left(\frac{1}{2i}\langle [\hat{A}, \hat{B}] \rangle\right)^2 + \left(\frac{1}{2}\langle \{\hat{A} - \langle \hat{A} \rangle, \hat{B} - \langle \hat{B} \rangle\} \rangle\right)^2}$$</p>
+        <p><strong>这个推广加入了"反关联项"</strong>(反对易子 $\{\hat{A}, \hat{B}\} = \hat{A}\hat{B} + \hat{B}\hat{A}$ 的期望)——它<strong>严格地</strong>比 Robertson 版本更强,允许"对易子为零但仍有非零下界"的情况。</p>
+
+        <h3>5.4.3 证明(Robertson 版本)</h3>
+        <p>设 $\lvert \psi \rangle$ 任意归一化态。考虑两个矢量:
+        $$\lvert u \rangle = (\hat{A} - \langle \hat{A} \rangle) \lvert \psi \rangle, \quad \lvert v \rangle = i (\hat{B} - \langle \hat{B} \rangle) \lvert \psi \rangle$$</p>
+        <p>则:</p>
+        <ul>
+          <li>$\langle u \rvert u \rangle = \langle \psi \rvert (\hat{A} - \langle \hat{A} \rangle)^2 \rvert \psi \rangle = (\Delta A)^2$</li>
+          <li>$\langle v \rvert v \rangle = (\Delta B)^2$</li>
+          <li>$\langle u \rvert v \rangle = i \langle \psi \rvert (\hat{A} - \langle \hat{A} \rangle)(\hat{B} - \langle \hat{B} \rangle) \rvert \psi \rangle$</li>
+        </ul>
+        <p>把对易子 $[\hat{A}, \hat{B}] = \hat{A}\hat{B} - \hat{B}\hat{A}$ 跟反对易子 $\{\hat{A}, \hat{B}\} = \hat{A}\hat{B} + \hat{B}\hat{A}$ 组合:
+        $$\hat{A}\hat{B} = \frac{1}{2}([\hat{A}, \hat{B}] + \{\hat{A}, \hat{B}\})$$</p>
+        <p>代入并取虚部,得:
+        $$\lvert \text{Im}(\langle u \rvert v \rangle) \rvert = \frac{1}{2} \lvert \langle [\hat{A}, \hat{B}] \rangle \rvert$$</p>
+        <p>Cauchy-Schwarz 不等式:
+        $$(\Delta A)^2 (\Delta B)^2 \ge \left(\frac{1}{2} \lvert \langle [\hat{A}, \hat{B}] \rangle \rvert\right)^2$$</p>
+        <p>开方得 Robertson 不等式。$\blacksquare$</p>
+
+        <h3>5.4.4 等号成立条件:最小不确定度态</h3>
+        <p>等号当且仅当 $\lvert u \rangle$ 和 $\lvert v \rangle$ <strong>线性相关</strong>——即
+        $$(\hat{A} - \langle \hat{A} \rangle) \lvert \psi \rangle = c \cdot i (\hat{B} - \langle \hat{B} \rangle) \lvert \psi \rangle$$</p>
+        <p>对某个<strong>复常数</strong> $c$ 成立。这是<strong>最小不确定度态(minimum uncertainty state)</strong>的充要条件。</p>
+        <p><strong>例</strong>:高斯波包是 $x$-$p$ 的最小不确定度态(5.3.3 例)。相干态(量子光学里"最像经典光"的态)也是最小不确定度态。</p>
+
+        <h3>5.4.5 推广到多个可观测量</h3>
+        <p>对<strong>三个</strong>可观测量 $\hat{A}, \hat{B}, \hat{C}$,有<strong>Schrödinger 三元版本</strong>:
+        $$(\Delta A)^2 (\Delta B)^2 \ge \left(\frac{1}{2i}\langle [\hat{A}, \hat{B}] \rangle\right)^2 + \left(\frac{1}{2}\langle \{\Delta \hat{A}, \Delta \hat{B}\} \rangle\right)^2 + ...$$</p>
+        <p>实际应用中,<strong>二元</strong>版本已经足够。</p>
+
+        <h3>5.4.6 常见误解:不确定性是"测量扰动"?</h3>
+        <p><strong>误解</strong>: "不确定性原理是因为我们测量时扰动了系统"——这<strong>不是</strong>量子力学的看法!</p>
+        <p><strong>正确解释</strong>:</p>
+        <ul>
+          <li>不确定性原理是<strong>态的内在性质</strong>——给定一个态 $\lvert \psi \rangle$, $\Delta A$ 和 $\Delta B$ 是<strong>确定的</strong>,不依赖你是否"实际测量"</li>
+          <li>也就是说,<strong>就算你</strong>不测量<strong>,系统</strong>已经<strong>有</strong>确定的 $\Delta A, \Delta B$<strong>——它们由</strong>态<strong>决定</strong></li>
+          <li>"测量扰动" 是一种<strong>早期</strong> (Bohr, Heisenberg) 直觉解释——<strong>正确的</strong>量子力学用的是<strong>对易子</strong>版本</li>
+          <li>对易子版本告诉你: $\Delta A \cdot \Delta B$ 的下界是 $\frac{1}{2}|\langle [\hat{A}, \hat{B}] \rangle|$——<strong>跟测量过程无关</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>关键澄清</strong>: 不确定性原理是<strong>关于态的陈述</strong>,<strong>不是</strong>关于"测量技术"的限制。一个<strong>完美的</strong>测量仪器也无法绕过它——因为它源于<strong>算符不对易</strong>这个代数事实。</p>
+        </blockquote>
+
+        <h3>5.4.7 对易子的算符意义</h3>
+        <p><strong>对易子</strong> $[\hat{A}, \hat{B}] = \hat{A}\hat{B} - \hat{B}\hat{A}$ 测量"两个算符<strong>不可交换</strong>"的程度:</p>
+        <ul>
+          <li><strong>对易</strong> ($[\hat{A}, \hat{B}] = 0$): 可观测量<strong>相容</strong>——可以<strong>同时</strong>精确测(它们有共同本征矢)</li>
+          <li><strong>反对易</strong> ($\{\hat{A}, \hat{B}\} = 0$): 一种<strong>强</strong>对易失败</li>
+          <li><strong>不对易</strong> ($[\hat{A}, \hat{B}] \neq 0$): <strong>不可同时精确测</strong>——它们的本征矢<strong>不正交</strong></li>
+        </ul>
+        <p><strong>对易子的"几何解释"</strong>: 不对易算符的"旋转"不满足交换律——先 $\hat{A}$ 后 $\hat{B}$ 跟先 $\hat{B}$ 后 $\hat{A}$ <strong>结果不同</strong>:
+        $$[\hat{A}, \hat{B}] = \hat{A}\hat{B} - \hat{B}\hat{A} \neq 0$$</p>
+        <p>这跟"3D 旋转不交换"是<strong>同构</strong>的——SO(3) 群的李代数是反对易子,不是对易子。<strong>量子力学里</strong> $[\hat{x}, \hat{p}] = i\hbar$ 跟 $[\hat{L}_x, \hat{L}_y] = i\hbar \hat{L}_z$ 是<strong>完全类似</strong>的代数结构。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>重要事实</strong>: 所有<strong>基本对易关系</strong>都跟<strong>对称性</strong>相关。$[\hat{x}, \hat{p}] = i\hbar$ 跟<strong>平移对称性</strong>对应;$[\hat{L}_x, \hat{L}_y] = i\hbar \hat{L}_z$ 跟<strong>旋转对称性</strong>对应。<strong>对称性决定对易关系</strong>——这是 Noether 定理的量子版。ch07 量子门和 ch15 复杂性里会再用到。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 5.5 -->
+        <h2>5.5 三个常见误解的澄清</h2>
+
+        <h3>5.5.1 误解 1: $\Delta E \Delta t \ge \hbar/2$ 跟"时间-能量"的关系</h3>
+        <p><strong>误解</strong>: "能量-时间不确定性关系是 $\Delta E \Delta t \ge \hbar/2$,意思是<strong>测量</strong>能量需要时间 $\Delta t$ 才能精确到 $\Delta E$。"</p>
+        <p><strong>正确陈述</strong>:</p>
+        <ul>
+          <li><strong>时间 $t$ 不是可观测量</strong>!在量子力学里,$t$ 是<strong>外部参数</strong>(跟经典力学一样),不是算符。</li>
+          <li>所以<strong>没有</strong>"$\Delta t$" 这种量跟 $\Delta E$ 配对</li>
+          <li>正确的"时间-能量"关系是<strong>Mandelshtam-Tamm 关系</strong>(1945):
+          $$\Delta E \cdot \tau \ge \frac{\hbar}{2}$$
+          其中 $\tau$ 是<strong>态演化的时间尺度</strong>(比如态从 $\lvert \psi(0) \rangle$ 演化到跟 $\lvert \psi(0) \rangle$ <strong>正交</strong>所需的时间)</li>
+          <li>物理含义:<strong>态变化得越快,能量展宽越大</strong></li>
+        </ul>
+        <p><strong>例</strong>:原子激发态寿命 $\tau \sim 10^{-8}$ s,能级展宽 $\Delta E \sim \hbar / \tau \sim 10^{-8}$ eV——这跟实验测得的"自然线宽"一致。</p>
+
+        <h3>5.5.2 误解 2: "测不准"是测量仪器的限制</h3>
+        <p><strong>误解</strong>: "我们测不准 $x$ 和 $p$ 是因为仪器不够好"。</p>
+        <p><strong>正确陈述</strong>:</p>
+        <ul>
+          <li>不确定性原理是<strong>态的内在性质</strong>——<strong>任何</strong>仪器,无论多精确,都无法同时给出<strong>精确的</strong> $x$ 和精确的 $p$</li>
+          <li>它来自 $[\hat{x}, \hat{p}] = i\hbar \neq 0$ 这个代数事实</li>
+          <li>这跟"仪器不够好"完全无关——是<strong>量子世界</strong>本身的性质</li>
+        </ul>
+
+        <h3>5.5.3 误解 3:EPR "反驳"了海森堡</h3>
+        <p><strong>EPR(1935)</strong> 的论点: "如果 Alice 测 $z$ 方向自旋,她可以<strong>瞬时知道</strong> Bob 那边 $z$ 方向自旋的值——所以 Bob 的 $z$ 方向自旋<strong>一定是个</strong>实在性元素<strong>——这跟量子力学的'测不准'矛盾!</strong>"</p>
+        <p><strong>正确回应</strong>:</p>
+        <ul>
+          <li>EPR 论证<strong>没有</strong>反驳海森堡——它揭示了<strong>量子纠缠</strong>的"非局域性"</li>
+          <li>量子力学回答: 测不准意味着<strong>没有"同时精确的 $x$ 和 $p$ 的态"存在</strong>——EPR 论证需要<strong>预先存在</strong>"所有方向的精确值"——这跟量子力学<strong>形式上不矛盾</strong>(量子力学从来不假设"预先存在所有方向的值")</li>
+          <li><strong>但</strong>——EPR 论证对<strong>定域隐变量</strong>理论是致命的(因为它说"隐变量必须预先存在所有方向的值")——这正是 ch04 讲的贝尔定理的起点</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>总结</strong>: EPR 没有"反驳"海森堡——它<strong>深化</strong>了海森堡: 不确定性不是"我们知识不够",而是"量子态本身<strong>没有</strong>这些精确值"——是<strong>本体论</strong>,不是<strong>认识论</strong>。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 5.6 -->
+        <h2>5.6 量子零差测量:用本征态做"零噪声"测量</h2>
+
+        <h3>5.6.1 什么是"零差测量"?</h3>
+        <p><strong>零差测量(homodyne detection)</strong>:用<strong>已知的本征态</strong>作为参考,测量<strong>相对相位</strong>。</p>
+        <p>具体:对<strong>单模光场</strong> $\hat{a} = (\hat{x} + i\hat{p})/\sqrt{2}$,可以用<strong>相干态</strong>(coherent state, 最接近"经典光"的量子态)做参考,把信号光跟参考光在 50:50 分束器上干涉——测量干涉强度就能<strong>反推</strong>信号光的"X 分量"或"P 分量"。</p>
+
+        <h3>5.6.2 为什么"零差"?</h3>
+        <p>"零差"(homodyne)指<strong>信号光频率 = 参考光频率</strong>(差频为零)。这跟"外差"(heterodyne,差频 $\neq 0$)对比。</p>
+        <p><strong>零差的优点</strong>:</p>
+        <ul>
+          <li><strong>相位敏感</strong>:直接测 $x$ 或 $p$ 分量(由参考光相位决定)</li>
+          <li><strong>量子噪声极限</strong>:对相干态参考,测量噪声达到<strong>散粒噪声极限(shot noise limit)</strong>——这是经典物理能达到的最好水平</li>
+          <li><strong>可用"压缩态"</strong> (squeezed state) 进一步降低某分量噪声(代价是另一分量噪声增加)</li>
+        </ul>
+
+        <h3>5.6.3 跟"测量公理"的关系</h3>
+        <p><strong>重要</strong>:零差测量是<strong>投影测量</strong>的特殊情况——测的是 $\hat{x}$ 或 $\hat{p}$(连续谱,<strong>不严格</strong>的投影,但可以形式化为"广义测量")。</p>
+        <p><strong>连续的谱</strong>的投影测量数学上稍微复杂:可观测量 $\hat{A}$ 的<strong>本征值</strong> $a$ 是连续的,本征矢 $\lvert a \rangle$ <strong>不正交归一</strong>:
+        $$\langle a \rvert a' \rangle = \delta(a - a')$$</p>
+        <p>概率密度是 $P(a) = \lvert \langle a \rvert \psi \rangle \rvert^2$,测量后系统塌缩到 $\lvert a \rangle$。这套形式化在数学上需要<strong>分布理论</strong>和<strong>算符代数</strong>,但物理上跟离散谱完全一致。</p>
+
+        <h3>5.6.4 测量后态的"信息恢复"</h3>
+        <p><strong>关键问题</strong>: 投影测量后,系统塌缩到 $\lvert a_i \rangle$——<strong>原来的振幅</strong> $\alpha, \beta$ <strong>完全丢失</strong>。这是否意味着<strong>信息</strong>被<strong>永久破坏</strong>?</p>
+        <p><strong>回答</strong>:</p>
+        <ul>
+          <li>对<strong>单个</strong>测量,<strong>是</strong>——你无法"反测量"</li>
+          <li>对<strong>统计系综</strong>(多份相同制备的态),<strong>否</strong>——通过<strong>多次</strong>重复测量,可以<strong>重构</strong>原态的密度矩阵</li>
+        </ul>
+        <p><strong>量子态层析(QST)</strong>: 选<strong>不同的</strong>测量基(比如 $\sigma_x, \sigma_y, \sigma_z$ 各测一次),用<strong>3 种基</strong>的测量结果反推<strong>密度矩阵</strong>:
+        $$\hat{\rho} = \frac{1}{2}(I + \langle \sigma_x \rangle \sigma_x + \langle \sigma_y \rangle \sigma_y + \langle \sigma_z \rangle \sigma_z)$$</p>
+        <p>对单 qubit,需要测 <strong>3 种基</strong>($= 3^1$);对 $n$ qubit,需要测 $3^n$ 种基(指数增长!)——这正是 QST 是<strong>难</strong>任务的原因(对大系统),也是 ch14 量子机器学习的"数据饥渴"问题。</p>
+
+        <hr>
+
+        <!-- 5.7 -->
+        <h2>5.7 POVM:投影测量的推广</h2>
+
+        <h3>5.7.1 为什么需要 POVM?</h3>
+        <p><strong>投影测量的限制</strong>:</p>
+        <ul>
+          <li>必须有<strong>正交</strong>的本征矢(谱分解)</li>
+          <li>测量的可能结果数 $\le$ 态空间维数</li>
+        </ul>
+        <p><strong>POVM 的动机</strong>:</p>
+        <ul>
+          <li><strong>态区分(state discrimination)</strong>:给定未知的两个非正交态,想<strong>以某种概率</strong>区分它们</li>
+          <li><strong>联合测量</strong>:对两个不对易的量,<strong>近似地同时测量</strong>(允许测量精度下降)</li>
+          <li>投影测量<strong>不够灵活</strong>——这些任务需要更一般的测量</li>
+        </ul>
+
+        <h3>5.7.2 POVM 的定义</h3>
+        <p><strong>POVM(Positive Operator-Valued Measure)</strong>:一组<strong>半正定算符</strong> $\{\hat{E}_i\}$(称为<strong>POVM 元素</strong>),满足:</p>
+        <ul>
+          <li>$\hat{E}_i \ge 0$(半正定)</li>
+          <li>$\sum_i \hat{E}_i = I$(完备性)</li>
+        </ul>
+        <p><strong>广义玻恩规则</strong>: 测得结果 $i$ 的概率是
+        $$P(i) = \text{tr}(\hat{\rho} \hat{E}_i)$$</p>
+        <p><strong>关键区别</strong>: POVM 元素<strong>不必是投影算符</strong>——它们可以是<strong>非正交的、可以不正交、可以是秩 > 1 的</strong>——只要满足半正定 + 完备性。</p>
+
+        <h3>5.7.3 POVM 跟 Kraus 表示的连接(Naimark 定理)</h3>
+        <p><strong>Naimark 扩充定理</strong>:任何 POVM 都可以<strong>实现</strong>为某个<strong>更大希尔伯特空间</strong>上的投影测量:
+        $$\hat{E}_i = \hat{P}_i \text{(在辅助系统上的投影)}$$</p>
+        <p>也就是说,POVM 不是"新物理"——它<strong>等价于</strong>"系统 + 辅助"上的投影测量。这给 POVM 一个<strong>操作意义</strong>:实际做 POVM 时,先<strong>酉演化</strong>让系统跟辅助纠缠,然后<strong>投影测量</strong>系统 + 辅助,最后<strong>丢掉</strong>辅助。</p>
+
+        <h3>5.7.4 例子:三个非正交态的最优区分</h3>
+        <p>考虑三个非正交态 $\lvert \psi_1 \rangle, \lvert \psi_2 \rangle, \lvert \psi_3 \rangle$(对称,夹角 120°),想<strong>确定性</strong>地区分它们。</p>
+        <p><strong>结论</strong>:<strong>不可能</strong>——因为非正交态<strong>没有完全可区分</strong>的测量(确定性区分要求态正交)。</p>
+        <p><strong>POVM 解决方案</strong>:用 4-元素 POVM $\{\hat{E}_0, \hat{E}_1, \hat{E}_2, \hat{E}_3\}$:</p>
+        <ul>
+          <li>$\hat{E}_i$ 对应"猜是 $\lvert \psi_i \rangle$"的猜测 ($i = 1, 2, 3$)</li>
+          <li>$\hat{E}_0$ 对应"我不猜"(inconclusive)</li>
+          <li>优化:<strong>最小化 inconclusive 概率</strong>,让 $P(\text{conclusive}) = 1$ 是不可能的(对三态非正交系统),但可以让 $P(\text{inconclusive}) = 1/4$(等概率猜测时)</li>
+        </ul>
+        <p>这个例子的实际意义:<strong>量子密码学的 BB84 协议</strong>(ch17 详细讲)的安全性<strong>部分依赖</strong>于此——窃听者(Eve)只能<strong>以 < 1 的概率</strong>确定性地区分非正交态,任何"猜错"都会引入可检测的错误。</p>
+
+        <h3>5.7.5 POVM 跟"Helstrom 界限"</h3>
+        <p><strong>Helstrom 界限(1970s)</strong>:对<strong>两个态</strong> $\hat{\rho}_0, \hat{\rho}_1$ (等概率先验)的最优区分,<strong>最小错误概率</strong>是
+        $$P_{\text{err}}^{\min} = \frac{1}{2} \left(1 - \frac{1}{2} \text{tr} \lvert \hat{\rho}_0 - \hat{\rho}_1 \rvert \right)$$</p>
+        <p>其中 $\lvert \hat{A} \rvert = \sqrt{\hat{A}^\dagger \hat{A}}$。</p>
+        <p>这个界限<strong>只有</strong>用 POVM 才能达到——投影测量<strong>不是</strong>最优(对非正交态)。Helstrom 界限是量子信息论的基础结果之一,ch14 会再讨论。</p>
+
+        <h3>5.7.6 POVM 跟"超选择定则"的关系</h3>
+        <p><strong>超选择定则(super-selection rule, SSR)</strong>:某些<strong>叠加</strong>在物理上<strong>禁止</strong>——比如</p>
+        <ul>
+          <li><strong>电荷超选择</strong>: 不能叠加不同电荷的态</li>
+          <li><strong>费米子数超选择</strong>: 不能叠加不同费米子数的态</li>
+          <li><strong>规范超选择</strong>: 整体相位 $\lvert \psi \rangle \to e^{i\theta} \lvert \psi \rangle$ <strong>不可观测</strong></li>
+        </ul>
+        <p><strong>POVM 的角色</strong>: 在超选择定则下,<strong>某些</strong>态区分<strong>原则上</strong>不可能,即使 POVM 也不能——这是<strong>基本物理定律</strong>的体现,不是技术限制。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>例</strong>: 用 POVM 区分 $\lvert 0 \rangle$ 和 $e^{i\theta} \lvert 0 \rangle$ (同一个态,只是相位不同)?<strong>不可能</strong>——它们是<strong>物理等价</strong>的,任何 POVM 都给出<strong>同样的</strong>结果。</p>
+        </blockquote>
+        <p><strong>对量子计算的意义</strong>: 超选择定则是<strong>资源的限制</strong>——你<strong>无法</strong>"放大"原本不可区分的态。但<strong>对量子计算任务</strong>(区分非正交计算基)——这<strong>不</strong>是限制,因为<strong>非正交</strong>态在量子力学里<strong>是</strong>真实<strong>的区分任务(只是有错误概率)。</strong></p>
+
+        <hr>
+
+        <!-- 5.8 -->
+        <h2>5.8 弱测量:在不彻底"塌缩"的情况下获得部分信息</h2>
+
+        <h3>5.8.1 弱测量的动机</h3>
+        <p><strong>强测量(strong measurement)</strong> 的缺点:</p>
+        <ul>
+          <li>测量后系统<strong>完全</strong>塌缩到某个本征态</li>
+          <li>后续测量<strong>只能测到那个本征态的值</strong>,没有更多信息</li>
+          <li>想要"沿着系统演化<strong>连续监测</strong>某个量"——强测量会<strong>完全破坏</strong>演化</li>
+        </ul>
+        <p><strong>弱测量(weak measurement)</strong>:</p>
+        <ul>
+          <li>用<strong>弱的</strong>耦合(系统-探测器耦合常数 $g$ <strong>小</strong>)</li>
+          <li>单次测量<strong>几乎不扰动</strong>系统(只引起<strong>微小</strong>的偏移)</li>
+          <li>单次测量<strong>不塌缩</strong>到本征态——只提取<strong>少量</strong>信息</li>
+          <li><strong>多次重复</strong>弱测量 + <strong>统计平均</strong>,可以<strong>反推</strong>系统性质</li>
+        </ul>
+
+        <h3>5.8.2 弱值(weak value)的概念</h3>
+        <p><strong>Aharonov-Albert-Vaidman(1988)</strong> 的关键思想:</p>
+        <ul>
+          <li>系统初态 $\lvert \psi_i \rangle$,末态 $\lvert \psi_f \rangle$ (通过<strong>前选择</strong>和<strong>后选择</strong>确定)</li>
+          <li>中间<strong>弱测量</strong>可观测量 $\hat{A}$</li>
+          <li>弱值定义为
+          $$\hat{A}_w = \frac{\langle \psi_f \rvert \hat{A} \rvert \psi_i \rangle}{\langle \psi_f \rvert \psi_i \rangle}$$</li>
+        </ul>
+        <p><strong>奇怪性质</strong>: 弱值<strong>可以</strong>超出 $\hat{A}$ 的<strong>经典谱</strong>范围!比如对 $\sigma_z$ 测(谱 $\{-1, +1\}$),弱值可以是 $100$——这叫"<strong>超经典弱值</strong>"。</p>
+        <p><strong>物理含义</strong>: 弱值<strong>不是</strong>直接测量到的"平均值"——它是<strong>条件期望</strong>(在给定前选择和后选择下),可以<strong>任意大</strong>——但<strong>代价</strong>是<strong>单次测量的信噪比极低</strong>(探测器读数会被"压扁"到很小),需要<strong>大量</strong>重复才能分辨。</p>
+
+        <h3>5.8.3 弱测量的应用</h3>
+        <ol>
+          <li><strong>量子态层析(quantum state tomography)</strong>: 不需要<strong>强投影</strong>就能估计系统态——对实验<strong>不干扰</strong>特别重要</li>
+          <li><strong>连续监测(continuous monitoring)</strong>: 跟踪量子系统的<strong>连续演化</strong>(超导量子比特的实时追踪)</li>
+          <li><strong>放大微小信号</strong>: 利用超经典弱值,放大<strong>微小物理效应</strong>(光束偏折、相位延迟)</li>
+          <li><strong>基础物理测试</strong>: 验证量子力学的<strong>弱值诠释</strong>跟传统诠释的等价性</li>
+        </ol>
+
+        <h3>5.8.4 弱测量跟"测量问题"的关系</h3>
+        <p><strong>哲学含义</strong>: 弱测量揭示了<strong>测量</strong>有<strong>连续谱</strong>——从"完全扰动"(强)到"几乎不扰动"(弱)到"完全不测"(极限)。<strong>经典极限</strong>下,测量"测了"或"没测"是二元的;<strong>量子</strong>下,这个二元区分被"打破"了。</p>
+        <p>这对<strong>测量问题</strong>(measurement problem)有深刻含义——它说明"塌缩"不是<strong>非此即彼</strong>的事件,而是一个<strong>连续过程</strong>。<strong>但它不"解决"测量问题</strong>——只是把"瞬时塌缩"换成了"连续弱扰动"。</p>
+
+        <h3>5.8.5 弱测量的"超经典弱值"——实验证据</h3>
+        <p><strong>Hosten 2008 实验</strong>("自旋霍尔效应的弱值放大"): 用<strong>超经典弱值</strong>(~100)放大<strong>光束偏折</strong>——把<strong>原本</strong>几纳米<strong>的偏折放大到几十微米,容易测到。</strong></p>
+        <p><strong>机制</strong>:</p>
+        <ul>
+          <li>准备光子初态 $\lvert i \rangle$</li>
+          <li>让光子<strong>预选择</strong>通过偏振器(确定 $\lvert \psi_i \rangle$)</li>
+          <li>中间<strong>弱测量</strong>系统(自旋-轨道耦合)</li>
+          <li>末态<strong>后选择</strong>通过偏振器(确定 $\lvert \psi_f \rangle$,跟 $\lvert \psi_i \rangle$ <strong>几乎正交</strong>)</li>
+          <li>测量<strong>空间位置</strong>作为弱值的"探针"</li>
+        </ul>
+        <p><strong>结果</strong>: 弱值放大<strong>小效应</strong>到可测尺度——这<strong>不违反</strong>不确定性原理,因为<strong>代价</strong>是<strong>单次测量的信噪比极低</strong>——<strong>总信噪比</strong>跟直接测一样。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>关键澄清</strong>: 弱值放大<strong>不</strong>是"绕过"不确定性原理——它<strong>重新分配</strong>信息,<strong>不增加</strong>信息。这跟"杠杆"放大力臂<strong>不增加</strong>能量守恒一样。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 5.9 -->
+        <h2>5.9 章节总结与后续</h2>
+
+        <h3>5.9.1 一句话总结</h3>
+        <p><strong>量子测量</strong>是<strong>量子力学第 3 公理</strong>——它<strong>不可被推导</strong>,只能被<strong>形式化</strong>。它把"量子态"映射成"经典读数",代价是<strong>相位信息丢失</strong>(强测量)或<strong>部分信息</strong>(弱测量)。<strong>不确定性原理</strong>是不对易算符的代数必然——它是<strong>态的内在性质</strong>,不是测量技术限制。</p>
+
+        <h3>📋 概念速查表</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>概念</th><th>定义</th><th>关键公式/例子</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>可观测量(observable)</strong></td><td>物理量,数学上是<strong>厄米算符</strong></td><td>$\hat{x}, \hat{p}, \hat{H}, \hat{S}_z$</td></tr>
+            <tr><td><strong>谱分解</strong></td><td>厄米算符写成"本征值 × 投影"之和</td><td>$\hat{A} = \sum_i a_i \lvert a_i \rangle \langle a_i \rvert$</td></tr>
+            <tr><td><strong>投影算符</strong></td><td>满足 $\hat{P}^2 = \hat{P} = \hat{P}^\dagger$</td><td>$\hat{P}_i = \lvert a_i \rangle \langle a_i \rvert$</td></tr>
+            <tr><td><strong>玻恩规则</strong></td><td>概率 = 振幅的模方</td><td>$P(a_i) = \lvert \langle a_i \rvert \psi \rangle \rvert^2$</td></tr>
+            <tr><td><strong>期望值</strong></td><td>量子期望 = 经典加权平均</td><td>$\langle \hat{A} \rangle = \langle \psi \rvert \hat{A} \rvert \psi \rangle$</td></tr>
+            <tr><td><strong>方差/不确定度</strong></td><td>态的内在涨落</td><td>$\Delta A = \sqrt{\langle \hat{A}^2 \rangle - \langle \hat{A} \rangle^2}$</td></tr>
+            <tr><td><strong>海森堡不确定性</strong></td><td>位置-动量最小测不准</td><td>$\Delta x \cdot \Delta p \ge \hbar/2$</td></tr>
+            <tr><td><strong>Robertson 不等式</strong></td><td>任意两可观测量的不确定度下界</td><td>$\Delta A \cdot \Delta B \ge \frac{1}{2}\lvert \langle [\hat{A}, \hat{B}] \rangle \rvert$</td></tr>
+            <tr><td><strong>对易子</strong></td><td>$[\hat{A}, \hat{B}] = \hat{A}\hat{B} - \hat{B}\hat{A}$</td><td>$[\hat{x}, \hat{p}] = i\hbar$</td></tr>
+            <tr><td><strong>零差测量</strong></td><td>用相干态参考测信号光的 $x$ 或 $p$</td><td>量子光学标准技术</td></tr>
+            <tr><td><strong>POVM</strong></td><td>半正定算符 + 完备性的测量推广</td><td>态区分、联合测量的工具</td></tr>
+            <tr><td><strong>Helstrom 界限</strong></td><td>两态最优区分的最小错误概率</td><td>$P_{\text{err}}^{\min} = \frac{1}{2}(1 - \frac{1}{2}\text{tr}\lvert \hat{\rho}_0 - \hat{\rho}_1 \rvert)$</td></tr>
+            <tr><td><strong>弱测量</strong></td><td>弱耦合下"几乎不扰动"的测量</td><td>弱值可超经典谱范围</td></tr>
+            <tr><td><strong>最小不确定度态</strong></td><td>不确定性等号成立的态</td><td>高斯波包、相干态</td></tr>
+            <tr><td><strong>塌缩</strong></td><td>测量后系统从叠加变本征</td><td>不可逆,丢失相位</td></tr>
+          </tbody>
+        </table>
+
+        <h3>5.9.3 为后续章节铺路</h3>
+        <ul>
+          <li><strong>第 6 章《量子比特》</strong>: 本章测量的 $\lvert 0\rangle, \lvert 1\rangle$ 基底会进一步具体化为"计算基"</li>
+          <li><strong>第 7 章《量子逻辑门》</strong>: $\hat{x}, \hat{p}$ 之外引入<strong>单 qubit 门</strong>(Pauli 门、Hadamard 门)——它们<strong>酉演化</strong> vs <strong>测量</strong>对比</li>
+          <li><strong>第 8 章《量子电路的数学模型》</strong>: 把"酉演化 + 测量"组合成"量子电路"的完整模型</li>
+          <li><strong>第 9 章《量子傅里叶变换》</strong>: 测量的"塌缩"如何在 QFT 里<strong>提取</strong>信息</li>
+          <li><strong>第 11 章《Shor 算法》</strong>: 不确定性原理<strong>不</strong>阻止<strong>有效</strong>信息提取——Shor 用 QFT + 测量<strong>巧妙地</strong>提取因子信息</li>
+          <li><strong>第 12 章《量子相位估计》</strong>: 是"测量的最纯净形式"——只测<strong>相位</strong></li>
+          <li><strong>第 17 章《量子纠错》</strong>: <strong>不破坏叠加</strong>的测量 = "综合征测量"(syndrome measurement)——ch17 的核心</li>
+        </ul>
+
+        <h3>5.9.4 推荐阅读</h3>
+        <ul>
+          <li>Nielsen & Chuang《Quantum Computation and Quantum Information》第 2 章(测量和密度矩阵)</li>
+          <li>S. Weinberg, 《Lectures on Quantum Mechanics》第 3 章(测量公理)</li>
+          <li>J. J. Sakurai & J. Napolitano, 《Modern Quantum Mechanics》第 1.4 节(不确定性与对易子)</li>
+          <li>Wikipedia "POVM" 与 "Weak measurement" 词条(标准参考)</li>
+          <li>B. S. DeWitt & R. N. Graham (eds.),《The Many-Worlds Interpretation of Quantum Mechanics》(测量问题的多世界视角)</li>
+          <li>原始论文: Born(1926), Heisenberg(1927), Robertson(1929), Schrödinger(1930), Aharonov-Albert-Vaidman(1988)</li>
+        </ul>
+
+        <h3>5.9.5 章节回顾问题</h3>
+        <ol>
+          <li><strong>玻恩规则</strong>的概率总和为什么保证为 1?(提示:用 $\sum_i \lvert a_i \rangle \langle a_i \rvert = I$)</li>
+          <li><strong>相干态</strong>为什么是"最像经典光"的量子态?(提示:5.3.3 提到的不确定度,以及它的<strong>最小</strong>性)</li>
+          <li><strong>不确定性原理</strong>为什么<strong>不</strong>意味着"测量扰动"?(提示:5.4.6 算符版本的独立性)</li>
+          <li><strong>POVM</strong> 跟<strong>投影测量</strong>的根本区别是什么?(提示:正交性 vs 半正定)</li>
+          <li><strong>弱值</strong>为什么可以超出<strong>经典谱</strong>范围?这个"超经典"性质在物理上<strong>真实</strong>吗?(提示:5.8.2 条件期望 + 信噪比)</li>
+        </ol>
+
+        <h3>5.9.6 复合系统的测量:从测量到量子电路</h3>
+        <p><strong>为什么这节重要</strong>: 实际量子算法里的"测量"是<strong>多 qubit 联合测量</strong>——比如 ch04.8 讲的 BSM(贝尔态测量)是<strong>两 qubit 测量</strong>,Shor 算法里测<strong>傅里叶变换后的寄存器</strong>也是多 qubit 测量。</p>
+        <p><strong>复合系统的可观测量</strong>: 对 $n$ qubit 系统,可观测量空间是<strong>张量积</strong> $\mathcal{H}_1 \otimes \mathcal{H}_2 \otimes ... \otimes \mathcal{H}_n$ 上的厄米算符。最常用的是<strong>单 qubit 测量的张量积</strong>:
+        $$\hat{Z}_1 \otimes \hat{I}_2 \otimes \hat{I}_3 = \text{测第 1 个 qubit,其他不测}$$</p>
+        <p>但<strong>联合可观测量</strong>(比如 $\hat{Z}_1 \otimes \hat{Z}_2$——"测两 qubit 的关联")<strong>不是单 qubit 测量的张量积</strong>。</p>
+        <p><strong>例:对 $\lvert \Phi^+ \rangle = \frac{1}{\sqrt{2}}(\lvert 00 \rangle + \lvert 11 \rangle)$</strong>:</p>
+        <ul>
+          <li>测 $\hat{Z}_1 \otimes \hat{I}_2$(只测第一 qubit):得到 0 或 1,各 50%</li>
+          <li>测 $\hat{Z}_1 \otimes \hat{Z}_2$("关联测量"):得到 +1(对应 $\lvert 00 \rangle, \lvert 11 \rangle$)或 -1(对应 $\lvert 01 \rangle, \lvert 10 \rangle$)
+          <ul>
+            <li>对 $\lvert \Phi^+ \rangle$, $\hat{Z}_1 \otimes \hat{Z}_2$ 的期望是 $\langle \Phi^+ \rvert \hat{Z}_1 \otimes \hat{Z}_2 \lvert \Phi^+ \rangle = +1$——<strong>总相关</strong>!</li>
+          </ul>
+          </li>
+        </ul>
+        <p><strong>纠缠见证者(entanglement witness)</strong>: 像 $\hat{W} = \hat{I} - 2\lvert \Phi^+ \rangle \langle \Phi^+ \rvert$ 这种算符,如果 $\text{tr}(\hat{\rho}\hat{W}) < 0$ 就证明态是<strong>纠缠的</strong>——这是<strong>实验上</strong>区分纠缠 vs 可分的标准方法。ch14 量子信息论会再讨论。</p>
+        <p><strong>结论</strong>: 多 qubit 测量是<strong>单 qubit 测量的推广</strong>,但<strong>联合可观测量</strong>可以揭示单 qubit 测量看不到的<strong>关联</strong>——这正是 ch04 纠缠和 ch08 量子电路的核心。</p>
+
+        <h3>5.9.7 第一部分的总结:量子力学的五大公理</h3>
+        <p>完成 ch01-ch05,我们已经覆盖了<strong>量子力学的完整公理体系</strong>。把 5 章核心整理一下:</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>公理</th><th>物理内容</th><th>形式化</th><th>章节</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>1. 态空间</strong></td><td>物理系统对应<strong>希尔伯特空间</strong></td><td>$\lvert \psi \rangle \in \mathcal{H}$</td><td>ch02</td></tr>
+            <tr><td><strong>2. 演化</strong></td><td>封闭系统<strong>酉演化</strong></td><td>$\lvert \psi(t) \rangle = \hat{U}(t) \lvert \psi(0) \rangle$</td><td>ch02, ch03</td></tr>
+            <tr><td><strong>3. 测量</strong></td><td>投影测量 + 玻恩规则</td><td>$P(a_i) = \lvert \langle a_i \rvert \psi \rangle \rvert^2$</td><td>ch05(本章)</td></tr>
+            <tr><td><strong>4. 复合系统</strong></td><td>多粒子态空间是<strong>张量积</strong></td><td>$\mathcal{H}_{AB} = \mathcal{H}_A \otimes \mathcal{H}_B$</td><td>ch04</td></tr>
+            <tr><td><strong>5. 不可克隆(定理)</strong></td><td>未知量子态<strong>不可完美复制</strong></td><td>$U(\lvert \psi \rangle \otimes \lvert 0 \rangle) \neq \lvert \psi \rangle \otimes \lvert \psi \rangle$</td><td>ch04.6</td></tr>
+          </tbody>
+        </table>
+        <p><strong>这 5 条公理</strong>就是<strong>量子力学的全部</strong>。所有 ch01-ch05 的内容都是这 5 条公理的<strong>推论</strong>或<strong>诠释</strong>。<strong>注:"不可克隆"是定理(可由前 4 条推出),不是公理——但因为在量子计算中太重要,列出作为参考。</strong></p>
+        <p><strong>进入第二部分</strong>: 现在我们有了完整的量子力学工具,接下来 ch06-ch10 会用这些工具<strong>构建量子计算的基础设施</strong>——量子比特、量子门、量子电路、QFT、Grover。从这里开始,量子力学的"哲学"问题退到次要位置,我们的重点是<strong>用它来计算</strong>。</p>
+
+        <!-- 上一章 / 下一章 导航 -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch04.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 4 章 量子纠缠与贝尔不等式</span>
+          </a>
+          <a href="ch06.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 6 章 量子比特 — 量子信息的基本单元</span>
+            <span class="pager-tag">即将推出</span>
+          </a>
+        </nav>
+
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>

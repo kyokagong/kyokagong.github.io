@@ -308,10 +308,17 @@
         <blockquote class="chapter-quote">30 年后,贝尔把这个哲学争论变成了<strong>可实验检验的物理问题</strong>。</blockquote>
 
         <h3>4.4.5 玻姆版本:让 EPR 更"可实验"</h3>
+        <blockquote class="chapter-quote"><p>4.3 节已经介绍了四种贝尔态 $\lvert\Phi^\pm\rangle, \lvert\Psi^\pm\rangle$。<strong>玻姆版本的关键不在于"再讲一次"贝尔态</strong>,而在于它把 EPR 思想实验从"两粒子任意量子数"<strong>具体化</strong>为"两自旋 1/2 粒子"——让贝尔不等式实验<strong>有了清晰的物理实现路径</strong>。下面我们用 4.3 已经熟悉的形式再走一遍。</p></blockquote>
         <p>1960 年代,玻姆(David Bohm) 把 EPR 思想实验<strong>具体化</strong>为<strong>两自旋 1/2 粒子</strong>的版本:考虑一个<strong>自旋单态(singlet)</strong></p>
         <p>$$\lvert S \rangle = \frac{1}{\sqrt{2}}(\lvert \uparrow\downarrow\rangle - \lvert \downarrow\uparrow\rangle)$$</p>
-        <p>这个态的"反关联"性质:沿任何方向测量,两粒子结果<strong>严格相反</strong>。这个版本是后来贝尔不等式实验(Aspect 1982 等)直接使用的形式。</p>
-        <p><strong>注</strong>:$\lvert S \rangle$ 跟 4.3 节的 $\lvert\Psi^-\rangle = \frac{1}{\sqrt{2}}(\lvert 01\rangle - \lvert 10\rangle)$ 形式上一样(只是基矢标签 $\uparrow/\downarrow$ vs $1/0$ 略有不同)——它也是四贝尔态之一,只是带"反关联"特性。</p>
+        <p>这个态的"反关联"性质:沿任何方向测量,两粒子结果<strong>严格相反</strong>。这正是 4.3 节介绍过的 $\lvert\Psi^-\rangle$ (只是基矢标签 $\uparrow/\downarrow$ vs $1/0$ 不同)——带"反关联"特性的贝尔态。</p>
+        <p><strong>为什么玻姆版本让贝尔不等式"可实验"</strong>:</p>
+        <ol>
+          <li><strong>物理可实现</strong>: 自旋 1/2 粒子可由各种物理系统实现(银原子 Stern-Gerlach、钙离子光泵浦、量子点、电子自旋共振)</li>
+          <li><strong>可任意选测量方向</strong>: 沿 $\hat{n}$ 方向测量自旋,只要用 Stern-Gerlach 装置旋转磁场方向即可</li>
+          <li><strong>可重复</strong>: 1980 年代起,钙原子、铷原子、光子偏振都已成为标准"贝尔实验"平台</li>
+        </ol>
+        <p>如果没有玻姆的具体化,EPR 论证将停留在"一般两粒子"层面——<strong>贝尔不等式虽然数学上可写出来,但没人知道怎么在实验室里搭出来</strong>。玻姆的贡献在于把"哲学问题"变成了"工程问题"。</p>
 
         <h3>4.4.6 不可克隆定理:为什么 EPR 论证让人不安</h3>
         <p>EPR 论点还有一层更深的物理意义,跟<strong>量子不可克隆定理(no-cloning theorem)</strong> 有关。</p>
@@ -442,7 +449,15 @@
             <tr><td>Handsteiner (维也纳)</td><td>2017</td><td>2.50 ± 0.18</td><td>2.828</td><td>~1.8σ (宇宙尺度自由选择)</td></tr>
           </tbody>
         </table>
-        <blockquote class="chapter-quote"><strong>注</strong>:$\sigma$ 数看起来"小",是因为这些新一代实验要在更严格条件下同时关闭多个漏洞,系统误差更大。<strong>重要的是</strong>——所有实验都跟量子预测一致,跟 $S=2$ 的经典上限至少差 $7\sigma$ 以上。σ 是标准差,9σ 表示偏离量子预测的概率 $p \sim 10^{-19}$。</blockquote>
+        <blockquote class="chapter-quote"><p><strong>注</strong>:$\sigma$ 数看起来"小",是因为这些新一代实验要在更严格条件下同时关闭多个漏洞,系统误差更大。<strong>重要的是</strong>——所有实验都跟量子预测一致,跟 $S=2$ 的经典上限至少差 $7\sigma$ 以上。</p>
+        <p><strong>$\sigma$ 是什么意思?</strong> $\sigma$ 是"标准差"(standard deviation)。如果实验测得 $S$ 跟某个理论值的偏差是 $k\sigma$,那么这种偏差<strong>纯粹由统计涨落引起</strong>的概率大致是 $p \sim 10^{-k^2/2}$。例如:</p>
+        <ul>
+          <li>$1\sigma$: $p \approx 0.32$ (32% 的人会"涨"出这个偏差,很常见)</li>
+          <li>$3\sigma$: $p \approx 0.0027$ (千分之三,<strong>发现级</strong>的物理阈值)</li>
+          <li>$5\sigma$: $p \approx 5.7 \times 10^{-7}$ (粒子物理的"发现标准",CERN 才用这个)</li>
+          <li>$7\sigma$ 以上: $p < 10^{-10}$ (十亿分之一,<strong>几乎不可能是偶然</strong>)</li>
+        </ul>
+        <p>所以表中"~16σ"意味着这种偏差由统计涨落造成的概率是 $10^{-56}$——这是无可争议的"实验确认"。</p></blockquote>
 
         <h3>4.6.4 留下的疑问:非局域性的精确含义</h3>
         <p>贝尔不等式的违反告诉我们:<strong>任何定域隐变量都不可能</strong>。但它<strong>没有</strong>告诉我们:</p>
@@ -508,6 +523,25 @@
         <p>$$\lvert GHZ \rangle = \frac{1}{\sqrt{2}}(\lvert 000\rangle + \lvert 111\rangle)$$</p>
         <p><strong>神奇性质</strong>:这个态不能用"两两纠缠 + 经典随机"来解释——它是<strong>真正三体</strong>的纠缠(对三 qubit 系统,GHZ 态被 Svetlichny 不等式判定为"三体非局域")。</p>
         <p><strong>直觉</strong>:三粒子 A, B, C 各取 $\sigma_x$ 测量,量子力学预测 $\sigma_x^A \sigma_x^B \sigma_x^C = +1$(总是)。三粒子各取 $\sigma_y$ 测量,也得到 $\sigma_y^A \sigma_y^B \sigma_y^C = +1$(总是)。但<strong>任何</strong>定域隐变量理论都不能同时满足这两个条件(经典盒子容不下三粒子完美关联)。这叫"GHZ 定理"——贝尔不等式的<strong>无不等式</strong>版本。</p>
+        <p><strong>为什么 GHZ 定理比贝尔不等式"更强"——直接反证:</strong></p>
+        <p>设三个粒子 A, B, C 各有一个<strong>预先赋值的隐变量</strong> $m_A^x, m_B^x, m_C^x \in \{+1, -1\}$(对应 $\sigma_x$ 测量的结果)。类似地有 $m_A^y, m_B^y, m_C^y$ (对应 $\sigma_y$ 测量的结果)。</p>
+        <p><strong>量子预测</strong>要求:</p>
+        <ul>
+          <li>全 $\sigma_x$ 测量: $m_A^x m_B^x m_C^x = +1$ ———(Eq.1)</li>
+          <li>全 $\sigma_y$ 测量: $m_A^y m_B^y m_C^y = +1$ ———(Eq.2)</li>
+        </ul>
+        <p><strong>经典定域性</strong>要求:每次实验<strong>只选一种测量方向</strong>。在 $\sigma_x$ 测量下, $m_i^y$ 必须是某个预先确定的"翻转因子" $q_i$ 跟 $m_i^x$ 关联:</p>
+        <p>$$m_i^y = m_i^x \cdot q_i, \quad q_i \in \{+1, -1\}$$</p>
+        <p>(因为 $\sigma_y = i \sigma_x \sigma_z$ 在经典定域下必须<strong>独立</strong>于测量方向——$q_i$ 是第 $i$ 个粒子的"特性",不依赖 Alice/Bob 怎么选方向。)</p>
+        <p>代入 Eq.2:</p>
+        <p>$$(m_A^x q_A)(m_B^x q_B)(m_C^x q_C) = +1$$</p>
+        <p>$$\Rightarrow (m_A^x m_B^x m_C^x)(q_A q_B q_C) = +1$$</p>
+        <p>$$\Rightarrow (+1) \cdot (q_A q_B q_C) = +1 \quad (\text{用 Eq.1})$$</p>
+        <p>$$\Rightarrow q_A q_B q_C = +1 ———(Eq.3)$$</p>
+        <p>但 $\sigma_x, \sigma_y, \sigma_z$ 的<strong>代数关系</strong> $\sigma_y = i\sigma_x \sigma_z$ 要求对每个粒子 $i$, $q_i = m_i^z$ (即"y 测量相对 x 测量的翻转"等于"z 方向的隐变量值")。这意味着 $q_A q_B q_C = m_A^z m_B^z m_C^z$——而 $\sigma_z^A \sigma_z^B \sigma_z^C$ 在 $\lvert GHZ\rangle$ 下的量子预测是</p>
+        <p>$$\sigma_z^A \sigma_z^B \sigma_z^C = \langle GHZ \rvert \sigma_z^A \sigma_z^B \sigma_z^C \lvert GHZ \rangle = \frac{1}{2}(+1 + +1) = +1$$</p>
+        <p>对 $\sigma_z$ 测量的独立分析得到 $q_A q_B q_C = -1$ (因为 $\sigma_x \sigma_y = i\sigma_z$, 三个 $i$ 因子相乘得 $i^3 = -i$, 跟经典盒子冲突)。<strong>所以 Eq.3 矛盾</strong>——$q_A q_B q_C$ 同时要求等于 $+1$ 和 $-1$。</p>
+        <p><strong>结论</strong>:定域隐变量在 GHZ 态上<strong>完全失败</strong>——单次实验就足够否决它,不需要像 CHSH 那样做统计平均。</p>
         <p>GHZ 态在量子算法里有应用(纠错、分布式计算、量子互联网),第 17、26 章会再讲。</p>
 
         <hr>
@@ -689,10 +723,9 @@
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 3 章 叠加原理与量子干涉</span>
           </a>
-          <a href="ch05.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch05.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
             <span class="pager-title">第 5 章 量子测量与不确定性原理</span>
-            <span class="pager-tag">即将推出</span>
           </a>
         </nav>
 
@@ -736,6 +769,7 @@
           <li><a href="ch02.html">第 2 章</a></li>
           <li><a href="ch03.html">第 3 章</a></li>
           <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>
