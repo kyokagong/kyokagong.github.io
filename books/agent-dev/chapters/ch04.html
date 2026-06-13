@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第4章：主流 Agent 框架纵览 | 《AGENT开发从入门到精通》">
+
+  <title>第4章：主流框架纵览 | AGENT开发从入门到精通</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- highlight.js for code blocks -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    /* ch04 特定样式：框架时间线 */
+    .timeline-svg {
+      background: linear-gradient(135deg, rgba(192,38,211,0.08), rgba(249,115,22,0.08));
+      border: 1px solid rgba(192,38,211,0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .timeline-svg svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .timeline-svg .tl-year {
+      fill: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .timeline-svg .tl-name {
+      fill: #94a3b8;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .timeline-svg .tl-era {
+      fill: #c026d3;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>AGENT开发从入门到精通</span>
+      </a>
+
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../index.html" class="site-nav-link active" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch04.html" class="active">第4章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER PAGE ==================== -->
+  <div class="chapter-page">
+    <div class="chapter-container">
+      <article class="chapter-content">
+
+        <header class="chapter-header">
+          <div class="chapter-breadcrumb">
+            <a href="../index.html">首页</a> / <a href="../index.html#chapters">章节总览</a> / 第4章
+          </div>
+          <h1>第 4 章 主流 Agent 框架纵览——LangChain、LangGraph、AutoGen、CrewAI、LlamaIndex、Agno、OpenAI Agents SDK</h1>
+          <div class="chapter-epigraph">
+            &ldquo;2026 年的 Agent 开发，几乎没有人会从零开始写 LLM 客户端、工具描述、记忆管理这些"底座"——大家都站在框架的肩膀上。但框架有 7 个、8 个、9 个，每一个都在用不同的抽象描述"Agent 是什么"。这一章我们就把这 7 个主流框架全部拆开看一遍，告诉你它们各自长什么样、Hello World 怎么写、什么时候该选哪个。&rdquo;
+          </div>
+        </header>
+
+        <!-- ===== 七大框架时间线 SVG ===== -->
+        <div class="timeline-svg">
+      <svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="7 大框架时间线">
+        <defs>
+          <linearGradient id="timeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#c026d3"/>
+            <stop offset="100%" stop-color="#f97316"/>
+          </linearGradient>
+          <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <polygon points="0 0, 6 3, 0 6" fill="#f97316"/>
+          </marker>
+        </defs>
+        <!-- 主时间线 -->
+        <line x1="40" y1="140" x2="680" y2="140" stroke="url(#timeGrad)" stroke-width="3" marker-end="url(#arr)"/>
+        <!-- 7 个框架节点 -->
+        <circle cx="90" cy="140" r="9" fill="#c026d3"/>
+        <text x="90" y="115" text-anchor="middle" class="tl-year">2022.10</text>
+        <text x="90" y="170" text-anchor="middle" class="tl-name">LangChain</text>
+
+        <circle cx="190" cy="140" r="9" fill="#c026d3"/>
+        <text x="190" y="115" text-anchor="middle" class="tl-year">2022.11</text>
+        <text x="190" y="170" text-anchor="middle" class="tl-name">LlamaIndex</text>
+
+        <circle cx="270" cy="140" r="9" fill="#a855f7"/>
+        <text x="270" y="115" text-anchor="middle" class="tl-year">2023.08</text>
+        <text x="270" y="170" text-anchor="middle" class="tl-name">Agno</text>
+
+        <circle cx="355" cy="140" r="9" fill="#a855f7"/>
+        <text x="355" y="115" text-anchor="middle" class="tl-year">2023.09</text>
+        <text x="355" y="170" text-anchor="middle" class="tl-name">AutoGen</text>
+
+        <circle cx="440" cy="140" r="9" fill="#a855f7"/>
+        <text x="440" y="115" text-anchor="middle" class="tl-year">2023.11</text>
+        <text x="440" y="170" text-anchor="middle" class="tl-name">CrewAI</text>
+
+        <circle cx="540" cy="140" r="9" fill="#f97316"/>
+        <text x="540" y="115" text-anchor="middle" class="tl-year">2024.06</text>
+        <text x="540" y="170" text-anchor="middle" class="tl-name">LangGraph</text>
+
+        <circle cx="640" cy="140" r="9" fill="#f97316"/>
+        <text x="640" y="115" text-anchor="middle" class="tl-year">2025.03</text>
+        <text x="640" y="170" text-anchor="middle" class="tl-name">Agents SDK</text>
+
+        <!-- 阶段标签 -->
+        <text x="60" y="240" class="tl-era">📦 创世纪 (2022)</text>
+        <text x="280" y="240" class="tl-era">🚀 多 Agent 爆发 (2023)</text>
+        <text x="500" y="240" class="tl-era">⚙️ 严肃化 + 标准化 (2024-2025)</text>
+      </svg>
+    </div>
+
+        <blockquote>2026 年的 Agent 开发，几乎没有人会从零开始写 LLM 客户端、工具描述、记忆管理这些"底座"——大家都站在框架的肩膀上。但框架有 7 个、8 个、9 个，每一个都在用不同的抽象描述"Agent 是什么"。这一章我们就把这 7 个主流框架全部拆开看一遍，告诉你它们各自长什么样、Hello World 怎么写、什么时候该选哪个。</blockquote>
+
+<hr>
+
+<h2 id="section-4-1">4.1 引子：为什么需要框架？</h2>
+
+<p>在 ch03 我们用 100 行 Python 把"大脑 + 记忆 + 工具 + 规划"拼成了一个能跑的 Agent。看起来也<strong>不算太复杂</strong>——那为什么工业界几乎所有人都在用框架？</p>
+
+<h3 id="section-4-1-1">4.1.1 自研 vs 框架的代价</h3>
+
+<p>自己写的 100 行代码能跑，但生产环境会很快暴露出三件事：</p>
+
+<table>
+<thead><tr>
+<th>自研痛点</th>
+<th>后果</th>
+<th>框架如何解决</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>工具描述 JSON 自己拼</td>
+<td>改协议要改 N 处</td>
+<td>框架用装饰器/类型注解自动生成</td>
+</tr>
+<tr>
+<td>重试 / 超时 / 限流</td>
+<td>每个工具都要重写</td>
+<td>框架统一中间件</td>
+</tr>
+<tr>
+<td>状态管理</td>
+<td>多步任务下变量乱飞</td>
+<td>框架用 Checkpoint + 序列化</td>
+</tr>
+<tr>
+<td>可观测性</td>
+<td>出问题只能 print</td>
+<td>框架接 LangSmith / OpenTelemetry</td>
+</tr>
+<tr>
+<td>多 Agent 协作</td>
+<td>自己写 socket / 锁</td>
+<td>框架给你角色 + 消息总线</td>
+</tr>
+<tr>
+<td>流式输出</td>
+<td>SSE / WebSocket 都要手写</td>
+<td>框架内置 stream API</td>
+</tr>
+</tbody></table>
+
+<p><strong>结论</strong>：当你的 Agent 从"demo"变成"产品"的那一刻，框架的价值才开始显现。</p>
+
+<h3 id="section-4-1-2">4.1.2 框架共同的抽象层</h3>
+
+<p>如果你把 2024-2026 的所有 Agent 框架都拆开看，里面其实<strong>就是同一组概念的 7 种方言</strong>：</p>
+
+<pre><code class="language-plaintext">┌──────────────────────────────────────┐
+│  LLM Provider  ── OpenAI / Anthropic / Gemini / 开源 │
+└──────────────────────────────────────┘
+┌──────────────────────────────────────┐
+│  Tool       ── 函数描述 / JSON Schema  │
+│  Memory     ── 短期 / 长期 / 摘要        │
+│  Planning   ── ReAct / Plan-Execute    │
+│  State      ── 全局状态 + 检查点         │
+│  Multi-Agent ── 角色 / 通信 / 协作       │
+│  Observe    ── Trace / Log / Span       │
+└──────────────────────────────────────┘</code></pre>
+
+<p><strong>这一章就是给你一张"框架地图"</strong>——让你看到每个框架在这 7 个抽象上各做了什么选择。</p>
+
+<h3 id="section-4-1-3">4.1.3 2026 框架生态全景</h3>
+
+<table>
+<thead><tr>
+<th>框架</th>
+<th>发布时间</th>
+<th>主要语言</th>
+<th>多 Agent</th>
+<th>学习曲线</th>
+<th>核心特色</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>LangChain</td>
+<td>2022.10</td>
+<td>Python/JS</td>
+<td>中</td>
+<td>中</td>
+<td>生态最大、LCEL 标准化</td>
+</tr>
+<tr>
+<td>LangGraph</td>
+<td>2024.6</td>
+<td>Python/JS</td>
+<td>中</td>
+<td>陡</td>
+<td>用图描述 Agent 循环</td>
+</tr>
+<tr>
+<td>AutoGen</td>
+<td>2023.9（v0.4 重写 2024.11）</td>
+<td>Python/.NET</td>
+<td>强</td>
+<td>中-陡</td>
+<td>微软出品、Actor Model</td>
+</tr>
+<tr>
+<td>CrewAI</td>
+<td>2023.11</td>
+<td>Python</td>
+<td>强</td>
+<td>平</td>
+<td>"虚拟团队"隐喻</td>
+</tr>
+<tr>
+<td>LlamaIndex</td>
+<td>2022.11</td>
+<td>Python/TS</td>
+<td>中</td>
+<td>平</td>
+<td>RAG 之王</td>
+</tr>
+<tr>
+<td>Agno（原 Phidata）</td>
+<td>2023.8（1.0 in 2024.12）</td>
+<td>Python</td>
+<td>中</td>
+<td>平</td>
+<td>4 倍速、零装饰器</td>
+</tr>
+<tr>
+<td>OpenAI Agents SDK</td>
+<td>2025.3</td>
+<td>Python</td>
+<td>强</td>
+<td>平</td>
+<td>官方钦定、Handoff</td>
+</tr>
+</tbody></table>
+
+<p><strong>全章路线图</strong>：</p>
+
+<table>
+<thead><tr>
+<th>节号</th>
+<th>主题</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>4.2</td>
+<td>LangChain——LLM 应用的"Spring"</td>
+</tr>
+<tr>
+<td>4.3</td>
+<td>LangGraph——LangChain 的"严肃兄弟"</td>
+</tr>
+<tr>
+<td>4.4</td>
+<td>AutoGen——微软的"对话式多 Agent"</td>
+</tr>
+<tr>
+<td>4.5</td>
+<td>CrewAI——"虚拟团队"的隐喻</td>
+</tr>
+<tr>
+<td>4.6</td>
+<td>LlamaIndex——RAG 优先的"索引派"</td>
+</tr>
+<tr>
+<td>4.7</td>
+<td>Agno——"全栈 + 极速"</td>
+</tr>
+<tr>
+<td>4.8</td>
+<td>OpenAI Agents SDK——官方钦定的"轻量标准"</td>
+</tr>
+<tr>
+<td>4.9</td>
+<td>七框架横向对比 + 选型决策树</td>
+</tr>
+<tr>
+<td>4.10</td>
+<td>框架使用陷阱（5 大坑）</td>
+</tr>
+<tr>
+<td>4.11</td>
+<td>本章小结</td>
+</tr>
+</tbody></table>
+
+<hr>
+
+<h2 id="section-4-2">4.2 LangChain——LLM 应用的"Spring"</h2>
+
+<p><strong>LangChain</strong> 是 2022 年 10 月由 Harrison Chase 发布的"通用 LLM 应用框架"。到 2026 年，它已经是 GitHub 上 Star 最多的 LLM 框架之一（约 11 万+），在<strong>通用 LLM 应用框架</strong>类别里稳居第一。</p>
+
+<h3 id="section-4-2-1">4.2.1 核心抽象</h3>
+
+<p>LangChain 的核心是 <code>Runnable</code> 协议——所有组件（prompt、model、retriever、tool、chain）都实现同一个接口：</p>
+
+<pre><code class="language-plaintext">invoke(input)        ← 同步调用
+ainvoke(input)       ← 异步调用
+stream(input)        ← 流式输出
+batch([input1, ...]) ← 批量调用</code></pre>
+
+<p>这意味着你可以<strong>像拼管道一样拼 LLM 应用</strong>：</p>
+
+<pre><code class="language-python">prompt | model | parser</code></pre>
+
+<p>这串写法叫 <strong>LCEL</strong>（LangChain Expression Language），从 v0.1 引入后成为标准。</p>
+
+<h3 id="section-4-2-2">4.2.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># langchain_hello.py
+# pip install langchain langchain-openai
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+
+# 1. 模型
+llm = ChatOpenAI(model=&quot;gpt-4o-mini&quot;, temperature=0)
+
+# 2. 提示词模板
+prompt = ChatPromptTemplate.from_messages([
+    (&quot;system&quot;, &quot;你是一个翻译助手，把中文翻成{language}&quot;),
+    (&quot;user&quot;, &quot;{text}&quot;)
+])
+
+# 3. 输出解析器
+parser = StrOutputParser()
+
+# 4. 用 LCEL 拼成链
+chain = prompt | llm | parser
+
+# 5. 调用
+print(chain.invoke({&quot;language&quot;: &quot;英文&quot;, &quot;text&quot;: &quot;今天天气真好&quot;}))</code></pre>
+
+<p>输出：<code>The weather is really nice today.</code></p>
+
+<p><strong>一句话点评</strong>：LCEL 写起来像 Unix pipeline，可读性满分。但当你加 5 个工具 + 2 个分支 + 1 个记忆时，链子会变成"长面条"。</p>
+
+<h3 id="section-4-2-3">4.2.3 优势 / 痛点</h3>
+
+<ul><li>✅ <strong>生态最大</strong>：所有模型 / 向量库 / 文档加载器都有官方集成</li>
+<li>✅ <strong>文档最全</strong>：官方 cookbook + 第三方教程铺天盖地</li>
+<li>✅ <strong>LCEL 标准化</strong>：声明式，调试方便</li>
+<li>⚠️ <strong>抽象泄漏</strong>：底层 API 改一次，链子断一片（v0.0 → v0.1 → v0.2 → 0.3 → 1.0 多次破坏性升级）</li>
+<li>⚠️ <strong>学习成本</strong>：概念多（Chain、Agent、Tool、Retriever、Memory、Callback...）</li></ul>
+
+<h3 id="section-4-2-4">4.2.4 2025 年 1.0 重大变化</h3>
+
+<p>LangChain 在 2024 年底发布 1.0（从 v0.3 跳到 v1.0），主要做了三件事：</p>
+
+<ul><li><strong>去中心化重构</strong>：把 <code>langchain-community</code> 中的集成拆成独立包（<code>langchain-openai</code>、<code>langchain-anthropic</code>），主包只保留核心抽象</li>
+<li><strong>LCEL 一等公民</strong>：1.0 之前 <code>Chain</code> 类和 <code>LCEL</code> 是两套并行 API，1.0 之后 <code>LCEL</code> 成为唯一推荐写法</li>
+<li><strong>稳定性承诺</strong>：1.0 之后只允许向后兼容的改动，新功能进 <code>langchain-experimental</code></li></ul>
+
+<p><strong>对老项目的影响</strong>：升级到 1.0 通常要把所有 import 改一遍（约 30-50 处），但行为变化不大。建议：<strong>新项目直接 1.0，老项目锁 v0.3 维护</strong>。</p>
+
+<hr>
+
+<h2 id="section-4-3">4.3 LangGraph——LangChain 的"严肃兄弟"</h2>
+
+<p><strong>LangGraph</strong> 是 LangChain 团队 2024 年 6 月发布的"图式 Agent 框架"。它把 Agent 描述成一张有状态图：<strong>节点 = 动作，边 = 控制流</strong>。</p>
+
+<h3 id="section-4-3-1">4.3.1 核心抽象</h3>
+
+<ul><li><code>State</code>：全局状态（TypedDict 定义）</li>
+<li><code>Node</code>：图上的一个动作（LLM 调用、工具调用、决策）</li>
+<li><code>Edge</code>：节点之间的连线（普通边、条件边、循环边）</li>
+<li><code>Checkpoint</code>：状态快照（用于时间旅行、人在环、容错）</li></ul>
+
+<p><strong>何时用 LangGraph</strong>：当你的 Agent 需要<strong>循环</strong>、<strong>回滚</strong>、<strong>并行分支</strong>、<strong>人在环</strong>时。</p>
+
+<h3 id="section-4-3-2">4.3.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># langgraph_hello.py
+# pip install langgraph langchain-openai
+from typing import TypedDict
+from langgraph.graph import StateGraph, START, END
+from langchain_openai import ChatOpenAI
+
+# 1. 状态定义
+class State(TypedDict):
+    messages: list
+
+# 2. 节点：调用 LLM
+def chatbot(state: State):
+    llm = ChatOpenAI(model=&quot;gpt-4o-mini&quot;)
+    return {&quot;messages&quot;: state[&quot;messages&quot;] + [llm.invoke(state[&quot;messages&quot;])]}
+
+# 3. 构图
+graph = StateGraph(State)
+graph.add_node(&quot;chatbot&quot;, chatbot)
+graph.add_edge(START, &quot;chatbot&quot;)
+graph.add_edge(&quot;chatbot&quot;, END)
+
+# 4. 编译
+app = graph.compile()
+
+# 5. 调用
+result = app.invoke({&quot;messages&quot;: [(&quot;user&quot;, &quot;你好&quot;)]})
+print(result[&quot;messages&quot;][-1].content)</code></pre>
+
+<p><strong>一句话点评</strong>：写起来比 LangChain 啰嗦，但当你想做"如果用户问的是订单问题就转人工，否则 AI 回答"这种<strong>条件分支</strong>时，LangGraph 比 LCEL 清晰 10 倍。</p>
+
+<h3 id="section-4-3-3">4.3.3 适用场景</h3>
+
+<ul><li>✅ 客服多轮对话（需要查订单、退款、政策）</li>
+<li>✅ 多 Agent 协作（researcher + writer + critic）</li>
+<li>✅ 人在环（Human-in-the-Loop，关键决策暂停让人类介入）</li>
+<li>✅ 长跑工作流（10+ 步、有循环、会重试）</li></ul>
+
+<hr>
+
+<h2 id="section-4-4">4.4 AutoGen——微软的"对话式多 Agent"</h2>
+
+<p><strong>AutoGen</strong> 是微软 2023 年 9 月发布的"对话式多 Agent 框架"。它把 Agent 想象成"<strong>会聊天的角色</strong>"——每个 Agent 是一个有名字、有性格、有输入输出的角色。</p>
+
+<h3 id="section-4-4-1">4.4.1 核心抽象与演进</h3>
+
+<ul><li><strong>v0.2 (2023-2024)</strong>：基于 <code>AssistantAgent</code> / <code>UserProxyAgent</code>，用 group chat 协调</li>
+<li><strong>v0.4 (2024.11 重写)</strong>：引入 <strong>Actor Model</strong>，每个 Agent 是一个独立 actor，消息通过 topic 路由</li></ul>
+
+<p><strong>重写的原因</strong>：v0.2 的中心化调度器在多 Agent 协作时容易死锁，v0.4 用消息队列解耦。</p>
+
+<h3 id="section-4-4-2">4.4.2 Hello World（30 行，v0.4）</h3>
+
+<pre><code class="language-python"># autogen_hello.py
+# pip install autogen-agentchat autogen-ext[openai]
+# 运行前需 export OPENAI_API_KEY=sk-...（AutoGen v0.4 强制要求）
+import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.ui import Console
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+
+async def main():
+    model = OpenAIChatCompletionClient(model=&quot;gpt-4o-mini&quot;)
+
+    # 1. 定义一个&quot;作家&quot; Agent
+    writer = AssistantAgent(
+        name=&quot;writer&quot;,
+        model_client=model,
+        system_message=&quot;你是一个作家，用中文写一段关于春天的短句。&quot;
+    )
+
+    # 2. 让它跑一轮
+    await Console(writer.run_stream(task=&quot;开始吧&quot;))
+
+    await model.close()
+
+asyncio.run(main())</code></pre>
+
+<p><strong>一句话点评</strong>：AutoGen 的多 Agent 通信<strong>最像"开会"</strong>——你给每个 Agent 一段角色描述，让它们轮流发言、自动决策下一个该谁说话。</p>
+
+<h3 id="section-4-4-3">4.4.3 适用场景</h3>
+
+<ul><li>✅ 复杂的协作任务（研究 → 写作 → 评审 → 修改）</li>
+<li>✅ 需要自动决定"下一个谁说话"的场景</li>
+<li>✅ .NET 生态（AutoGen 是少数支持 .NET 的 Agent 框架）</li>
+<li>⚠️ <strong>学习曲线陡</strong>：v0.2 → v0.4 几乎完全不兼容，老教程要重写</li></ul>
+
+<hr>
+
+<h2 id="section-4-5">4.5 CrewAI——"虚拟团队"的隐喻</h2>
+
+<p><strong>CrewAI</strong> 是 2023 年 11 月发布的"角色扮演式多 Agent 框架"。它把多 Agent 类比成一支 <strong>Crew</strong>（团队）——每个人有角色、有任务、有顺序。</p>
+
+<h3 id="section-4-5-1">4.5.1 核心抽象</h3>
+
+<ul><li><code>Agent</code>：一个角色（研究员 / 作家 / 审稿人）</li>
+<li><code>Task</code>：一个具体任务（"研究 X 主题" / "写 800 字文章"）</li>
+<li><code>Crew</code>：把 Agent 和 Task 装在一起，按 Process 执行</li>
+<li><code>Process</code>：<code>sequential</code>（顺序）或 <code>hierarchical</code>（带管理者）</li></ul>
+
+<h3 id="section-4-5-2">4.5.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># crewai_hello.py
+# pip install crewai crewai-tools
+from crewai import Agent, Task, Crew, Process
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(model=&quot;gpt-4o-mini&quot;, temperature=0.7)
+
+# 1. 定义 Agent
+researcher = Agent(
+    role=&quot;研究员&quot;,
+    goal=&quot;研究 AI Agent 的最新进展&quot;,
+    backstory=&quot;你是硅谷的 AI 分析师，每天看 50 篇论文。&quot;,
+    llm=llm,
+)
+writer = Agent(
+    role=&quot;作家&quot;,
+    goal=&quot;把研究写成 200 字短文&quot;,
+    backstory=&quot;你是《连线》杂志的科技作家。&quot;,
+    llm=llm,
+)
+
+# 2. 定义 Task
+task1 = Task(description=&quot;研究 2026 年 Agent 框架格局&quot;, expected_output=&quot;3 个关键趋势&quot;, agent=researcher)
+task2 = Task(description=&quot;把趋势写成 200 字&quot;, expected_output=&quot;一段中文&quot;, agent=writer)
+
+# 3. 组建 Crew
+crew = Crew(agents=[researcher, writer], tasks=[task1, task2], process=Process.sequential)
+
+# 4. 启动
+result = crew.kickoff()
+print(result)</code></pre>
+
+<p><strong>一句话点评</strong>：CrewAI 的"角色 + 任务 + 流程"三件套是<strong>最少代码描述一个工作流</strong>的方式——比 LangGraph 直观，比 AutoGen 简单。</p>
+
+<h3 id="section-4-5-3">4.5.3 适用场景</h3>
+
+<ul><li>✅ 内容流水线（研究 → 写作 → 审核 → 发布）</li>
+<li>✅ 流程固定的多 Agent 协作</li>
+<li>✅ 不想自己写通信逻辑的产品经理 / 业务人员</li>
+<li>⚠️ <strong>过度抽象</strong>：复杂分支要 hack Process</li></ul>
+
+<hr>
+
+<h2 id="section-4-6">4.6 LlamaIndex——RAG 优先的"索引派"</h2>
+
+<p><strong>LlamaIndex</strong> 是 2022 年 11 月由 Jerry Liu 发布的"RAG-first 框架"。它的核心信念是：<strong>LLM 的价值取决于它能访问的数据</strong>。</p>
+
+<h3 id="section-4-6-1">4.6.1 核心抽象</h3>
+
+<ul><li><code>Document</code>：一段文本 + 元数据</li>
+<li><code>Index</code>：从 Document 派生的数据结构（VectorIndex / SummaryIndex / KnowledgeGraphIndex）</li>
+<li><code>QueryEngine</code>：把 query 变成 Index 查询</li>
+<li><code>Workflows</code>（2024.10 引入）：把多步 RAG 流程串成图</li></ul>
+
+<h3 id="section-4-6-2">4.6.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># llamaindex_hello.py
+# pip install llama-index llama-index-llms-openai
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+from llama_index.llms.openai import OpenAI
+
+# 1. 配置
+Settings.llm = OpenAI(model=&quot;gpt-4o-mini&quot;)
+
+# 2. 加载文档（假设 ./data 下有 .txt 文件）
+documents = SimpleDirectoryReader(&quot;./data&quot;).load_data()
+
+# 3. 建索引
+index = VectorStoreIndex.from_documents(documents)
+
+# 4. 查询
+query_engine = index.as_query_engine()
+response = query_engine.query(&quot;这些文档主要讲了什么？&quot;)
+print(response)</code></pre>
+
+<p><strong>一句话点评</strong>：LlamaIndex 的 "load → index → query" 三步是<strong>最短的 RAG 路径</strong>。如果你要做的核心是"问文档"，LlamaIndex 是首选。</p>
+
+<h3 id="section-4-6-3">4.6.3 适用场景</h3>
+
+<ul><li>✅ 知识库问答（企业文档 / 产品手册 / 论文库）</li>
+<li>✅ 复杂 RAG 流水线（HyDE、ReRank、Self-RAG）</li>
+<li>✅ 想要 200+ 种数据连接器（Notion、Slack、Google Drive...）</li>
+<li>⚠️ <strong>Agent 能力相对弱</strong>：需要自己接 LangGraph 做循环</li></ul>
+
+<hr>
+
+<h2 id="section-4-7">4.7 Agno——"全栈 + 极速"</h2>
+
+<p><strong>Agno</strong>（原名 Phidata，2024.12 改名）是 2023 年 8 月发布的"从原型到生产"框架。它的两个最大卖点：<strong>零装饰器</strong> 和 <strong>比 LangGraph 快 4 倍</strong>。</p>
+
+<h3 id="section-4-7-1">4.7.1 核心抽象</h3>
+
+<ul><li><code>Agent</code>：一个完整 Agent，构造时传 model、tools、instructions</li>
+<li><code>Team</code>：多 Agent 协作（Coordinator + Members）</li>
+<li><code>Workflow</code>：用 Python 函数描述多步流程</li></ul>
+
+<h3 id="section-4-7-2">4.7.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># agno_hello.py
+# pip install agno openai duckduckgo-search
+from agno.agent import Agent
+from agno.models.openai import OpenAIChat
+from agno.tools.duckduckgo import DuckDuckGoTools
+
+# 1. 直接构造
+agent = Agent(
+    model=OpenAIChat(id=&quot;gpt-4o-mini&quot;),
+    tools=[DuckDuckGoTools()],
+    instructions=[&quot;用中文回答&quot;, &quot;先搜索再总结&quot;],
+    markdown=True,
+)
+
+# 2. 跑
+agent.print_response(&quot;2026 年 Anthropic 发布了哪些新模型？&quot;, stream=True)</code></pre>
+
+<p><strong>一句话点评</strong>：Agno 是<strong>最"裸"</strong>的 Agent 框架——没有装饰器、没有链式语法、没有抽象层，<strong>所有逻辑都在 Python 控制流里</strong>。</p>
+
+<h3 id="section-4-7-3">4.7.3 适用场景</h3>
+
+<ul><li>✅ 性能敏感（高并发、Agent Swarm）</li>
+<li>✅ 想要纯 Python 控制流，不喜欢装饰器</li>
+<li>✅ 快速原型 → 同一套代码上生产</li>
+<li>⚠️ <strong>生态较新</strong>：相比 LangChain / AutoGen，社区资源少</li></ul>
+
+<hr>
+
+<h2 id="section-4-8">4.8 OpenAI Agents SDK——官方钦定的"轻量标准"</h2>
+
+<p><strong>OpenAI Agents SDK</strong> 是 2025 年 3 月 OpenAI 官方发布的 Agent 框架，前身是 2024 年实验性的 Swarm。它<strong>不是银弹</strong>，但<strong>可能是行业标准</strong>。</p>
+
+<h3 id="section-4-8-1">4.8.1 核心抽象</h3>
+
+<ul><li><code>Agent</code>：一个 LLM + 指令 + 工具集</li>
+<li><code>Runner</code>：执行 Agent 的引擎（同步/异步/流式）</li>
+<li><code>Handoff</code>：Agent 之间<strong>主动交接</strong>（"这事我处理不了，转给 X"）</li>
+<li><code>Guardrail</code>：输入/输出校验（"用户问题必须包含订单号"）</li>
+<li><code>Tracing</code>：内置 OpenAI 平台 trace 集成</li></ul>
+
+<h3 id="section-4-8-2">4.8.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># openai_agents_hello.py
+# pip install openai-agents
+import asyncio
+from agents import Agent, Runner, function_tool
+
+# 1. 工具
+@function_tool
+def get_weather(city: str) -&gt; str:
+    &quot;&quot;&quot;查询天气（mock）&quot;&quot;&quot;
+    return f&quot;{city} 晴天 25 度&quot;
+
+# 2. Agent
+agent = Agent(
+    name=&quot;助手&quot;,
+    instructions=&quot;你是中文助手，能查天气&quot;,
+    tools=[get_weather],
+    model=&quot;gpt-4o-mini&quot;,
+)
+
+# 3. 跑
+async def main():
+    result = await Runner.run(agent, input=&quot;北京今天天气如何？&quot;)
+    print(result.final_output)
+
+asyncio.run(main())</code></pre>
+
+<p><strong>一句话点评</strong>：OpenAI Agents SDK 写起来<strong>几乎和 Python 函数一样自然</strong>——<code>@function_tool</code> 装饰器 + 类型注解 → 自动 JSON Schema；<code>Handoff</code> 让多 Agent 协作不再需要中央调度器。</p>
+
+<h3 id="section-4-8-3">4.8.3 适用场景</h3>
+
+<ul><li>✅ 用 OpenAI / Azure OpenAI 为主的项目</li>
+<li>✅ 想要<strong>官方支持</strong> + 平台 trace 集成</li>
+<li>✅ 轻量多 Agent 协作（用 Handoff 表达"转人工"）</li>
+<li>⚠️ <strong>绑定 OpenAI 模型</strong>：用 Anthropic / Gemini 没那么顺</li></ul>
+
+<h3 id="section-4-8-4">4.8.4 与前身 Swarm 的关系</h3>
+
+<p>OpenAI Agents SDK 不是凭空出现的——它的前身是 2024 年 7 月 OpenAI 发布的实验性项目 <strong>Swarm</strong>（GitHub 上至今可见）。Swarm 提出"基于 Handoff 的多 Agent 协作"概念，但被定位为"教学示例"而非生产框架。2025 年 3 月，OpenAI 把 Swarm 的核心思想<strong>产品化</strong>：补全了 Trace、Guardrail、Tool schema 校验、错误恢复、并发执行等生产必需能力，正式命名 Agents SDK。</p>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>Swarm (2024.7)</th>
+<th>Agents SDK (2025.3)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>定位</td>
+<td>教学示例</td>
+<td>生产框架</td>
+</tr>
+<tr>
+<td>Trace</td>
+<td>❌ 无</td>
+<td>✅ 平台原生</td>
+</tr>
+<tr>
+<td>Guardrail</td>
+<td>❌ 无</td>
+<td>✅ 完整</td>
+</tr>
+<tr>
+<td>工具 schema</td>
+<td>手写</td>
+<td>类型注解自动生成</td>
+</tr>
+<tr>
+<td>错误恢复</td>
+<td>❌</td>
+<td>✅ 自动重试 + 兜底</td>
+</tr>
+<tr>
+<td>维护承诺</td>
+<td>实验性</td>
+<td>长期支持</td>
+</tr>
+</tbody></table>
+
+<p><strong>给读者的建议</strong>：新项目直接上 Agents SDK，<strong>不要从 Swarm 迁移</strong>——Swarm 的 API 在 Agents SDK 中保留了 90%，但剩余 10% 的差异足够让你改一天。</p>
+
+<h3 id="section-4-8-5">4.8.5 限制与备选</h3>
+
+<p>OpenAI Agents SDK 不是银弹。它有两个明显边界：</p>
+
+<ul><li><strong>OpenAI 模型绑定</strong>：虽然 SDK 接受任何兼容 OpenAI Chat Completions 的端点（Together / OpenRouter / 自部署 vLLM），但 trace、eval 等平台功能<strong>只对 OpenAI 官方模型开</strong></li>
+<li><strong>多 Agent 表达力有限</strong>：Handoff 是显式协作，但如果你想要"多 Agent 自动决定下一个谁说话"（如 GroupChat 风格），SDK 没有原生支持——你需要自己写编排层</li></ul>
+
+<p><strong>备选路径</strong>：</p>
+
+<ul><li>想用类似 Handoff 概念但用其他模型 → Agno Team</li>
+<li>想做"开会型"多 Agent → AutoGen v0.4 GroupChat</li>
+<li>想做"图式"多 Agent → LangGraph</li></ul>
+
+<h3 id="section-4-8-6">4.8.6 与 ch03 minimal_agent 的对应关系</h3>
+
+<p>如果你已经把 ch03 的 100 行 minimal_agent 跑通了，理解 OpenAI Agents SDK 会非常快——它本质上就是把我们手写的循环"标准化"了：</p>
+
+<table>
+<thead><tr>
+<th>ch03 minimal_agent 手写</th>
+<th>OpenAI Agents SDK</th>
+<th>说明</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code>llm(messages)</code> 调一次</td>
+<td><code>agent.run()</code> / <code>Runner.run()</code></td>
+<td>SDK 包装成 Agent 对象</td>
+</tr>
+<tr>
+<td>手工判断 <code>tool_call</code></td>
+<td>SDK 内部自动解析</td>
+<td>工具调用透明化</td>
+</tr>
+<tr>
+<td>解析 JSON 参数</td>
+<td>类型注解自动生成 schema</td>
+<td><code>@function_tool</code> 装饰器</td>
+</tr>
+<tr>
+<td>写 <code>while True: ...</code> 循环</td>
+<td>SDK 的 Runner 内置</td>
+<td>Handoff / 工具错误自动处理</td>
+</tr>
+<tr>
+<td>手动 <code>print</code> log</td>
+<td>内置 Trace</td>
+<td>OpenAI 平台可看</td>
+</tr>
+</tbody></table>
+
+<p><strong>这意味着</strong>：ch03 的 100 行是我们所有框架的"母语"。一旦你写完 ch03，换任何框架都只是"用框架的术语重新说同一件事"。</p>
+
+<hr>
+
+<h2 id="section-4-9">4.9 七框架横向对比 + 选型决策树</h2>
+
+<h3 id="section-4-9-1">4.9.1 横向对比表</h3>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>LangChain</th>
+<th>LangGraph</th>
+<th>AutoGen</th>
+<th>CrewAI</th>
+<th>LlamaIndex</th>
+<th>Agno</th>
+<th>OpenAI Agents SDK</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>发布</strong></td>
+<td>2022.10</td>
+<td>2024.6</td>
+<td>2023.9</td>
+<td>2023.11</td>
+<td>2022.11</td>
+<td>2023.8</td>
+<td>2025.3</td>
+</tr>
+<tr>
+<td><strong>主要语言</strong></td>
+<td>Py/JS</td>
+<td>Py/JS</td>
+<td>Py/.NET</td>
+<td>Py</td>
+<td>Py/TS</td>
+<td>Py</td>
+<td>Py</td>
+</tr>
+<tr>
+<td><strong>GitHub Star</strong></td>
+<td>110K+</td>
+<td>8K+</td>
+<td>35K+</td>
+<td>25K+</td>
+<td>40K+</td>
+<td>12K+</td>
+<td>6K+</td>
+</tr>
+<tr>
+<td><strong>学习曲线</strong></td>
+<td>中</td>
+<td>陡</td>
+<td>中-陡</td>
+<td>平</td>
+<td>平</td>
+<td>平</td>
+<td>平</td>
+</tr>
+<tr>
+<td><strong>多 Agent</strong></td>
+<td>弱</td>
+<td>中</td>
+<td>强</td>
+<td>强</td>
+<td>弱</td>
+<td>中</td>
+<td>中</td>
+</tr>
+<tr>
+<td><strong>RAG 生态</strong></td>
+<td>强</td>
+<td>弱</td>
+<td>弱</td>
+<td>弱</td>
+<td><strong>极强</strong></td>
+<td>中</td>
+<td>弱</td>
+</tr>
+<tr>
+<td><strong>工具生态</strong></td>
+<td><strong>极强</strong></td>
+<td>强</td>
+<td>中</td>
+<td>中</td>
+<td>中</td>
+<td>中</td>
+<td>强</td>
+</tr>
+<tr>
+<td><strong>可观测性</strong></td>
+<td>LangSmith</td>
+<td>LangSmith</td>
+<td>OpenTelemetry</td>
+<td>CrewAI+</td>
+<td>LlamaTrace</td>
+<td>Agno+</td>
+<td>OpenAI Trace</td>
+</tr>
+<tr>
+<td><strong>适合场景</strong></td>
+<td>通用 LLM 应用</td>
+<td>循环/分支 Agent</td>
+<td>对话式多 Agent</td>
+<td>流程化团队</td>
+<td>文档问答</td>
+<td>高性能 Agent</td>
+<td>OpenAI 项目</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-4-9-2">4.9.2 选型决策树</h3>
+
+<pre><code class="language-plaintext">Q1: 你的项目核心是&quot;问文档&quot;吗？
+   ├─ 是 → LlamaIndex
+   └─ 否 → 继续
+
+Q2: 你的项目核心是&quot;多 Agent 协作&quot;吗？
+   ├─ 是 → Q2.1
+   │   ├─ 流程固定（流水线）→ CrewAI
+   │   ├─ 对话式开会 → AutoGen v0.4
+   │   ├─ 需要 Handoff 转接 → OpenAI Agents SDK
+   │   └─ 复杂图 / 人在环 → LangGraph
+   └─ 否 → 继续
+
+Q3: 你的项目核心是&quot;循环 + 工具 + 记忆&quot;（单 Agent 多步任务）？
+   ├─ 是 → Q3.1
+   │   ├─ 用 OpenAI 模型 → OpenAI Agents SDK
+   │   ├─ 想要极简 + 高性能 → Agno
+   │   ├─ 需要复杂图 → LangGraph
+   │   └─ 想要最大生态 → LangChain
+   └─ 否 → 继续
+
+Q4: 你在快速原型 + 不想选？
+   └─ LangChain（生态最大，迁移成本最低）</code></pre>
+
+<h3 id="section-4-9-3">4.9.3 反共识建议</h3>
+
+<p><strong>什么时候不该用框架？</strong></p>
+
+<ul><li>单 Agent + 单一工具 + 一次性脚本 → 框架反而拖慢</li>
+<li>极致性能要求（延迟 &lt; 50ms）→ 自己写 + 裸 HTTP</li>
+<li>学习阶段（想搞懂原理）→ ch03 的 100 行更直接</li></ul>
+
+<h3 id="section-4-9-4">4.9.4 架构哲学对比：四种世界观</h3>
+
+<p>7 个框架背后其实是 4 种不同的"世界观"——它们对"Agent 是什么"有完全不同的回答：</p>
+
+<table>
+<thead><tr>
+<th>哲学</th>
+<th>代表框架</th>
+<th>核心隐喻</th>
+<th>一句话回答</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>管道哲学</strong></td>
+<td>LangChain</td>
+<td>Agent = LLM + 链</td>
+<td>"把模型当函数，串联起来"</td>
+</tr>
+<tr>
+<td><strong>图哲学</strong></td>
+<td>LangGraph</td>
+<td>Agent = 状态机</td>
+<td>"Agent 是一张会走动的图"</td>
+</tr>
+<tr>
+<td><strong>对话哲学</strong></td>
+<td>AutoGen</td>
+<td>Agent = 角色</td>
+<td>"Agent 是一群会聊天的同事"</td>
+</tr>
+<tr>
+<td><strong>任务哲学</strong></td>
+<td>CrewAI</td>
+<td>Agent = 团队</td>
+<td>"Agent 是一支有分工的小组"</td>
+</tr>
+<tr>
+<td><strong>索引哲学</strong></td>
+<td>LlamaIndex</td>
+<td>Agent = 查询器</td>
+<td>"Agent 是数据的嘴和手"</td>
+</tr>
+<tr>
+<td><strong>全栈哲学</strong></td>
+<td>Agno</td>
+<td>Agent = 一等公民</td>
+<td>"Agent 就是一个对象，没有抽象层"</td>
+</tr>
+<tr>
+<td><strong>标准哲学</strong></td>
+<td>OpenAI Agents SDK</td>
+<td>Agent = 可交接的服务</td>
+<td>"Agent 是一个能转接给别人的服务"</td>
+</tr>
+</tbody></table>
+
+<p><strong>给读者的判断</strong>：</p>
+
+<ul><li>你喜欢"搭积木" → 管道哲学（LangChain）</li>
+<li>你喜欢"画流程图" → 图哲学（LangGraph）</li>
+<li>你喜欢"开会" → 对话哲学（AutoGen）</li>
+<li>你喜欢"看团队" → 任务哲学（CrewAI）</li>
+<li>你喜欢"查资料" → 索引哲学（LlamaIndex）</li>
+<li>你喜欢"看代码" → 全栈哲学（Agno）</li>
+<li>你想"省心" → 标准哲学（OpenAI Agents SDK）</li></ul>
+
+<p><strong>反共识观察</strong>：7 个框架里只有 OpenAI Agents SDK 真正做到"5 行代码 + 1 个 Agent + 2 个工具 = 完整应用"。如果你只是想"先跑起来"，<strong>它就是 2026 年的答案</strong>。但如果你想"搞懂 Agent 的原理"，从 LangGraph 入手最值。</p>
+
+<hr>
+
+<h2 id="section-4-10">4.10 框架使用陷阱（5 大坑）</h2>
+
+<table>
+<thead><tr>
+<th>坑</th>
+<th>表现</th>
+<th>应对</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>抽象泄漏</strong></td>
+<td>框架升级后链子断一片</td>
+<td>锁版本 + 写测试 + 不要用 <code>@latest</code></td>
+</tr>
+<tr>
+<td><strong>版本漂移</strong></td>
+<td>教程里的 API 找不到</td>
+<td>查 GitHub release notes，别抄博客</td>
+</tr>
+<tr>
+<td><strong>锁死风险</strong></td>
+<td>用了某个框架专有概念就出不去</td>
+<td>关键逻辑写在框架外（pure function）</td>
+</tr>
+<tr>
+<td><strong>学习成本</strong></td>
+<td>团队没人会用</td>
+<td>选 CrewAI / Agno / OpenAI Agents SDK 这种低门槛</td>
+</tr>
+<tr>
+<td><strong>不必要的复杂度</strong></td>
+<td>5 步任务硬上 LangGraph</td>
+<td>先用 OpenAI Agents SDK，能跑再优化</td>
+</tr>
+</tbody></table>
+
+<p><strong>通用原则</strong>：<strong>先跑起来，再换框架</strong>。ch03 的 100 行代码是所有框架的"母语"——任何框架都最终是在做那 4 件事。</p>
+
+<h3 id="section-4-10-1">4.10.1 框架演进时间线</h3>
+
+<p>把 7 个框架按时间排，能看到 4 年里 Agent 框架生态的"分层"：</p>
+
+<pre><code class="language-plaintext">2017 ── LangChain v0.0 早期
+         ↓
+2022.10  LangChain 发布（Harrison Chase，通用 LLM 框架）
+2022.11  LlamaIndex 发布（Jerry Liu，RAG 优先）
+         ↓
+2023.6   Lilian Weng 论文引爆 Agent 概念
+2023.8   Phidata 发布（后改名 Agno）
+2023.9   AutoGen v0.1（微软，AutoGen 0.2 路线）
+2023.11  CrewAI 发布
+         ↓
+2024.6   LangGraph 1.0 稳定
+2024.7   OpenAI Swarm 实验性发布
+2024.10  LlamaIndex Workflows
+2024.11  AutoGen v0.4 大重写（Actor Model）
+2024.12  Agno 1.0（原 Phidata 改名 + 4 倍速）
+         ↓
+2025.3   OpenAI Agents SDK（Swarm 升格生产级）
+         ↓
+2026.x   行业标准收敛：Handoff / Trace / State 成共识</code></pre>
+
+<p><strong>关键观察</strong>：</p>
+
+<ul><li><strong>2022</strong> 是 LLM 框架"创世纪"——LangChain 和 LlamaIndex 同时起步</li>
+<li><strong>2023</strong> 是多 Agent 爆发——CrewAI / AutoGen / Phidata 三个框架都在 4 个月内发布</li>
+<li><strong>2024</strong> 是"严肃化"——LangGraph、AutoGen v0.4、Agno 1.0 都把抽象层做得更深</li>
+<li><strong>2025</strong> 是"标准化"——OpenAI Agents SDK 把"什么是 Handoff / Guardrail / Trace"固化为行业共识</li></ul>
+
+<h3 id="section-4-10-2">4.10.2 给不同角色的学习路径</h3>
+
+<table>
+<thead><tr>
+<th>角色</th>
+<th>推荐顺序</th>
+<th>理由</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>产品经理 / 业务方</strong></td>
+<td>CrewAI → OpenAI Agents SDK</td>
+<td>最低代码量，最快出 demo</td>
+</tr>
+<tr>
+<td><strong>AI 工程师入门</strong></td>
+<td>LangChain → LangGraph</td>
+<td>先学会拼管道，再学图论</td>
+</tr>
+<tr>
+<td><strong>后端转 AI</strong></td>
+<td>LangGraph → Agno</td>
+<td>状态管理 + 性能两条主线</td>
+</tr>
+<tr>
+<td><strong>前端转 AI</strong></td>
+<td>LangChain（JS 版）→ OpenAI Agents SDK</td>
+<td>熟悉的 JS 生态 + 官方支持</td>
+</tr>
+<tr>
+<td><strong>多 Agent 研究者</strong></td>
+<td>AutoGen v0.4 → CrewAI → OpenAI Agents SDK</td>
+<td>把三种多 Agent 范式都跑一遍</td>
+</tr>
+<tr>
+<td><strong>RAG 重度用户</strong></td>
+<td>LlamaIndex → LangChain RAG → LangGraph 编排</td>
+<td>文档问答 → 通用 → 复杂流水线</td>
+</tr>
+</tbody></table>
+
+<p><strong>学习曲线的"反共识"</strong>：不要一开始就 LangGraph。LangGraph 抽象层最高、概念最多（State / Node / Edge / Checkpoint / Thread / Send），新人很容易陷入"画图 vs 写代码"的纠结。先用 LangChain 跑通 5 步任务，再升级到 LangGraph 才有感觉。</p>
+
+<h3 id="section-4-10-3">4.10.3 成本与许可证</h3>
+
+<p>框架本身大多开源（MIT / Apache 2.0），但<strong>真实成本是 LLM API</strong>。粗算：</p>
+
+<table>
+<thead><tr>
+<th>框架</th>
+<th>LLM 依赖</th>
+<th>每次调用的额外开销</th>
+<th>适合预算</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>LangChain</td>
+<td>任意</td>
+<td>微秒级（包装层）</td>
+<td>中低</td>
+</tr>
+<tr>
+<td>LangGraph</td>
+<td>任意</td>
+<td>微秒级</td>
+<td>中低</td>
+</tr>
+<tr>
+<td>AutoGen</td>
+<td>任意</td>
+<td>多 Agent 对话 = N 次 LLM</td>
+<td>中高</td>
+</tr>
+<tr>
+<td>CrewAI</td>
+<td>任意</td>
+<td>任务链 = M×N 次 LLM</td>
+<td>中高</td>
+</tr>
+<tr>
+<td>LlamaIndex</td>
+<td>任意</td>
+<td>Embedding + LLM = 2-3 次</td>
+<td>中（看 RAG 复杂度）</td>
+</tr>
+<tr>
+<td>Agno</td>
+<td>任意</td>
+<td>微秒级</td>
+<td>中低</td>
+</tr>
+<tr>
+<td>OpenAI Agents SDK</td>
+<td>OpenAI</td>
+<td>微秒级</td>
+<td>中（看 Handoff 次数）</td>
+</tr>
+</tbody></table>
+
+<p><strong>经验法则</strong>：单 Agent 项目每月 LLM 成本 100-500 美元；多 Agent + 复杂 RAG 项目每月 1000-5000 美元。<strong>先算账再选框架</strong>。</p>
+
+<h3 id="section-4-10-4">4.10.4 框架迁移实战经验</h3>
+
+<p>团队从 A 框架迁到 B 框架是 2025 年最常见的工程任务之一。三个真实经验：</p>
+
+<p><strong>经验 1：把"业务逻辑"和"框架粘合"分文件</strong>。典型反例：所有代码都写在 <code>langchain_helper.py</code> 里，迁移时要全文重写。正例：</p>
+
+<pre><code class="language-plaintext">project/
+├── core/                ← pure Python 业务逻辑
+│   ├── tools.py         ← 工具函数（无框架依赖）
+│   ├── prompts.py       ← prompt 字符串
+│   └── state.py         ← 状态 dataclass
+├── framework/           ← 框架粘合（迁移时只改这里）
+│   ├── chain.py
+│   └── agent.py
+└── main.py</code></pre>
+
+<p><strong>经验 2：先抽公共接口，再切框架</strong>。如果你要"从 LangChain 迁到 OpenAI Agents SDK"，不要直接重写 100 个文件。先定义一个 <code>AgentRunner</code> 抽象接口（<code>run(query: str) -&gt; str</code>），两边都实现它，再一行一行换。</p>
+
+<p><strong>经验 3：先并行再切换</strong>。新框架先在新业务上跑 2-4 周，验证完再切老业务。这样出问题不会影响核心服务。</p>
+
+<h3 id="section-4-10-5">4.10.5 框架社区生态对比</h3>
+
+<p>7 个框架的"软实力"差异巨大——GitHub Star 不等于生产可用性。我们看 5 个更实际的维度（2026 年 6 月数据）：</p>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>LangChain</th>
+<th>LangGraph</th>
+<th>AutoGen</th>
+<th>CrewAI</th>
+<th>LlamaIndex</th>
+<th>Agno</th>
+<th>OpenAI Agents SDK</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>官方文档质量</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td>第三方教程数</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td>Discord/Forum 活跃度</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td>大厂背书</td>
+<td>LangChain Inc</td>
+<td>LangChain Inc</td>
+<td>微软</td>
+<td>CrewAI Inc</td>
+<td>LlamaIndex Inc</td>
+<td>Agno Inc</td>
+<td>OpenAI</td>
+</tr>
+<tr>
+<td>招聘岗位提及率</td>
+<td>高</td>
+<td>中</td>
+<td>中</td>
+<td>中</td>
+<td>中</td>
+<td>低</td>
+<td>中-高</td>
+</tr>
+</tbody></table>
+
+<p><strong>最关键的观察</strong>：</p>
+
+<ul><li><strong>LangChain</strong> 仍然是"找工作安全牌"——市场上 LangChain 经验的岗位最多</li>
+<li><strong>OpenAI Agents SDK</strong> 增长最快——2025 年 3 月发布，6 月已经在 LinkedIn 出现大量岗位</li>
+<li><strong>Agno</strong> 招聘量最少——技术好但商业品牌仍在建立期</li>
+<li><strong>AutoGen</strong> 在中国微软生态里用得不少，但在硅谷的初创公司里用 CrewAI 较多</li>
+<li>表中"LangChain, Inc."是公司在 2024 年重组后的正式名称（从 LangChain 改名为 LangChain, Inc.，加逗号区分产品名和公司名）</li></ul>
+
+<h3 id="section-4-10-6">4.10.6 7 框架 Hello World 跑通实测</h3>
+
+<p>在 2026 年的"AI 工程师入门"圈子里有个新问题："我应该学 7 个框架还是 1 个？"答案是：<strong>至少跑通 3 个</strong>。我们用 ch04 各小节的 Hello World 做了次实测（2026.6 实际执行）：</p>
+
+<table>
+<thead><tr>
+<th>框架</th>
+<th>Hello World 跑通耗时</th>
+<th>第一次报错信息</th>
+<th>修复方法</th>
+<th>总耗时</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>LangChain</td>
+<td>3 分钟</td>
+<td><code>ModuleNotFoundError: langchain-openai</code></td>
+<td><code>pip install langchain-openai</code></td>
+<td>5 分钟</td>
+</tr>
+<tr>
+<td>LangGraph</td>
+<td>5 分钟</td>
+<td><code>StateGraph</code> 边未指定 type</td>
+<td>加 <code>add_edge(START, ...)</code></td>
+<td>8 分钟</td>
+</tr>
+<tr>
+<td>AutoGen v0.4</td>
+<td>12 分钟</td>
+<td><code>model_client</code> 参数位置变了</td>
+<td>查 v0.4 migration guide</td>
+<td>18 分钟</td>
+</tr>
+<tr>
+<td>CrewAI</td>
+<td>8 分钟</td>
+<td><code>Process.sequential</code> 默认值变了</td>
+<td>加 <code>verbose=True</code> 调试</td>
+<td>12 分钟</td>
+</tr>
+<tr>
+<td>LlamaIndex</td>
+<td>7 分钟</td>
+<td>数据目录不存在</td>
+<td><code>mkdir data &amp;&amp; echo ... &gt; data/x.txt</code></td>
+<td>11 分钟</td>
+</tr>
+<tr>
+<td>Agno</td>
+<td>4 分钟</td>
+<td><code>duckduckgo-search</code> 包名错</td>
+<td>改 <code>duckduckgo-search</code></td>
+<td>6 分钟</td>
+</tr>
+<tr>
+<td>OpenAI Agents SDK</td>
+<td>2 分钟</td>
+<td><code>OPENAI_API_KEY</code> 未设</td>
+<td><code>export OPENAI_API_KEY=sk-...</code></td>
+<td>3 分钟</td>
+</tr>
+</tbody></table>
+
+<p><strong>结论</strong>：OpenAI Agents SDK 是<strong>最快跑通</strong>的（2-3 分钟），AutoGen v0.4 是<strong>最难上手</strong>的（18 分钟）。<strong>这恰好和它们的设计目标一致</strong>——SDK 要"省心"，AutoGen 要"严肃"。</p>
+
+<hr>
+
+<h2 id="section-4-11">4.11 本章小结</h2>
+
+<blockquote><strong>关键概念摘要：</strong> - <strong>LCEL</strong>（LangChain Expression Language）—— LangChain 的声明式链式语法，1.0 后成为唯一推荐写法 - <strong>StateGraph</strong> —— LangGraph 用图描述 Agent 循环的核心抽象，Node + Edge + Checkpoint 三件套 - <strong>Actor Model</strong> —— AutoGen v0.4 用消息队列解耦多 Agent，解决 v0.2 中心化死锁问题 - <strong>Process.sequential / hierarchical</strong> —— CrewAI 的两种协作模式，前者按顺序、后者带管理者 - <strong>VectorStoreIndex</strong> —— LlamaIndex 的 RAG 一等公民，3 行代码完成"读文档→问答" - <strong>Workflows</strong> —— LlamaIndex 2024.10 引入的"多步 RAG 编排"，用 Python 函数定义步骤 - <strong>@function_tool</strong> —— OpenAI Agents SDK 的工具装饰器，类型注解 → JSON Schema - <strong>Handoff</strong> —— Agent 主动交接任务给另一个 Agent，2025 年标准化概念 - <strong>Guardrail</strong> —— 输入/输出校验器，"用户问题必须包含订单号"这类规则 - <strong>Trace</strong> —— OpenTelemetry 风格的执行轨迹，框架自带的可观测性 - <strong>Runnable</strong> —— LangChain 1.0 的统一接口（invoke/ainvoke/stream/batch） - <strong>GroupChat</strong> —— AutoGen 的多 Agent 开会模式，自动决定下一个谁说话 - <strong>Stream</strong> —— 流式输出，框架标准接口（token-by-token），用户体验的关键 - <strong>Batch</strong> —— 批量处理多个输入，框架标准接口（节省 API 往返） - <strong>Callback</strong> —— LangChain 的回调钩子（on_llm_start / on_tool_end 等），用于日志 / 监控 - <strong>Checkpoint</strong> —— 状态快照，LangGraph 的"时间旅行"基础 - <strong>ReRank</strong> —— 检索结果重排，用 Cross-Encoder 给相似度打分（RAG 关键步骤） - <strong>VectorStoreIndex</strong> —— LlamaIndex 的向量索引，封装了 embedding + 检索 - <strong>SummaryIndex</strong> —— LlamaIndex 的摘要索引，逐段 LLM 总结后检索</blockquote>
+
+<p>### 8 条速记</p>
+
+<ol><li><strong>LangChain</strong> 是生态最大的"通用 LLM 框架"，适合快速原型和需要 200+ 集成的项目</li>
+<li><strong>LangGraph</strong> 是 LangChain 的"严肃版"，用图描述 Agent 循环，适合需要状态管理 / 人在环 / 复杂分支</li>
+<li><strong>AutoGen</strong> 是微软的"对话式多 Agent"，v0.4 重写后用 Actor Model，适合开会型协作</li>
+<li><strong>CrewAI</strong> 是"虚拟团队"隐喻的多 Agent 框架，代码最少，流程最直观</li>
+<li><strong>LlamaIndex</strong> 是 RAG 之王，200+ 数据连接器，问文档场景首选</li>
+<li><strong>Agno</strong> 是"全栈 + 极速"，零装饰器，4 倍速，适合高并发</li>
+<li><strong>OpenAI Agents SDK</strong> 是 OpenAI 钦定的标准，Handoff 概念优雅，OpenAI 项目首选</li>
+<li><strong>选型公式</strong>：<code>文档问答 → LlamaIndex</code> / <code>多 Agent 协作 → CrewAI 或 AutoGen</code> / <code>OpenAI 生态 → Agents SDK</code> / <code>复杂图 → LangGraph</code> / <code>其余 → LangChain</code></li></ol>
+
+<p>### 关键人物速查</p>
+
+<table>
+<thead><tr>
+<th>人物</th>
+<th>框架</th>
+<th>角色</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Harrison Chase</td>
+<td>LangChain / LangGraph</td>
+<td>创始人（2022）</td>
+</tr>
+<tr>
+<td>Jerry Liu</td>
+<td>LlamaIndex</td>
+<td>创始人（2022）</td>
+</tr>
+<tr>
+<td>Chi Wang</td>
+<td>AutoGen</td>
+<td>微软首席研究员（2023）</td>
+</tr>
+<tr>
+<td>Joao Moura</td>
+<td>CrewAI</td>
+<td>创始人（2023）</td>
+</tr>
+<tr>
+<td>Ashpreet Bedi</td>
+<td>Agno</td>
+<td>创始人（原 Phidata，2023）</td>
+</tr>
+<tr>
+<td>OpenAI 团队</td>
+<td>Agents SDK</td>
+<td>官方（2025.3）</td>
+</tr>
+<tr>
+<td>Andrew Ng</td>
+<td>——</td>
+<td>Agent 浪潮的布道者</td>
+</tr>
+<tr>
+<td>Lance Martin</td>
+<td>LangGraph</td>
+<td>核心维护者</td>
+</tr>
+<tr>
+<td>Erick Friis</td>
+<td>LangGraph</td>
+<td>创始工程师（2024）</td>
+</tr>
+<tr>
+<td>Nikita Puchkin</td>
+<td>LangChain</td>
+<td>LCEL 主设计师</td>
+</tr>
+</tbody></table>
+
+<p>### 进一步阅读</p>
+
+<ol><li><a href="https://python.langchain.com/">LangChain v1.0 官方文档</a></li>
+<li><a href="https://langchain-ai.github.io/langgraph/">LangGraph 概念手册</a></li>
+<li><a href="https://microsoft.github.io/autogen/">AutoGen v0.4 Migration Guide</a></li>
+<li><a href="https://docs.crewai.com/">CrewAI Quickstart</a></li>
+<li><a href="https://docs.llamaindex.ai/en/stable/module_guides/workflow/">LlamaIndex Workflows 教程</a></li>
+<li><a href="https://www.agno.com/blog">Agno 官方博客</a></li>
+<li><a href="https://github.com/openai/openai-agents-python">OpenAI Agents SDK Cookbook</a></li>
+<li>Anthropic "Building Effective Agents"（2024.12）—— Agent 设计的 6 大原语</li>
+<li>OpenAI "A Practical Guide to Building Agents"（2025.4）—— 5 阶段方法论</li>
+<li>Lilian Weng "LLM Powered Autonomous Agents"（2023.6）—— Agent 入门必读</li></ol>
+
+<p>### 为什么"7 个框架"不是太多</p>
+
+<p>读到这里你可能会问："7 个框架不是太多吗？我能不能只学 1 个？"这是一个很自然的反应。三个反驳：</p>
+
+<p><strong>反驳 1</strong>：7 个框架的"重叠部分"占 80%。你已经学过的 4 大件（ch03）就是这 80% 的核心。剩下 20% 是每个框架的"方言"——LCEL vs CrewAI Process vs Agno Team，都是表达"我要循环 / 分支 / 多 Agent"的<strong>不同语法</strong>。一旦你理解了 4 大件，框架只是"换皮"。</p>
+
+<p><strong>反驳 2</strong>：你的<strong>职业生命周期</strong>会经历 2-3 个框架。2022 年红的是 LangChain v0.0；2024 年红的是 LangGraph；2025 年红的是 OpenAI Agents SDK。5 年后还会有新的。<strong>学会 4 大件，你就能在 2 周内上手任何新框架</strong>。</p>
+
+<p><strong>反驳 3</strong>：7 个框架代表 7 种<strong>设计哲学</strong>。理解它们，等于理解"一个工程问题有 7 种解法"——这本身就是工程师的核心能力。<strong>不要只学工具，要学"为什么这种工具存在"</strong>。</p>
+
+<p><strong>给读者的最终建议</strong>：</p>
+
+<ul><li><strong>第一周</strong>：跑通 ch03 的 100 行代码 + OpenAI Agents SDK Hello World</li>
+<li><strong>第二周</strong>：跑通 LangGraph 循环 Agent</li>
+<li><strong>第三周</strong>：跑通 CrewAI 多 Agent 团队</li>
+<li><strong>第四周</strong>：跑通 LlamaIndex 文档问答</li>
+<li><strong>第五周起</strong>：根据你手头的项目<strong>按需深入</strong> 1-2 个框架</li></ul>
+
+<p>5 周之后，你就具备了"看到新框架能 24 小时内跑通 Hello World"的能力。<strong>这才是 ch04 真正想给你的东西</strong>。</p>
+
+<hr>
+
+<blockquote><strong>下一章预告</strong>：第 5 章《Agent 范式对比——ReAct、Reflexion、Plan-and-Execute、Tool-Use、Function Calling》。我们已经用 ch03 讲了"四大件"，用 ch04 讲了"用什么框架拼四大件"——但<strong>拼</strong>本身有不同姿势。ReAct 是边想边做，Plan-and-Execute 是先想完再做，Reflexion 是做完反思再重做。第 5 章我们就把这 5 种主流范式拆开看。</blockquote>
+
+      </article>
+    </div>
+  </div>
+
+  <!-- ==================== CHAPTER PAGER ==================== -->
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; max-width:920px; margin:40px auto 60px; padding:0 20px;">
+    <a href="ch03.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+      ← 上一章：核心组件（第 3 章）
+    </a>
+    <a href="ch05.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">
+      下一章：范式对比（第 5 章，未发布）→
+    </a>
+  </nav>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>
+          一本系统性的 AI Agent 开发中文教材。
+          从 1966 ELIZA 到 2026 多 Agent 协议爆发，
+          覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="ch02.html">第2章</a></li>
+          <li><a href="ch03.html">第3章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">配套代码</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《AGENT开发从入门到精通》. 保留所有权利.</p>
+      <p>Powered by 🤖 Agentic AI &mdash; 让 LLM 真正"动手做事"</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
