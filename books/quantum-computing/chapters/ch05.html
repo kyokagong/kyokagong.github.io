@@ -403,7 +403,11 @@
         </ul>
         <p><strong>量子态层析(QST)</strong>: 选<strong>不同的</strong>测量基(比如 $\sigma_x, \sigma_y, \sigma_z$ 各测一次),用<strong>3 种基</strong>的测量结果反推<strong>密度矩阵</strong>:
         $$\hat{\rho} = \frac{1}{2}(I + \langle \sigma_x \rangle \sigma_x + \langle \sigma_y \rangle \sigma_y + \langle \sigma_z \rangle \sigma_z)$$</p>
-        <p>对单 qubit,需要测 <strong>3 种基</strong>($= 3^1$);对 $n$ qubit,需要测 $3^n$ 种基(指数增长!)——这正是 QST 是<strong>难</strong>任务的原因(对大系统),也是 ch14 量子机器学习的"数据饥渴"问题。</p>
+        <p><strong>为什么是 3 不是 4 不是 6?——n qubit 系统的 $3^n$ 推导</strong>: 对 $n$ qubit 系统,密度矩阵是 $4^n \times 4^n$ 维的<strong>厄米矩阵</strong>,有 $4^n$ 个实参数(对角线 $2^n$ + 上三角 $4^n - 2^n$ 实部),<strong>独立实参数是 $4^n - 1$</strong>(对角元求和 = 1 给出一个约束)。一个标准基是<strong>泡利串 (Pauli string)</strong> $P_1 \otimes P_2 \otimes \cdots \otimes P_n$,其中 $P_i \in \{I, X, Y, Z\}$——共 $4^n$ 种泡利串。<strong>非平凡</strong>泡利串(去掉全 $I$)有 $4^n - 1$ 个,<strong>正好</strong>等于独立参数个数 ✅。</p>
+        <p>但<strong>实验上</strong>我们不是测"泡利串的全体",而是测<strong>每个</strong> $P_i$ 在三个非平凡方向 $\{X, Y, Z\}$——因为对单 qubit,$I$ 方向无信号($\langle I \rangle = 1$ 已知)。所以需要测 <strong>$3^n$ 种</strong> 泡利串的期望值(每 qubit 在 3 个方向测,组合 $3^n$)。对 $n$ qubit,需要测 $3^n$ 种基(指数增长!)——这正是 QST 是<strong>难</strong>任务的原因(对大系统),也是 ch14 量子机器学习的"数据饥渴"问题。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>复杂度对比</strong>:对 $n = 10$ qubit,QST 需要 $3^{10} = 59{,}049$ 种测量,每种要 $O(1/\epsilon^2)$ 次重复才能把统计误差压到 $\epsilon$——总共 $O(3^n / \epsilon^2)$ 次实验。<strong>到 $n = 50$</strong>(典型 NISQ 规模),$3^{50} \approx 10^{24}$——这<strong>已经</strong>比宇宙年龄的秒数还多!<strong>QST 的指数成本</strong>是量子计算实用化的核心障碍之一(参 ch14 量子机器学习对"数据高效学习算法"的追求)。</p>
+        </blockquote>
 
         <hr>
 
@@ -447,6 +451,7 @@
           <li>$\hat{E}_0$ 对应"我不猜"(inconclusive)</li>
           <li>优化:<strong>最小化 inconclusive 概率</strong>,让 $P(\text{conclusive}) = 1$ 是不可能的(对三态非正交系统),但可以让 $P(\text{inconclusive}) = 1/4$(等概率猜测时)</li>
         </ul>
+        <p><strong>为什么 inconclusive = 1/4?——对称三态 POVM 的推导</strong>: 对三态<strong>对称分布</strong>($\lvert \psi_i \rangle$ 在赤道面上,夹角 120°,等概率先验 $p_i = 1/3$),最优 POVM 有解析形式。直觉:<strong>三个非正交态占据的子空间是 2 维的</strong>(因为三个态线性相关),所以<strong>测得结论的子空间</strong> $\mathcal{H}_{\text{conclusive}} \subseteq \mathcal{H}$ 的<strong>最大可能维数</strong>是 2;<strong>inconclusive 子空间</strong> $\mathcal{H}_{\text{inc}}$ 必须是 1 维的(总维数 2)。三个态都跟 inconclusive 元素 $\hat{E}_0 = c \lvert \phi \rangle \langle \phi \rvert$ <strong>正交</strong>($\lvert \phi \rangle$ 是 $\mathcal{H}_{\text{inc}}$ 的基矢),由对称性 $c = 1/3$,然后从 $\sum_i \hat{E}_i = I$ 反推 $\hat{E}_1, \hat{E}_2, \hat{E}_3$。<strong>最终</strong> $P(\text{inc}) = \langle \psi_i \rvert \hat{E}_0 \lvert \psi_i \rangle = c \lvert \langle \phi \rvert \psi_i \rangle \rvert^2 = 1/3 \cdot 1/4 \cdot 3 = 1/4$ ✅。所以对<strong>任何</strong>态的 inconclusive 概率都是 $1/4$,而<strong>确定性</strong>区分成功的概率是 $3/4$——失败率 $1/4$ 是<strong>非正交性</strong>的代价。</p>
         <p>这个例子的实际意义:<strong>量子密码学的 BB84 协议</strong>(ch17 详细讲)的安全性<strong>部分依赖</strong>于此——窃听者(Eve)只能<strong>以 < 1 的概率</strong>确定性地区分非正交态,任何"猜错"都会引入可检测的错误。</p>
 
         <h3>5.7.5 POVM 跟"Helstrom 界限"</h3>
@@ -520,6 +525,21 @@
           <li>中间<strong>弱测量</strong>系统(自旋-轨道耦合)</li>
           <li>末态<strong>后选择</strong>通过偏振器(确定 $\lvert \psi_f \rangle$,跟 $\lvert \psi_i \rangle$ <strong>几乎正交</strong>)</li>
           <li>测量<strong>空间位置</strong>作为弱值的"探针"</li>
+        </ul>
+        <p><strong>放大倍数与信噪比的量化权衡</strong>:</p>
+        <ul>
+          <li><strong>输入信号</strong>: 原始光束偏折 $\Delta x_0 \sim 10$ nm</li>
+          <li><strong>弱值</strong>: $A_w = \langle \psi_f \rvert \hat{A} \lvert \psi_i \rangle / \langle \psi_f \rvert \psi_i \rangle \approx 100$ (<strong>预选/后选</strong>接近正交,导致分母极小,弱值极大)</li>
+          <li><strong>放大后信号</strong>: $\Delta x = A_w \cdot \Delta x_0 \sim 100 \cdot 10 \text{ nm} = 1$ μm</li>
+          <li><strong>放大倍数</strong>: $\sim 100$ ✅</li>
+          <li><strong>代价</strong>: <strong>后选择概率</strong> $P(\text{post-selection}) = \lvert \langle \psi_f \rvert \psi_i \rangle \rvert^2 \sim 1/A_w^2 \sim 10^{-4}$——<strong>99.99% 的光子被丢弃</strong>!</li>
+          <li><strong>信噪比</strong>:
+            <ul>
+              <li><strong>直接测</strong> $\Delta x_0 = 10$ nm:需要 $N$ 次测量,SNR $\propto \sqrt{N}$</li>
+              <li><strong>弱值放大</strong> 测 $\Delta x = 1$ μm:<strong>有效</strong>测量数 $N_{\text{eff}} = P \cdot N = 10^{-4} N$,但<strong>单次</strong>信号大 100 倍,所以 SNR $\propto 100 \cdot \sqrt{10^{-4} N} = \sqrt{N}$——<strong>总信噪比</strong>跟直接测<strong>一样</strong> ✅</li>
+            </ul>
+          </li>
+          <li><strong>工程价值</strong>: 用<strong>低分辨率</strong>探测器(μm 级 CCD)就能测 nm 级效应——避免昂贵的高分辨率探测器,这是<strong>工程</strong>上<strong>值得的</strong></li>
         </ul>
         <p><strong>结果</strong>: 弱值放大<strong>小效应</strong>到可测尺度——这<strong>不违反</strong>不确定性原理,因为<strong>代价</strong>是<strong>单次测量的信噪比极低</strong>——<strong>总信噪比</strong>跟直接测一样。</p>
         <blockquote class="chapter-quote">
@@ -628,10 +648,9 @@
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 4 章 量子纠缠与贝尔不等式</span>
           </a>
-          <a href="ch06.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch06.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
             <span class="pager-title">第 6 章 量子比特 — 量子信息的基本单元</span>
-            <span class="pager-tag">即将推出</span>
           </a>
         </nav>
 
@@ -676,6 +695,7 @@
           <li><a href="ch03.html">第 3 章</a></li>
           <li><a href="ch04.html">第 4 章</a></li>
           <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第6章：量子比特 — 量子信息的基本单元 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第6章：量子比特 — 量子信息的基本单元 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航:返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第二部分 · 量子计算基础 <span class="part-done" style="color:#10b981;font-size:0.85em;margin-left:0.5em;">🚀 第二部分开篇</span></span>
+        <span class="chapter-day-tag">Day 7 · 2026-06-14</span>
+      </div>
+      <h1 class="chapter-title">第 6 章 量子比特 — 量子信息的基本单元</h1>
+      <p class="chapter-subtitle">从经典比特到量子比特——Bloch 球几何登场</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,500 字</span>
+        <span class="stat">🔢 36 公式 / 369 内联</span>
+        <span class="stat">📑 10 节 · 44 子节</span>
+        <span class="stat">⏱ ~40 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+
+        <!-- 6.0 引言 -->
+        <h2>6.0 引言:从经典比特到量子比特</h2>
+        <p>第一部分(ch01-ch05)我们<strong>完整地</strong>建立了量子力学的公理体系:<strong>5 条公理</strong>(态空间、演化、测量、复合系统、不可克隆定理)。从 ch06 开始,我们要把这些公理<strong>工具化</strong>——用来<strong>计算</strong>。</p>
+        <p>本章的核心是<strong>量子比特(qubit)</strong>——量子信息的"原子"。</p>
+        <p><strong>经典比特</strong>很简单: 0 或 1,二选一。<strong>量子比特</strong>复杂得多: 它是 2 维希尔伯特空间里的一个<strong>归一化</strong>向量——这给了它<strong>无穷多个</strong>可能的状态。本章我们将揭示:</p>
+        <ol>
+          <li><strong>量子比特的数学定义</strong> — 复数振幅 + 归一化约束</li>
+          <li><strong>Bloch 球几何</strong> — 单 qubit 态的"地图"</li>
+          <li><strong>多 qubit 系统</strong> — 2^n 维指数空间 + 纠缠</li>
+          <li><strong>不可克隆定理</strong> — 量子比特<strong>不能</strong>被完美复制</li>
+          <li><strong>物理实现</strong> — 5 种主流平台概览(为 ch20-24 硬件章铺垫)</li>
+        </ol>
+        <p>学完本章,你将掌握:</p>
+        <ul>
+          <li>单 qubit 态的完整数学(全局相位、相对相位、Bloch 球坐标)</li>
+          <li>多 qubit 系统的<strong>张量积</strong>结构 + 纠缠态 vs 可分态</li>
+          <li>不可克隆定理的<strong>量子计算视角</strong>解读</li>
+          <li>5 种物理实现的基本权衡(相干时间、可扩展性、保真度)</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>第二部分的开篇</strong>: 从 ch06 开始,我们从"物理学家"切换到"计算科学家"的视角。<strong>量子力学不再是哲学,而是工具</strong>。</p>
+        </blockquote>
+
+        <h3>6.0.1 视角的转变:从"自然描述"到"信息载体"</h3>
+        <p>在 ch01-ch05 里,量子力学的对象是"物理系统"——电子、光子、原子。我们用态矢量描述它们的状态,用算符描述物理量,用薛定谔方程描述演化,用玻恩规则描述测量结果。</p>
+        <p><strong>从 ch06 开始,我们的对象变了</strong>——我们关心的不是"电子"或"光子"本身,而是<strong>信息</strong>。qubit 不是一个"自然粒子",而是<strong>一个可控的 2 维量子系统</strong>。具体物理实现可以是超导电路、离子、光子、中性原子……<strong>载体不同,但信息处理能力相同</strong>(由 ch06 的数学决定)。</p>
+        <p>这个视角转变是<strong>量子计算</strong>的灵魂:</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>视角</th><th>关注</th><th>度量</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>物理学家</strong> (ch01-ch05)</td><td>"电子" / "光子" / "原子"</td><td>能量、本征值、寿命</td></tr>
+            <tr><td><strong>量子工程师</strong> (ch20-24)</td><td>"transmon" / "离子" / "光路"</td><td>保真度、相干时间、门时间</td></tr>
+            <tr><td><strong>量子计算科学家</strong> (ch06+)</td><td>"qubit" / "量子门" / "量子电路"</td><td>电路深度、qubit 数、错误率</td></tr>
+          </tbody>
+        </table>
+        <blockquote class="chapter-quote">
+          <p><strong>类比</strong>: 经典计算机科学家<strong>不关心</strong>晶体管是双极型还是 CMOS,<strong>只关心</strong>"逻辑门"。同样,量子计算科学家<strong>不关心</strong> qubit 是超导还是离子,<strong>只关心</strong>"酉演化 + 测量"。<strong>这就是为什么 ch06 几乎是纯数学</strong>——我们要把 qubit 抽象成<strong>信息载体</strong>,而不是物理实体。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.1 经典比特的局限</h2>
+
+        <h3>6.1.1 经典比特的定义</h3>
+        <p><strong>经典比特</strong>: 一个<strong>二态</strong>系统,任一时刻处于 0 或 1。物理实现多种多样:</p>
+        <ul>
+          <li>高/低电压(电子电路)</li>
+          <li>磁化方向(硬盘)</li>
+          <li>光强(光纤通信)</li>
+          <li>机械位置(早期继电器)</li>
+        </ul>
+        <p><strong>核心特征</strong>: 经典比特在<strong>任一确定时刻</strong>只<strong>有</strong>一个值(0 或 1)。如果你想知道是哪个,只需"看一眼"——不会扰动它。</p>
+
+        <h3>6.1.2 经典计算的瓶颈</h3>
+        <p>经典计算的<strong>根本限制</strong>不在于"0 和 1 不够用",而在于<strong>状态空间小</strong>:</p>
+        <p>$n$ 个经典比特表示 $2^n$ 种状态中的<strong>一种</strong>($n = 10$ bit → 1024 种可能,$n = 1000$ bit → $2^{1000} \approx 10^{301}$ 种可能)。但是<strong>一台经典计算机一次只能处理一种</strong>——这是<strong>经典计算</strong>的"原始瓶颈":</p>
+        <ul>
+          <li>想找 $N$ 个数据中的最小值:经典需要 $O(N)$ 次比较</li>
+          <li>想分解 $L$ 位整数:经典需要 $O(e^{L^{1/3}})$ 次算术运算</li>
+          <li>想模拟 $n$ qubit 系统:经典需要 $O(2^n)$ 个复数</li>
+        </ul>
+        <p><strong>最后一个</strong>是 Feynman 1982 年提出量子计算的<strong>原始动机</strong> —— 经典计算机<strong>指数地</strong>难以模拟量子系统本身。</p>
+
+        <h3>6.1.3 量子比特的"承诺"</h3>
+        <p>如果 $n$ 个量子比特能<strong>同时</strong>处于<strong>所有</strong> $2^n$ 种状态的"叠加",那量子计算就能在<strong>指数级</strong>的状态空间里<strong>并行</strong>操作——这是<strong>量子加速</strong>的直觉来源(第 10 章 Grover、第 11 章 Shor 的几何基础)。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>但是</strong>(重要警告): 量子计算<strong>不</strong>等于"对所有 $2^n$ 种输入同时计算,然后读出答案"。<strong>测量</strong>的玻恩规则告诉我们:你<strong>只能</strong>读出<strong>一个</strong>结果!真正的"魔法"是<strong>干涉</strong>——算法<strong>巧妙地</strong>让正确答案<strong>建设性干涉</strong>、错误答案<strong>破坏性干涉</strong>,使得测量得到正确答案的<strong>概率</strong>接近 1。这是 ch10 Grover 和 ch11 Shor 的核心思想。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.2 量子比特的定义</h2>
+
+        <h3>6.2.1 数学定义</h3>
+        <p><strong>量子比特(qubit)</strong> 是一个<strong>2 维复希尔伯特空间</strong> $\mathcal{H} = \mathbb{C}^2$ 中的<strong>归一化</strong>向量。</p>
+        <p><strong>标准基</strong>($|0\rangle$ 和 $|1\rangle$):</p>
+        $$|0\rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}, \quad |1\rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}$$
+        <p><strong>一般 qubit 态</strong>:</p>
+        $$|\psi\rangle = \alpha |0\rangle + \beta |1\rangle = \begin{pmatrix} \alpha \\ \beta \end{pmatrix}, \quad \alpha, \beta \in \mathbb{C}$$
+        <p><strong>归一化条件</strong>:</p>
+        $$|\alpha|^2 + |\beta|^2 = 1$$
+        <p><strong>物理解释</strong>(玻恩规则): 测量 $\hat{Z}$(计算基)得到 0 的概率是 $|\alpha|^2$,得到 1 的概率是 $|\beta|^2$。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>关键差异</strong>: 经典比特有 2 个状态;量子比特有<strong>无穷多</strong>个状态(因为 $\alpha, \beta$ 可以是任意满足归一化的复数)。这个"无穷多"是量子计算威力的<strong>形式化基础</strong>。</p>
+        </blockquote>
+
+        <h3>6.2.2 全局相位与相对相位</h3>
+        <p>由于 $|\alpha|^2 + |\beta|^2 = 1$ 的归一化,<strong>两个振幅被约束住</strong>——但还有一个<strong>冗余自由度</strong>。</p>
+        <p><strong>全局相位</strong>: $|\psi\rangle$ 跟 $e^{i\phi} |\psi\rangle$ 描述<strong>同一个</strong>物理态——因为玻恩规则 $|\langle a | \psi \rangle|^2$ 对<strong>全局</strong>相位不敏感。所以 qubit 态的<strong>真实自由度</strong>是<strong>2</strong> 个实数(不是 4 个)。</p>
+        <p><strong>相对相位</strong>: 对 $|\psi\rangle = \alpha |0\rangle + \beta |1\rangle$,我们可以<strong>总是</strong>通过<strong>乘以全局相位</strong> $e^{-i \arg \alpha}$ 让 $\alpha$ 变成<strong>实正数</strong> $\geq 0$。然后 $|\beta|$ 决定概率分布,$\arg \beta$ 决定<strong>相对相位</strong>(0 到 $2\pi$ 的实数)。</p>
+        <p><strong>简化形式</strong>(忽略全局相位):</p>
+        $$|\psi\rangle = \cos\frac{\theta}{2} |0\rangle + e^{i\phi} \sin\frac{\theta}{2} |1\rangle$$
+        <p>其中 $\theta \in [0, \pi]$, $\phi \in [0, 2\pi)$。这两个实参数<strong>正好</strong>是<strong>Bloch 球</strong>的球极坐标(见 6.3)。</p>
+
+        <h3>6.2.3 例:6 个常用态</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>态</th><th>记号</th><th>形式</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>计算基 0</td><td>$|0\rangle$</td><td>$\begin{pmatrix}1\\0\end{pmatrix}$</td></tr>
+            <tr><td>计算基 1</td><td>$|1\rangle$</td><td>$\begin{pmatrix}0\\1\end{pmatrix}$</td></tr>
+            <tr><td>Hadamard 基 +</td><td>$|+\rangle$</td><td>$\frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$</td></tr>
+            <tr><td>Hadamard 基 −</td><td>$|-\rangle$</td><td>$\frac{1}{\sqrt{2}}(|0\rangle - |1\rangle)$</td></tr>
+            <tr><td>圆基 +i</td><td>$|+i\rangle$</td><td>$\frac{1}{\sqrt{2}}(|0\rangle + i|1\rangle)$</td></tr>
+            <tr><td>圆基 −i</td><td>$|-i\rangle$</td><td>$\frac{1}{\sqrt{2}}(|0\rangle - i|1\rangle)$</td></tr>
+          </tbody>
+        </table>
+        <p><strong>注意</strong>: 6 个态的 $\theta, \phi$ 坐标:</p>
+        <ul>
+          <li>$|0\rangle$: $\theta = 0$ (北极)</li>
+          <li>$|1\rangle$: $\theta = \pi$ (南极)</li>
+          <li>$|+\rangle$: $\theta = \pi/2, \phi = 0$ (赤道 +x)</li>
+          <li>$|-\rangle$: $\theta = \pi/2, \phi = \pi$ (赤道 −x)</li>
+          <li>$|+i\rangle$: $\theta = \pi/2, \phi = \pi/2$ (赤道 +y)</li>
+          <li>$|-i\rangle$: $\theta = \pi/2, \phi = 3\pi/2$ (赤道 −y)</li>
+        </ul>
+
+        <hr>
+
+        <h2>6.3 Bloch 球:单 qubit 几何</h2>
+
+        <h3>6.3.1 几何对应</h3>
+        <p>每个 qubit 纯态<strong>一一对应</strong>Bloch 球面上的<strong>一个点</strong>。Bloch 球是一个<strong>3 维</strong>单位球,半径为 1。</p>
+        <p><strong>球极坐标 ↔ qubit</strong>:</p>
+        $$|\psi\rangle = \cos\frac{\theta}{2} |0\rangle + e^{i\phi} \sin\frac{\theta}{2} |1\rangle \quad \longleftrightarrow \quad (x, y, z) = (\sin\theta \cos\phi, \sin\theta \sin\phi, \cos\theta)$$
+        <p><strong>反向公式</strong>(球坐标 → qubit 振幅):</p>
+        <ul>
+          <li>$x = \sin\theta \cos\phi = 2 \text{Re}(\alpha^* \beta)$</li>
+          <li>$y = \sin\theta \sin\phi = 2 \text{Im}(\alpha^* \beta)$</li>
+          <li>$z = \cos\theta = |\alpha|^2 - |\beta|^2$</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>关键事实</strong>: Bloch 球面 = 单 qubit 纯态;Bloch 球<strong>内</strong> = 单 qubit 混合态(见 6.4)。这个<strong>几何对应</strong>是<strong>单 qubit 量子信息</strong>最强大的直觉工具。</p>
+        </blockquote>
+
+        <h3>6.3.2 Bloch 球上的 6 个"坐标点"</h3>
+        <p>对应 6.2.3 节的 6 个常用态(ASCII 示意):</p>
+        <pre><code>                |0⟩ (北极)
+                ●
+               /|\
+              / | \
+             /  |  \
+            /   |   \
+           /    |    \
+          /     |     \
+   |+i⟩ ●------+------● |−i⟩
+        \      |      /
+         \     |     /
+          \    |    /
+           \   |   /
+            \  |  /
+             \ | /
+              \|/
+                ●
+                |1⟩ (南极)
+
+        (在赤道面上:
+         |+⟩ 在 +x 方向,
+         |−⟩ 在 −x 方向)
+</code></pre>
+        <p><strong>6 个态的 Bloch 向量</strong>:</p>
+        <ul>
+          <li>$|0\rangle \leftrightarrow (0, 0, +1)$ (北极)</li>
+          <li>$|1\rangle \leftrightarrow (0, 0, -1)$ (南极)</li>
+          <li>$|+\rangle \leftrightarrow (+1, 0, 0)$ (赤道 +x)</li>
+          <li>$|-\rangle \leftrightarrow (-1, 0, 0)$ (赤道 −x)</li>
+          <li>$|+i\rangle \leftrightarrow (0, +1, 0)$ (赤道 +y)</li>
+          <li>$|-i\rangle \leftrightarrow (0, -1, 0)$ (赤道 −y)</li>
+        </ul>
+
+        <h3>6.3.2.1 Bloch 球上的常用旋转——Pauli 旋转的几何意义</h3>
+        <p>单 qubit 酉演化 = Bloch 球上的<strong>旋转</strong>。三个 Pauli 矩阵生成三个<strong>基本旋转</strong>:</p>
+        $$\hat{R}_x(\theta) = e^{-i\theta \sigma_x/2}: \text{绕 } x \text{ 轴旋转 } \theta$$
+        $$\hat{R}_y(\theta) = e^{-i\theta \sigma_y/2}: \text{绕 } y \text{ 轴旋转 } \theta$$
+        $$\hat{R}_z(\theta) = e^{-i\theta \sigma_z/2}: \text{绕 } z \text{ 轴旋转 } \theta$$
+        <p><strong>几个常用的"门 = 旋转"对应</strong>(参 ch07 详):</p>
+        <ul>
+          <li>$\hat{X} = \hat{R}_x(\pi)$: 绕 x 转 180°(北极 ↔ 南极)</li>
+          <li>$\hat{Y} = \hat{R}_y(\pi)$: 绕 y 转 180°</li>
+          <li>$\hat{Z} = \hat{R}_z(\pi)$: 绕 z 转 180°(留下全局相位 $-1$,但 Bloch 向量不动 — 一个<strong>纯相位</strong>门)</li>
+          <li>$\hat{H}$ (Hadamard): 绕 $(x+z)/\sqrt{2}$ 轴转 180° — 把 $|0\rangle$ 转到 $|+\rangle$ (北极 → 赤道)</li>
+          <li>$\hat{S} = \hat{R}_z(\pi/2)$: 90° 绕 z</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>几何意义</strong>: <strong>所有</strong>单 qubit 酉演化都是 Bloch 球上的<strong>某种 3D 旋转</strong>(SO(3) 群),但不是一一对应 —— 两个酉矩阵 $\hat{U}$ 和 $-\hat{U}$ 给出<strong>同一个</strong> Bloch 旋转(它们差一个<strong>全局相位</strong>,物理等价)。这给 SO(3) ≅ SU(2) / Z_2 的<strong>二重覆盖</strong>。<strong>单 qubit 酉演化</strong>有 <strong>3 个实参数</strong>(旋转轴 + 角度),跟 SO(3) 维数一致 ✅。</p>
+        </blockquote>
+
+        <h3>6.3.3 为什么用"球"而不是"平面"?</h3>
+        <p>直觉: <strong>3 个实参数</strong>($\theta, \phi$,以及一个<strong>缩放因子</strong>)描述一个态。<strong>全局相位</strong>消除了一个自由度,归一化 $|\alpha|^2 + |\beta|^2 = 1$ 又消除一个,剩 <strong>2 个实自由度</strong>——正好是<strong>球面</strong>上的 $(\theta, \phi)$。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>注</strong>: Bloch 球<strong>只</strong>对<strong>单 qubit</strong>有效!2 qubit 系统的几何不能简单地用 2 个球——因为有<strong>纠缠</strong>,态空间是 $4 - 1 = 3$ 个实参数(乘上整体归一化 + 全局相位,实际 6 个实参数)。<strong>多 qubit 几何</strong>更复杂,需要其他工具(见 6.6 和 ch08 量子电路)。</p>
+        </blockquote>
+
+        <h3>6.3.4 Bloch 球上的"距离"——Fubini-Study 度量</h3>
+        <p>两个 qubit 态 $|\psi\rangle$ 和 $|\phi\rangle$ 之间的"角度"由 Fubini-Study 度量定义:</p>
+        $$\cos^2 \frac{d_{FS}}{2} = |\langle \psi | \phi \rangle|^2$$
+        <p>对 Bloch 球面上的两个点 $\vec{r}_1, \vec{r}_2$,这等价于:</p>
+        $$d_{FS} = \arccos(\vec{r}_1 \cdot \vec{r}_2)$$
+        <blockquote class="chapter-quote">
+          <p><strong>几何意义</strong>: 两个态的"可区分度"跟它们 Bloch 向量的<strong>点积</strong>直接相关。<strong>正交态</strong> ($\langle \psi | \phi \rangle = 0$, $\vec{r}_1 \cdot \vec{r}_2 = -1$) 的 Fubini-Study 距离是 $\pi$——最远。<strong>相同态</strong> ($\langle \psi | \phi \rangle = 1$, $\vec{r}_1 = \vec{r}_2$) 的距离是 0——最近。</p>
+        </blockquote>
+
+        <h3>6.3.5 工作实例:把 4 个态"翻译"到 Bloch 球</h3>
+        <p><strong>计算 $|0\rangle$ 和 $|+\rangle$ 的 Fubini-Study 距离</strong>:</p>
+        <ul>
+          <li>$|0\rangle \leftrightarrow (0, 0, +1)$</li>
+          <li>$|+\rangle \leftrightarrow (+1, 0, 0)$</li>
+          <li>$\vec{r}_1 \cdot \vec{r}_2 = 0$</li>
+          <li>$d_{FS} = \arccos(0) = \pi/2$ ✅ (正交,符合 $\langle 0|+\rangle = 1/\sqrt{2}$, $\cos^2(d/2) = 1/2$ → $d/2 = \pi/4$ → $d = \pi/2$)</li>
+        </ul>
+        <p><strong>计算 $|+\rangle$ 和 $|+i\rangle$ 的距离</strong>:</p>
+        <ul>
+          <li>$|+\rangle \leftrightarrow (1, 0, 0)$</li>
+          <li>$|+i\rangle \leftrightarrow (0, 1, 0)$</li>
+          <li>$\vec{r}_1 \cdot \vec{r}_2 = 0$</li>
+          <li>$d_{FS} = \pi/2$ ✅ (也正交,符合 $\langle +|+i\rangle = (1/\sqrt{2})(1/\sqrt{2} \cdot 1 + 1/\sqrt{2} \cdot i) = (1+i)/2$, $|\langle +|+i\rangle|^2 = 1/2$)</li>
+        </ul>
+        <p><strong>计算 $|+\rangle$ 和 $|-\rangle$ 的距离</strong>:</p>
+        <ul>
+          <li>$\vec{r}_1 \cdot \vec{r}_2 = (1)(−1) + 0 + 0 = -1$</li>
+          <li>$d_{FS} = \arccos(-1) = \pi$ ✅ (<strong>最远</strong>,正交反相,符合 $\langle +|-\rangle = 0$)</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>观察</strong>: Bloch 球上<strong>正交对</strong>总是<strong>对极点</strong>(距离 $\pi$)。赤道上的 4 个态($\{|\pm\rangle, |\pm i\rangle\}$) 构成<strong>正交归一基</strong>(对极点),但 $\{|0\rangle, |1\rangle\}$ 才是"计算基"——这两组基<strong>不一样</strong>,因为它们对应不同的<strong>测量方向</strong>。<strong>选哪组基</strong>测量 = 选<strong>测哪个可观测量</strong>(参 ch05 投影测量)——这是 <strong>ch07 单 qubit 门</strong>的几何基础。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.4 量子比特的"内部"——混合态与纯度</h2>
+
+        <h3>6.4.1 纯态 vs 混合态</h3>
+        <p><strong>纯态(pure state)</strong>: $|\psi\rangle \in \mathcal{H}$ 的<strong>矢量</strong>描述。</p>
+        $$\hat{\rho} = |\psi\rangle \langle \psi|$$
+        <p><strong>混合态(mixed state)</strong>: 一组纯态的<strong>概率混合</strong>:</p>
+        $$\hat{\rho} = \sum_i p_i |\psi_i\rangle \langle \psi_i|, \quad p_i \geq 0, \sum_i p_i = 1$$
+        <p><strong>举例</strong>: 制备一硬币,正反两面各占 50%:</p>
+        <ul>
+          <li><strong>经典混合</strong>: 你<strong>不知道</strong>是正面还是反面,态是"正面 OR 反面"</li>
+          <li><strong>量子叠加</strong>: $|\psi\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$,<strong>干涉</strong> 会出现(参 ch03 双缝)</li>
+        </ul>
+        <p><strong>纯度(purity)</strong>: $\text{tr}(\hat{\rho}^2) = \begin{cases} 1 & \text{纯态} \\ 1/d & \text{完全混合态}(d = \text{维数}) \end{cases}$</p>
+        <p>对单 qubit 完全混合态: $\hat{\rho} = I/2$, $\text{tr}(\hat{\rho}^2) = 1/2$。</p>
+
+        <h3>6.4.2 Bloch 球内的"半径"= 纯度</h3>
+        <p><strong>关键公式</strong>: 单 qubit 密度矩阵可以<strong>总是</strong>写成</p>
+        $$\hat{\rho} = \frac{1}{2}(I + \vec{r} \cdot \vec{\sigma})$$
+        <p>其中 $\vec{r} = (r_x, r_y, r_z)$ 是 <strong>Bloch 向量</strong>(3 维实向量), $\vec{\sigma} = (\sigma_x, \sigma_y, \sigma_z)$ 是 Pauli 矩阵向量。</p>
+        <p><strong>纯度跟 Bloch 向量长度的关系</strong>:</p>
+        $$\text{tr}(\hat{\rho}^2) = \frac{1}{2}(1 + |\vec{r}|^2)$$
+        <p><strong>对应</strong>:</p>
+        <ul>
+          <li>$|\vec{r}| = 1$ (球面) → $\text{tr}(\hat{\rho}^2) = 1$ → <strong>纯态</strong></li>
+          <li>$|\vec{r}| = 0$ (球心) → $\text{tr}(\hat{\rho}^2) = 1/2$ → <strong>完全混合态</strong></li>
+          <li>$0 < |\vec{r}| < 1$ (球内) → <strong>部分混合态</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>几何意义</strong>: 整个 Bloch 球(球面 + 内部)描述<strong>所有</strong>单 qubit 态(纯态 + 混合态)。球面是"纯",球心是"最不纯"。</p>
+        </blockquote>
+
+        <h3>6.4.3 例:三种态的 Bloch 向量</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>态</th><th>$\hat{\rho}$</th><th>$\vec{r}$</th><th>位置</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$|0\rangle$</td><td>$\begin{pmatrix}1&0\\0&0\end{pmatrix}$</td><td>$(0, 0, +1)$</td><td>北极</td></tr>
+            <tr><td>完全混合 $I/2$</td><td>$\begin{pmatrix}1/2&0\\0&1/2\end{pmatrix}$</td><td>$(0, 0, 0)$</td><td>球心</td></tr>
+            <tr><td>50% $|0\rangle$ + 50% $|1\rangle$</td><td>$\begin{pmatrix}1/2&0\\0&1/2\end{pmatrix}$</td><td>$(0, 0, 0)$</td><td>球心</td></tr>
+            <tr><td>50% $|+\rangle$ + 50% $|-\rangle$</td><td>$\frac{1}{2}\begin{pmatrix}1&0\\0&1\end{pmatrix}$</td><td>$(0, 0, 0)$</td><td>球心</td></tr>
+          </tbody>
+        </table>
+        <p><strong>关键观察</strong>: <strong>后两行</strong> 物理上<strong>不同</strong>(一个知道是 $|+\rangle$ 还是 $|-\rangle$,一个不知道),但<strong>密度矩阵相同</strong>!这说明<strong>密度矩阵丢失了"如何制备"的信息</strong>——ch02 复习过。</p>
+
+        <h3>6.4.4 Bloch 球上的"典型"噪声通道</h3>
+        <p><strong>噪声</strong>(noise) 把<strong>纯态</strong>(球面)拉到<strong>混合态</strong>(球内)。几种标准单 qubit 噪声:</p>
+        <p><strong>退极化(depolarizing)</strong>: 以概率 $p$ 把态变成完全混合,概率 $1 - p$ 保持</p>
+        $$\mathcal{E}_{\text{depol}}(\hat{\rho}) = (1-p) \hat{\rho} + p \frac{I}{2}$$
+        <p><strong>几何</strong>: Bloch 向量<strong>按比例</strong>收缩 $|\vec{r}| \to (1-p) |\vec{r}|$ —— <strong>径向收缩</strong>到球心</p>
+        <p><strong>退相位(dephasing)</strong>: 抹去 $\sigma_x, \sigma_y$ 方向的相干性,只保留 $\sigma_z$ 方向:</p>
+        $$\mathcal{E}_{\text{deph}}(\hat{\rho}) = (1-p) \hat{\rho} + p \hat{Z} \hat{\rho} \hat{Z}$$
+        <p><strong>几何</strong>: Bloch 向量<strong>z 分量</strong>不变,$\vec{r}_{x,y}$ <strong>缩小</strong>为 $(1-p) \vec{r}_{x,y}$ —— <strong>赤道方向收缩</strong>到 z 轴</p>
+        <p><strong>振幅阻尼(amplitude damping)</strong>: 模拟<strong>自发辐射</strong>($|1\rangle \to |0\rangle$ 释放能量)</p>
+        $$\mathcal{E}_{\text{AD}}(\hat{\rho}) = \hat{K}_0 \hat{\rho} \hat{K}_0^\dagger + \hat{K}_1 \hat{\rho} \hat{K}_1^\dagger$$
+        $$\hat{K}_0 = |0\rangle\langle 0| + \sqrt{1-\gamma}|1\rangle\langle 1|, \quad \hat{K}_1 = \sqrt{\gamma}|0\rangle\langle 1|$$
+        <p><strong>几何</strong>: <strong>非平凡</strong>变换,Bloch 向量<strong>沿某条曲线</strong>移到 $|0\rangle$ (北极)</p>
+        <blockquote class="chapter-quote">
+          <p><strong>噪声对量子计算的根本影响</strong>: ch16 详。<strong>核心问题</strong>: 噪声让量子态"远离球面"——从纯态(球面点)走向混合态(球内点)——所有依赖<strong>相位</strong>的算法(Grover、Shor、QFT)都会<strong>降速</strong>甚至<strong>失败</strong>。<strong>量子纠错</strong>(ch17)的本质 = 用<strong>冗余的物理 qubit</strong>保护<strong>逻辑 qubit</strong>,让噪声"反向收缩"回球面。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.5 量子比特的物理实现</h2>
+
+        <h3>6.5.1 为什么物理实现是个挑战?</h3>
+        <p><strong>DiVincenzo 判据</strong>(2000,量子计算的"可行性标准"):</p>
+        <ol>
+          <li><strong>可扩展的物理 qubit</strong>:能制造<strong>多个</strong>qubit(目前百到千级)</li>
+          <li><strong>初态制备</strong>:能把 qubit 初始化到已知态(比如 $|0\rangle$)</li>
+          <li><strong>长相干时间</strong>:qubit 能在<strong>比门操作时间</strong>长得多的时间内保持量子相干性</li>
+          <li><strong>通用量子门</strong>:能实现<strong>一组通用量子门</strong>(比如 $\{$Hadamard, CNOT, T$\}$ 集,ch07 详)</li>
+          <li><strong>测量能力</strong>:能<strong>高保真</strong>地测量单个 qubit</li>
+          <li><strong>量子比特间通信</strong>:qubit 能<strong>互相交互</strong>(2-qubit 门)</li>
+        </ol>
+        <blockquote class="chapter-quote">
+          <p><strong>注</strong>: 这 6 条是<strong>必要条件</strong>,不是充分条件。<strong>实际工程</strong>还有冷却、纠错、控制电子学、经典-量子接口等很多挑战。</p>
+        </blockquote>
+
+        <h3>6.5.2 5 种主流平台对比</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>平台</th><th>物理 qubit</th><th>相干时间</th><th>门时间</th><th>优势</th><th>劣势</th><th>章节</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>超导(transmon)</strong></td><td>微波控制的 LC 电路</td><td>100 μs</td><td>10-100 ns</td><td>成熟工艺、可扩展</td><td>相干时间短、纠错难</td><td><strong>ch20</strong></td></tr>
+            <tr><td><strong>离子阱(trapped ion)</strong></td><td>真空中的原子离子</td><td>1-10 s</td><td>1-100 μs</td><td>相干时间长、保真度高</td><td>门慢、扩展难</td><td><strong>ch21</strong></td></tr>
+            <tr><td><strong>光量子</strong></td><td>光子的偏振/路径</td><td>∞ (飞行)</td><td>不可存储</td><td>室温、抗退相干</td><td>双 qubit 门难</td><td><strong>ch22</strong></td></tr>
+            <tr><td><strong>中性原子</strong></td><td>光镊中的 Rydberg 原子</td><td>1-10 s</td><td>100 ns - 1 μs</td><td>可扩展、灵活</td><td>门保真度中等</td><td><strong>ch24</strong></td></tr>
+            <tr><td><strong>拓扑(Majorana)</strong></td><td>拓扑保护 qubit</td><td>理论 ∞</td><td>~ns</td><td>内在保护、容错</td><td>工程未成熟</td><td><strong>ch23</strong></td></tr>
+          </tbody>
+        </table>
+        <blockquote class="chapter-quote">
+          <p><strong>目前状态</strong>(2026 年):<strong>超导</strong>(IBM, Google)和<strong>离子阱</strong>(IonQ, Quantinuum)是商业上<strong>最成熟</strong>的两条路线。<strong>中性原子</strong>(QuEra, Pasqal)在 2024-2025 出现<strong>爆发性进展</strong>。<strong>光量子</strong>(PsiQuantum, Xanadu)在特定问题(如 Gaussian Boson Sampling)上有突破。<strong>拓扑量子计算</strong>仍是<strong>远期</strong>路线。</p>
+        </blockquote>
+
+        <h3>6.5.3 怎么选物理 qubit?</h3>
+        <p><strong>没有"最好"的物理实现</strong>——每种平台都在<strong>不同的工程权衡</strong>下竞争:</p>
+        <ul>
+          <li><strong>超导</strong>: 速度(scale-up 快),但相干时间短</li>
+          <li><strong>离子阱</strong>: 保真度高,但门慢</li>
+          <li><strong>光量子</strong>: 室温飞行 qubit(网络),但难做双 qubit 门</li>
+          <li><strong>中性原子</strong>: 平衡型选手,可做大规模阵列</li>
+          <li><strong>拓扑</strong>: 物理保护好,但工程极难</li>
+        </ul>
+        <p><strong>通用经验</strong>: <strong>早期容错量子计算</strong>(2026-2035)→ <strong>超导</strong> + <strong>离子阱</strong> + <strong>中性原子</strong> 主导;<strong>远期</strong>(2035+)→ <strong>拓扑</strong> 或 <strong>光量子模块化</strong> 可能成为主流。</p>
+
+        <h3>6.5.4 几个关键里程碑(2024-2025)</h3>
+        <ul>
+          <li><strong>Google Willow 芯片(2024.12)</strong>: 105 个 transmon qubit,首次实现"低于阈值"量子纠错——错误率随码距增大<strong>指数下降</strong> ✅(参 ch17/18)</li>
+          <li><strong>IBM Heron r2(2025)</strong>: 156 个 qubit,门保真度 99.7%(2-qubit 99.5%),演示 5,000 门深电路</li>
+          <li><strong>Atom Computing(2024.10)</strong>: 1,180 个中性原子 qubit,<strong>首次</strong>原子阵列突破 1,000 qubit 大关</li>
+          <li><strong>Quantinuum H2(2024)</strong>: 56 个离子阱 qubit,2-qubit 门保真度 <strong>99.87%</strong> —— <strong>目前</strong>保真度世界纪录</li>
+          <li><strong>PsiQuantum Omega(2025)</strong>: 光量子模块化原型,首次在 <strong>300 m 光纤</strong>上做"网络化量子计算"</li>
+          <li><strong>Microsoft Majorana 1(2025.02)</strong>: 拓扑量子计算的"工程突破"——展示了<strong>可测量</strong>的 Majorana 零模(尚有争议)</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>观察</strong>: 2024-2025 是量子计算的"工程化拐点"——<strong>量子纠错</strong>首次在硬件上"低于阈值"(Willow),<strong>模块化</strong>开始成形(PsiQuantum)。下一个 5 年(2026-2030)预计是"中等规模容错量子计算"(early-FTQC) 时代——几百到几千个<strong>逻辑</strong>qubit(由几万个物理 qubit 编码)。<strong>那时候</strong>(2030 前后),Shor 算法可能第一次<strong>实际地</strong>威胁 RSA-2048 加密。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.6 多 qubit 系统:从 1 到 n</h2>
+
+        <h3>6.6.1 张量积结构</h3>
+        <p>$n$ qubit 系统的态空间是<strong>张量积</strong>:</p>
+        $$\mathcal{H}^{\otimes n} = \mathcal{H}_1 \otimes \mathcal{H}_2 \otimes \cdots \otimes \mathcal{H}_n$$
+        <p>每个 $\mathcal{H}_i = \mathbb{C}^2$,所以 $\dim(\mathcal{H}^{\otimes n}) = 2^n$。</p>
+        <p><strong>2 qubit 例子</strong>:</p>
+        $$|0\rangle \otimes |1\rangle = |0\rangle |1\rangle = |01\rangle = \begin{pmatrix} 1 \\ 0 \\ 0 \\ 0 \end{pmatrix}$$
+        <p><strong>一般 2 qubit 态</strong>:</p>
+        $$|\psi\rangle = \alpha_{00} |00\rangle + \alpha_{01} |01\rangle + \alpha_{10} |10\rangle + \alpha_{11} |11\rangle$$
+        <p>归一化: $\sum_{ij} |\alpha_{ij}|^2 = 1$。</p>
+
+        <h3>6.6.2 指数级状态空间</h3>
+        <p><strong>关键事实</strong>: $n$ qubit 系统的<strong>复振幅</strong>有 $2^{n+1}$ 个实数(2^n 复数,减 1 归一化,再除以 1 个全局相位),<strong>但只用 $n$ 个 qubit 物理实现</strong>!</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>$n$</th><th>$2^n$</th><th>类比</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td>1024</td><td>1 KB</td></tr>
+            <tr><td>50</td><td>$1.1 \times 10^{15}$</td><td>1 PB</td></tr>
+            <tr><td>100</td><td>$1.3 \times 10^{30}$</td><td>比可观测宇宙的原子数还多</td></tr>
+            <tr><td>300</td><td>比宇宙中所有原子的估计数还多</td><td>⚛️</td></tr>
+          </tbody>
+        </table>
+        <blockquote class="chapter-quote">
+          <p><strong>这就是量子计算的"承诺"</strong> —— $n = 300$ qubit 系统的 Hilbert 空间<strong>比可观测宇宙的原子数还多</strong>!但(再次强调)<strong>测量只能读出一个结果</strong>——量子算法的<strong>艺术</strong>就是让"正确答案建设性干涉、错误答案破坏性干涉"。</p>
+        </blockquote>
+
+        <h3>6.6.3 可分态 vs 纠缠态</h3>
+        <p><strong>可分态(separable state)</strong>: 能写成<strong>单 qubit 态的张量积</strong>:</p>
+        $$|\psi\rangle = |\psi_1\rangle \otimes |\psi_2\rangle \otimes \cdots \otimes |\psi_n\rangle$$
+        <p><strong>纠缠态(entangled state)</strong>: <strong>不能</strong>写成张量积(参 ch04)。</p>
+        <p><strong>2 qubit 例子</strong>:</p>
+        <ul>
+          <li>$|00\rangle$ — 可分 ✅</li>
+          <li>$\frac{1}{\sqrt{2}}(|00\rangle + |11\rangle) = |\Phi^+\rangle$ — <strong>纠缠</strong> ✅ (Bell 态)</li>
+          <li>$\frac{1}{\sqrt{2}}(|0+\rangle + |1-\rangle) = \frac{1}{2}(|00\rangle - |01\rangle + |10\rangle - |11\rangle) = |\psi_1\rangle \otimes |\psi_2\rangle$ — <strong>可分</strong> ✅(可分解为 $(|0\rangle + |1\rangle)/\sqrt{2} \otimes (|0\rangle - |1\rangle)/\sqrt{2}$)</li>
+        </ul>
+        <p><strong>判断方法</strong>: 计算<strong>约化密度矩阵</strong> $\hat{\rho}_A = \text{tr}_B(|\psi\rangle\langle\psi|)$。如果 $\hat{\rho}_A$ 是<strong>纯态</strong>($\text{tr}(\hat{\rho}_A^2) = 1$),则 $|\psi\rangle$ 可分;否则纠缠。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>纠缠的"代价"</strong>: 2 qubit 纠缠态的 4 个复振幅<strong>不能</strong>被 2 个单 qubit 复振幅"完全描述"——这 4 个振幅里有<strong>真正的"多体信息"</strong>,不只来自单 qubit 的局部自由度。这是 ch04 纠缠的核心,也是 ch10 Grover、ch11 Shor 等量子算法的"燃料"。</p>
+        </blockquote>
+
+        <h3>6.6.3.1 工作实例:从 $|00\rangle$ 制备 Bell 态 $|\Phi^+\rangle$</h3>
+        <p><strong>目标</strong>: 通过<strong>量子门操作</strong>把可分态 $|00\rangle$ 变成<strong>最大纠缠</strong> Bell 态 $|\Phi^+\rangle = \frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)$。</p>
+        <p><strong>电路</strong>(Hadamard + CNOT):</p>
+        <ol>
+          <li><strong>Hadamard 门</strong>作用在 qubit 0: $|0\rangle \to |+\rangle = (|0\rangle + |1\rangle)/\sqrt{2}$
+          $$|00\rangle \xrightarrow{H \otimes I} \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle) |0\rangle = \frac{1}{\sqrt{2}}(|00\rangle + |10\rangle)$$</li>
+          <li><strong>CNOT 门</strong>(qubit 0 控制,qubit 1 目标):$|00\rangle \to |00\rangle, |10\rangle \to |11\rangle$
+          $$\frac{1}{\sqrt{2}}(|00\rangle + |10\rangle) \xrightarrow{\text{CNOT}} \frac{1}{\sqrt{2}}(|00\rangle + |11\rangle) = |\Phi^+\rangle$$</li>
+        </ol>
+        <p><strong>为什么这是"纠缠制备"</strong>: $|\Phi^+\rangle$ <strong>不能</strong>写成单 qubit 张量积(可验证 $\hat{\rho}_A = \text{tr}_B(|\Phi^+\rangle\langle\Phi^+|) = I/2$ 是<strong>完全混合态</strong>,不是纯态,意味着 qubit 0 不再处于任何确定的单 qubit 态)。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>几何观察</strong>: 这两个门<strong>完全在 qubit 0 和 qubit 1 上局部作用</strong> —— 但<strong>结果</strong>是 qubit 0 和 qubit 1 <strong>完全纠缠</strong>!这正是量子计算的"魔法" —— 局部操作(每个 qubit 上做门)产生<strong>非局域</strong>结果(两 qubit 纠缠)。<strong>纠缠不能被局部操作产生,只能被"扩散"</strong>(如果初态已经有局部关联);但<strong>CNOT + Hadamard</strong> 的组合<strong>确实</strong>把 $|00\rangle$(无关联)转成 $|\Phi^+\rangle$(完全关联)——这看似矛盾,实际是<strong>"信息从经典(振幅位置)转到量子(振幅间相位关联)"</strong>的微妙平衡。</p>
+        </blockquote>
+
+        <h3>6.6.3.2 3 qubit 的 GHZ 和 W 不可相互转换</h3>
+        <p>3 qubit 纠缠<strong>有两种"等价类"</strong>(Dür-Vidal-Cirac 2000):</p>
+        <ul>
+          <li><strong>GHZ 类</strong>: 包含 GHZ 态,3-qubit "集体"纠缠</li>
+          <li><strong>W 类</strong>: 包含 W 态,3-qubit "成对"纠缠</li>
+        </ul>
+        <p><strong>关键事实</strong>: <strong>任何</strong> LOCC(局域操作 + 经典通信) <strong>不能</strong> 把 GHZ 转为 W(或反之) <strong>确定性地</strong> —— 两者<strong>不可逆等价</strong>。这意味着 GHZ 类和 W 类在 LOCC 下属于<strong>不同的纠缠等价类</strong>。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>含义</strong>: 量子纠缠<strong>不是</strong>单一标量,3 qubit 起需要<strong>多个参数</strong>描述。ch14 量子机器学习的"量子纠缠特征"通常需要测 concurrence、negativity、3-tangle 等<strong>多个</strong>度量。</p>
+        </blockquote>
+
+        <h3>6.6.4 多 qubit 态的密度矩阵</h3>
+        <p>$n$ qubit 系统的<strong>一般</strong>密度矩阵是 $2^n \times 2^n$ 的厄米矩阵。</p>
+        <p><strong>独立实参数个数</strong>: $4^n - 1$(对 $n$ qubit,ch05 5.6.4 推导过)。</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>$n$</th><th>$4^n - 1$</th><th>存储</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>3</td><td>3 个数 (Bloch 向量)</td></tr>
+            <tr><td>5</td><td>1023</td><td>1 KB</td></tr>
+            <tr><td>10</td><td>1,048,575</td><td>1 MB</td></tr>
+            <tr><td>20</td><td>$\approx 10^{12}$</td><td>1 TB</td></tr>
+            <tr><td>50</td><td>$\approx 10^{30}$</td><td>超过人脑记忆</td></tr>
+          </tbody>
+        </table>
+        <blockquote class="chapter-quote">
+          <p><strong>复杂性鸿沟</strong>: <strong>多 qubit 态的完全描述</strong>需要 $O(4^n)$ 个数,而<strong>物理存储</strong>只占 $n$ 个 qubit。<strong>这正是量子模拟(Shor 1994)和量子机器学习(ch14)面临的根本挑战</strong>。</p>
+        </blockquote>
+
+        <h3>6.6.5 多 qubit 的"明星"纠缠态</h3>
+        <p><strong>Bell 态(2 qubit, 4 个)</strong> — 4 个<strong>最大纠缠</strong>正交归一基(参 ch04):</p>
+        $$|\Phi^\pm\rangle = \frac{1}{\sqrt{2}}(|00\rangle \pm |11\rangle), \quad |\Psi^\pm\rangle = \frac{1}{\sqrt{2}}(|01\rangle \pm |10\rangle)$$
+        <p><strong>GHZ 态(n qubit)</strong> — Greenberger-Horne-Zeilinger 1989:</p>
+        $$|\text{GHZ}_n\rangle = \frac{1}{\sqrt{2}}(|0\rangle^{\otimes n} + |1\rangle^{\otimes n})$$
+        <p><strong>特点</strong>: 所有 $n$ 个 qubit <strong>同时</strong>是 0 <strong>或</strong>同时是 1,关联度<strong>比经典强</strong>。<strong>测量</strong>任意一个 qubit 得 0(或 1),<strong>其余</strong>所有 qubit 立即塌缩到<strong>同</strong>一个值(这是"非局域关联"的最戏剧版本)。</p>
+        <p><strong>W 态(n qubit)</strong> — Dür-Vidal-Cirac 2000:</p>
+        $$|W_n\rangle = \frac{1}{\sqrt{n}}(|100\cdots 0\rangle + |010\cdots 0\rangle + \cdots + |0\cdots 01\rangle)$$
+        <p><strong>特点</strong>: 恰好<strong>一个</strong> qubit 是 1,<strong>其余</strong>是 0 的"叠加"。<strong>跟 GHZ 的区别</strong>: 测量一个 qubit 得 1 后,GHZ 完全确定,还有"集体信息"塌缩;W 态塌缩后<strong>还剩</strong>(n-1) qubit 的 W 态,具有<strong>鲁棒性</strong>——失去一个 qubit 仍<strong>部分</strong>纠缠。</p>
+        <p><strong>图态(graph state)</strong> — 量子纠错(ch17)和<strong>测量基量子计算</strong>(MBQC)的基础:</p>
+        <ul>
+          <li>$n$ 个 qubit 排成<strong>图</strong> $G = (V, E)$</li>
+          <li>初态: 所有 qubit 在 $|+\rangle$</li>
+          <li>边 $(i, j) \in E$ 上做 <strong>CZ 门</strong> (controlled-Z)</li>
+          <li>得到的态是<strong>图态</strong> $G\rangle$</li>
+          <li><strong>包括</strong>: 1D 簇态(cluster state, MBQC 的"资源态")、2D 簇态(表面码的"补丁",ch18 详)</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>为什么"明星态"重要</strong>: 这些态<strong>不是任意</strong>态——它们是<strong>有结构</strong>的纠缠态,在量子计算、量子通信、量子纠错中<strong>反复出现</strong>。ch10 Grover 用 GHZ/W 态作为"标记态",ch11 Shor 用 QFT 产生 GHZ 态,ch17 表面码本质上是 2D 图态。<strong>掌握这些态</strong> = 掌握量子计算的工具箱。</p>
+        </blockquote>
+
+        <h3>6.6.6 纠缠的量化——Concurrence, Entanglement Entropy, Negativity</h3>
+        <p>判断<strong>是否</strong>纠缠是第一步,<strong>量化多少</strong>纠缠是第二步。<strong>3 个常用纠缠度量</strong>:</p>
+        <p><strong>Concurrence</strong> (Wootters 1998, 2 qubit):</p>
+        $$C(|\psi\rangle) = \sqrt{2(1 - \text{tr}(\hat{\rho}_A^2))}$$
+        <ul>
+          <li>$C = 0$: 可分</li>
+          <li>$C = 1$: 最大纠缠(Bell 态)</li>
+          <li>物理意义: 跟<strong>可逆纠缠转换</strong>的"等价类"一致</li>
+        </ul>
+        <p><strong>Entanglement Entropy</strong> (von Neumann 熵的约化态,任意 bipartition $A|B$):</p>
+        $$S_A = -\text{tr}(\hat{\rho}_A \log_2 \hat{\rho}_A) = S_B$$
+        <ul>
+          <li>范围: $[0, \log_2(\min(\dim A, \dim B))]$</li>
+          <li>物理意义: <strong>量子热力学</strong>的"纠缠温度"——纠缠越多,约化态越"热"</li>
+          <li>2 qubit 最大纠缠: $S_A = 1$ bit</li>
+        </ul>
+        <p><strong>Negativity</strong> (可计算,任意 bipartition):</p>
+        $$\mathcal{N} = \frac{\|\hat{\rho}^{T_A}\|_1 - 1}{2} = \sum_{\lambda_i < 0} |\lambda_i|$$
+        <ul>
+          <li>$\mathcal{N} = 0$: 可分</li>
+          <li>$\mathcal{N} > 0$: 纠缠</li>
+          <li>物理意义: 部分转置后的<strong>负本征值之和</strong>——可分态的部分转置<strong>仍半正定</strong>(PPT 判据),纠缠态的<strong>至少有一个负本征值</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>多 qubit 纠缠的特殊性</strong>: 3 qubit 起的纠缠有<strong>不可逆转换</strong>(GHZ 不能转为 W 或反之,Dür-Vidal-Cirac 2000),所以<strong>单个</strong>标量度量<strong>不够</strong>——需要<strong>完整</strong>的 SLOCC(随机 LOCC 等价类)分类,这是<strong>量子多体物理</strong>的活跃研究领域。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.7 量子比特的不可克隆性</h2>
+
+        <h3>6.7.1 不可克隆定理(回顾 ch04)</h3>
+        <p><strong>定理</strong> (Wootters-Zurek 1982, Dieks 1982): 没有任何<strong>物理过程</strong>能<strong>完美复制</strong>未知的量子态:</p>
+        $$U |\psi\rangle |0\rangle = |\psi\rangle |\psi\rangle \quad \text{(对所有 $|\psi\rangle$ 同时成立)} \quad \Rightarrow \quad \text{矛盾}$$
+        <p><strong>简短证明</strong>(对 2 维): 假设 $U$ 能完美复制 $|0\rangle$ 和 $|1\rangle$:</p>
+        $$U|0\rangle|0\rangle = |0\rangle|0\rangle, \quad U|1\rangle|0\rangle = |1\rangle|1\rangle$$
+        <p>对叠加 $|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$:</p>
+        $$U|\psi\rangle|0\rangle = \alpha U|0\rangle|0\rangle + \beta U|1\rangle|0\rangle = \alpha|0\rangle|0\rangle + \beta|1\rangle|1\rangle$$
+        <p>但<strong>完美复制</strong>要求 $U|\psi\rangle|0\rangle = |\psi\rangle|\psi\rangle = \alpha^2|00\rangle + \alpha\beta|01\rangle + \alpha\beta|10\rangle + \beta^2|11\rangle$。</p>
+        <p><strong>两个表达式不相等</strong> ($\alpha\beta$ 项 vs $\alpha^2, \beta^2$ 项) — 矛盾! ∎</p>
+
+        <h3>6.7.2 不可克隆的"量子计算视角"</h3>
+        <p>对<strong>量子计算</strong>而言,不可克隆定理<strong>既是限制也是机会</strong>:</p>
+        <p><strong>作为限制</strong>:</p>
+        <ul>
+          <li><strong>不能</strong>复制 qubit → <strong>不能</strong>做"经典备份" → 错误一旦发生<strong>不可逆</strong></li>
+          <li>这给<strong>量子纠错</strong>带来根本挑战 —— ch16 噪声、退相干;ch17 纠错码会详谈</li>
+          <li>经典的"复制 + 比较"消错方法<strong>不适用</strong></li>
+        </ul>
+        <p><strong>作为机会</strong>:</p>
+        <ul>
+          <li>量子密钥分发(BB84, ch17/26)<strong>安全</strong>的根源:窃听者<strong>不能</strong>复制量子态而不留下痕迹</li>
+          <li>不可克隆是<strong>量子加密</strong>比经典加密<strong>更强</strong>的物理基础</li>
+          <li><strong>没有经典备份</strong>也意味着量子计算的"私密性"——单次计算后,原始输入<strong>自动消失</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>关键澄清</strong>: 不可克隆<strong>不</strong>意味着 qubit <strong>不能传输</strong> —— 量子隐形传态(ch04)告诉我们:用 2 经典 bit + 1 纠缠对可以<strong>传输</strong>qubit 态(不"复制")。</p>
+        </blockquote>
+
+        <h3>6.7.3 近似克隆与量子克隆机</h3>
+        <p><strong>完美</strong>克隆不可能,但<strong>近似</strong>克隆可能(Bužek-Hillery 1996):</p>
+        <ul>
+          <li><strong>1 → 2 最优克隆机</strong>:对<strong>未知</strong> qubit,保真度最优 $F = 5/6 \approx 0.833$</li>
+          <li>实用价值:某些<strong>量子通信</strong>协议需要"放大"弱信号(但不能完美)</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>跟经典对比</strong>: 经典 bit <strong>完美</strong>复制是<strong>免费</strong>的(用三极管、寄存器等);qubit 的"近似复制"已经是<strong>研究前沿</strong>。这反映了量子信息跟经典信息的<strong>根本不同</strong>。</p>
+        </blockquote>
+
+        <h3>6.7.4 不可克隆的"几何"解读</h3>
+        <p>Bloch 球给出了不可克隆的<strong>几何直觉</strong>:</p>
+        <ul>
+          <li><strong>完美复制</strong> $|\psi\rangle |0\rangle \to |\psi\rangle |\psi\rangle$ 要求<strong>两个</strong>独立 qubit <strong>都</strong>映射到同一个 Bloch 向量 $\vec{r}_\psi$。</li>
+          <li>但酉演化 = Bloch 球<strong>旋转</strong>,<strong>只能</strong>把<strong>一个</strong>向量转到<strong>另一个</strong>固定向量。<strong>两个</strong>独立 qubit <strong>同时</strong>转到<strong>同一个</strong>目标 = 需要<strong>两套独立的</strong>旋转参数,但酉算符只有<strong>一套</strong>。</li>
+          <li>对<strong>单</strong> qubit 的酉演化 $\hat{U}$:$\hat{U}$ 把 $\vec{r}$ 转到 $\hat{U} \vec{r} \hat{U}^\dagger$(Bloch 向量的旋转)。<strong>两个</strong> qubit 同时转到 $\vec{r}_\psi$ 需要<strong>两个</strong>独立酉算符 $\hat{U}_1, \hat{U}_2$ 满足 $\hat{U}_1 \vec{r} \hat{U}_1^\dagger = \hat{U}_2 \vec{r} \hat{U}_2^\dagger$ 对<strong>所有</strong> $\vec{r}$——这要求 $\hat{U}_1 = \hat{U}_2$(在<strong>全局相位</strong>下),但<strong>作用在不同 qubit</strong> —— 跟"独立"假设矛盾。</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>几何意义</strong>: 不可克隆定理<strong>等价于</strong>说:Bloch 球上的"对应"操作不能被<strong>两个独立 qubit 共享</strong>酉演化实现。<strong>整个球</strong>无法被<strong>单一酉</strong>映到<strong>自身</strong>(除了恒等 $I$ 和反演 $-I$,它们都对应平凡的"克隆"——但 $\hat{U} = -I$ 跟 $\hat{U} = I$ 在 Bloch 球上<strong>不可区分</strong>,所以"完美克隆"在 Bloch 球上<strong>没有意义</strong>——这是个微妙但深刻的观察)。</p>
+        </blockquote>
+
+        <h3>6.7.5 不可克隆的"哲学"含义:为什么不能"备份"?</h3>
+        <p>经典计算的<strong>强大</strong>部分来自<strong>可复制</strong>——你可以"保存"一个 bit,需要时"加载"。但<strong>量子</strong>世界<strong>没有</strong>这种<strong>永久备份</strong>:</p>
+        <ul>
+          <li><strong>量子纠错</strong>(ch17)只能<strong>间接</strong>保护信息——用<strong>冗余物理 qubit</strong> 编码<strong>逻辑 qubit</strong>,但物理 qubit <strong>不是</strong>逻辑 qubit 的"备份"(而是"带冗余的编码")</li>
+          <li>任何<strong>退相干</strong>都<strong>不可逆地</strong>损失相位信息(参 ch03.6)</li>
+          <li>量子计算的"运行"是<strong>一次性</strong>的——一旦测量,叠加塌缩,信息<strong>不可恢复</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>隐喻</strong>: 经典计算像"在白纸上写字"——可以复印;量子计算像"在水面投石子"——波纹<strong>瞬时</strong>展开,<strong>测量</strong>后波纹消失,<strong>不可</strong>"重新播放"。</p>
+        </blockquote>
+        <blockquote class="chapter-quote">
+          <p><strong>乐观视角</strong>: 正是这种"易碎"使得量子计算"安全"(BB84 量子密钥)——窃听者<strong>不可能</strong>复制而不破坏。但<strong>悲观视角</strong>: 也是这种"易碎"使量子计算<strong>难</strong>——任何噪声都会<strong>破坏</strong>结果。<strong>量子纠错</strong> = 在"易碎"上建造"鲁棒"。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.8 量子比特的"身份证"——Pauli 分解</h2>
+
+        <h3>6.8.1 单 qubit 密度矩阵的 Pauli 分解</h3>
+        <p>对单 qubit,<strong>任何</strong> $2 \times 2$ 厄米矩阵可写成 Pauli 矩阵的线性组合:</p>
+        $$\hat{\rho} = \frac{1}{2}(r_0 I + r_1 \sigma_x + r_2 \sigma_y + r_3 \sigma_z) = \frac{1}{2}(I + \vec{r} \cdot \vec{\sigma})$$
+        <p>其中 $r_0 = 1$(归一化), $\vec{r} = (r_1, r_2, r_3)$ 是 Bloch 向量。</p>
+        <p><strong>Pauli 矩阵</strong>:</p>
+        $$I = \begin{pmatrix}1&0\\0&1\end{pmatrix}, \sigma_x = \begin{pmatrix}0&1\\1&0\end{pmatrix}, \sigma_y = \begin{pmatrix}0&-i\\i&0\end{pmatrix}, \sigma_z = \begin{pmatrix}1&0\\0&-1\end{pmatrix}$$
+        <p><strong>性质</strong>: $\text{tr}(\sigma_i \sigma_j) = 2 \delta_{ij}$, $\{I, \sigma_x, \sigma_y, \sigma_z\}$ 构成<strong>完备基</strong>。</p>
+
+        <h3>6.8.2 多 qubit 的泡利串(Pauli string)分解</h3>
+        <p>$n$ qubit 系统的<strong>任意</strong>密度矩阵可写成<strong>泡利串</strong> $P_1 \otimes P_2 \otimes \cdots \otimes P_n$ 的线性组合:</p>
+        $$\hat{\rho} = \frac{1}{2^n} \sum_{P_1, \ldots, P_n \in \{I, X, Y, Z\}} c_{P_1 \cdots P_n} P_1 \otimes \cdots \otimes P_n$$
+        <p><strong>系数</strong> $c_{P_1 \cdots P_n} = \text{tr}(\hat{\rho} P_1 \otimes \cdots \otimes P_n)$ —— 这就是<strong>量子态层析(QST)</strong>的数学基础(参 ch05 5.6.4)。</p>
+        <p><strong>独立系数个数</strong>: $4^n$ 个泡利串,但<strong>归一化</strong> $c_{I\cdots I} = 1$ 固定一个,所以<strong>独立</strong> $4^n - 1$ 个 ✅(跟 6.6.4 一致)。</p>
+
+        <h3>6.8.3 Pauli 分解的"物理意义"——可观测量视角</h3>
+        <p>每个 Pauli 串 $P_1 \otimes \cdots \otimes P_n$ 对应一个<strong>可观测量</strong>(参 ch05)。<strong>系数</strong> $c_{P_1 \cdots P_n}$ <strong>就是</strong>这个观测量的<strong>期望值</strong> $\langle P_1 \otimes \cdots \otimes P_n \rangle$。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>关键观察</strong>: <strong>Pauli 分解把密度矩阵的"数学描述"直接翻译成"实验可测量"</strong>——QST 只需要测 $4^n - 1$ 个期望值(对 $n$ qubit),无需直接"读出" $2^n \times 2^n$ 矩阵。这是<strong>量子态可观测性</strong>的<strong>具体化</strong>:虽然态在指数大的 Hilbert 空间里,但<strong>可观测信息</strong>只有 $4^n - 1$ 个实数,<strong>跟</strong> Hilbert 空间维数的<strong>平方根</strong>同阶 ✅(实际是 $4^n$ 量级,但比 $2^{2n}$ 矩阵的 $4^n$ 个数少一半)。</p>
+        </blockquote>
+        <blockquote class="chapter-quote">
+          <p><strong>QST 在实验中的地位</strong>: 任何<strong>量子算法</strong>的<strong>输出验证</strong>(比如测 Bell 态保真度)都需要 QST 作为子程序。ch14 量子机器学习中,<strong>量子数据的特征提取</strong> = 计算某些 Pauli 串的期望值(比如 VQE 算哈密顿量,QAOA 算 cost Hamiltonian)。<strong>Pauli 分解是连接"理论数学"和"实验测量"的桥梁</strong>。</p>
+        </blockquote>
+
+        <hr>
+
+        <h2>6.9 章节总结与后续</h2>
+
+        <h3>6.9.1 一句话总结</h3>
+        <p><strong>量子比特(qubit)</strong> 是 2 维希尔伯特空间的归一化向量,可以用 <strong>Bloch 球</strong>做几何表示。$n$ qubit 系统的 Hilbert 空间维数<strong>指数</strong>增长($2^n$),这给量子计算<strong>形式化</strong>提供了"指数级状态空间"的承诺——但(再次)真正的"魔法"是<strong>干涉</strong>,不是"指数并行"。<strong>不可克隆定理</strong>告诉我们 qubit <strong>不能</strong>完美复制,这既给量子纠错带来挑战,又给量子加密提供安全基础。</p>
+
+        <h3>6.9.2 概念速查表</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>概念</th><th>定义 / 形式</th><th>关键数字 / 备注</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>qubit 态</strong></td><td>$|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$, $|\alpha|^2 + |\beta|^2 = 1$</td><td>$\alpha, \beta \in \mathbb{C}$</td></tr>
+            <tr><td><strong>计算基</strong></td><td>$|0\rangle = (1,0)^T$, $|1\rangle = (0,1)^T$</td><td>2 个</td></tr>
+            <tr><td><strong>Hadamard 基</strong></td><td>$|\pm\rangle = (|0\rangle \pm |1\rangle)/\sqrt{2}$</td><td>2 个</td></tr>
+            <tr><td><strong>圆基</strong></td><td>$|\pm i\rangle = (|0\rangle \pm i|1\rangle)/\sqrt{2}$</td><td>2 个</td></tr>
+            <tr><td><strong>Bloch 球</strong></td><td>$|\psi\rangle \leftrightarrow (\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)$</td><td>半径 1</td></tr>
+            <tr><td><strong>Bloch 向量</strong></td><td>$\hat{\rho} = \frac{1}{2}(I + \vec{r} \cdot \vec{\sigma})$, $\vec{r} \in \mathbb{R}^3$</td><td>$|\vec{r}| \leq 1$</td></tr>
+            <tr><td><strong>纯度</strong></td><td>$\text{tr}(\hat{\rho}^2) = \frac{1}{2}(1 + |\vec{r}|^2)$</td><td>$\in [1/2, 1]$</td></tr>
+            <tr><td><strong>n qubit 维数</strong></td><td>$\dim(\mathcal{H}^{\otimes n}) = 2^n$</td><td>指数</td></tr>
+            <tr><td><strong>n qubit 振幅数</strong></td><td>复数振幅 $2^n$,实参数 $2^{n+1} - 2$</td><td>指数</td></tr>
+            <tr><td><strong>可分态</strong></td><td>$|\psi\rangle = \otimes_i |\psi_i\rangle$</td><td>不纠缠</td></tr>
+            <tr><td><strong>纠缠态</strong></td><td>不可分</td><td>Bell 态等</td></tr>
+            <tr><td><strong>不可克隆</strong></td><td>$U|\psi\rangle|0\rangle \neq |\psi\rangle|\psi\rangle$ 对所有 $|\psi\rangle$</td><td>严格证明见 6.7.1</td></tr>
+            <tr><td><strong>1→2 最优克隆</strong></td><td>保真度 $5/6$</td><td>Bužek-Hillery 1996</td></tr>
+            <tr><td><strong>Pauli 串</strong></td><td>$P_1 \otimes \cdots \otimes P_n$, $P_i \in \{I,X,Y,Z\}$</td><td>$4^n$ 个</td></tr>
+          </tbody>
+        </table>
+
+        <h3>6.9.3 跟第一部分的衔接</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>ch01-ch05 公理</th><th>ch06 的体现</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>态空间公理</strong> (ch02)</td><td>qubit = 2 维 Hilbert 空间向量</td></tr>
+            <tr><td><strong>演化公理</strong> (ch02)</td><td>单 qubit 演化 = 2×2 酉算符 (ch07 详)</td></tr>
+            <tr><td><strong>测量公理</strong> (ch05)</td><td>测 $\hat{Z}$ = 得 0 或 1,概率 $|\alpha|^2, |\beta|^2$</td></tr>
+            <tr><td><strong>复合系统公理</strong> (ch04)</td><td>n qubit 态空间 = 张量积,维数 $2^n$</td></tr>
+            <tr><td><strong>不可克隆定理</strong> (ch04)</td><td>6.7 详细数学 + 量子计算视角解读</td></tr>
+          </tbody>
+        </table>
+
+        <h3>6.9.4 为后续章节铺路</h3>
+        <ul>
+          <li><strong>ch07 量子逻辑门</strong>: 在 6.5 DiVincenzo 判据里我们提了"通用量子门"——下一章会详讲 <strong>Hadamard、Pauli、相位、CNOT、Toffoli</strong> 等</li>
+          <li><strong>ch08 量子电路</strong>: 用 6.6 多 qubit 系统 + ch07 量子门,构造量子算法</li>
+          <li><strong>ch09 量子傅里叶变换</strong>: 6.2 的振幅 $\alpha, \beta$ 会变成 $2^n$ 个复数,QFT 在指数大的空间里"洗牌"</li>
+          <li><strong>ch10 Grover 搜索</strong>: 6.6 的 $2^n$ 状态空间会通过"振幅放大"实现<strong>平方根</strong>加速</li>
+          <li><strong>ch11 Shor 因式分解</strong>: 6.7 不可克隆定理的"反面"——<strong>周期查找</strong> + QFT 实现<strong>指数</strong>加速</li>
+          <li><strong>ch14 量子机器学习</strong>: 6.8 Pauli 串分解是"量子数据"的标准表示</li>
+          <li><strong>ch16 量子噪声</strong>: 6.4 混合态的几何表示(球内)是描述<strong>退极化</strong>等噪声的天然工具</li>
+          <li><strong>ch20-24 量子硬件</strong>: 6.5 物理实现是详细硬件章的概览</li>
+        </ul>
+
+        <h3>6.9.5 章节回顾问题</h3>
+        <ol>
+          <li>经典比特和量子比特的<strong>根本区别</strong>是什么?为什么这给量子计算<strong>承诺</strong>?</li>
+          <li>Bloch 球面上 6 个常用态($|0\rangle, |1\rangle, |\pm\rangle, |\pm i\rangle$)的 Bloch 向量是什么?</li>
+          <li>单 qubit 混合态在 Bloch 球上的什么位置?完全混合态呢?</li>
+          <li>5 个 qubit 系统的 Hilbert 空间维数是多少?需要多少实参数描述它的密度矩阵?</li>
+          <li>为什么量子计算的"指数级状态空间"<strong>不</strong>等于"对 $2^n$ 种输入同时计算"?</li>
+          <li>不可克隆定理给量子计算带来什么"限制"?什么"机会"?</li>
+        </ol>
+
+        <h3>6.9.6 思考题(为 ch07 铺垫)</h3>
+        <ol>
+          <li>证明 $\hat{R}_x(\pi) = -i \hat{X}$(全局相位 $-i$)。这两个算符在 Bloch 球上给出<strong>相同</strong>的旋转吗?为什么?</li>
+          <li>计算 $|\Phi^+\rangle = (|00\rangle + |11\rangle)/\sqrt{2}$ 在 $\hat{X} \otimes \hat{X}$ 上的期望值。它跟 $|\Phi^-\rangle$ 在 $\hat{X} \otimes \hat{X}$ 上的期望值有什么不同?</li>
+          <li>2 qubit 态 $|\psi\rangle = (|00\rangle + |01\rangle + |10\rangle - |11\rangle)/2$ 是可分还是纠缠?给出理由。</li>
+          <li>5 个物理 qubit 的 Hilbert 空间维数是 $32$。如果用 5 qubit <strong>完全描述</strong>(密度矩阵),需要存储多少实数?如果要测所有 $4^5 = 1024$ 个泡利串的期望值,需要多少种独立测量?</li>
+        </ol>
+
+        <h3>6.9.7 推荐阅读</h3>
+        <ul>
+          <li><strong>Nielsen & Chuang,《Quantum Computation and Quantum Information》ch2</strong> — 标准入门</li>
+          <li><strong>Mermin,《Quantum Computer Science》ch2</strong> — 更物理导向</li>
+          <li><strong>Kaye-Laflamme-Mosca,《An Introduction to Quantum Computing》ch1</strong> — 更工程导向</li>
+          <li><strong>W. K. Wootters, W. H. Zurek, Nature 299, 802 (1982)</strong> — 不可克隆定理</li>
+          <li><strong>V. Bužek, M. Hillery, Phys. Rev. A 54, 1844 (1996)</strong> — 1→2 最优克隆</li>
+          <li><strong>F. Bloch, Phys. Rev. 70, 460 (1946)</strong> — Bloch 球的原始论文(核磁共振上下文)</li>
+          <li><strong>DiVincenzo, Fortschritte der Physik 48, 771 (2000)</strong> — DiVincenzo 判据</li>
+        </ul>
+
+        <hr>
+
+        <p><strong>第一部分到此结束,第二部分开始</strong>。ch06 是分水岭:之前的 ch01-ch05 是"量子力学的物理公理",从这里开始,ch07-ch10 是"量子计算的算法基础",ch11+ 是"算法 + 硬件 + 应用"。</p>
+        <p><strong>准备好进入 ch07 量子逻辑门了吗?</strong> 🚪</p>
+
+        <!-- 上一章 / 下一章 导航 -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch05.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 5 章 量子测量与不确定性原理</span>
+          </a>
+          <a href="ch07.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 7 章 量子逻辑门与量子线路</span>
+            <span class="pager-tag">即将推出</span>
+          </a>
+        </nav>
+
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
