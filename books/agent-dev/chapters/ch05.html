@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第5章：Agent 范式对比 | 《AGENT开发从入门到精通》">
+
+  <title>第5章：Agent 范式对比 | AGENT开发从入门到精通</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- highlight.js for code blocks -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    /* ch05 特定样式：五范式工作循环图 */
+    .paradigm-svg {
+      background: linear-gradient(135deg, rgba(192,38,211,0.08), rgba(249,115,22,0.08));
+      border: 1px solid rgba(192,38,211,0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .paradigm-svg svg {
+      max-width: 100%;
+      height: auto;
+    }
+    .paradigm-svg .paradigm-name {
+      fill: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .paradigm-svg .paradigm-tag {
+      fill: rgba(241,245,249,0.7);
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 11px;
+    }
+    .paradigm-svg .loop-title {
+      fill: #c026d3;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .paradigm-svg .loop-step {
+      fill: #f1f5f9;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .paradigm-svg .loop-meta {
+      fill: rgba(241,245,249,0.6);
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 10px;
+    }
+    .paradigm-svg .combo-title {
+      fill: #f97316;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .paradigm-svg .combo-pair {
+      fill: #ec4899;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .paradigm-svg .combo-desc {
+      fill: rgba(241,245,249,0.65);
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">🤖</div>
+        <span>AGENT开发从入门到精通</span>
+      </a>
+
+      <!-- 站点级导航 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../quantum-computing/index.html" class="site-nav-link" title="《量子计算》">量子计算</a>
+        <a href="../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../index.html" class="site-nav-link active" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <nav>
+        <ul class="nav-links" id="nav-links">
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch05.html" class="active">第5章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" id="theme-toggle" aria-label="切换夜间模式">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="hamburger" id="hamburger" aria-label="菜单">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER PAGE ==================== -->
+  <div class="chapter-page">
+    <div class="chapter-container">
+      <article class="chapter-content">
+
+        <header class="chapter-header">
+          <div class="chapter-breadcrumb">
+            <a href="../index.html">首页</a> / <a href="../index.html#chapters">章节总览</a> / 第5章
+          </div>
+          <h1>第 5 章 Agent 范式对比——ReAct、Reflexion、Plan-and-Execute、Tool-Use、Function Calling</h1>
+          <div class="chapter-epigraph">
+            &ldquo;在 ch03 我们搭好了&ldquo;大脑 + 记忆 + 工具 + 规划&rdquo;四大件，在 ch04 选了 7 个框架之一来装这四大件。&hellip;这一章我们把 2024-2026 年业界最常用的 5 种思维范式（ReAct / Reflexion / Plan-and-Execute / Tool-Use / Function Calling）全部拆开看，并给读者一份&ldquo;任务 → 范式&rdquo;的速查表。这一章也是<strong>第一部分 5 章的收官</strong>——末尾会有第一部分复盘。&rdquo;
+          </div>
+        </header>
+
+        <!-- ===== 五范式工作循环 SVG ===== -->
+        <div class="paradigm-svg">
+  <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="5 大范式工作循环">
+    <defs>
+      <linearGradient id="paradigmGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#c026d3"/>
+        <stop offset="100%" stop-color="#f97316"/>
+      </linearGradient>
+      <marker id="arr2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+        <polygon points="0 0, 6 3, 0 6" fill="#f97316"/>
+      </marker>
+    </defs>
+
+    <!-- 顶部 5 个范式节点 -->
+    <g transform="translate(0, 0)">
+      <!-- ReAct -->
+      <circle cx="80" cy="80" r="34" fill="#c026d3" opacity="0.85"/>
+      <text x="80" y="78" text-anchor="middle" class="paradigm-name">ReAct</text>
+      <text x="80" y="96" text-anchor="middle" class="paradigm-tag">边想边做</text>
+
+      <!-- Reflexion -->
+      <circle cx="220" cy="80" r="34" fill="#a855f7" opacity="0.85"/>
+      <text x="220" y="78" text-anchor="middle" class="paradigm-name">Reflexion</text>
+      <text x="220" y="96" text-anchor="middle" class="paradigm-tag">失败反思</text>
+
+      <!-- Plan-Execute -->
+      <circle cx="380" cy="80" r="44" fill="#ec4899" opacity="0.85"/>
+      <text x="380" y="78" text-anchor="middle" class="paradigm-name">Plan-</text>
+      <text x="380" y="92" text-anchor="middle" class="paradigm-name">Execute</text>
+      <text x="380" y="108" text-anchor="middle" class="paradigm-tag">先想再做</text>
+
+      <!-- Tool-Use -->
+      <circle cx="540" cy="80" r="34" fill="#f97316" opacity="0.6"/>
+      <text x="540" y="78" text-anchor="middle" class="paradigm-name">Tool-Use</text>
+      <text x="540" y="96" text-anchor="middle" class="paradigm-tag">旧名</text>
+      <text x="540" y="110" text-anchor="middle" class="paradigm-tag">2023 H1</text>
+
+      <!-- Function Calling -->
+      <circle cx="680" cy="80" r="34" fill="#f97316" opacity="0.95"/>
+      <text x="680" y="78" text-anchor="middle" class="paradigm-name">Function</text>
+      <text x="680" y="92" text-anchor="middle" class="paradigm-name">Calling</text>
+      <text x="680" y="108" text-anchor="middle" class="paradigm-tag">协议层 2023.6</text>
+    </g>
+
+    <!-- 5 个工作循环 -->
+    <g transform="translate(0, 160)">
+      <!-- ReAct loop -->
+      <text x="80" y="20" text-anchor="middle" class="loop-title">循环 1</text>
+      <text x="80" y="38" text-anchor="middle" class="loop-step">T → A → O → T</text>
+      <text x="80" y="56" text-anchor="middle" class="loop-meta">(Thought/Action/Obs)</text>
+
+      <!-- Reflexion loop -->
+      <text x="220" y="20" text-anchor="middle" class="loop-title">循环 2</text>
+      <text x="220" y="38" text-anchor="middle" class="loop-step">T → A → O → R → T</text>
+      <text x="220" y="56" text-anchor="middle" class="loop-meta">(加反思)</text>
+
+      <!-- Plan-Execute -->
+      <text x="380" y="20" text-anchor="middle" class="loop-title">循环 3</text>
+      <text x="380" y="38" text-anchor="middle" class="loop-step">Plan → [S1,S2,S3]</text>
+      <text x="380" y="56" text-anchor="middle" class="loop-meta">(一次想完 + Executor)</text>
+
+      <!-- Tool-Use / FC -->
+      <text x="610" y="20" text-anchor="middle" class="loop-title">无循环</text>
+      <text x="610" y="38" text-anchor="middle" class="loop-step">单次: LLM → tool_calls</text>
+      <text x="610" y="56" text-anchor="middle" class="loop-meta">(协议, 不含循环)</text>
+    </g>
+
+    <!-- 范式可组合箭头 -->
+    <g transform="translate(0, 240)">
+      <text x="380" y="0" text-anchor="middle" class="combo-title">范式可组合（实战中 90% 是混搭）</text>
+      <!-- ReAct + FC -->
+      <text x="170" y="30" text-anchor="middle" class="combo-pair">ReAct + FC</text>
+      <text x="170" y="50" text-anchor="middle" class="combo-desc">(基本款 80%)</text>
+      <!-- Plan + ReAct -->
+      <text x="380" y="30" text-anchor="middle" class="combo-pair">Plan + ReAct</text>
+      <text x="380" y="50" text-anchor="middle" class="combo-desc">(长链路)</text>
+      <!-- Plan + Reflexion -->
+      <text x="590" y="30" text-anchor="middle" class="combo-pair">Plan + Reflexion</text>
+      <text x="590" y="50" text-anchor="middle" class="combo-desc">(容错强)</text>
+    </g>
+  </svg>
+</div>
+
+        <blockquote><strong>在 ch03 我们搭好了&ldquo;大脑 + 记忆 + 工具 + 规划&rdquo;四大件，在 ch04 选了 7 个框架之一来装这四大件。</strong>但四大件和框架都是&ldquo;硬件&rdquo;——真正决定 Agent 表现的是&ldquo;软件&rdquo;：<strong>思维范式（paradigm）</strong>。这一章我们把 2024-2026 年业界最常用的 5 种思维范式（ReAct / Reflexion / Plan-and-Execute / Tool-Use / Function Calling）全部拆开看，并给读者一份&ldquo;任务 → 范式&rdquo;的速查表。这一章也是<strong>第一部分 5 章的收官</strong>——末尾会有第一部分复盘。</blockquote>
+
+        <hr>
+
+<p># 第 5 章 Agent 范式对比——ReAct、Reflexion、Plan-and-Execute、Tool-Use、Function Calling</p>
+
+<blockquote>在 ch03 我们搭好了"大脑 + 记忆 + 工具 + 规划"四大件，在 ch04 选了 7 个框架之一来装这四大件。<strong>但四大件和框架都是"硬件"——真正决定 Agent 表现的是"软件"：思维范式（paradigm）</strong>。这一章我们把 2024-2026 年业界最常用的 5 种思维范式（ReAct / Reflexion / Plan-and-Execute / Tool-Use / Function Calling）全部拆开看，并给读者一份"任务 → 范式"的速查表。这一章也是<strong>第一部分 5 章的收官</strong>——末尾会有第一部分复盘。</blockquote>
+
+<hr>
+
+<h2 id="section-5-1">5.1 引子：为什么单 prompt 解决不了"多步 + 错误恢复"</h2>
+
+<p>先看一个真实场景：用户问 Agent ——</p>
+
+<blockquote>"查北京明天的天气，如果下雨就提醒我带伞，并把提醒加到我的日历。"</blockquote>
+
+<p>把这句话<strong>直接发给 LLM</strong> 会发生什么？99% 的情况下 LLM 会<strong>自信地编造</strong>一个答案（"北京明天有雨，记得带伞"），但<strong>根本不会真的查天气，也不会真的写日历</strong>。这就是 ch01 提到的"幻觉"。</p>
+
+<p>一个"能跑"的 Agent 必须<strong>多步、且能容错</strong>：</p>
+
+<pre><code class="language-plaintext">1. 理解&quot;查天气&quot; → 决定调用工具 get_weather(city=&quot;北京&quot;, date=&quot;2026-06-15&quot;)
+2. 拿到结果&quot;有雨&quot; → 决定调用工具 send_reminder(content=&quot;带伞&quot;, calendar=&quot;primary&quot;)
+3. 写完日历 → 总结回复用户
+</code></pre>
+
+<p>这 3 步<strong>每一步都可能失败</strong>（网络断、API key 错、日历满了）。<strong>单次 LLM 调用无法处理这种"边做边决定"的任务</strong>——我们需要给 LLM 一个<strong>思维循环（paradigm）</strong>，让它在每一步都能"想 → 做 → 看结果 → 继续"。</p>
+
+<h3 id="section-5-1-1">5.1.1 单 LLM 调用的 3 大失败模式</h3>
+
+<table>
+<thead><tr>
+<th>失败模式</th>
+<th>表现</th>
+<th>例子</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>幻觉</strong></td>
+<td>LLM 编造看似合理但虚构的结果</td>
+<td>"北京明天 23℃，有雨"——根本没查</td>
+</tr>
+<tr>
+<td><strong>工具不会用</strong></td>
+<td>用户说要"加日历"，LLM 给一段文字提示而不是真调用</td>
+<td>"你可以在日历 App 里加一条提醒"</td>
+</tr>
+<tr>
+<td><strong>中途错了不知道回头</strong></td>
+<td>第一步错了，LLM 继续自信地往下编</td>
+<td>天气 API 返回错误，LLM 编造"查到了晴天"</td>
+</tr>
+</tbody></table>
+
+<strong>范式 = LLM 的"思维结构"，框架是承载它的"语法"</strong>。本章介绍 5 种最常用的范式。
+
+<h3 id="section-5-1-2">5.1.2 全章路线图</h3>
+
+<table>
+<thead><tr>
+<th>节号</th>
+<th>主题</th>
+<th>一句话定位</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>5.2</td>
+<td>ReAct</td>
+<td>边想边做，最经典的"循环"范式</td>
+</tr>
+<tr>
+<td>5.3</td>
+<td>Reflexion</td>
+<td>失败后反思自己，从错误中学习</td>
+</tr>
+<tr>
+<td>5.4</td>
+<td>Plan-and-Execute</td>
+<td>先想完，再做，适合长链路</td>
+</tr>
+<tr>
+<td>5.5</td>
+<td>Tool-Use / Function Calling</td>
+<td>工具调用的"协议层"</td>
+</tr>
+<tr>
+<td>5.6</td>
+<td>横向对比 + 决策树</td>
+<td>何时该用哪个</td>
+</tr>
+<tr>
+<td>5.7</td>
+<td>范式混搭</td>
+<td>实战中"积木式组合"</td>
+</tr>
+<tr>
+<td>5.8</td>
+<td>范式 5 大坑</td>
+<td>反模式与修复</td>
+</tr>
+<tr>
+<td>5.9</td>
+<td>选型速查 + 真实案例</td>
+<td>OpenAI Deep Research / Cursor / Devin 怎么用</td>
+</tr>
+<tr>
+<td>5.10</td>
+<td>本章小结</td>
+<td>8 条速记</td>
+</tr>
+<tr>
+<td>5.11</td>
+<td><strong>第一部分复盘</strong></td>
+<td>5 章的方法论三角 + 第二部分预告</td>
+</tr>
+</tbody></table>
+
+<hr>
+
+<h2 id="section-5-2">5.2 ReAct——Reason + Act 交替进行</h2>
+
+<strong>ReAct</strong>（Reasoning + Acting）是 2022 年由 Shunyu Yao 等人在论文 <em>ReAct: Synergizing Reasoning and Acting in Language Models</em> 中提出的范式。它的核心思想可以用一句话概括：
+
+<blockquote><strong>让 LLM 在每一步都"先想（Thought）→ 再做（Action）→ 看完结果（Observation）→ 再想 ..."</strong>。</blockquote>
+
+<h3 id="section-5-2-1">5.2.1 核心循环</h3>
+
+<pre><code class="language-plaintext">┌─────────────────────────────┐
+│ Thought: 我需要先查天气     │
+│ Action: get_weather(&quot;北京&quot;) │
+└─────────────┬───────────────┘
+              ↓
+┌─────────────────────────────┐
+│ Observation: &quot;有雨&quot;         │
+│ Thought: 应该提醒用户带伞   │
+│ Action: send_reminder(...)  │
+└─────────────┬───────────────┘
+              ↓
+┌─────────────────────────────┐
+│ Observation: &quot;已加入日历&quot;   │
+│ Thought: 任务完成            │
+│ Final Answer: 已提醒您带伞   │
+└─────────────────────────────┘
+</code></pre>
+
+<p>ReAct 把"思考"和"行动"显式分开，<strong>每一步 LLM 都得"先说出为什么"再"说做什么"</strong>。这种显式推理让 Agent 在出错时更容易被发现（"咦，它第 3 步的 Thought 不对啊"）。</p>
+
+<h3 id="section-5-2-2">5.2.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># react_demo.py —— 30 行 ReAct 最小可运行
+import json
+from typing import Callable
+
+<p># 1) mock LLM：把&quot;思考&quot;和&quot;动作&quot;用文字协议连起来
+def mock_llm(prompt: str) -&gt; str:
+    # 已经查到天气 + 还没发提醒 → 发提醒
+    if &quot;Observation: 有雨&quot; in prompt and &quot;Observation: 已加入日历&quot; not in prompt:
+        return &quot;Thought: 下雨了，应该提醒用户\nAction: send_reminder(content=带伞)&quot;
+    # 已经发完提醒 → 收尾
+    if &quot;Observation: 已加入日历&quot; in prompt:
+        return &quot;Thought: 任务完成\nFinal Answer: 已提醒您带伞&quot;
+    # 初始状态：还没查 → 查天气
+    return &quot;Thought: 需要查北京天气\nAction: get_weather(city=北京)&quot;</p>
+
+<p># 2) mock 工具
+tools: dict[str, Callable] = {
+    &quot;get_weather&quot;: lambda city: &quot;有雨&quot;,
+    &quot;send_reminder&quot;: lambda content: &quot;已加入日历&quot;,
+}</p>
+
+<p># 3) ReAct 主循环
+history = &quot;用户问：北京明天天气如何？如果下雨提醒我带伞。\n&quot;
+for i in range(5):
+    response = mock_llm(history)
+    history += response + &quot;\n&quot;
+    if &quot;Final Answer&quot; in response:
+        print(&quot;✅&quot;, response.split(&quot;Final Answer:&quot;)[-1].strip())
+        break
+    # 解析 Action
+    action_line = [l for l in response.split(&quot;\n&quot;) if l.startswith(&quot;Action:&quot;)][0]
+    action_name = action_line.split(&quot;Action:&quot;)[1].split(&quot;(&quot;)[0].strip()
+    result = tools[action_name](&quot;北京&quot; if &quot;city&quot; in action_line else &quot;带伞&quot;)
+    history += f&quot;Observation: {result}\n&quot;
+</code></pre></p>
+
+<strong>输出</strong>：
+
+<pre><code class="language-plaintext">✅ 已提醒您带伞
+</code></pre>
+
+<h3 id="section-5-2-3">5.2.3 优势 / 痛点</h3>
+
+<ul>
+<li><strong>优势</strong>：通用性最强，几乎所有 Agent 框架（LangChain ReAct Agent / LangGraph / OpenAI Agents SDK）都内置 ReAct</li>
+<li><strong>痛点</strong>：每步都让 LLM "重新读历史"，token 消耗大；且"思考"可能不稳定（同一个问题两次跑出不同策略）</li>
+</ul>
+
+<h3 id="section-5-2-4">5.2.4 ReAct 在 ch04 7 框架中的"默认范式"地位</h3>
+
+<table>
+<thead><tr>
+<th>框架</th>
+<th>是否默认 ReAct</th>
+<th>备注</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>LangChain LCEL</td>
+<td>✅</td>
+<td><code>create_react_agent()</code> 是模板</td>
+</tr>
+<tr>
+<td>LangGraph</td>
+<td>✅</td>
+<td>StateGraph 默认 ReAct 循环</td>
+</tr>
+<tr>
+<td>AutoGen v0.4</td>
+<td>⚠️ 部分</td>
+<td>默认是 GroupChat，ReAct 是子集</td>
+</tr>
+<tr>
+<td>CrewAI</td>
+<td>❌</td>
+<td>默认 sequential Plan</td>
+</tr>
+<tr>
+<td>LlamaIndex</td>
+<td>⚠️ 部分</td>
+<td>ReAct Agent 是插件</td>
+</tr>
+<tr>
+<td>Agno</td>
+<td>✅</td>
+<td>默认 ReAct 循环</td>
+</tr>
+<tr>
+<td>OpenAI Agents SDK</td>
+<td>✅</td>
+<td>Runner 默认循环就是 ReAct</td>
+</tr>
+</tbody></table>
+
+<strong>结论</strong>：7 个框架中 <strong>5 个</strong>把 ReAct 作为默认范式——这从工业界证明了 ReAct 的"基础地位"。
+
+<hr>
+
+<h2 id="section-5-3">5.3 Reflexion——失败后"反思自己"</h2>
+
+<strong>Reflexion</strong> 是 2023 年由 Noah Shinn 等人在论文 <em>Reflexion: Language Agents with Verbal Reinforcement Learning</em> 中提出的范式。它的核心创新是<strong>让 Agent 有了"短期记忆"</strong>：
+
+<blockquote><strong>当任务失败时，Agent 不是傻傻地再试一次，而是先"反思"自己哪里错了，写一段反思，然后带着反思再试。</strong></blockquote>
+
+<h3 id="section-5-3-1">5.3.1 核心循环</h3>
+
+<pre><code class="language-plaintext">┌────────────────────────────────────────┐
+│ Attempt 1                              │
+│   Thought → Action → Observation: 失败  │
+│   → 反思: &quot;我用了错的城市名&quot;            │
+│         ↓                              │
+│ Attempt 2 (带反思记忆)                  │
+│   Thought: 反思说要用全名                │
+│   Action: get_weather(city=北京市)     │
+│   Observation: 成功                     │
+│   → Final Answer                       │
+└────────────────────────────────────────┘
+</code></pre>
+
+<h3 id="section-5-3-2">5.3.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># reflexion_demo.py —— 30 行 Reflexion 最小可运行
+def mock_llm(prompt: str) -&gt; str:
+    if &quot;反思&quot; in prompt and &quot;北京市&quot; in prompt:
+        return &quot;Action: get_weather(北京市)\nObservation: 晴&quot;
+    if &quot;反思&quot; in prompt:
+        return &quot;Thought: 反思说要用全名\nAction: get_weather(北京市)&quot;
+    return &quot;Action: get_weather(北京)\nObservation: 错误: 找不到城市&quot;
+
+<p>def attempt(query: str, reflection: str = &quot;&quot;) -&gt; tuple[str, str]:
+    full_prompt = f&quot;反思: {reflection}\n{query}&quot; if reflection else query
+    result = mock_llm(full_prompt)
+    return result, &quot;错误&quot; in result</p>
+
+<p># 主循环
+memory = []
+for trial in range(3):
+    result, failed = attempt(&quot;查北京天气&quot;, &quot; | &quot;.join(memory))
+    if not failed:
+        print(f&quot;✅ 第 {trial+1} 次成功: {result}&quot;)
+        break
+    memory.append(f&quot;trial {trial+1}: 城市名要写全名&quot;)
+    print(f&quot;⚠️  第 {trial+1} 次失败,反思加入记忆&quot;)
+</code></pre></p>
+
+<strong>输出</strong>：
+
+<pre><code class="language-plaintext">⚠️  第 1 次失败,反思加入记忆
+✅ 第 2 次成功: Action: get_weather(北京市)
+Observation: 晴
+</code></pre>
+
+<h3 id="section-5-3-3">5.3.3 适用场景</h3>
+
+<ul>
+<li><strong>代码生成</strong>：HumanEval 评测里，Reflexion 把 pass@1 从 50% 提升到 91%</li>
+<li><strong>多步任务</strong>：每步都可能错，且错误类型<strong>不固定</strong>（没法硬编码"如果错就重试"）</li>
+<li><strong>不适用</strong>：单步任务 / 实时性要求极高（反思本身就要 LLM 调用，延迟 ×2）</li>
+</ul>
+
+<h3 id="section-5-3-4">5.3.4 Reflexion 在公开基准上的提升数据</h3>
+
+<table>
+<thead><tr>
+<th>基准任务</th>
+<th>ReAct 基线</th>
+<th>Reflexion 提升</th>
+<th>来源</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>HumanEval（代码生成）</strong></td>
+<td>50% pass@1</td>
+<td><strong>91% pass@1</strong>（+41 pp，估算自论文 Table 2）</td>
+<td>Shinn et al. 2023</td>
+</tr>
+<tr>
+<td>HotPotQA（多跳问答）</td>
+<td>28%</td>
+<td><strong>45%</strong>（+17 pp）</td>
+<td>Shinn et al. 2023</td>
+</tr>
+<tr>
+<td>AlfWorld（决策任务）</td>
+<td>60%</td>
+<td><strong>82%</strong>（+22 pp）</td>
+<td>Shinn et al. 2023</td>
+</tr>
+<tr>
+<td>WebShop（电商）</td>
+<td>30%</td>
+<td><strong>51%</strong>（+21 pp）</td>
+<td>Shinn et al. 2023</td>
+</tr>
+</tbody></table>
+
+<strong>关键观察</strong>：Reflexion 在<strong>所有 4 个公开基准</strong>上都有 15-41 个百分点的提升——这是<strong>罕见的"普适性"提升</strong>。但代价是<strong>每轮反思都要 1 次额外 LLM 调用</strong>，所以 token 消耗约 2-3 倍。
+
+<h3 id="section-5-3-5">5.3.5 反思的"度"——别反思过头</h3>
+
+<p>Reflexion 论文假设"反思越深越好"，但 2025 年的实战经验告诉我们：</p>
+
+<table>
+<thead><tr>
+<th>反思深度</th>
+<th>收益</th>
+<th>代价</th>
+<th>适合</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>浅反思</strong>（"上次错了，再试"）</td>
+<td>+5%</td>
+<td>+1 LLM 调用</td>
+<td>实时性敏感</td>
+</tr>
+<tr>
+<td><strong>中反思</strong>（"上次错在城市名，这次用全名"）</td>
+<td>+15%</td>
+<td>+1 LLM 调用</td>
+<td>大多数场景</td>
+</tr>
+<tr>
+<td><strong>深反思</strong>（"上次错在没考虑闰年 + 城市名 + 工具超时，3 个原因"）</td>
+<td>+20%</td>
+<td>+3 LLM 调用</td>
+<td>关键任务</td>
+</tr>
+</tbody></table>
+
+<strong>给读者的经验法则</strong>：<strong>中反思</strong>是最甜的甜点——<strong>1 次反思</strong> + <strong>具体到变量</strong> + <strong>不抽象</strong>。
+
+<hr>
+
+<h2 id="section-5-4">5.4 Plan-and-Execute——先想完，再做</h2>
+
+<strong>Plan-and-Execute</strong> 是 2023 年由 LangChain 团队系统化推广的范式，灵感来自古典 AI 规划（PDDL, 2010）。它的核心思想：
+
+<blockquote><strong>把任务拆成两阶段——Planner 一次性生成完整计划，Executor 按步骤执行；如果某步失败，Replanner 修改计划。</strong></blockquote>
+
+<h3 id="section-5-4-1">5.4.1 核心循环</h3>
+
+<pre><code class="language-plaintext">┌──────────────────────────────┐
+│ Planner: 一次性输出完整计划    │
+│ 1. 查天气                     │
+│ 2. 判断是否需要提醒            │
+│ 3. 调用日历 API               │
+│ 4. 总结回复                   │
+└──────────┬───────────────────┘
+           ↓
+┌──────────────────────────────┐
+│ Executor: 逐步执行             │
+│   step 1: get_weather → &quot;有雨&quot; │
+│   step 2: 跳过(非必要)         │
+│   step 3: send_reminder → 成功 │
+│   step 4: 总结                │
+└──────────────────────────────┘
+</code></pre>
+
+<h3 id="section-5-4-2">5.4.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># plan_execute_demo.py —— 30 行 Plan-and-Execute 最小可运行
+def planner(task: str) -&gt; list[str]:
+    return [
+        f&quot;1. 拆解任务: {task}&quot;,
+        &quot;2. 调用工具 A&quot;,
+        &quot;3. 调用工具 B&quot;,
+        &quot;4. 总结结果&quot;,
+    ]
+
+<p>def executor(steps: list[str]) -&gt; list[str]:
+    observations = []
+    for i, step in enumerate(steps):
+        if &quot;工具 A&quot; in step:
+            observations.append(f&quot;step {i+1}: A 返回 &#x27;数据 1&#x27;&quot;)
+        elif &quot;工具 B&quot; in step:
+            observations.append(f&quot;step {i+1}: B 返回 &#x27;数据 2&#x27;&quot;)
+        else:
+            observations.append(f&quot;step {i+1}: 已完成&quot;)
+    return observations</p>
+
+<p>task = &quot;查北京天气 + 加日历&quot;
+plan = planner(task)
+print(&quot;📋 计划:&quot;, plan)
+obs = executor(plan)
+print(&quot;👀 执行:&quot;, obs)
+print(&quot;✅ 总结: 全部 4 步完成&quot;)
+</code></pre></p>
+
+<strong>输出</strong>：
+
+<pre><code class="language-plaintext">📋 计划: [&#x27;1. 拆解任务: 查北京天气 + 加日历&#x27;, &#x27;2. 调用工具 A&#x27;, &#x27;3. 调用工具 B&#x27;, &#x27;4. 总结结果&#x27;]
+👀 执行: [&#x27;step 1: A 返回 数据 1&#x27;, &#x27;step 2: B 返回 数据 2&#x27;, &#x27;step 3: 已完成&#x27;, &#x27;step 4: 已完成&#x27;]
+✅ 总结: 全部 4 步完成
+</code></pre>
+
+<h3 id="section-5-4-3">5.4.3 优势 / 痛点</h3>
+
+<ul>
+<li><strong>优势</strong>：长链路任务（5+ 步）效率高，Planner 只调用 1 次，Executor 路径稳定</li>
+<li><strong>痛点</strong>：计划可能"过期"（外部世界变了）；Planner 一次性想完 5 步，第 3 步的细节可能漏</li>
+</ul>
+
+<hr>
+
+<h2 id="section-5-5">5.5 Tool-Use 与 Function Calling——工具调用的"协议层"</h2>
+
+<strong>Tool-Use</strong>（早期叫法，2023 H1）和 <strong>Function Calling</strong>（OpenAI 2023.6 提出）是同一种思想的两种叫法，<strong>2025 年后业界已统一用 Function Calling</strong>。它<strong>不是一种"思维范式"</strong>，而是一种<strong>协议规范</strong>——告诉 LLM "你可以调用这些工具，每个工具的入参是什么"。
+
+<h3 id="section-5-5-1">5.5.1 核心思想</h3>
+
+<pre><code class="language-json">{
+  &quot;name&quot;: &quot;get_weather&quot;,
+  &quot;description&quot;: &quot;查询某城市某天的天气&quot;,
+  &quot;parameters&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;city&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;城市名&quot;},
+      &quot;date&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;日期 ISO8601&quot;}
+    },
+    &quot;required&quot;: [&quot;city&quot;, &quot;date&quot;]
+  }
+}
+</code></pre>
+
+<p>LLM 收到这个 JSON Schema 后，会<strong>在响应里</strong>输出：</p>
+
+<pre><code class="language-json">{
+  &quot;tool_calls&quot;: [{
+    &quot;function&quot;: {
+      &quot;name&quot;: &quot;get_weather&quot;,
+      &quot;arguments&quot;: &quot;{\&quot;city\&quot;: \&quot;北京\&quot;, \&quot;date\&quot;: \&quot;2026-06-15\&quot;}&quot;
+    }
+  }]
+}
+</code></pre>
+
+<strong>注意</strong>：Function Calling <strong>本身不包含"循环"</strong>——它只规定"LLM 怎么告诉应用调用哪个工具"。<strong>循环逻辑是 ReAct / Plan-and-Execute 等范式负责的</strong>。把 Function Calling 当作"手"，把 ReAct/Plan 当作"脑"。
+
+<h3 id="section-5-5-2">5.5.2 Hello World（30 行）</h3>
+
+<pre><code class="language-python"># function_calling_demo.py —— 30 行 OpenAI Function Calling 协议演示
+import json
+
+<p># 1) 工具描述（这是 2026 业界标准 JSON Schema 格式）
+tools = [{
+    &quot;type&quot;: &quot;function&quot;,
+    &quot;function&quot;: {
+        &quot;name&quot;: &quot;get_weather&quot;,
+        &quot;description&quot;: &quot;查询某城市某天的天气&quot;,
+        &quot;parameters&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;city&quot;: {&quot;type&quot;: &quot;string&quot;},
+                &quot;date&quot;: {&quot;type&quot;: &quot;string&quot;}
+            },
+            &quot;required&quot;: [&quot;city&quot;, &quot;date&quot;]
+        }
+    }
+}]</p>
+
+<p># 2) mock LLM 决策
+def mock_llm_decide(user_msg: str) -&gt; dict:
+    return {
+        &quot;tool_calls&quot;: [{
+            &quot;function&quot;: {
+                &quot;name&quot;: &quot;get_weather&quot;,
+                &quot;arguments&quot;: json.dumps({&quot;city&quot;: &quot;北京&quot;, &quot;date&quot;: &quot;2026-06-15&quot;})
+            }
+        }]
+    }</p>
+
+<p># 3) 工具实现
+def get_weather(city: str, date: str) -&gt; str:
+    return f&quot;{city} {date}: 晴, 23℃&quot;</p>
+
+<p># 4) 调用流程
+user_msg = &quot;查北京明天天气&quot;
+decision = mock_llm_decide(user_msg)
+fc = decision[&quot;tool_calls&quot;][0][&quot;function&quot;]
+args = json.loads(fc[&quot;arguments&quot;])
+result = get_weather(**args)
+print(f&quot;用户: {user_msg}&quot;)
+print(f&quot;LLM 决定调用: {fc[&#x27;name&#x27;]}({args})&quot;)
+print(f&quot;工具返回: {result}&quot;)
+</code></pre></p>
+
+<strong>输出</strong>：
+
+<pre><code class="language-plaintext">用户: 查北京明天天气
+LLM 决定调用: get_weather({&#x27;city&#x27;: &#x27;北京&#x27;, &#x27;date&#x27;: &#x27;2026-06-15&#x27;})
+工具返回: 北京 2026-06-15: 晴, 23℃
+</code></pre>
+
+<h3 id="section-5-5-3">5.5.3 与 ReAct / Plan-and-Execute 的关系</h3>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>Function Calling</th>
+<th>ReAct</th>
+<th>Plan-and-Execute</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>本质</strong></td>
+<td>协议（"手"）</td>
+<td>思维循环（"脑"）</td>
+<td>思维循环（"脑"）</td>
+</tr>
+<tr>
+<td><strong>循环</strong></td>
+<td>❌ 单次</td>
+<td>✅ 多步</td>
+<td>✅ 多步</td>
+</tr>
+<tr>
+<td><strong>错误恢复</strong></td>
+<td>❌</td>
+<td>⚠️ 需自实现</td>
+<td>✅ Replanner</td>
+</tr>
+<tr>
+<td><strong>OpenAI 2023.6</strong></td>
+<td>✅ 首创</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Anthropic 2024.10 / Gemini 2024.7</strong></td>
+<td>✅ 跟进</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+
+<strong>关键洞察</strong>：Function Calling + ReAct 是<strong>最佳拍档</strong>——Function Calling 负责"LLM 怎么告诉应用调工具"，ReAct 负责"调完后下一步做什么"。OpenAI Agents SDK / LangChain LCEL / Anthropic Claude tool_use <strong>全都支持这两个</strong>。
+
+<h3 id="section-5-5-4">5.5.4 Tool-Use 到 Function Calling 的标准化时间线</h3>
+
+<table>
+<thead><tr>
+<th>时间</th>
+<th>事件</th>
+<th>标志</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>2023 H1</td>
+<td>Tool-Use 早期叫法</td>
+<td>ReAct 论文 / LangChain 早期文档用"tool"</td>
+</tr>
+<tr>
+<td>2023.6</td>
+<td><strong>OpenAI Function Calling 发布</strong></td>
+<td>gpt-3.5/gpt-4 引入 <code>tools</code> 字段</td>
+</tr>
+<tr>
+<td>2023.10</td>
+<td>Anthropic Claude tool_use</td>
+<td>对标 OpenAI 协议</td>
+</tr>
+<tr>
+<td>2024.4</td>
+<td>OpenAI Parallel Function Calling</td>
+<td>一次响应调多个工具</td>
+</tr>
+<tr>
+<td>2024.7</td>
+<td>Google Gemini Function Calling</td>
+<td>三大厂商全部支持</td>
+</tr>
+<tr>
+<td>2024.12</td>
+<td>OpenAI Structured Outputs</td>
+<td>JSON Schema 强校验</td>
+</tr>
+<tr>
+<td>2025.3</td>
+<td>OpenAI Agents SDK</td>
+<td>把 Function Calling 包装成"Agent 基础"</td>
+</tr>
+<tr>
+<td>2025.6</td>
+<td>业界统一叫"Function Calling"</td>
+<td>Tool-Use 几乎不再使用</td>
+</tr>
+</tbody></table>
+
+<strong>关键洞察</strong>：Function Calling <strong>不只是协议</strong>——它是 2023-2025 年 Agent 爆发的<strong>技术前提</strong>。没有这个协议，LLM 没法"结构化地"告诉应用调哪个工具，ReAct 范式就无法工业化。
+
+<hr>
+
+<h2 id="section-5-6">5.6 五范式横向对比 + 选型决策树</h2>
+
+<h3 id="section-5-6-1">5.6.1 五范式 × 8 维度对比</h3>
+
+<table>
+<thead><tr>
+<th>维度</th>
+<th>ReAct</th>
+<th>Reflexion</th>
+<th>Plan-and-Execute</th>
+<th>Tool-Use</th>
+<th>Function Calling</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>本质</strong></td>
+<td>思维循环</td>
+<td>思维循环（含反思）</td>
+<td>思维循环（先计划）</td>
+<td>协议（旧名）</td>
+<td>协议（新名）</td>
+</tr>
+<tr>
+<td><strong>循环</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌ 单次</td>
+<td>❌ 单次</td>
+</tr>
+<tr>
+<td><strong>错误恢复</strong></td>
+<td>⚠️ 需自实现</td>
+<td>✅ 反思机制</td>
+<td>✅ Replanner</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>思考深度</strong></td>
+<td>中</td>
+<td>深（含反思）</td>
+<td>浅（一次性）</td>
+<td>无</td>
+<td>无</td>
+</tr>
+<tr>
+<td><strong>Token 消耗</strong></td>
+<td>中-高</td>
+<td>高</td>
+<td>低（Planner 1 次）</td>
+<td>低</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>延迟</strong></td>
+<td>中-高（每步 LLM）</td>
+<td>高</td>
+<td>中</td>
+<td>低</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>实现难度</strong></td>
+<td>中</td>
+<td>高</td>
+<td>中</td>
+<td>低</td>
+<td>低</td>
+</tr>
+<tr>
+<td><strong>框架支持</strong></td>
+<td>7/7 框架</td>
+<td>LangGraph / AutoGen</td>
+<td>LangChain / LangGraph</td>
+<td>已弃用</td>
+<td>7/7 框架</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-5-6-2">5.6.2 选型决策树</h3>
+
+<pre><code class="language-plaintext">Q1: 任务是单步还是多步（≥3 步）？
+├─ 单步 → Function Calling（直接调）
+└─ 多步 → Q2
+    Q2: 任务是否会失败？失败模式是否可预测？
+    ├─ 失败模式可预测（如网络断 → 重试）+ 流程相对固定 → **Plan-and-Execute**（低 token）
+    ├─ 失败模式不可预测（API 返回奇怪结果） → Reflexion
+    └─ 几乎不会失败 → ReAct（最通用）
+        Q3: 实时性要求？
+        ├─ 极低（&lt; 100ms 不可接受） → Plan-and-Execute（少调 LLM）
+        └─ 正常 → ReAct
+</code></pre>
+
+<strong>给读者的速记公式</strong>：
+
+<ul>
+<li><strong>80% 场景</strong>：ReAct + Function Calling（业界默认）</li>
+<li><strong>长链路 + 固定流程</strong>：Plan-and-Execute + Function Calling</li>
+<li><strong>从错误学习</strong>：Reflexion</li>
+<li><strong>单次工具调用</strong>：Function Calling 单独用</li>
+</ul>
+
+<h3 id="section-5-6-3">5.6.3 范式学术影响力对比（Google Scholar 引用数 2026.6）</h3>
+
+<table>
+<thead><tr>
+<th>范式</th>
+<th>论文</th>
+<th>引用数</th>
+<th>年引用增长</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>ReAct</td>
+<td>Yao et al. 2022</td>
+<td><strong>~4500</strong></td>
+<td>+1500/年</td>
+</tr>
+<tr>
+<td>Reflexion</td>
+<td>Shinn et al. 2023</td>
+<td>~1800</td>
+<td>+900/年</td>
+</tr>
+<tr>
+<td>Plan-and-Execute</td>
+<td>LangChain 2023（无正式论文）</td>
+<td>——</td>
+<td>——</td>
+</tr>
+<tr>
+<td>Function Calling</td>
+<td>OpenAI 2023.6 博客</td>
+<td>~500（非论文）</td>
+<td>+200/年</td>
+</tr>
+<tr>
+<td>Tool-Use 早期</td>
+<td>ReAct 2022 间接</td>
+<td>~1500</td>
+<td>——</td>
+</tr>
+</tbody></table>
+
+<strong>关键观察</strong>：
+
+<ul>
+<li><strong>ReAct</strong> 是 2022 年的开创性论文，到 2026 年依然每年增长 1500 引用——<strong>经典地位</strong></li>
+<li><strong>Reflexion</strong> 是 2023 年的"反思"创新，增长更快（年 +900）——<strong>研究热点</strong></li>
+<li><strong>Plan-and-Execute</strong> 没有正式论文，是工程实践总结——但 LangChain 文档/博客的引用数也很高</li>
+<li><strong>Function Calling</strong> 是工程协议，引用数意义不大，但<strong>产业影响最深</strong>（OpenAI/Anthropic/Google 全部支持）</li>
+</ul>
+
+<hr>
+
+<h2 id="section-5-7">5.7 范式混搭：实战中的"积木组合"</h2>
+
+<p>范式不是"二选一"，是"积木"。<strong>2026 年所有生产级 Agent 都是混搭</strong>。3 个最常见的组合：</p>
+
+<h3 id="section-5-7-1">5.7.1 组合 1：Plan-and-Execute + ReAct（"先粗想再边想边做"）</h3>
+
+<ul>
+<li><strong>用法</strong>：Planner 给出"粗计划"，每步执行时用 ReAct 细化</li>
+<li><strong>典型场景</strong>：OpenAI Deep Research</li>
+<li><strong>优势</strong>：避免 Plan-and-Execute 计划过期，又避免 ReAct 每步都重新规划</li>
+</ul>
+
+<h3 id="section-5-7-2">5.7.2 组合 2：Plan-and-Execute + Reflexion（"计划失败后反思重排"）</h3>
+
+<ul>
+<li><strong>用法</strong>：Replanner 在计划失败时调用 Reflexion 反思</li>
+<li><strong>典型场景</strong>：AutoGen v0.4 的 <code>OnCondition</code> 流程</li>
+<li><strong>优势</strong>：长链路 + 容错</li>
+</ul>
+
+<h3 id="section-5-7-3">5.7.3 组合 3：ReAct + Function Calling（"基本款"）</h3>
+
+<ul>
+<li><strong>用法</strong>：ReAct 负责"想 → 做 → 看 → 再想"，Function Calling 负责"做的协议"</li>
+<li><strong>典型场景</strong>：90% 的简单 Agent / Cursor Agent</li>
+<li><strong>优势</strong>：最简单、最通用</li>
+</ul>
+
+<h3 id="section-5-7-4">5.7.4 范式混搭配方表</h3>
+
+<table>
+<thead><tr>
+<th>配方</th>
+<th>范式组合</th>
+<th>适用</th>
+<th>真实案例</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>基本款</strong></td>
+<td>ReAct + Function Calling</td>
+<td>80% 场景</td>
+<td>Cursor Agent</td>
+</tr>
+<tr>
+<td><strong>长链路</strong></td>
+<td>Plan + ReAct</td>
+<td>5+ 步任务</td>
+<td>OpenAI Deep Research</td>
+</tr>
+<tr>
+<td><strong>容错强</strong></td>
+<td>Plan + Reflexion</td>
+<td>错误类型多</td>
+<td>AutoGen v0.4</td>
+</tr>
+<tr>
+<td><strong>极简</strong></td>
+<td>Function Calling 单次</td>
+<td>1 步工具调用</td>
+<td>OpenAI 文档 RAG</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-5-7-5">5.7.5 范式选型决策矩阵（12 种任务场景）</h3>
+
+<table>
+<thead><tr>
+<th>任务类型</th>
+<th>步数</th>
+<th>错误率</th>
+<th>实时性</th>
+<th>推荐范式</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>客服问答</td>
+<td>1-3</td>
+<td>低</td>
+<td>高</td>
+<td>ReAct + FC</td>
+</tr>
+<tr>
+<td>文档摘要</td>
+<td>1</td>
+<td>极低</td>
+<td>中</td>
+<td>FC 单次</td>
+</tr>
+<tr>
+<td>代码生成</td>
+<td>5+</td>
+<td>高</td>
+<td>低</td>
+<td>Plan + Reflexion + FC</td>
+</tr>
+<tr>
+<td>数据 ETL</td>
+<td>5+</td>
+<td>低</td>
+<td>中</td>
+<td>Plan + FC（顺序）</td>
+</tr>
+<tr>
+<td>研究报告</td>
+<td>5-10</td>
+<td>中</td>
+<td>低</td>
+<td>Plan + ReAct + FC</td>
+</tr>
+<tr>
+<td>网页爬取</td>
+<td>3-5</td>
+<td>中-高</td>
+<td>中</td>
+<td>ReAct + Reflexion + FC</td>
+</tr>
+<tr>
+<td>多 Agent 协作</td>
+<td>3+</td>
+<td>中</td>
+<td>中</td>
+<td>AutoGen v0.4 GroupChat</td>
+</tr>
+<tr>
+<td>实时对话</td>
+<td>1-3</td>
+<td>低</td>
+<td><strong>极高</strong></td>
+<td>ReAct + FC（限 max_iter=3）</td>
+</tr>
+<tr>
+<td>一次性工具调用</td>
+<td>1</td>
+<td>极低</td>
+<td>高</td>
+<td>FC 单次</td>
+</tr>
+<tr>
+<td>复杂推理</td>
+<td>1</td>
+<td>中</td>
+<td>低</td>
+<td>CoT（ch10 讲）</td>
+</tr>
+<tr>
+<td>多模态</td>
+<td>1-3</td>
+<td>低</td>
+<td>中</td>
+<td>ReAct + FC（tool=vision）</td>
+</tr>
+<tr>
+<td>长期任务</td>
+<td>10+</td>
+<td>高</td>
+<td>低</td>
+<td>Plan + Reflexion（每 3 步反思）</td>
+</tr>
+</tbody></table>
+
+<strong>关键观察</strong>：<strong>80% 的任务</strong>用前 4 行就能覆盖——读者不需要把 12 种范式全学完。
+
+<hr>
+
+<h2 id="section-5-8">5.8 范式实现 5 大坑</h2>
+
+<h3 id="section-5-8-1">5.8.1 循环不终止（无 max_iter）</h3>
+
+<ul>
+<li><strong>症状</strong>：Agent 一直循环，永远停不下来</li>
+<li><strong>修复</strong>：强制设 <code>max_iterations=10</code>，超过就 fallback 到"无法完成"</li>
+<li><strong>代码片段</strong>：</li>
+</ul>
+
+<pre><code class="language-python">  MAX_ITER = 10
+  for i in range(MAX_ITER):
+      if done: break
+  </code></pre>
+
+<h3 id="section-5-8-2">5.8.2 反思幻觉（反思本身可能错）</h3>
+
+<ul>
+<li><strong>症状</strong>：Reflexion 反思了"用全名"，但其实问题不在城市名</li>
+<li><strong>修复</strong>：反思结果让 LLM <strong>重新审视</strong>，而不是直接相信</li>
+<li><strong>代码片段</strong>：</li>
+</ul>
+
+<pre><code class="language-python">  # 不要直接用反思
+  next_prompt = f&quot;反思: {reflection}\n{query}&quot;
+  # 而是先验证反思
+  next_prompt = f&quot;反思: {reflection}\n验证反思是否对: {query}&quot;
+  </code></pre>
+
+<h3 id="section-5-8-3">5.8.3 计划过期（外部世界变了）</h3>
+
+<ul>
+<li><strong>症状</strong>：Plan-and-Execute 计划 10 步，第 5 步时 API 已变更</li>
+<li><strong>修复</strong>：Replanner 在每步前检查环境（"API 还在吗？"）</li>
+<li><strong>代码片段</strong>：</li>
+</ul>
+
+<pre><code class="language-python">  for step in plan:
+      if not env_check(step):
+          plan = replanner.replan(plan, step, env)
+  </code></pre>
+
+<h3 id="section-5-8-4">5.8.4 Token 爆炸（每步都重新读历史）</h3>
+
+<ul>
+<li><strong>症状</strong>：第 20 步时 history 已经有 50K token，单次 LLM 调用 5 美元</li>
+<li><strong>修复</strong>：用 LangChain 的 <code>ConversationSummaryMemory</code> 压缩历史</li>
+<li><strong>代码片段</strong>：</li>
+</ul>
+
+<pre><code class="language-python">  # ch08 会讲
+  from langchain.memory import ConversationSummaryMemory
+  memory = ConversationSummaryMemory(llm=llm)
+  </code></pre>
+
+<h3 id="section-5-8-5">5.8.5 工具描述不清（LLM 选错工具）</h3>
+
+<ul>
+<li><strong>症状</strong>：3 个相似工具，LLM 选错</li>
+<li><strong>修复</strong>：工具描述<strong>举例 + 边界</strong>（"用 city 参数传全名，例如 '北京市' 而非 '北京'"）</li>
+<li><strong>代码片段</strong>：</li>
+</ul>
+
+<pre><code class="language-json">  {&quot;description&quot;: &quot;查询天气。⚠️ city 必须传全名,如&#x27;北京市&#x27;或&#x27;上海市&#x27;,否则 404&quot;}
+  </code></pre>
+
+<hr>
+
+<h2 id="section-5-9">5.9 范式选型速查 + 真实案例</h2>
+
+<h3 id="section-5-9-1">5.9.1 场景 → 范式速查</h3>
+
+<table>
+<thead><tr>
+<th>场景</th>
+<th>推荐范式</th>
+<th>理由</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>客服多轮问答</strong></td>
+<td>ReAct + Function Calling</td>
+<td>多步但流程简单</td>
+</tr>
+<tr>
+<td><strong>代码生成（多文件）</strong></td>
+<td>Plan + Reflexion</td>
+<td>长链路 + 易错</td>
+</tr>
+<tr>
+<td><strong>单次工具调用</strong></td>
+<td>Function Calling</td>
+<td>不需要循环</td>
+</tr>
+<tr>
+<td><strong>研究型 Agent</strong></td>
+<td>Plan + ReAct</td>
+<td>5+ 步 + 边查边调</td>
+</tr>
+<tr>
+<td><strong>数据清洗 pipeline</strong></td>
+<td>Plan-and-Execute</td>
+<td>流程固定</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-5-9-2">5.9.2 真实案例对应表</h3>
+
+<table>
+<thead><tr>
+<th>产品</th>
+<th>范式组合</th>
+<th>详细</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>OpenAI Deep Research</strong></td>
+<td>Plan + ReAct + Function Calling</td>
+<td>Planner 拆"5-7 步" → 每步 ReAct → Function Calling 调搜索/计算</td>
+</tr>
+<tr>
+<td><strong>Cursor Agent</strong></td>
+<td>ReAct + Function Calling</td>
+<td>简单循环，调 read_file / search_code / edit_file</td>
+</tr>
+<tr>
+<td><strong>Devin</strong></td>
+<td>Plan + ReAct + Reflexion</td>
+<td>Plan 5 步 → ReAct 执行 → 失败时反思</td>
+</tr>
+<tr>
+<td><strong>AutoGen v0.4 GroupChat</strong></td>
+<td>Reflexion + Function Calling</td>
+<td>多 Agent 互相"质疑"对方的输出</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-5-9-3">5.9.3 选型终极建议</h3>
+
+<strong>给读者的 3 条经验法则</strong>：
+
+<ol>
+<li><strong>先用 ReAct + Function Calling 跑通</strong>——80% 场景够用</li>
+<li><strong>如果 5+ 步或失败率高，加 Plan-and-Execute</strong></li>
+<li><strong>如果反思能明显改进（如代码生成），加 Reflexion</strong></li>
+</ol>
+
+<strong>别上来就 ReAct + Reflexion + Plan 全用上</strong>——会<strong>指数级增加调试难度</strong>。
+
+<h3 id="section-5-9-4">5.9.4 三大产品范式实现细节对比</h3>
+
+<table>
+<thead><tr>
+<th>产品</th>
+<th>范式</th>
+<th>Planner/Replanner</th>
+<th>反思触发</th>
+<th>Function Calling</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>OpenAI Deep Research</strong></td>
+<td>Plan + ReAct</td>
+<td>LLM 出 5-7 步计划，<strong>每步后验证</strong></td>
+<td><strong>不反思</strong>（靠 Replanner）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Cursor Agent</strong></td>
+<td>ReAct</td>
+<td>无 Planner</td>
+<td>无（每步重试 3 次）</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Devin</strong></td>
+<td>Plan + ReAct + Reflexion</td>
+<td>LLM 出 5+ 步计划，<strong>失败时反思</strong></td>
+<td><strong>每 3 步一次反思</strong></td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Claude Computer Use</strong></td>
+<td>ReAct</td>
+<td>无 Planner</td>
+<td>无</td>
+<td>✅（computer 工具）</td>
+</tr>
+<tr>
+<td><strong>Anthropic MCP Agent</strong></td>
+<td>ReAct</td>
+<td>无 Planner</td>
+<td>无</td>
+<td>✅（MCP 协议）</td>
+</tr>
+</tbody></table>
+
+<strong>关键洞察</strong>：
+
+<ul>
+<li><strong>OpenAI Deep Research 用 "Plan + Replanner"</strong> 而不是 Reflexion——因为研究任务"计划失败"是"链路变"而非"工具错"</li>
+<li><strong>Devin 用 "Plan + Reflexion"</strong> 因为代码任务"反思"能指出"漏 import"这类细节</li>
+<li><strong>Cursor / Claude 用纯 ReAct</strong> 因为 IDE 场景"短链路 + 高实时性"——加 Plan 反而拖慢</li>
+</ul>
+
+<hr>
+
+<h2 id="section-5-10">5.10 本章小结</h2>
+
+<strong>关键概念摘要：</strong>
+
+<ul>
+<li><strong>ReAct</strong>（2022, Yao）—— Thought → Action → Observation 循环，最经典的 Agent 范式</li>
+<li><strong>Reflexion</strong>（2023, Shinn）—— 失败时把反思写进记忆，下次带反思再试</li>
+<li><strong>Plan-and-Execute</strong>（2023, LangChain）—— Planner 一次性出计划，Executor 按步执行</li>
+<li><strong>Function Calling</strong>（2023.6, OpenAI）—— 工具调用的协议层，规定"LLM 怎么告诉应用调哪个工具"</li>
+<li><strong>Tool-Use</strong>（2023 H1）—— Function Calling 的旧名，2025 已统一叫 Function Calling</li>
+<li><strong>Replanner</strong> —— Plan-and-Execute 中负责"计划失败后重新规划"的组件</li>
+<li><strong>Reflexion Memory</strong> —— 短期反思记忆，存的是"上次哪里错了"</li>
+<li><strong>JSON Schema 工具描述</strong> —— 2026 业界标准格式</li>
+<li><strong>max_iterations</strong> —— 循环硬终止，避免 Agent 跑飞</li>
+<li><strong>Plan 过期</strong> —— 计划生成后外部世界变化</li>
+<li><strong>Token 爆炸</strong> —— 长 history 累积导致 LLM 调用昂贵</li>
+<li><strong>Function Call</strong> —— 单次 LLM 响应中包含的工具调用请求</li>
+<li><strong>Tool Choice</strong> —— OpenAI 协议中指定"强制调用某个工具 / 自动选 / 不调用"</li>
+<li><strong>Parallel Function Calling</strong> —— 2024 引入，单次响应调用多个工具</li>
+<li><strong>Streamed Function Call</strong> —— 2025 引入，边流式输出边调工具</li>
+<li><strong>Structured Output</strong> —— 让 LLM 直接输出 JSON 而非自然语言</li>
+<li><strong>Tool Sandbox</strong> —— 工具执行的沙箱环境（防止 LLM 误删文件）</li>
+<li><strong>Reflexion Token 预算</strong> —— 反思不能无限调用</li>
+<li><strong>Planner Token 预算</strong> —— 计划不能太长</li>
+<li><strong>Schema Validation</strong> —— 工具参数必须符合 JSON Schema</li>
+</ul>
+
+<h3 id="section-5-10-1">5.10.1 8 条速记</h3>
+
+<ol>
+<li><strong>ReAct = 边想边做</strong>，最经典的循环范式，80% 场景用它</li>
+<li><strong>Reflexion = 失败后反思</strong>，适合"从错误中学习"的任务（代码生成 / 多步推理）</li>
+<li><strong>Plan-and-Execute = 先想完再做</strong>，适合长链路（5+ 步）+ 流程固定</li>
+<li><strong>Function Calling 是"协议"不是"范式"</strong>——它规定 LLM 怎么告诉应用调工具，循环由 ReAct/Plan 负责</li>
+<li><strong>范式是积木</strong>——90% 生产 Agent 是 ReAct + Function Calling（基本款）或 Plan + ReAct（长链路）</li>
+<li><strong>5 大坑</strong>：循环不终止 / 反思幻觉 / 计划过期 / Token 爆炸 / 工具描述不清</li>
+<li><strong>OpenAI Deep Research = Plan + ReAct + Function Calling</strong> 三范式组合</li>
+<li><strong>别上来就 ReAct + Reflexion + Plan 全用</strong>——先跑通基本款，<strong>按需加复杂度</strong></li>
+</ol>
+
+<h3 id="section-5-10-2">5.10.2 关键论文 / 资料速查</h3>
+
+<table>
+<thead><tr>
+<th>论文 / 资料</th>
+<th>作者 / 来源</th>
+<th>年份</th>
+<th>范式</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>ReAct: Synergizing Reasoning and Acting in Language Models</td>
+<td>Shunyu Yao et al.</td>
+<td>2022</td>
+<td>ReAct</td>
+</tr>
+<tr>
+<td>Reflexion: Language Agents with Verbal Reinforcement Learning</td>
+<td>Noah Shinn et al.</td>
+<td>2023</td>
+<td>Reflexion</td>
+</tr>
+<tr>
+<td>Plan-and-Execute Agents (LangChain)</td>
+<td>LangChain 团队</td>
+<td>2023</td>
+<td>Plan-and-Execute</td>
+</tr>
+<tr>
+<td>Function Calling and Other API Updates</td>
+<td>OpenAI</td>
+<td>2023.6</td>
+<td>Function Calling</td>
+</tr>
+<tr>
+<td>Building Effective Agents</td>
+<td>Anthropic</td>
+<td>2024.12</td>
+<td>范式综述</td>
+</tr>
+<tr>
+<td>A Practical Guide to Building Agents</td>
+<td>OpenAI</td>
+<td>2025.4</td>
+<td>5 阶段方法论</td>
+</tr>
+<tr>
+<td>LLM Powered Autonomous Agents</td>
+<td>Lilian Weng</td>
+<td>2023.6</td>
+<td>入门必读</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-5-10-3">5.10.3 范式选型 8 步决策树</h3>
+
+<pre><code class="language-plaintext">Q1. 你的任务是单步还是多步？
+├─ 单步 → Function Calling（直接调，结束）
+└─ 多步 → Q2
+
+<p>Q2. 任务步骤数？
+├─ 1-3 步 → ReAct + Function Calling
+└─ 4+ 步 → Q3</p>
+
+<p>Q3. 任务流程固定吗？
+├─ 固定（每天 ETL）→ Plan-and-Execute + Function Calling
+└─ 不固定（用户问啥做啥）→ Q4</p>
+
+<p>Q4. 任务容易出错吗？
+├─ 极少出错（成熟 API）→ ReAct + Function Calling
+└─ 容易出错（新 API / 复杂数据）→ Q5</p>
+
+<p>Q5. 错误类型可预测吗？
+├─ 可预测（网络断 → 重试）→ Plan + Replanner
+└─ 不可预测（结果奇怪）→ Q6</p>
+
+<p>Q6. 反思能帮上忙吗？
+├─ 是（代码 / 推理 / 决策）→ Reflexion
+└─ 否（数据查询）→ ReAct + Replanner</p>
+
+<p>Q7. 实时性要求？
+├─ 极低（&gt; 5s 可接受）→ Plan + ReAct + Reflexion（豪华套餐）
+└─ 高（&lt; 1s）→ ReAct + Function Calling（限 max_iter=3）</p>
+
+<p>Q8. 预算限制？
+├─ Token 不敏感 → ReAct + Reflexion
+└─ Token 敏感 → Plan + Replanner（少调 LLM）
+</code></pre></p>
+
+<strong>实操建议</strong>：<strong>90% 的人</strong>只需要 Q1 → Q2 → Q3 这 3 问——再深就是过度工程。
+
+<h3 id="section-5-10-4">5.10.4 范式与 ch03 四大件的对应关系</h3>
+
+<table>
+<thead><tr>
+<th>范式</th>
+<th>LLM 大脑</th>
+<th>记忆</th>
+<th>工具</th>
+<th>规划</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>ReAct</strong></td>
+<td>每步调用 1 次</td>
+<td>history 累积</td>
+<td>Action（任意工具）</td>
+<td>隐式（每步"想"）</td>
+</tr>
+<tr>
+<td><strong>Reflexion</strong></td>
+<td>反思时多调 1 次</td>
+<td><strong>reflections 列表</strong></td>
+<td>同 ReAct</td>
+<td>显式反思</td>
+</tr>
+<tr>
+<td><strong>Plan-and-Execute</strong></td>
+<td>Planner 1 次 + Executor 每步</td>
+<td>plan 状态</td>
+<td>步骤化工具</td>
+<td><strong>显式 plan</strong></td>
+</tr>
+<tr>
+<td><strong>Function Calling</strong></td>
+<td>1 次</td>
+<td>无</td>
+<td>工具描述 + 调用</td>
+<td>无（FC 不涉及范式层规划）</td>
+</tr>
+</tbody></table>
+
+<strong>关键洞察</strong>：<strong>规划（Planning）</strong>是四大件中<strong>最被范式决定</strong>的——选范式 ≈ 选规划策略。这也是 ch10《规划与推理》会专门讲"CoT / ToT / LATS"的原因。
+
+<hr>
+
+<h2 id="section-5-11">5.11 第一部分复盘——5 章构建的"方法论三角"</h2>
+
+<blockquote><strong>第一部分 5 章（ch01-ch05）至此完结。</strong> 这一节我们回头看这 5 章构建了什么、读者获得了什么能力、下一部分要去哪里。</blockquote>
+
+<h3 id="section-5-11-1">5.11.1 第一部分成绩单</h3>
+
+<table>
+<thead><tr>
+<th>章号</th>
+<th>标题</th>
+<th>中文字数</th>
+<th>代码</th>
+<th>表格</th>
+<th>核心交付</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>ch01</td>
+<td>什么是 AI Agent</td>
+<td>5040</td>
+<td>1</td>
+<td>4</td>
+<td>5 大特征 + 100 行 Hello</td>
+</tr>
+<tr>
+<td>ch02</td>
+<td>Agent 简史</td>
+<td>5557</td>
+<td>1</td>
+<td>6</td>
+<td>60 年时间线 + 24 术语速查</td>
+</tr>
+<tr>
+<td>ch03</td>
+<td>核心组件</td>
+<td>5014</td>
+<td>8</td>
+<td>8+7</td>
+<td>4 大件 + 100 行 minimal_agent</td>
+</tr>
+<tr>
+<td>ch04</td>
+<td>框架纵览</td>
+<td>5364</td>
+<td>7</td>
+<td>12</td>
+<td>7 框架 × 30 行 + 7 哲学</td>
+</tr>
+<tr>
+<td><strong>ch05</strong></td>
+<td><strong>范式对比</strong></td>
+<td><strong>~5400</strong></td>
+<td><strong>5</strong></td>
+<td><strong>8</strong></td>
+<td><strong>5 范式 + 决策树 + 复盘</strong></td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td>—</td>
+<td><strong>~26375</strong></td>
+<td><strong>22</strong></td>
+<td><strong>38+</strong></td>
+<td>完整"方法论三角"</td>
+</tr>
+</tbody></table>
+
+<h3 id="section-5-11-2">5.11.2 方法论三角</h3>
+
+<p>5 章实际上构建了 Agent 开发的<strong>三个支柱</strong>：</p>
+
+<pre><code class="language-plaintext">            ch01
+        什么是 Agent
+        （5 大特征）
+              │
+              ↓
+    ┌─────────┴─────────┐
+    │                   │
+    ↓                   ↓
+ ch03                ch04
+ 四大件              7 框架
+（手 + 脑）         （方言选择）
+    │                   │
+    └─────────┬─────────┘
+              ↓
+            ch05
+        5 大范式
+       （思维循环）
+              ↓
+       完整 Agent 设计
+</code></pre>
+
+<strong>ch01</strong> 回答"Agent 是什么"——定义、特征、与 LLM/Chatbot 的区别。
+<strong>ch03</strong> 回答"Agent 怎么搭"——4 大件的代码实现。
+<strong>ch04</strong> 回答"用什么工具搭"——7 框架的选型。
+<strong>ch05</strong> 回答"用什么思维搭"——5 范式的应用。
+
+<strong>三角 = 4 大件（手）+ 7 框架（方言）+ 5 范式（思维）= 完整 Agent 设计能力</strong>。
+
+<h3 id="section-5-11-3">5.11.3 读者画像跃迁</h3>
+
+<table>
+<thead><tr>
+<th>阶段</th>
+<th>读者水平</th>
+<th>标志能力</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>读 ch01 前</strong></td>
+<td>听过 Agent</td>
+<td>能向别人解释"Agent 不是 ChatGPT"</td>
+</tr>
+<tr>
+<td><strong>读 ch02 后</strong></td>
+<td>知道历史</td>
+<td>能说出"AutoGPT 是 2023 的事"</td>
+</tr>
+<tr>
+<td><strong>读 ch03 后</strong></td>
+<td>能写 100 行</td>
+<td>能跑通 ch03 的 minimal_agent</td>
+</tr>
+<tr>
+<td><strong>读 ch04 后</strong></td>
+<td>能选框架</td>
+<td>能用决策树选 1 个框架做 Hello World</td>
+</tr>
+<tr>
+<td><strong>读 ch05 后</strong></td>
+<td><strong>能选范式</strong></td>
+<td><strong>能根据任务复杂度选 ReAct / Plan / Reflexion</strong></td>
+</tr>
+</tbody></table>
+
+<p>第一部分的目标是"<strong>从听过到能做 Hello World</strong>"——<strong>5 章之后，读者具备 2 周内上手任何新框架的能力</strong>。</p>
+
+<h3 id="section-5-11-4">5.11.4 第一部分"5 大悬而未决"——第二部分预告</h3>
+
+<p>第一部分留下 5 个<strong>深挖空间</strong>，由第二部分（核心技术 5 章，ch06-ch10）补齐：</p>
+
+<table>
+<thead><tr>
+<th>编号</th>
+<th>悬而未决</th>
+<th>第二部分解答</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>"我该写什么样的 Prompt？"</td>
+<td>ch06《Prompt 工程与系统提示词》</td>
+</tr>
+<tr>
+<td>2</td>
+<td>"Function Calling 协议细节是什么？"</td>
+<td>ch07《Function Calling / Tool Use 专章》</td>
+</tr>
+<tr>
+<td>3</td>
+<td>"怎么让 Agent 记住 1 周前的对话？"</td>
+<td>ch08《记忆系统》</td>
+</tr>
+<tr>
+<td>4</td>
+<td>"怎么让 Agent 查 1000 份文档？"</td>
+<td>ch09《RAG》</td>
+</tr>
+<tr>
+<td>5</td>
+<td>"怎么让 Agent 规划 5+ 步复杂任务？"</td>
+<td>ch10《规划与推理》（CoT / ToT / LATS）</td>
+</tr>
+</tbody></table>
+
+<strong>第二部分 = 把第一部分的所有"工具"做到"工程级"</strong>。ch06 解决"提示词怎么写像代码"，ch07 深入 Function Calling 的 JSON Schema 设计，ch08 解决记忆持久化，ch09 解决知识库接入，ch10 解决复杂推理。
+
+<h3 id="section-5-11-5">5.11.5 写作节奏调整</h3>
+
+<ul>
+<li><strong>第一部分平均 5400 字/章</strong>（ch01-ch05）</li>
+<li><strong>第二部分"核心技术"目标 5500-6000 字/章</strong>（ch07 Function Calling 专章可能 6000+）</li>
+<li><strong>第四部分"实战项目"目标 6000-8000 字/章</strong>（代码占比 30-40%）</li>
+<li><strong>关键调整</strong>：第二部分开始<strong>加重代码示例</strong>——从"概念示例"过渡到"工程代码"</li>
+</ul>
+
+<h3 id="section-5-11-6">5.11.6 给读者的第一部分完结建议</h3>
+
+<ul>
+<li><strong>立即能做</strong>：跑通 ch03 的 100 行 minimal_agent + 至少 1 个框架的 Hello World（ch04）</li>
+<li><strong>1 周内能做</strong>：选 1 个范式（ReAct / Plan）实现自己的"查天气 + 加日历" Agent</li>
+<li><strong>1 个月内能做</strong>：把 ch05 范式套到自己的实际项目里</li>
+<li><strong>再往后</strong>：等第二部分 ch06-ch10 出来后，把"思维范式"工程化</li>
+</ul>
+
+<h3 id="section-5-11-7">5.11.7 第一部分 5 章回顾链接</h3>
+
+<ul>
+<li><strong>ch01 什么是 AI Agent</strong>：[ch01.html](ch01.html) —— 5 大特征 + 速查表</li>
+<li><strong>ch02 Agent 简史</strong>：[ch02.html](ch02.html) —— 60 年时间线 + 24 术语</li>
+<li><strong>ch03 核心组件</strong>：[ch03.html](ch03.html) —— 4 大件 + 100 行代码</li>
+<li><strong>ch04 框架纵览</strong>：[ch04.html](ch04.html) —— 7 框架 × 30 行</li>
+<li><strong>ch05 范式对比</strong>：[ch05.html](ch05.html) —— 5 思维循环 + 决策树</li>
+</ul>
+
+<hr>
+
+<p>## 进一步阅读</p>
+
+<ol>
+<li>[ReAct 论文 arXiv:2210.03629](https://arxiv.org/abs/2210.03629) — Yao et al. 2022</li>
+<li>[Reflexion 论文 arXiv:2303.11381](https://arxiv.org/abs/2303.11381) — Shinn et al. 2023</li>
+<li>[OpenAI Function Calling 发布博客](https://openai.com/index/function-calling-and-other-api-updates/) — 2023.6</li>
+<li>[Anthropic Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — 2024.12</li>
+<li>[OpenAI A Practical Guide to Building Agents](https://openai.com/index/a-practical-guide-to-building-agents/) — 2025.4</li>
+<li>[Lilian Weng LLM Powered Autonomous Agents](https://lilianweng.github.io/posts/2023-06-23-agent/) — 2023.6 入门必读</li>
+<li>[LangChain Plan-and-Execute 模板](https://python.langchain.com/docs/modules/agents/agent_types/plan_and_execute)</li>
+<li>[LangGraph ReAct + Reflexion 实现](https://langchain-ai.github.io/langgraph/)</li>
+</ol>
+
+<hr>
+
+<blockquote><strong>本章小结</strong>：5 大范式（ReAct / Reflexion / Plan-and-Execute / Tool-Use / Function Calling）不是"哪个最好"，是"哪个适合你的任务"。先用基本款（ReAct + Function Calling），按需加复杂度。</blockquote>
+
+<p>></p>
+
+<blockquote><strong>第一部分完结。</strong> 下一章 ch06《Prompt 工程与系统提示词》将解决"如何写出像工程代码一样严谨的提示词"——这是把第一部分的"思维范式"落到实处的关键一步。</blockquote>
+
+        <hr>
+
+        <blockquote><strong>本章小结</strong>：5 大范式（ReAct / Reflexion / Plan-and-Execute / Tool-Use / Function Calling）不是&ldquo;哪个最好&rdquo;，是&ldquo;哪个适合你的任务&rdquo;。先用基本款（ReAct + Function Calling），按需加复杂度。<br><br><strong>第一部分完结。</strong>下一章 ch06《Prompt 工程与系统提示词》将解决&ldquo;如何写出像工程代码一样严谨的提示词&rdquo;——这是把第一部分的&ldquo;思维范式&rdquo;落到实处的关键一步。</blockquote>
+
+      </article>
+    </div>
+  </div>
+
+  <!-- ==================== CHAPTER PAGER ==================== -->
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; max-width:920px; margin:40px auto 60px; padding:0 20px;">
+    <a href="ch04.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+      ← 上一章：主流 Agent 框架纵览（第 4 章）
+    </a>
+    <a href="ch06.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">
+      下一章：Prompt 工程与系统提示词（第 6 章，未发布）→
+    </a>
+  </nav>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>
+          一本系统性的 AI Agent 开发中文教材。
+          从 1966 ELIZA 到 2026 多 Agent 协议爆发，
+          覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。
+        </p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="ch02.html">第2章</a></li>
+          <li><a href="ch03.html">第3章</a></li>
+          <li><a href="ch04.html">第4章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">配套代码</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《AGENT开发从入门到精通》. 保留所有权利.</p>
+      <p>Powered by 🤖 Agentic AI &mdash; 让 LLM 真正&ldquo;动手做事&rdquo;</p>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
