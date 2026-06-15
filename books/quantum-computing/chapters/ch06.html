@@ -280,7 +280,7 @@
           <li>$\hat{S} = \hat{R}_z(\pi/2)$: 90° 绕 z</li>
         </ul>
         <blockquote class="chapter-quote">
-          <p><strong>几何意义</strong>: <strong>所有</strong>单 qubit 酉演化都是 Bloch 球上的<strong>某种 3D 旋转</strong>(SO(3) 群),但不是一一对应 —— 两个酉矩阵 $\hat{U}$ 和 $-\hat{U}$ 给出<strong>同一个</strong> Bloch 旋转(它们差一个<strong>全局相位</strong>,物理等价)。这给 SO(3) ≅ SU(2) / Z_2 的<strong>二重覆盖</strong>。<strong>单 qubit 酉演化</strong>有 <strong>3 个实参数</strong>(旋转轴 + 角度),跟 SO(3) 维数一致 ✅。</p>
+          <p><strong>几何意义</strong>: <strong>所有</strong>单 qubit 酉演化都是 Bloch 球上的<strong>某种 3D 旋转</strong>(SO(3) 群),但不是一一对应 —— 两个酉矩阵 $\hat{U}$ 和 $-\hat{U}$ 给出<strong>同一个</strong> Bloch 旋转(它们差一个<strong>全局相位</strong>,物理等价)。这给 SO(3) ≅ SU(2) / Z_2 的<strong>二重覆盖</strong> —— 这里的 $\mathbb{Z}_2 = \{+1, -1\}$ 是<strong>最小非平凡群</strong>,反映<strong>全局相位</strong> $\pm 1$ 不改变物理态;<strong>没有</strong>其他酉算符(没有 $e^{i\pi/3}$ 等)给出同一个 Bloch 旋转,所以覆盖是<strong>严格 2:1</strong>。<strong>单 qubit 酉演化</strong>有 <strong>3 个实参数</strong>(旋转轴 + 角度),跟 SO(3) 维数一致 ✅。</p>
         </blockquote>
 
         <h3>6.3.3 为什么用"球"而不是"平面"?</h3>
@@ -376,6 +376,7 @@
         <p><strong>几何</strong>: Bloch 向量<strong>按比例</strong>收缩 $|\vec{r}| \to (1-p) |\vec{r}|$ —— <strong>径向收缩</strong>到球心</p>
         <p><strong>退相位(dephasing)</strong>: 抹去 $\sigma_x, \sigma_y$ 方向的相干性,只保留 $\sigma_z$ 方向:</p>
         $$\mathcal{E}_{\text{deph}}(\hat{\rho}) = (1-p) \hat{\rho} + p \hat{Z} \hat{\rho} \hat{Z}$$
+        <p><strong>为什么这是 dephasing?</strong> $\hat{Z}$ 跟 $\sigma_z$ <strong>对易</strong>,跟 $\sigma_x, \sigma_y$ <strong>反对易</strong> ($\hat{Z}\sigma_x\hat{Z} = -\sigma_x$,$\hat{Z}\sigma_y\hat{Z} = -\sigma_y$)。所以 <strong>经典概率混合</strong> $(1-p)\hat{\rho} + p \hat{Z}\hat{\rho}\hat{Z}$ 让 $X, Y$ 方向的 Pauli 期望 $\langle\sigma_x\rangle, \langle\sigma_y\rangle$ <strong>按 $(1-2p)$ 衰减</strong>,而 $Z$ 方向 $\langle\sigma_z\rangle$ <strong>不变</strong> —— 这正是"相位(对角线外项)被抹去、布局(对角线项)被保留"的几何含义。</p>
         <p><strong>几何</strong>: Bloch 向量<strong>z 分量</strong>不变,$\vec{r}_{x,y}$ <strong>缩小</strong>为 $(1-p) \vec{r}_{x,y}$ —— <strong>赤道方向收缩</strong>到 z 轴</p>
         <p><strong>振幅阻尼(amplitude damping)</strong>: 模拟<strong>自发辐射</strong>($|1\rangle \to |0\rangle$ 释放能量)</p>
         $$\mathcal{E}_{\text{AD}}(\hat{\rho}) = \hat{K}_0 \hat{\rho} \hat{K}_0^\dagger + \hat{K}_1 \hat{\rho} \hat{K}_1^\dagger$$
@@ -442,6 +443,7 @@
         </ul>
         <blockquote class="chapter-quote">
           <p><strong>观察</strong>: 2024-2025 是量子计算的"工程化拐点"——<strong>量子纠错</strong>首次在硬件上"低于阈值"(Willow),<strong>模块化</strong>开始成形(PsiQuantum)。下一个 5 年(2026-2030)预计是"中等规模容错量子计算"(early-FTQC) 时代——几百到几千个<strong>逻辑</strong>qubit(由几万个物理 qubit 编码)。<strong>那时候</strong>(2030 前后),Shor 算法可能第一次<strong>实际地</strong>威胁 RSA-2048 加密。</p>
+          <p><strong>注</strong>: 以上数据为 2024-2025 年的"快照",具体数字(qubit 数、保真度、错误率等)会<strong>随时间快速变化</strong>。读者应<strong>查阅最新论文/官网</strong>确认<strong>当前</strong>的工程水平。<strong>物理/数学原理</strong>(Bloch 球、Shor 算法、量子纠错码)不过时,但<strong>工程数字</strong>会过时 —— 明确这个区别。ch20-24 会详细讲每个平台<strong>原理</strong>,<strong>不</strong>依赖具体工程数字。</p>
         </blockquote>
 
         <hr>
@@ -543,15 +545,14 @@
         <p><strong>W 态(n qubit)</strong> — Dür-Vidal-Cirac 2000:</p>
         $$|W_n\rangle = \frac{1}{\sqrt{n}}(|100\cdots 0\rangle + |010\cdots 0\rangle + \cdots + |0\cdots 01\rangle)$$
         <p><strong>特点</strong>: 恰好<strong>一个</strong> qubit 是 1,<strong>其余</strong>是 0 的"叠加"。<strong>跟 GHZ 的区别</strong>: 测量一个 qubit 得 1 后,GHZ 完全确定,还有"集体信息"塌缩;W 态塌缩后<strong>还剩</strong>(n-1) qubit 的 W 态,具有<strong>鲁棒性</strong>——失去一个 qubit 仍<strong>部分</strong>纠缠。</p>
-        <p><strong>图态(graph state)</strong> — 量子纠错(ch17)和<strong>测量基量子计算</strong>(MBQC)的基础:</p>
-        <ul>
-          <li>$n$ 个 qubit 排成<strong>图</strong> $G = (V, E)$</li>
-          <li>初态: 所有 qubit 在 $|+\rangle$</li>
-          <li>边 $(i, j) \in E$ 上做 <strong>CZ 门</strong> (controlled-Z)</li>
-          <li>得到的态是<strong>图态</strong> $G\rangle$</li>
-          <li><strong>包括</strong>: 1D 簇态(cluster state, MBQC 的"资源态")、2D 簇态(表面码的"补丁",ch18 详)</li>
-        </ul>
+        <p><strong>图态(graph state)</strong> — 量子纠错(ch17)和<strong>测量基量子计算</strong>(MBQC)的基础:把 qubit 排成<strong>图</strong> $G=(V,E)$,所有 qubit 初态 $|+\rangle$,每条边做 <strong>CZ 门</strong>。完整定义见 ch17/18。<strong>关键特例</strong>:<strong>Bell 态</strong> = 1 边图(2 qubit),<strong>GHZ 态</strong> = 0 边图($n$ 个孤立 qubit 后 Hadamard),<strong>W 态</strong> = 1 边星图。所以"明星态"其实是<strong>图态家族的不同成员</strong>。</p>
         <blockquote class="chapter-quote">
+          <p><strong>谱系图</strong>(家族关系):</p>
+          <pre><code>                 图态 G⟩ (G = 图)
+                    │
+     ┌──────────────┼──────────────┐
+     │              │              │
+  1 边 (Bell)   0 边 (GHZ)    星图 (W)</code></pre>
           <p><strong>为什么"明星态"重要</strong>: 这些态<strong>不是任意</strong>态——它们是<strong>有结构</strong>的纠缠态,在量子计算、量子通信、量子纠错中<strong>反复出现</strong>。ch10 Grover 用 GHZ/W 态作为"标记态",ch11 Shor 用 QFT 产生 GHZ 态,ch17 表面码本质上是 2D 图态。<strong>掌握这些态</strong> = 掌握量子计算的工具箱。</p>
         </blockquote>
 
@@ -633,6 +634,7 @@
         </ul>
         <blockquote class="chapter-quote">
           <p><strong>几何意义</strong>: 不可克隆定理<strong>等价于</strong>说:Bloch 球上的"对应"操作不能被<strong>两个独立 qubit 共享</strong>酉演化实现。<strong>整个球</strong>无法被<strong>单一酉</strong>映到<strong>自身</strong>(除了恒等 $I$ 和反演 $-I$,它们都对应平凡的"克隆"——但 $\hat{U} = -I$ 跟 $\hat{U} = I$ 在 Bloch 球上<strong>不可区分</strong>,所以"完美克隆"在 Bloch 球上<strong>没有意义</strong>——这是个微妙但深刻的观察)。</p>
+          <p><strong>严格代数</strong>:<strong>酉演化</strong>对<strong>任意</strong> Bloch 向量 $\vec{r}$ <strong>完全决定</strong>结果:$\vec{r}_{\text{out}} = R(\hat{U})\vec{r}$ 其中 $R(\hat{U}) \in SO(3)$ 是酉算符诱导的 3D 旋转。所以<strong>两个</strong>酉算符 $\hat{U}_1, \hat{U}_2$ 给出<strong>同一个</strong> Bloch 旋转,即 $R(\hat{U}_1) = R(\hat{U}_2)$,<strong>必须</strong>有 $\hat{U}_1 = \pm \hat{U}_2$(在<strong>全局相位</strong>下)——这是 SO(3) ≅ SU(2)/$\mathbb{Z}_2$ 的严格表述。所以两个独立 qubit 不可能有<strong>不同</strong>酉算符 $\hat{U}_1 \neq \pm \hat{U}_2$ 同时<strong>完美</strong>地把各自<strong>不同</strong>的输入态 $\vec{r}_1, \vec{r}_2$ 转成<strong>同一个</strong>目标 $\vec{r}_\psi$ —— 这跟"完美克隆"的形式要求矛盾,因而<strong>不可实现</strong>。</p>
         </blockquote>
 
         <h3>6.7.5 不可克隆的"哲学"含义:为什么不能"备份"?</h3>
@@ -772,10 +774,9 @@
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 5 章 量子测量与不确定性原理</span>
           </a>
-          <a href="ch07.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch07.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
             <span class="pager-title">第 7 章 量子逻辑门与量子线路</span>
-            <span class="pager-tag">即将推出</span>
           </a>
         </nav>
 
@@ -821,6 +822,7 @@
           <li><a href="ch04.html">第 4 章</a></li>
           <li><a href="ch05.html">第 5 章</a></li>
           <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

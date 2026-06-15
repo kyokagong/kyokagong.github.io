@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第6章：量子比特 — 量子信息的基本单元 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第7章：量子逻辑门与量子线路 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航:返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第二部分 · 量子计算基础</span>
+        <span class="chapter-day-tag">Day 8 · 2026-06-15</span>
+      </div>
+      <h1 class="chapter-title">第 7 章 量子逻辑门与量子线路</h1>
+      <p class="chapter-subtitle">从经典门到量子门——酉演化即"门",通用集 {H, T, CNOT}</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,700 字</span>
+        <span class="stat">🔢 13 节 · 50+ 子节</span>
+        <span class="stat">📑 7 张 ASCII 几何图</span>
+        <span class="stat">⏱ ~42 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+        <!-- 7.0 引言 -->
+        <h2>7.0 引言:从"比特"到"门"——操控 qubit</h2>
+        <p>第 6 章我们建立了 <strong>qubit = 2 维 Hilbert 空间中的归一化向量</strong>。这个抽象对象"摆在那里"——但<strong>怎么让它动起来</strong>?怎么把 $|0\rangle$ 变成 $|+\rangle$?怎么把两个 qubit <strong>纠缠</strong>起来?这正是<strong>量子门</strong>(quantum gate)要回答的问题。</p>
+        <p>类比经典计算:<strong>经典逻辑门</strong>(AND、OR、NOT、NAND)在经典 bit 上做"操作",把输入 bit 转成输出 bit;<strong>量子门</strong>则是 qubit 上的"操作"——把输入态 $\lvert\psi_{\text{in}}\rangle$ 转成输出态 $\lvert\psi_{\text{out}}\rangle$。但<strong>量子门有一个根本不同</strong>:它必须<strong>保持归一化</strong>、<strong>保持概率守恒</strong>、<strong>保持可逆性</strong>。这就把"门"严格限制为<strong>酉算符</strong>(unitary operator):</p>
+        $$\lvert\psi_{\text{out}}\rangle = \hat{U} \lvert\psi_{\text{in}}\rangle, \quad \hat{U}^\dagger \hat{U} = \hat{U} \hat{U}^\dagger = I$$
+        <p><strong>为什么必须酉</strong>?三个理由:</p>
+        <ol>
+          <li><strong>归一化保持</strong>: $\langle\psi_{\text{out}}\rvert\psi_{\text{out}}\rangle = \langle\psi_{\text{in}}\rvert\hat{U}^\dagger\hat{U}\lvert\psi_{\text{in}}\rangle = \langle\psi_{\text{in}}\rvert\psi_{\text{in}}\rangle = 1$</li>
+          <li><strong>可逆性</strong>: $\hat{U}^{-1} = \hat{U}^\dagger$,所以<strong>每个量子门都有"逆门"</strong>(经典 NOT 门可逆、AND 门不可逆)</li>
+          <li><strong>概率守恒</strong>: $\lvert\langle\phi\rvert\hat{U}\lvert\psi\rangle\rvert^2$ 在 $\hat{U}$ 下不变</li>
+        </ol>
+        <p><strong>为什么不能"测量门"</strong>:测量<strong>不可逆</strong>、<strong>不可酉</strong>——所以<strong>测量不算门</strong>,<strong>门是酉演化</strong>(第 5 章公理 2)。</p>
+        <p>本章分五部分展开:</p>
+        <ol>
+          <li><strong>7.1-7.6 单 qubit 门</strong> —— Pauli、$\hat{H}$、$\hat{S}$、$\hat{T}$、一般旋转 + Bloch 球几何</li>
+          <li><strong>7.7-7.9 多 qubit 门</strong> —— CNOT、SWAP、Toffoli + 纠缠产生</li>
+          <li><strong>7.10 通用性定理</strong> —— <strong>任意</strong>酉算符可由 $\{\hat{H}, \hat{T}, \text{CNOT}\}$ 逼近</li>
+          <li><strong>7.11 量子线路的物理约束</strong> —— no-cloning 的后果(无扇出、无复制)</li>
+          <li><strong>7.12 总结</strong> —— 概念速查表 + 为后续铺路</li>
+        </ol>
+
+        <hr>
+
+        <!-- 7.1 量子门的数学约束 -->
+        <h2>7.1 量子门的数学约束:酉性 + 线性 + 矩阵表示</h2>
+
+        <h3>7.1.1 酉性(unitary)</h3>
+        <p><strong>定义</strong>: 一个 $d\times d$ 矩阵 $\hat{U}$ 是<strong>酉的</strong>当且仅当 $\hat{U}^\dagger \hat{U} = I$。等价表述:</p>
+        <ul>
+          <li><strong>行正交归一</strong>: $\sum_k U_{ik} U^*_{jk} = \delta_{ij}$</li>
+          <li><strong>列正交归一</strong>: $\sum_k U^*_{ik} U_{jk} = \delta_{ij}$</li>
+          <li><strong>保持内积</strong>: $\langle\hat{U}\phi\rvert\hat{U}\psi\rangle = \langle\phi\rvert\psi\rangle$</li>
+        </ul>
+        <p><strong>$d=2$ 的酉矩阵一般形式</strong>(8 个实参数):</p>
+        $$\hat{U} = e^{i\alpha}\begin{pmatrix} e^{-i\beta/2} & 0 \\ 0 & e^{+i\beta/2} \end{pmatrix}\begin{pmatrix} \cos(\gamma/2) & -\sin(\gamma/2) \\ \sin(\gamma/2) & \cos(\gamma/2) \end{pmatrix}\begin{pmatrix} e^{-i\delta/2} & 0 \\ 0 & e^{+i\delta/2} \end{pmatrix}$$
+        <p>但<strong>全局相位</strong> $e^{i\alpha}$ <strong>不可观</strong>(参 6.2.2),<strong>真正</strong>的独立实参数只有 <strong>3 个</strong>($\beta, \gamma, \delta$)——正是 SO(3) 的维数 ✅。</p>
+
+        <h3>7.1.2 量子门 = 矩阵</h3>
+        <p>由于 qubit 是 2 维 Hilbert 空间,<strong>单 qubit 门</strong> = $2\times 2$ 酉矩阵;<strong>$n$ qubit 门</strong> = $2^n \times 2^n$ 酉矩阵。</p>
+        <p><strong>约定</strong>: 矩阵按<strong>计算基</strong> $\{|0\rangle, |1\rangle\}$ 展开:</p>
+        $$|0\rangle = \begin{pmatrix} 1 \\ 0 \end{pmatrix}, \quad |1\rangle = \begin{pmatrix} 0 \\ 1 \end{pmatrix}$$
+        <p><strong>作用</strong>: $\hat{U}|0\rangle$ = 矩阵乘以向量 = 给出 $\hat{U}$ 的<strong>第一列</strong>。例: $\hat{X}|0\rangle = |1\rangle$,所以 $\hat{X}$ 的第一列是 $\begin{pmatrix} 0 \\ 1 \end{pmatrix}$。</p>
+
+        <h3>7.1.3 门 = 酉算符 ≠ 测量</h3>
+        <p><strong>关键区别</strong>:</p>
+        <ul>
+          <li><strong>门</strong>:$\hat{U}$ 酉、<strong>保持信息</strong>(可逆)、作用后量子态<strong>仍可叠加</strong></li>
+          <li><strong>测量</strong>:$\{M_m\}$ Kraus 算符、<strong>不保持信息</strong>(不可逆)、作用后<strong>塌缩</strong>到经典结果</li>
+        </ul>
+        <p><strong>门可以</strong>叠加、纠缠;<strong>测量</strong>结束叠加。<strong>量子线路 = 门的序列</strong>(中间不测量),<strong>测量</strong>是线路<strong>末尾</strong>的"读取"操作。</p>
+
+        <h3>7.1.4 量子门 vs 经典门</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>性质</th><th>经典门</th><th>量子门</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>操作对象</td><td>bit (0/1)</td><td>qubit ($\lvert\psi\rangle$)</td></tr>
+            <tr><td>数学约束</td><td>布尔函数(可逆/不可逆)</td><td>酉算符(<strong>必须</strong>可逆)</td></tr>
+            <tr><td>扇出(fanout)</td><td>✅ 自由复制</td><td>❌ no-cloning 禁止</td></tr>
+            <tr><td>反馈</td><td>✅ 经典条件分支</td><td>❌ 量子计算无条件分支</td></tr>
+            <tr><td>通用门</td><td>NAND 单门<strong>通用</strong></td><td>$\{\hat{H}, \hat{T}, \text{CNOT}\}$ 三门<strong>通用</strong></td></tr>
+            <tr><td>比特数 vs 状态</td><td>bit 数 = 状态数</td><td>$n$ qubit → $2^n$ 振幅</td></tr>
+          </tbody>
+        </table>
+        <blockquote class="chapter-quote">
+          <p><strong>类比</strong>: 经典门像"开关"——0/1 二选一;量子门像"棱镜"——可以把光的偏振方向"转"到任意中间角度(连续 + 酉)。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.2 单 qubit 门:Pauli 矩阵 -->
+        <h2>7.2 单 qubit 门(1):Pauli 矩阵</h2>
+        <p><strong>Pauli 矩阵</strong>(参 ch02.4.2)是<strong>最基本</strong>的单 qubit 门——它们既是酉算符,又是 Hermitian 算符(可观测量),还是 SU(2) 群的李代数生成元。</p>
+
+        <h3>7.2.1 $\hat{X}$ 门(Bit-flip)</h3>
+        $$\hat{X} = \begin{pmatrix} 0 & 1 \\ 1 & 0 \end{pmatrix} = \lvert 1\rangle\langle 0\rvert + \lvert 0\rangle\langle 1\rvert$$
+        <p><strong>作用</strong>: 交换 $|0\rangle \leftrightarrow |1\rangle$,等价经典 NOT 门。<strong>注意</strong>: $\hat{X}^2 = I$——应用两次回到原态(对合性,involution)。</p>
+        <p><strong>Bloch 球几何</strong>: 绕 $x$ 轴转 180°(北极 ↔ 南极)。</p>
+        $$\hat{X} = \hat{R}_x(\pi)$$
+
+        <h3>7.2.2 $\hat{Y}$ 门(Bit-phase-flip)</h3>
+        $$\hat{Y} = \begin{pmatrix} 0 & -i \\ i & 0 \end{pmatrix} = i\hat{X}\hat{Z} = -i\hat{Z}\hat{X}$$
+        <p><strong>作用</strong>: $\hat{Y}|0\rangle = i|1\rangle$(全局相位 $i$ + 翻转),$\hat{Y}|1\rangle = -i|0\rangle$。</p>
+        <p><strong>Bloch 球几何</strong>: 绕 $y$ 轴转 180°。</p>
+        $$\hat{Y} = \hat{R}_y(\pi)$$
+
+        <h3>7.2.3 $\hat{Z}$ 门(Phase-flip)</h3>
+        $$\hat{Z} = \begin{pmatrix} 1 & 0 \\ 0 & -1 \end{pmatrix} = \lvert 0\rangle\langle 0\rvert - \lvert 1\rangle\langle 1\rvert$$
+        <p><strong>作用</strong>: $|0\rangle \to |0\rangle$,$|1\rangle \to -|1\rangle$——<strong>只</strong>翻转<strong>相位</strong>,不翻转<strong>位</strong>值。<strong>注意</strong>: $-|1\rangle$ 和 $|1\rangle$ <strong>物理等价</strong>(全局相位不影响测量),所以 $\hat{Z}$ 在计算基上<strong>看起来"什么都不做"</strong>——但对叠加态 <strong>确实</strong>加 $\pi$ 相位到 $|1\rangle$ 分量,<strong>影响</strong>相对相位 → <strong>影响</strong>干涉(参 ch03)。</p>
+        <p><strong>Bloch 球几何</strong>: 形式上 $\hat{Z} = \hat{R}_z(\pi)$——绕 $z$ 轴转 180°。这是 <strong>SO(3) ≅ SU(2)/$\mathbb{Z}_2$</strong> 的一个具体例子。</p>
+
+        <h3>7.2.4 $\hat{I}$ 门(Identity)</h3>
+        $$\hat{I} = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix}$$
+        <p>"什么都不做"——但<strong>门计数</strong>里也占一格(在物理实现中,门 = 时间演化,$\hat{I}$ = "等一个时钟周期")。</p>
+
+        <h3>7.2.5 Pauli 矩阵的对易 / 反对易关系</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th></th><th>$\hat{X}$</th><th>$\hat{Y}$</th><th>$\hat{Z}$</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$\hat{X}$</td><td>$[\hat{X},\hat{X}]=0$</td><td>$\{\hat{X},\hat{Y}\}=0$</td><td>$\{\hat{X},\hat{Z}\}=0$</td></tr>
+            <tr><td>$\hat{Y}$</td><td>$\{\hat{X},\hat{Y}\}=0$</td><td>$[\hat{Y},\hat{Y}]=0$</td><td>$\{\hat{Y},\hat{Z}\}=0$</td></tr>
+            <tr><td>$\hat{Z}$</td><td>$\{\hat{X},\hat{Z}\}=0$</td><td>$\{\hat{Y},\hat{Z}\}=0$</td><td>$[\hat{Z},\hat{Z}]=0$</td></tr>
+          </tbody>
+        </table>
+        <p><strong>对易</strong>: $\hat{X}\hat{Y} = \hat{Y}\hat{X}$ 自身(都是 0);<strong>反对易</strong>: 不同 Pauli 之间 $\hat{A}\hat{B} = -\hat{B}\hat{A}$。</p>
+        <p><strong>重要恒等式</strong>:</p>
+        $$\hat{X}\hat{Y}\hat{Z} = i\hat{I}$$
+        <p>这是 <strong>qubit 几何</strong>的"魔数"——任意 4 个 Pauli 矩阵乘积 = $\pm I$ 或 $\pm iI$。</p>
+
+        <h3>7.2.6 工作实例:Pauli 矩阵的 Bloch 球几何(图)</h3>
+        <blockquote class="chapter-quote">
+          <p><strong>图 7.0: 三个 Pauli 门在 Bloch 球上的旋转</strong>(ASCII 示意)</p>
+          <pre><code>               |0⟩ (北极, +z)
+                ●
+               /|\            X 门: 绕 x 轴 180°(南北极对调)
+              / | \           Y 门: 绕 y 轴 180°(东-西方向对调)
+             /  |  \          Z 门: 绕 z 轴 180°(赤道对径点对调)
+            /   |   \
+       |-⟩ ●────┼────● |+⟩    绕 x:北极→南极
+       -x    ╲  |  ╱    +x     绕 y:北极→北极(从前面看)
+              ╲ | ╱           绕 z:北极→北极(从上面看,只是赤道转)
+               \|/
+                ●
+               |1⟩ (南极, -z)</code></pre>
+        </blockquote>
+        <p><strong>关键观察</strong>:</p>
+        <ul>
+          <li>$\hat{X}$ 旋转 = <strong>南北极对调</strong>($|0\rangle \leftrightarrow |1\rangle$)</li>
+          <li>$\hat{Y}$ 旋转 = <strong>东西对调</strong>($|0\rangle$ 转到 $|0\rangle$ 但 $|+x\rangle$ 转到 $-|+x\rangle$ 等)</li>
+          <li>$\hat{Z}$ 旋转 = <strong>赤道对径</strong>($|0\rangle$ 不动,$|1\rangle$ 加 $\pi$ 相位)</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>记忆口诀</strong>:"X 翻南北,Y 翻东西,Z 翻赤道"</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.3 Hadamard 门 -->
+        <h2>7.3 单 qubit 门(2):Hadamard 门</h2>
+        <p><strong>Hadamard 门</strong> $\hat{H}$ 是<strong>最常用</strong>的量子门——没有之一。</p>
+
+        <h3>7.3.1 定义</h3>
+        $$\hat{H} = \frac{1}{\sqrt{2}}\begin{pmatrix} 1 & 1 \\ 1 & -1 \end{pmatrix} = \frac{1}{\sqrt{2}}(\hat{X} + \hat{Z})$$
+        <p><strong>作用</strong>:</p>
+        <ul>
+          <li>$\hat{H}|0\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle) = |+\rangle$ —— <strong>叠加的"开关"</strong></li>
+          <li>$\hat{H}|1\rangle = \frac{1}{\sqrt{2}}(|0\rangle - |1\rangle) = |-\rangle$ —— <strong>叠加的"开关"</strong></li>
+        </ul>
+        <p><strong>逆门是自己</strong>: $\hat{H}^2 = I$。所以 $\hat{H}|+\rangle = |0\rangle$, $\hat{H}|-\rangle = |1\rangle$。</p>
+
+        <h3>7.3.2 为什么 $\hat{H}$ 如此重要</h3>
+        <p><strong>两个原因</strong>:</p>
+        <ol>
+          <li><strong>创造叠加</strong> —— 从 $|0\rangle$ 到 $|+\rangle$ 是"经典 → 量子"的关键一步</li>
+          <li><strong>切换基</strong> —— $\hat{H}$ 把 $\hat{Z}$ 基(计算基)转成 $\hat{X}$ 基($\{|+\rangle, |-\rangle\}$),反之亦然</li>
+        </ol>
+        <p><strong>Hadamard 门是 QFT、Grover、Shor 算法的"基础砖块"</strong>。</p>
+
+        <h3>7.3.3 Bloch 球几何</h3>
+        <p><strong>Hadamard 旋转</strong> = 绕 $(x+z)/\sqrt{2}$ 轴(赤道上的"对角线"轴)转 180°:</p>
+        $$\hat{H} = \hat{R}_{\hat{n}}(\pi), \quad \hat{n} = \frac{1}{\sqrt{2}}(\hat{x} + \hat{z})$$
+        <p><strong>几何动作</strong>:</p>
+        <ul>
+          <li>$|0\rangle$(北极) → $|+\rangle$($+x$ 极)</li>
+          <li>$|1\rangle$(南极) → $|-\rangle$($-x$ 极)</li>
+          <li>$|+\rangle$($+x$ 极) → $|0\rangle$(北极)</li>
+          <li>$|+i\rangle$($+y$ 极) → $|-i\rangle$($-y$ 极,带全局相位 $e^{i\pi/4}$)</li>
+        </ul>
+        <p><strong>Hadamard 反射</strong> = 球面上的<strong>对角反射</strong>(像镜子):<strong>平行</strong>于 $\hat{n}$ 的向量<strong>不变</strong>,<strong>垂直</strong>的分量<strong>反演</strong>。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>图 7.1: Hadamard 在 Bloch 球上的几何动作</strong>(ASCII 示意)</p>
+          <pre><code>           |0⟩ (北极)
+            ●
+           /|\
+          / | \
+         /  |  \
+        /   |   \
+  |-⟩ ●────┼────● |+⟩  (赤道)
+        \   |   /
+         \  |  /
+          \ | /
+           \|/
+            ●
+           |1⟩ (南极)
+   旋转轴: (x+z)/√2 (东北方向)
+   = 180° 绕对角轴
+   → |0⟩↔|+⟩,|1⟩↔|-⟩(北↔+x,南↔-x)
+   → |+i⟩↔|-i⟩(+y↔-y,反演)</code></pre>
+        </blockquote>
+
+        <h3>7.3.4 工作实例:Hadamard 的"对角反射"性质</h3>
+        <p><strong>严格地</strong>:Hadamard 是绕对角线轴 $\hat{n}=(x+z)/\sqrt{2}$ 的 180° 旋转,<strong>对</strong> $\hat{n}$ <strong>平行</strong>分量不变,<strong>对</strong> $\hat{n}$ <strong>垂直</strong>分量反演。</p>
+        <p><strong>为什么 $+y$ 极反演到 $-y$ 极</strong>?</p>
+        $$\hat{H}|+i\rangle = \hat{H} \cdot \frac{1}{\sqrt{2}}\begin{pmatrix} 1 \\ i \end{pmatrix} = \frac{1}{2}\begin{pmatrix} 1+i \\ 1-i \end{pmatrix} = e^{i\pi/4}|-i\rangle$$
+        <p>所以 $\hat{H}|+i\rangle = e^{i\pi/4}|-i\rangle$——Bloch 向量从 $(0,+1,0)$ <strong>反转到</strong> $(0,-1,0)$(全局相位 $e^{i\pi/4}$ 不影响物理态)。</p>
+
+        <hr>
+
+        <!-- 7.4 Phase 门 -->
+        <h2>7.4 单 qubit 门(3):Phase 门 $\hat{S}$ 和 $\hat{T}$</h2>
+
+        <h3>7.4.1 $\hat{S}$ 门($\hat{P}(\pi/2)$,也叫 $\sqrt{\hat{Z}}$)</h3>
+        $$\hat{S} = \begin{pmatrix} 1 & 0 \\ 0 & i \end{pmatrix} = \hat{R}_z(\pi/2)$$
+        <p><strong>作用</strong>: $|0\rangle \to |0\rangle$,$|1\rangle \to i|1\rangle$——给 $|1\rangle$ 加 $\pi/2$ 相位。</p>
+        <p><strong>性质</strong>:</p>
+        <ul>
+          <li>$\hat{S}^2 = \hat{Z}$</li>
+          <li>$\hat{S}^\dagger = \hat{S}^3 = \hat{S}^{-1}$(4 阶群 $\cong \mathbb{Z}_4$)</li>
+          <li><strong>不是</strong> Hermitian($\hat{S}^\dagger \neq \hat{S}$),所以<strong>不是</strong>可观测量</li>
+        </ul>
+        <p><strong>Bloch 球</strong>: 绕 $z$ 轴转 90°。</p>
+
+        <h3>7.4.2 $\hat{T}$ 门($\hat{P}(\pi/4)$,也叫 $\sqrt{\hat{S}}$)</h3>
+        $$\hat{T} = \begin{pmatrix} 1 & 0 \\ 0 & e^{i\pi/4} \end{pmatrix} = \hat{R}_z(\pi/4)$$
+        <p><strong>作用</strong>: $|1\rangle \to e^{i\pi/4}|1\rangle$——给 $|1\rangle$ 加 $\pi/4$ 相位。</p>
+        <p><strong>性质</strong>:</p>
+        <ul>
+          <li>$\hat{T}^2 = \hat{S}$</li>
+          <li>$\hat{T}^4 = \hat{Z}$</li>
+          <li>$\hat{T}^8 = \hat{I}$(8 阶群)</li>
+          <li><strong>不是</strong> Clifford 算符(7.6 详)—— $\hat{T}$ 门是<strong>进入"非 Clifford"世界</strong>的钥匙</li>
+        </ul>
+
+        <h3>7.4.3 一般 Phase 门 $\hat{P}(\phi)$</h3>
+        $$\hat{P}(\phi) = \begin{pmatrix} 1 & 0 \\ 0 & e^{i\phi} \end{pmatrix} = \hat{R}_z(\phi)$$
+        <p><strong>几何</strong>: 绕 $z$ 轴转 $\phi$。<strong>用途</strong>: 一般酉电路的"相位调整"。</p>
+
+        <h3>7.4.4 $\hat{S}$ 和 $\hat{T}$ 的物理意义</h3>
+        <p><strong>为什么 $\hat{S}, \hat{T}$ 重要?</strong></p>
+        <ol>
+          <li><strong>创造非平凡相位</strong> —— $\hat{Z}$ 给 $\pi$ 相位(可被全局相位"吸收"的不算真正引入新结构),$\hat{S}$ 给 $\pi/2$,$\hat{T}$ 给 $\pi/4$</li>
+          <li><strong>进入非 Clifford 层级</strong> —— 7.6 详</li>
+          <li><strong>T 计数</strong>是量子算法的<strong>资源度量</strong> —— T 门<strong>贵</strong>(物理实现上 ~10× 别的门),算法中 T 门数 = 主要成本指标</li>
+        </ol>
+        <blockquote class="chapter-quote">
+          <p><strong>类比</strong>: 如果 $\hat{H}$ 是"叠加开关",$\hat{S}, \hat{T}$ 是"相位开关"——调相位是<strong>干涉</strong>(ch03)的<strong>核心</strong>。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.5 一般旋转 -->
+        <h2>7.5 单 qubit 门(4):一般旋转 $\hat{R}_x, \hat{R}_y, \hat{R}_z$</h2>
+
+        <h3>7.5.1 定义</h3>
+        <p>三个<strong>轴向</strong>旋转(沿用 6.3.2.1 的形式):</p>
+        $$\hat{R}_x(\theta) = e^{-i\theta \hat{X}/2} = \cos(\theta/2)\hat{I} - i\sin(\theta/2)\hat{X}$$
+        $$\hat{R}_y(\theta) = e^{-i\theta \hat{Y}/2} = \cos(\theta/2)\hat{I} - i\sin(\theta/2)\hat{Y}$$
+        $$\hat{R}_z(\theta) = e^{-i\theta \hat{Z}/2} = \cos(\theta/2)\hat{I} - i\sin(\theta/2)\hat{Z}$$
+
+        <h3>7.5.2 Euler 角分解:任意单 qubit 门可分解为 3 个旋转</h3>
+        <p><strong>定理</strong>(Euler-Rodrigues): <strong>任意</strong> $2\times 2$ 酉算符 $\hat{U}$ 可以写成</p>
+        $$\hat{U} = e^{i\alpha} \hat{R}_z(\beta) \hat{R}_y(\gamma) \hat{R}_z(\delta)$$
+        <p><strong>注意</strong>: 全局相位 $e^{i\alpha}$ 不可观,<strong>真正独立</strong>的实参数 = 3 个($\beta, \gamma, \delta$),<strong>正好</strong>对应 Bloch 球旋转的 3 个角度(欧拉角)。</p>
+
+        <h3>7.5.3 工作实例:把 $\hat{H}$ 分解为 $\hat{R}_x, \hat{R}_y, \hat{R}_z$</h3>
+        <p><strong>问题</strong>: 找 $\alpha, \beta, \gamma, \delta$ 使得 $e^{i\alpha} \hat{R}_z(\beta)\hat{R}_y(\gamma)\hat{R}_z(\delta) = \hat{H}$</p>
+        <p><strong>解</strong>:</p>
+        <ul>
+          <li>$\hat{H}$ 在 Bloch 球上 = 绕 $\hat{n} = (x+z)/\sqrt{2}$ 转 180°</li>
+          <li>等价地 = $\hat{R}_{\hat{n}}(\pi)$</li>
+          <li><strong>对 $\hat{H}$</strong>:
+            <ul>
+              <li>$\hat{R}_z(\pi/2) \hat{R}_x(\pi/2) \hat{R}_z(\pi/2) = e^{i\pi/2}\hat{H}$(全局相位 $\pi/2$)</li>
+            </ul>
+          </li>
+        </ul>
+        <p><strong>结论</strong>: <strong>任何</strong>单 qubit 门 = <strong>3 个 $\hat{R}$ 门的乘积</strong>(轴向固定)+ 1 个全局相位。</p>
+
+        <h3>7.5.4 一般旋转 $\hat{R}_n(\theta)$ 几何图</h3>
+        <blockquote class="chapter-quote">
+          <p><strong>图 7.4: 一般 Bloch 球旋转</strong>(ASCII 示意)</p>
+          <pre><code>              |0⟩
+              ●
+             /|\
+            / | \
+           /  |  \        初态 |ψ_0⟩
+          /   |   \       ↗
+     |-⟩ ●────┼────● |+⟩  /
+          \   |   /      / 绕 n̂ 旋转 θ
+           \  |  /      /
+            \ | /      ↙
+             \|/        终态 |ψ_1⟩
+              ●
+              |1⟩
+
+   旋转轴 n̂ = (sin φ cos θ_rot, sin φ sin θ_rot, cos φ)
+   旋转角度 θ
+   3 个实参数:(θ_rot, φ, θ) 描述任何 3D 旋转</code></pre>
+        </blockquote>
+
+        <h3>7.5.5 工作实例:把 $\hat{R}_x(\pi/3)$ 应用到 $|+\rangle$</h3>
+        <p><strong>问题</strong>: $\hat{R}_x(\pi/3)|+\rangle = ?$</p>
+        <p><strong>计算</strong>:</p>
+        <ul>
+          <li>$\hat{R}_x(\pi/3) = \cos(\pi/6)\hat{I} - i\sin(\pi/6)\hat{X} = \frac{\sqrt{3}}{2}\hat{I} - \frac{i}{2}\hat{X}$</li>
+          <li>$|+\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$</li>
+          <li>$\hat{R}_x(\pi/3)|+\rangle = \left(\frac{\sqrt{3}}{2} - \frac{i}{2}\right)|+\rangle = e^{-i\pi/6}|+\rangle$(<strong>全局相位</strong>)</li>
+        </ul>
+        <p><strong>结果</strong>: $|+\rangle$ 是 $\hat{R}_x$ 的<strong>特征态</strong>!——在 Bloch 球上,$|+x\rangle$ 极是 $x$ 轴的"极点",绕 $x$ 轴转<strong>任何角度</strong>,它<strong>不动</strong>(只加全局相位)。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>几何</strong>: <strong>任何</strong>绕 $\hat{n}$ 的旋转,$\hat{n}$ 方向的向量是<strong>不动点</strong>——加全局相位,其他向量在"垂直 $\hat{n}$ 的赤道平面"上转 $\theta$。</p>
+        </blockquote>
+        <p><strong>这个性质</strong>对所有 Bloch 球旋转都成立——是理解"qubit 旋转"几何的关键。</p>
+
+        <hr>
+
+        <!-- 7.6 Clifford 群 -->
+        <h2>7.6 单 qubit 门(5):Clifford 群</h2>
+
+        <h3>7.6.1 Clifford 群定义</h3>
+        <p><strong>Clifford 群</strong> $\mathcal{C}_n$ = $n$ qubit 上<strong>所有把 Pauli 串映到 Pauli 串</strong>的酉算符:</p>
+        $$\hat{U} \in \mathcal{C}_n \iff \forall \hat{P} \in \mathcal{P}_n, \hat{U}\hat{P}\hat{U}^\dagger \in \mathcal{P}_n$$
+        <p>($\mathcal{P}_n$ = $n$ qubit Pauli 串,共 $4^n$ 个,参 6.8)</p>
+
+        <h3>7.6.2 单 qubit Clifford 群 $\mathcal{C}_1$</h3>
+        <p><strong>有 24 个元素</strong>(陪集分解):</p>
+        <ul>
+          <li>Pauli 群 $\mathcal{P}_1 = \{\pm I, \pm iI, \pm X, \pm iX, \pm Y, \pm iY, \pm Z, \pm iZ\}$ — 16 元素</li>
+          <li>单 qubit Clifford = Pauli 群 + Hadamard + 相位门 = <strong>24 个元素</strong>(严格地 $|\mathcal{C}_1| = 24$)</li>
+        </ul>
+        <p><strong>生成元</strong>: $\hat{H}, \hat{S}$(配上 Pauli)。</p>
+        <ul>
+          <li>$\hat{H}\hat{X}\hat{H}^\dagger = \hat{Z}$</li>
+          <li>$\hat{H}\hat{Z}\hat{H}^\dagger = \hat{X}$</li>
+          <li>$\hat{S}\hat{X}\hat{S}^\dagger = \hat{Y}$</li>
+          <li>$\hat{S}\hat{Z}\hat{S}^\dagger = \hat{Z}$</li>
+        </ul>
+        <p><strong>Gottesman-Knill 定理</strong>(重要!<strong>经典可模拟</strong>):</p>
+        <blockquote class="chapter-quote">
+          <p><strong>只用 Clifford 门</strong>($\hat{H}, \hat{S}$, CNOT)<strong>和</strong>初态 $|0\rangle$<strong>的量子电路</strong>可以用<strong>经典计算机多项式时间</strong>模拟。</p>
+        </blockquote>
+        <p><strong>意义</strong>: 量子算法的<strong>优势</strong>必须<strong>来自</strong>非 Clifford 门(主要是 $\hat{T}$)!<strong>T 计数</strong>才是真正的"量子成本"。</p>
+
+        <h3>7.6.3 工作实例:Gottesman-Knill 的应用</h3>
+        <p><strong>电路</strong>(Clifford-only):</p>
+        <pre><code>|0⟩ --H--S--H--M</code></pre>
+        <p><strong>经典模拟</strong>: 跟踪<strong>稳定子</strong>(stabilizer)而非 $2^n$ 复振幅。</p>
+        <ul>
+          <li>初态: $|0\rangle$ (稳定子 $Z$)</li>
+          <li>$\hat{H}$: 稳定子 → $X$</li>
+          <li>$\hat{S}$: 稳定子 → $Y$</li>
+          <li>$\hat{H}$: 稳定子 → $-Z$</li>
+        </ul>
+        <p><strong>经典复杂度</strong>: $O(n^2)$ 跟踪 Pauli 串(更新表)vs $O(2^n)$ 跟踪振幅。<strong>指数加速</strong>。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>警示</strong>: Gottesman-Knill 只适用于"只用 Clifford + 初态 $|0\rangle$ + Pauli 测量"的电路。一旦<strong>有</strong> $\hat{T}$ 门,经典模拟就<strong>指数</strong>难。</p>
+        </blockquote>
+
+        <h3>7.6.4 Clifford 群的具体结构(24 元素)</h3>
+        <p><strong>24 个 $\mathcal{C}_1$ 元素</strong>可以由 $\{\hat{H}, \hat{S}\}$ 生成,具体为:</p>
+        <p><strong>Pauli 群</strong>(16 个,4 类 × 4 元素):</p>
+        $$\{\pm I, \pm iI, \pm X, \pm iX, \pm Y, \pm iY, \pm Z, \pm iZ\}$$
+        <p><strong>非 Pauli Clifford</strong>(8 个):</p>
+        $$\hat{H}, \hat{S}, \hat{H}\hat{S}, \hat{S}\hat{H}, \hat{H}\hat{S}^\dagger, \hat{S}^\dagger\hat{H}, \hat{H}\hat{S}\hat{H}, \hat{H}\hat{S}^\dagger\hat{H}$$
+        <p><strong>关键性质</strong>:</p>
+        <ul>
+          <li>$\mathcal{C}_1$ <strong>不是</strong> 2 元素群,也不是 4 元素群——是 <strong>24 元素群</strong>(阶 24)</li>
+          <li>$\mathcal{C}_1 \cong S_4$(4 次对称群)—— 数学上 $S_4$ 是 24 阶</li>
+          <li>$\mathcal{C}_1/\mathcal{P}_1 \cong S_3$(3 次对称群)—— 6 阶</li>
+        </ul>
+        <p><strong>对应 Bloch 球几何</strong>: $\mathcal{C}_1$ = SO(3) 的 24 个<strong>对称</strong>变换(立方体的对称群,O 对应于正八面体)。</p>
+
+        <h3>7.6.5 为什么要进入非 Clifford 层级?</h3>
+        <p><strong>Gottesman-Knill 定理</strong>说 Clifford-only 电路可经典模拟——意味着<strong>只用 Clifford 门的算法 = 经典算法</strong>(没有量子加速)。</p>
+        <p><strong>结论</strong>: 任何有<strong>量子加速</strong>的算法<strong>必须</strong>有 $\hat{T}$ 门(或等价非 Clifford 门)。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>重要洞察</strong>: <strong>Clifford 电路 = 经典计算</strong>(可经典模拟);<strong>非 Clifford 门 = 量子优势的源泉</strong>。这是<strong>资源理论</strong>(resource theory)的视角——<strong>T 计数</strong> = <strong>量子优势的资源</strong>。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.7 多 qubit 门:受控门 -->
+        <h2>7.7 多 qubit 门(1):受控门(Controlled Gates)</h2>
+
+        <h3>7.7.1 受控门的一般结构</h3>
+        <p><strong>$k$-控制 1-目标门</strong> = 作用在 $(k+1)$ qubit 上:</p>
+        <ul>
+          <li><strong>控制</strong> qubit $c_1, c_2, \ldots, c_k$ <strong>全部</strong>为 $|1\rangle$ 时,目标 qubit $t$ 应用酉算符 $\hat{U}$</li>
+          <li><strong>否则</strong> 目标 qubit <strong>不动</strong>(应用 $\hat{I}$)</li>
+        </ul>
+        <p><strong>形式</strong>:</p>
+        $$\text{C}^k\hat{U} = |0\rangle\langle 0|_{c_1\cdots c_k} \otimes I_t + |1\rangle\langle 1|_{c_1\cdots c_k} \otimes \hat{U}_t$$
+        <p><strong>注意</strong>: "控制"是<strong>张量积</strong>而不是直和——所有 qubit <strong>一起</strong>演化,<strong>不能</strong>单独"读取"控制 qubit 然后<strong>经典地</strong>决定是否应用 $\hat{U}$(那样就<strong>测量</strong>了,会塌缩)。</p>
+
+        <h3>7.7.2 CNOT 门($\text{C}X$,Controlled-NOT,Controlled-$X$)</h3>
+        <p><strong>最常用</strong>的多 qubit 门:</p>
+        $$\text{CNOT} = |0\rangle\langle 0|_c \otimes I_t + |1\rangle\langle 1|_c \otimes X_t = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \\ 0 & 0 & 1 & 0 \end{pmatrix}$$
+        <p>(基 $\{|00\rangle, |01\rangle, |10\rangle, |11\rangle\}$)</p>
+        <p><strong>作用</strong>:</p>
+        <ul>
+          <li>$|00\rangle \to |00\rangle$</li>
+          <li>$|01\rangle \to |01\rangle$</li>
+          <li>$|10\rangle \to |11\rangle$(目标翻转)</li>
+          <li>$|11\rangle \to |10\rangle$(目标翻转)</li>
+        </ul>
+        <p><strong>控制为 0 时不动,控制为 1 时翻转目标</strong>。</p>
+
+        <h3>7.7.3 重要:CNOT 是<strong>经典不可逆门</strong>?</h3>
+        <p><strong>不是!</strong> CNOT <strong>可逆</strong>: $\text{CNOT}^2 = I$。所以它是<strong>经典 XOR 的量子可逆版本</strong>——但<strong>有本质不同</strong>:CNOT 在<strong>叠加</strong>上产生<strong>纠缠</strong>。</p>
+        <p><strong>工作实例:CNOT 创造 Bell 态</strong>(参 6.6.3.1):</p>
+        $$(\hat{H} \otimes I) \cdot \text{CNOT} \cdot |00\rangle = \frac{1}{\sqrt{2}}(|00\rangle + |11\rangle) = |\Phi^+\rangle$$
+        <p><strong>没有 CNOT,$\hat{H} \otimes I$ 只能创造可分态</strong>。CNOT 是<strong>纠缠的"开关"</strong>。</p>
+
+        <h3>7.7.4 CZ 门(Controlled-$Z$)</h3>
+        $$\text{CZ} = |0\rangle\langle 0|_c \otimes I_t + |1\rangle\langle 1|_c \otimes Z_t = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & -1 \end{pmatrix}$$
+        <p><strong>作用</strong>: 当控制 = 1 时给目标加 $\pi$ 相位。<strong>对称</strong>(谁当控制都行):$\text{CZ} = \text{CZ}^T$。</p>
+        <p><strong>跟 CNOT 的关系</strong>: $\text{CZ} = (I \otimes \hat{H}) \cdot \text{CNOT} \cdot (I \otimes \hat{H})$——Hadamard 变换把 $X$ 翻成 $Z$。</p>
+
+        <h3>7.7.5 一般受控旋转 $\text{C-}R_\phi$</h3>
+        $$\text{C-}R_\phi = |0\rangle\langle 0|_c \otimes I_t + |1\rangle\langle 1|_c \otimes R_\phi$$
+        <p>(目标: 绕 $\phi$ 旋转某个轴)</p>
+        <p><strong>常见特例</strong>:</p>
+        <ul>
+          <li>$\text{C-}R_x(\pi) = \text{CNOT}$</li>
+          <li>$\text{C-}R_z(\pi) = \text{CZ}$</li>
+          <li>$\text{C-}R_z(\pi/2) = \text{CS}$(controlled-S)</li>
+          <li>$\text{C-}R_z(\pi/4) = \text{CT}$(controlled-T)</li>
+        </ul>
+
+        <h3>7.7.6 CNOT 的"作用"图示</h3>
+        <blockquote class="chapter-quote">
+          <p><strong>图 7.5: CNOT 门的作用</strong>(电路 + 真值表)</p>
+          <pre><code>电路图:
+   c (控制) ──●──         c 为 0: 目标不动
+              │           c 为 1: 目标翻转 (X 门)
+   t (目标) ──⊕──
+
+真值表:
+   |c⟩|t⟩ → |c⟩|c⊕t⟩
+   ─────────────
+   |0⟩|0⟩ → |0⟩|0⟩      (c=0, t=0 → t'=0)
+   |0⟩|1⟩ → |0⟩|1⟩      (c=0, t=1 → t'=1)
+   |1⟩|0⟩ → |1⟩|1⟩      (c=1, t=0 → t'=1,翻转)
+   |1⟩|1⟩ → |1⟩|0⟩      (c=1, t=1 → t'=0,翻转)
+
+矩阵形式 (4×4):
+   [1 0 0 0]      |00⟩ → |00⟩
+   [0 1 0 0]      |01⟩ → |01⟩
+   [0 0 0 1]      |10⟩ → |11⟩
+   [0 0 1 0]      |11⟩ → |10⟩</code></pre>
+        </blockquote>
+        <p><strong>注意</strong>: CNOT 矩阵<strong>对称</strong>(右下 2×2 子矩阵是 $X$ 矩阵——因为控制为 1 时目标应用 $\hat{X}$)。</p>
+        <p><strong>关键性质</strong>:</p>
+        <ul>
+          <li>$\text{CNOT}^2 = I$(应用两次 = 恒等)</li>
+          <li>$\text{CNOT}$ 是<strong>对合</strong>算符(involution)</li>
+          <li>$\text{CNOT}$ 是<strong>Hermitian</strong> 的($\text{CNOT}^\dagger = \text{CNOT}$),所以<strong>既是酉又是可观测量</strong></li>
+        </ul>
+
+        <h3>7.7.7 CNOT 的"纠缠产生"机制</h3>
+        <p><strong>为什么 CNOT 能产生纠缠?</strong> 让我们用 $|+\rangle$ 控制的实例说明:</p>
+        <p><strong>输入</strong>: $|c\rangle = |+\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$,$|t\rangle = |0\rangle$</p>
+        <ul>
+          <li>整体态: $|+\rangle|0\rangle = \frac{1}{\sqrt{2}}(|0\rangle|0\rangle + |1\rangle|0\rangle)$</li>
+        </ul>
+        <p><strong>应用 CNOT</strong>(控制 c,目标 t):</p>
+        <ul>
+          <li>$|0\rangle|0\rangle \to |0\rangle|0\rangle$ (c=0,不动)</li>
+          <li>$|1\rangle|0\rangle \to |1\rangle|1\rangle$ (c=1,翻转 t)</li>
+          <li><strong>整体</strong>: $\frac{1}{\sqrt{2}}(|0\rangle|0\rangle + |1\rangle|1\rangle) = |\Phi^+\rangle$ —— <strong>Bell 态,纠缠!</strong></li>
+        </ul>
+        <p><strong>关键区别</strong>:</p>
+        <ul>
+          <li><strong>经典 XOR</strong>: $a, b \in \{0, 1\}$(确定值)→ $a, a \oplus b$ 也是确定值</li>
+          <li><strong>量子 CNOT</strong>: $\alpha|0\rangle + \beta|1\rangle, |0\rangle$ → $\alpha|0\rangle|0\rangle + \beta|1\rangle|1\rangle$——<strong>叠加</strong>到<strong>纠缠</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>纠缠的"几何"直觉</strong>: CNOT 创造<strong>两个 qubit 之间的"关联"</strong>——一个 qubit 处于 $|0\rangle$ 和 $|1\rangle$ 的"叠加",<strong>强制</strong>另一个 qubit 处于"对应"的 $|0\rangle$ 和 $|1\rangle$——<strong>两者不再独立</strong>。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.8 SWAP -->
+        <h2>7.8 多 qubit 门(2):SWAP 和它的近亲</h2>
+
+        <h3>7.8.1 SWAP 门</h3>
+        $$\text{SWAP} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 0 & 1 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}$$
+        <p><strong>作用</strong>: $|ab\rangle \to |ba\rangle$——交换两个 qubit。<strong>注意</strong>: $\text{SWAP}^2 = I$。</p>
+        <p><strong>关键</strong>: SWAP <strong>不是</strong>受控门——它<strong>没有"控制 + 目标"</strong>结构。它是<strong>对称</strong>操作。</p>
+
+        <h3>7.8.2 $\sqrt{\text{SWAP}}$ 门</h3>
+        $$\sqrt{\text{SWAP}} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & \frac{1+i}{2} & \frac{1-i}{2} & 0 \\ 0 & \frac{1-i}{2} & \frac{1+i}{2} & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}$$
+        <p><strong>性质</strong>:</p>
+        <ul>
+          <li>$(\sqrt{\text{SWAP}})^2 = \text{SWAP}$</li>
+          <li>$\sqrt{\text{SWAP}}$ 是<strong>天然</strong> 2 qubit 相互作用——某些物理实现(超导 qubit 的 $\hat{XY}$ 耦合)就是 $\sqrt{\text{SWAP}}$</li>
+        </ul>
+
+        <h3>7.8.3 iSWAP 门</h3>
+        $$\text{iSWAP} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 0 & i & 0 \\ 0 & i & 0 & 0 \\ 0 & 0 & 0 & 1 \end{pmatrix}$$
+        <p><strong>作用</strong>: $|01\rangle \to i|10\rangle$,$|10\rangle \to i|01\rangle$——<strong>交换 + 加 $i$ 相位</strong>。</p>
+
+        <h3>7.8.4 SWAP = 3 个 CNOT 链</h3>
+        $$\text{SWAP} = \text{CNOT}_{12} \cdot \text{CNOT}_{21} \cdot \text{CNOT}_{12}$$
+        <p><strong>为什么 3 个 CNOT 是最优?</strong></p>
+        <ul>
+          <li>1 个 CNOT <strong>不能</strong>实现 SWAP(因为 CNOT 是<strong>上三角</strong>矩阵,SWAP 是<strong>对称</strong>矩阵)</li>
+          <li>2 个 CNOT <strong>不能</strong>实现 SWAP(2 个 CNOT 最多产生<strong>上三角</strong>矩阵)</li>
+          <li>3 个 CNOT = <strong>刚好</strong>实现 SWAP</li>
+        </ul>
+
+        <h3>7.8.5 SWAP 门的电路图</h3>
+        <blockquote class="chapter-quote">
+          <p><strong>图 7.6: SWAP = 3 个 CNOT 链</strong></p>
+          <pre><code> 1 ─●───────●───────●──
+    │       │ ╲     │
+    │       │  ╲    │
+ 2 ─⊕──●───│───●────⊕──
+        │   │   │
+        └───│───│──────
+            │   │
+ (注: 实际是 3 个 CNOT 交替控制)
+
+分解:
+ 1 ────●────────●──────
+           │         ╲
+           │          ╲
+ 2 ────────⊕────────⊕──
+
+即: SWAP = CNOT_{1→2} · CNOT_{2→1} · CNOT_{1→2}</code></pre>
+        </blockquote>
+
+        <h3>7.8.6 物理视角:2 qubit 门的"自然形态"</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>平台</th><th>天然 2 qubit 门</th><th>工程难度</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>超导 transmon</strong></td><td>$\text{CZ}$, $\text{iSWAP}$ (脉冲参数化)</td><td>中(微秒级,可调)</td></tr>
+            <tr><td><strong>离子阱</strong></td><td>$\text{MS}(\text{Mølmer-Sørensen})$ 门</td><td>较易(微秒级,高保真)</td></tr>
+            <tr><td><strong>中性原子</strong></td><td>$\text{CZ}$ (Rydberg 阻塞)</td><td>中(微秒级,可重配置)</td></tr>
+            <tr><td><strong>光量子</strong></td><td>$\text{CZ}$ (KLM 方案)</td><td>难(概率性,需后选择)</td></tr>
+            <tr><td><strong>拓扑</strong></td><td>$\text{CNOT}$ 物理上= braiding</td><td>远期(尚未实用)</td></tr>
+          </tbody>
+        </table>
+        <p><strong>关键观察</strong>: 不同平台有<strong>不同的"天然门"</strong>——但<strong>通用集</strong> $\{\hat{H}, \hat{T}, \text{CNOT}\}$ 都可以<strong>互相转换</strong>。<strong>工程上选什么门</strong> = <strong>优化物理保真度 + 速度</strong> 的问题,不是"能不能"的问题。</p>
+
+        <hr>
+
+        <!-- 7.9 Toffoli 和 Fredkin -->
+        <h2>7.9 多 qubit 门(3):Toffoli 和 Fredkin</h2>
+
+        <h3>7.9.1 Toffoli 门(CCNOT,CCX)</h3>
+        <p><strong>Toffoli 门</strong> = <strong>双控制 + NOT</strong>:</p>
+        $$\text{CCX} = |00\rangle\langle 00| \otimes I + |01\rangle\langle 01| \otimes I + |10\rangle\langle 10| \otimes I + |11\rangle\langle 11| \otimes X$$
+        <p><strong>作用</strong>:</p>
+        <ul>
+          <li>$|00c\rangle \to |00c\rangle$</li>
+          <li>$|01c\rangle \to |01c\rangle$</li>
+          <li>$|10c\rangle \to |10c\rangle$</li>
+          <li>$|11c\rangle \to |11, c\oplus 1\rangle$(两控制都是 1 时,翻转目标)</li>
+        </ul>
+        <p><strong>计算上</strong>: Toffoli 是 <strong>NAND 门的可逆推广</strong>——把 2 个"控制" qubit 当 AND,翻转目标 = NAND 操作的"在目标上"。</p>
+        <p><strong>注意</strong>: Toffoli 是<strong>它自己的逆</strong>——$\text{CCX}^2 = I$(对合性)。</p>
+
+        <h3>7.9.2 Fredkin 门(CSWAP,Controlled-SWAP)</h3>
+        <p><strong>Fredkin 门</strong> = <strong>单控制 + SWAP</strong>:</p>
+        $$\text{CSWAP} = |0\rangle\langle 0|_c \otimes I_t + |1\rangle\langle 1|_c \otimes \text{SWAP}_{t_1, t_2}$$
+        <p><strong>作用</strong>: 控制 = 0 时,两个目标 qubit 不动;控制 = 1 时,两个目标 qubit 交换。</p>
+
+        <h3>7.9.3 Toffoli + Fredkin 的"经典可逆计算"角色</h3>
+        <p><strong>经典可逆计算</strong> (reversible computing) 有一个<strong>深刻事实</strong>:</p>
+        <blockquote class="chapter-quote">
+          <p>任何<strong>经典</strong>函数 $f: \{0,1\}^n \to \{0,1\}^m$ 都<strong>可以</strong>用 Toffoli 门<strong>可逆地</strong>实现(通过添加"垃圾" qubit / 临时存储)。</p>
+        </blockquote>
+        <p><strong>这意味着</strong>: 经典计算<strong>完全</strong>包含在 Toffoli 门 + 单 qubit 门的<strong>量子通用集</strong>里(参 7.10)。</p>
+
+        <h3>7.9.4 Toffoli 的分解(实现成本)</h3>
+        <p><strong>关键</strong>: Toffoli 门 = 6 个 CNOT + 几个单 qubit 门($\hat{H}, \hat{T}, \hat{T}^\dagger$)</p>
+        <ul>
+          <li>常用分解:<strong>6 CNOT + 7 单 qubit 门</strong>(包括 4 个 $\hat{T}$)</li>
+          <li><strong>T 计数 = 7</strong></li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>工程现实</strong>: Toffoli 是"昂贵门"——<strong>实验上比 CNOT 难 10× 以上</strong>。</p>
+        </blockquote>
+
+        <h3>7.9.5 工作实例:Toffoli 实现经典 AND</h3>
+        <p><strong>问题</strong>: Toffoli 是 3 qubit 门,看起来不直接像 AND——<strong>怎么</strong>用 Toffoli 实现 AND?</p>
+        <p><strong>答案</strong>: Toffoli = "<strong>带 1 个"垃圾"qubit</strong> 的 AND"——把 2 个"输入" qubit 当"控制",1 个"目标" qubit 初始化为 $|0\rangle$,<strong>Toffoli 把 AND 结果写到目标上</strong>。</p>
+        <p><strong>继续 4 个 case</strong>:</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>a</th><th>b</th><th>AND</th><th>Toffoli 输出</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>0</td><td>0</td><td>000</td></tr>
+            <tr><td>0</td><td>1</td><td>0</td><td>010</td></tr>
+            <tr><td>1</td><td>0</td><td>0</td><td>100</td></tr>
+            <tr><td>1</td><td>1</td><td><strong>1</strong></td><td>111(目标翻 1)</td></tr>
+          </tbody>
+        </table>
+        <p><strong>关键</strong>: <strong>目标</strong> qubit = AND(a, b),<strong>控制</strong> qubit = a, b 本身<strong>不变</strong>。</p>
+        <p><strong>这意味着</strong>: 经典 AND 门 = 1 个 Toffoli 门 + 1 个"垃圾" qubit($|0\rangle$ 初始化)。</p>
+        <blockquote class="chapter-quote">
+          <p><strong>可逆 vs 不可逆</strong>: 经典 AND <strong>不可逆</strong>(从输出 0 不知道输入是 00, 01, 还是 10)——所以需要<strong>额外</strong>信息(垃圾 qubit)保持可逆。</p>
+        </blockquote>
+
+        <h3>7.9.6 Toffoli 分解为 H, T, CNOT(详细构造)</h3>
+        <p><strong>关键构造</strong>(Barenco et al. 1995):</p>
+        $$\text{Toffoli} = (\hat{I} \otimes \hat{H}) \cdot \text{CCZ} \cdot (\hat{I} \otimes \hat{H})$$
+        <p>(注意: 作用在第二 + 第三 qubit,$\hat{H}$ 把 $X$ 翻成 $Z$,所以 $\text{CCZ} = \text{Toffoli}$ 的 $X$ 翻 $Z$ 版)</p>
+        <p><strong>CCZ 的分解</strong>(用 6 个 CNOT + T 门):</p>
+        $$\text{CCZ} = \text{CNOT}_{23} \cdot \hat{T}_2^\dagger \cdot \text{CNOT}_{13} \cdot \hat{T}_3 \cdot \text{CNOT}_{23} \cdot \hat{T}_3^\dagger \cdot \text{CNOT}_{13} \cdot \hat{T}_2 \cdot \hat{T}_3 \cdot \text{CNOT}_{12}$$
+        <p>(需要 6 CNOT + 7 个 T 门,总 T 计数 = 7)</p>
+        <blockquote class="chapter-quote">
+          <p><strong>工程上</strong>: Toffoli 门的 T 计数 <strong>7</strong> 在 2025 年的硬件上 = <strong>约 7-10 个时钟周期</strong>(每个 T 门需要"魔术态"工厂)。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.10 通用性 -->
+        <h2>7.10 通用性定理:Nielsen-Chuang 定理</h2>
+
+        <h3>7.10.1 通用门集的定义</h3>
+        <p><strong>定义</strong>: 一组量子门 $\mathcal{G}$ 称为<strong>通用</strong>(universal),如果对<strong>任意</strong> $n$ qubit 酉算符 $\hat{U}$ 和<strong>任意精度</strong> $\epsilon > 0$,存在<strong>有限</strong>个 $\mathcal{G}$ 中的门组成的电路 $C$ 使得 $\|C - \hat{U}\| < \epsilon$(算子范数距离)。</p>
+        <p><strong>注意</strong>:<strong>有限</strong>个门(不是连续族)——这意味着 $\mathcal{G}$ 必须是<strong>有限集</strong>或者<strong>参数化</strong>但<strong>连续</strong>调节(像 $\hat{R}_x(\theta)$,参数 $\theta$ 可以连续变化)。</p>
+
+        <h3>7.10.2 Nielsen-Chuang 定理(1995)</h3>
+        <p><strong>定理</strong>(Nielsen-Chuang, 简化版):</p>
+        <blockquote class="chapter-quote">
+          <p><strong>门集</strong> $\{\hat{H}, \hat{T}, \text{CNOT}\}$ 是<strong>通用</strong>量子门集。</p>
+        </blockquote>
+        <p><strong>等价的通用门集</strong>:</p>
+        <ul>
+          <li>$\{\hat{H}, \hat{T}, \text{CNOT}\}$</li>
+          <li>$\{\hat{H}, \hat{S}, \text{CNOT}, \hat{T}\}(\hat{S} = \hat{T}^2$)</li>
+          <li>$\{\hat{H}, \hat{T}, \text{CZ}\}(\text{CNOT} \leftrightarrow \text{CZ}$ 用 Hadamard 互换)</li>
+          <li>$\{\hat{R}_x(\theta), \hat{R}_z(\phi), \text{CNOT}\}(\theta, \phi$ 连续)</li>
+          <li>单 qubit 任意<strong>非 Clifford 门</strong> + CNOT</li>
+        </ul>
+        <p><strong>不通用</strong>的门集举例:</p>
+        <ul>
+          <li>$\{\hat{H}, \hat{S}, \text{CNOT}\}$ = Clifford only(Gottesman-Knill 可模拟)→ <strong>不通用</strong></li>
+          <li>$\{\hat{X}, \hat{Y}, \hat{Z}\}$ = Pauli only(有限 4 个门)→ <strong>不通用</strong></li>
+          <li>$\{\hat{H}, \text{CNOT}\}$ = 不含非 Clifford 相位门→ <strong>不通用</strong></li>
+        </ul>
+
+        <h3>7.10.3 通用性证明(简述)</h3>
+        <p><strong>四步</strong>:</p>
+        <ol>
+          <li><strong>任意单 qubit 酉算符</strong> $\hat{U}$ 可以由 $\hat{H}, \hat{T}$ 序列<strong>任意精度</strong>逼近(Solovay-Kitaev 定理)</li>
+          <li><strong>任意 $n$ qubit 酉算符</strong> $\hat{U}$ 可以分解为 $O(4^n)$ 个<strong>2 qubit 门</strong>(参 ch08.2)</li>
+          <li><strong>任意 2 qubit 门</strong>可以由 3 个 CNOT + 15 个单 qubit 门实现(Vatan-Williams 2004)</li>
+          <li><strong>任意单 qubit 门</strong>可以由 $\hat{H}, \hat{T}$ 实现(Solovay-Kitaev)</li>
+        </ol>
+        <p><strong>总结</strong>: $\hat{U}_n \to$ 2 qubit 门 → CNOT + 单 qubit 门 → $\hat{H}, \hat{T}$ + CNOT ✅</p>
+
+        <h3>7.10.4 Solovay-Kitaev 定理(关键)</h3>
+        <p><strong>定理</strong>(Solovay-Kitaev 1995):</p>
+        <blockquote class="chapter-quote">
+          <p>对单 qubit 上<strong>通用</strong>门集 $\mathcal{G}$(有限、含 $\hat{H}$ 和<strong>非 Clifford</strong> 门),把 $\mathcal{G}$ 中 $O(\log^c(1/\epsilon))$ 个门组合起来,能逼近<strong>任意</strong>单 qubit 酉算符到精度 $\epsilon$。<strong>典型</strong> $c \approx 3 \sim 4$。</p>
+        </blockquote>
+        <p><strong>实际意义</strong>: 用 <strong>几十到几百个</strong> $\hat{H}, \hat{T}$ 门可以<strong>足够好</strong>地逼近任何单 qubit 旋转——<strong>工程上是可行的</strong>。</p>
+
+        <h3>7.10.5 工作实例:把 $\hat{R}_z(\pi/8)$ 分解为 $\hat{H}, \hat{T}$</h3>
+        <p>$\hat{R}_z(\pi/8) = e^{-i\pi/16}\hat{T}^{1/2}$——但 $\hat{T}^{1/2} = \hat{P}(\pi/8)$ 本身不是 $\hat{T}$ 门,<strong>所以不能用 1 个 $\hat{T}$ 门</strong>。</p>
+        <p><strong>实际</strong>:</p>
+        <ul>
+          <li>$\hat{R}_z(\pi/8) \approx \hat{H}\hat{T}\hat{H}\hat{T}\hat{H}$ 序列(精确度 ~0.001)</li>
+          <li><strong>Solovay-Kitaev</strong>: 100 个 $\hat{H}, \hat{T}$ 门可逼近任何单 qubit 门到 $\epsilon = 10^{-6}$</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>量子算法成本度量</strong>:</p>
+          <ul>
+            <li><strong>T 计数</strong>(T-count) = 电路中 $\hat{T}$ 门数(影响"魔术态蒸馏"成本)</li>
+            <li><strong>T 深度</strong>(T-depth) = 电路<strong>最大</strong> T 门层数(影响"运行时间")</li>
+            <li><strong>CNOT 计数</strong> = CNOT 门数(影响"通信成本")</li>
+            <li><strong>总门数</strong> = 全部门数(影响"总时间")</li>
+          </ul>
+        </blockquote>
+
+        <h3>7.10.6 通用性定理的"分解树"图</h3>
+        <blockquote class="chapter-quote">
+          <p><strong>图 7.7: Nielsen-Chuang 通用性分解链</strong></p>
+          <pre><code>      任意 n qubit 酉算符 Û_n
+               │
+     量子香农分解(ch08.2 详)
+               │
+               ▼
+        O(4^n) 个 2 qubit 酉算符
+               │
+     Vatan-Williams 2004 分解
+               │
+               ▼
+     每个 2 qubit 门 = 3 CNOT + 15 单 qubit 门
+               │
+               ▼
+        单 qubit 酉算符(3 个实参数)
+               │
+     Solovay-Kitaev 定理
+               │
+               ▼
+    O(log^c(1/ε)) 个 H, T 门(ε 精度)
+
+最终: 任意 n qubit 酉算符 = 有限个 H, T, CNOT 门</code></pre>
+        </blockquote>
+        <p><strong>工程成本</strong>(典型估算):</p>
+        <ul>
+          <li><strong>单 qubit 门</strong>精度 $10^{-3}$: ~10 个 $\hat{H}, \hat{T}$ 门</li>
+          <li><strong>单 qubit 门</strong>精度 $10^{-6}$: ~100 个 $\hat{H}, \hat{T}$ 门</li>
+          <li><strong>2 qubit 门</strong> = 3 CNOT + 15 单 qubit 门 ≈ 3 + 150 = 153 个 H, T, CNOT 门</li>
+          <li><strong>$n$ qubit 酉算符</strong> = $4^n$ 个 2 qubit 门 ≈ $4^n \times 153$ 个 H, T, CNOT 门</li>
+        </ul>
+        <p><strong>结论</strong>: 通用性是"理论上可以",<strong>工程上贵</strong>——但 2025 年的硬件(1000+ qubit, $10^{-3}$ 门保真度)已经<strong>进入</strong>这个范围。</p>
+
+        <h3>7.10.7 重要算法的资源估算</h3>
+        <p><strong>T 计数</strong>(T-count) 是量子算法<strong>主要</strong>的成本指标(因为 T 门是<strong>唯一</strong>非 Clifford 门,在容错量子计算里<strong>最贵</strong>):</p>
+        <table class="concept-table">
+          <thead>
+            <tr><th>算法</th><th>经典复杂度</th><th>量子 T 计数</th><th>量子加速</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Shor 因式分解</strong></td><td>$\exp(O(n^{1/3}))$</td><td>$O(n^3)$</td><td>指数</td></tr>
+            <tr><td><strong>Grover 搜索</strong></td><td>$O(N)$</td><td>$O(\sqrt{N} \log N)$</td><td>二次</td></tr>
+            <tr><td><strong>HHL 线性方程组</strong></td><td>$O(N)$</td><td>$O(\log N \cdot \text{poly}(\kappa, 1/\epsilon))$</td><td>指数(条件性)</td></tr>
+            <tr><td><strong>QFT</strong></td><td>$O(N \log N)$</td><td>$O(\log^2 N)$</td><td>指数</td></tr>
+            <tr><td><strong>VQE</strong>(化学)</td><td>$\exp(O(n))$</td><td>$O(n^4)$(单步)</td><td>多项式</td></tr>
+            <tr><td><strong>QAOA</strong>(优化)</td><td>$\exp(O(n))$</td><td>$O(n^2 p)$(p 层)</td><td>启发式</td></tr>
+          </tbody>
+        </table>
+        <p><strong>观察</strong>:</p>
+        <ul>
+          <li><strong>Shor</strong> 和 <strong>QFT</strong> 是<strong>指数加速</strong>的"杀手锏"——T 计数<strong>多项式</strong></li>
+          <li><strong>Grover</strong> 是<strong>二次加速</strong>——T 计数<strong>亚线性</strong></li>
+          <li><strong>HHL</strong> 是"条件性指数加速"——但前提是<strong>稀疏、低条件数、结果可提取</strong></li>
+          <li><strong>VQE/QAOA</strong> 是<strong>启发式</strong>加速——理论上<strong>没有严格证明</strong>有加速</li>
+        </ul>
+        <blockquote class="chapter-quote">
+          <p><strong>前瞻</strong>: 2030 年的容错量子计算机(~$10^6$ T 门预算)可以跑<strong>1000 qubit 的 Shor</strong>——这将<strong>威胁 RSA-2048 加密</strong>。NIST 已经在 2024 年发布<strong>后量子密码标准</strong>(基于格密码, NIST FIPS 203/204/205)。</p>
+        </blockquote>
+
+        <hr>
+
+        <!-- 7.11 物理约束 -->
+        <h2>7.11 量子线路的物理约束</h2>
+
+        <h3>7.11.1 量子线路图的标准记号</h3>
+        <p><strong>标准符号</strong>:</p>
+        <ul>
+          <li><strong>单 qubit 门</strong>: 方框写门名(如 `H`, `X`, `T`)。<strong>时间从左到右</strong></li>
+          <li><strong>CNOT</strong>: 控制 = 实心点 `●`,目标 = ⊕ 符号(空心圈 + 十字)。控制线<strong>垂直连</strong>到目标线</li>
+          <li><strong>测量</strong>: 方框画<strong>仪表</strong>符号</li>
+          <li><strong>qubit 线</strong>: 水平线</li>
+        </ul>
+        <p><strong>例</strong>(Hadamard + CNOT 创造 Bell 态):</p>
+        <pre><code>|0⟩ ──[H]──•──
+             │
+|0⟩ ────────⊕──</code></pre>
+        <ul>
+          <li>第一根线: 应用 $\hat{H}$ 到 $|0\rangle$,得到 $|+\rangle$</li>
+          <li>CNOT: 第一根为控制,第二根为目标。CNOT 创造 $|\Phi^+\rangle$</li>
+        </ul>
+
+        <h3>7.11.2 物理约束 1:无扇出(no-fanout)</h3>
+        <p><strong>经典</strong>: 你可以<strong>免费</strong>地把 1 个 bit 复制到多个 bit(`Y = X; Z = X;`)</p>
+        <p><strong>量子</strong>: <strong>No-cloning 定理</strong>禁止!——你<strong>不能</strong>把 1 个 qubit 复制到多个 qubit(参 6.7 + ch04)</p>
+        <p><strong>后果</strong>:</p>
+        <ul>
+          <li>量子电路<strong>不能</strong>有"扇出"——1 个 qubit 输出到多个 qubit 输入的<strong>结构</strong>是非法的</li>
+          <li><strong>回避方法</strong>: 用 <strong>CNOT 链</strong>"传递"信息(qubit 1 → 量子纠缠对 → qubit 2)。<strong>开销 = $n-1$ 个 CNOT 复制 1 个 qubit 到 $n$ 个 qubit</strong></li>
+        </ul>
+
+        <h3>7.11.3 物理约束 2:无反馈(no-feedback)</h3>
+        <p><strong>经典</strong>: 你可以 `if X then Y else Z` 条件分支</p>
+        <p><strong>量子</strong>: 中间测量会<strong>塌缩叠加</strong>——一旦测量,<strong>叠加丢失</strong></p>
+        <p><strong>后果</strong>:</p>
+        <ul>
+          <li>量子电路<strong>不能</strong>有"if qubit 测到 0 then apply A else apply B"这种结构</li>
+          <li><strong>回避方法</strong>: 保持叠加到最后一次测量;<strong>不</strong>用中间测量做分支</li>
+        </ul>
+
+        <h3>7.11.4 物理约束 3:无循环(no-loops)</h3>
+        <p><strong>经典</strong>: 程序可以循环、递归</p>
+        <p><strong>量子</strong>: 酉演化<strong>无记忆</strong>——给定<strong>当前态</strong>,未来<strong>唯一</strong>决定</p>
+        <p><strong>后果</strong>:</p>
+        <ul>
+          <li>量子电路是<strong>有向无环图</strong>(DAG),<strong>无循环</strong></li>
+          <li>算法<strong>复杂度</strong>靠<strong>并行 + 干涉</strong>(不是循环)</li>
+        </ul>
+
+        <h3>7.11.5 物理约束 4:不能"擦除"信息(Landauer 原理)</h3>
+        <p><strong>Landauer 原理</strong>(1961):</p>
+        <blockquote class="chapter-quote">
+          <p>擦除 1 bit 信息<strong>至少</strong>耗能 $k_B T \ln 2$。<strong>量子对应</strong>: <strong>不可逆</strong>操作(测量 + 复位)耗能;<strong>酉</strong>操作(门)<strong>理论上</strong>不耗能(可逆)。</p>
+        </blockquote>
+        <p><strong>工程含义</strong>:</p>
+        <ul>
+          <li>量子门(酉)<strong>理想</strong>地不耗能</li>
+          <li><strong>测量 + 初始化</strong>(复位到 $|0\rangle$)<strong>耗能</strong>——所以应该<strong>最后</strong>测量,<strong>不要</strong>反复测量 + 复位</li>
+        </ul>
+
+        <h3>7.11.5.1 物理约束 5:门时延 = 时间演化</h3>
+        <p><strong>量子门 = 哈密顿量的时间演化</strong>:</p>
+        $$\hat{U} = e^{-i\hat{H}t/\hbar}$$
+        <p><strong>典型</strong>:</p>
+        <ul>
+          <li>$\hat{X}$ 门: $\hat{H} = \omega \hat{X}/2$, 演化时间 $t = \pi/\omega$</li>
+          <li>$\hat{H}$ 门: $\hat{H} = \omega(\hat{X} + \hat{Z})/2$, 演化时间 $t = \pi/(\omega\sqrt{2})$</li>
+        </ul>
+        <p><strong>这意味着</strong>:</p>
+        <ul>
+          <li>任何门<strong>至少</strong>要<strong>有限</strong>时间(物理哈密顿量<strong>有</strong>能量尺度)</li>
+          <li>1 个"门时延" = 几十纳秒到几微秒</li>
+          <li><strong>总</strong>电路时间 = 门数 × 门时延</li>
+          <li><strong>必须</strong>比<strong>相干时间</strong>($T_1, T_2$)短,否则 decoherence(ch16 详)<strong>破坏</strong>结果</li>
+        </ul>
+        <p><strong>经验</strong>:</p>
+        <ul>
+          <li>超导 qubit: 门时延 ~20-50 ns, 相干时间 ~100 μs → 最多 ~2000 个门</li>
+          <li>离子阱: 门时延 ~1-100 μs, 相干时间 > 1 s → 最多 $10^4 \sim 10^6$ 个门</li>
+          <li><strong>结论</strong>: 离子阱在"门数"维度<strong>更强</strong>,超导在"速度"维度<strong>更强</strong></li>
+        </ul>
+
+        <h3>7.11.5.2 物理约束 6:门错误率(保真度)</h3>
+        <p><strong>门保真度</strong> $F$ = 1 - 错误率:</p>
+        <ul>
+          <li>2025 年典型: $F \sim 99.5\% \sim 99.9\%$(单 qubit 99.9%, CNOT 99.5%)</li>
+          <li>错误<strong>累积</strong>: $N$ 个门后保真度 $\sim F^N$<strong>指数衰减</strong></li>
+          <li><strong>容错阈值定理</strong>(ch19 详): 如果 $F > F_{\text{threshold}} \approx 99.99\%$,<strong>理论上</strong>可以<strong>无限</strong>长度量子计算</li>
+          <li>2025 年<strong>未达</strong>阈值 → <strong>NISQ</strong> 时代(Noisy Intermediate-Scale Quantum)</li>
+        </ul>
+
+        <h3>7.11.5.3 物理约束 7:qubit 连通性</h3>
+        <p><strong>不是所有 qubit 都直接耦合</strong>:</p>
+        <ul>
+          <li><strong>超导</strong>: 2D 网格(每个 qubit 跟 ~4 个近邻耦合),远距离 qubit 需要 <strong>SWAP 链</strong></li>
+          <li><strong>离子阱</strong>: <strong>全连通</strong>(任意 2 个离子都能耦合)——优势明显</li>
+          <li><strong>中性原子</strong>: <strong>可重配置</strong>(光镊移动原子), 但有重配置时间</li>
+        </ul>
+        <p><strong>例子</strong>(SWAP 链):</p>
+        <pre><code>qubit 1 ─ qubit 2 ─ qubit 3 ─ ... ─ qubit 50
+                      │
+                      想要 1 → 50: 需要 49 个 SWAP 门</code></pre>
+        <p><strong>工程含义</strong>: 算法的 <strong>CNOT 深度</strong>(qubit 距离)直接影响<strong>总时间</strong>和<strong>错误率</strong>——<strong>layout-aware</strong> 算法设计是关键。</p>
+
+        <h3>7.11.6 量子并行性 ≠ 经典并行</h3>
+        <p><strong>关键澄清</strong>:</p>
+        <ul>
+          <li><strong>经典并行</strong>: N 个处理器<strong>同时</strong>跑 N 个程序</li>
+          <li><strong>量子并行</strong>: 1 个电路 1 次运行 = 1 个<strong>叠加态</strong> = <strong>同时</strong>跑 $2^n$ 个"分支"(振幅)</li>
+        </ul>
+        <p><strong>量子"并行"是"叠加"</strong>,<strong>不是</strong>"多个处理器"——所有"分支"<strong>互相干涉</strong>,<strong>不是</strong>独立。</p>
+
+        <hr>
+
+        <!-- 7.12 总结 -->
+        <h2>7.12 章节总结与后续</h2>
+
+        <h3>7.12.1 本章关键概念</h3>
+        <p>量子门 = <strong>酉算符</strong>(可逆 + 线性 + 保持归一化)。单 qubit 门 = Bloch 球上的 3D 旋转(3 个实自由度);多 qubit 门 = 张量积空间中的酉算符,<strong>核心</strong>是 CNOT(创造纠缠)和 SWAP(交换 qubit)。Nielsen-Chuang 定理保证 $\{\hat{H}, \hat{T}, \text{CNOT}\}$ <strong>通用</strong>——<strong>任何</strong>酉算符可被<strong>这三个门</strong>任意精度逼近。量子线路<strong>有</strong> 7 大物理约束(无扇出、无反馈、无循环、Landauer、门时延、门错误、连通性)——这些都源自<strong>酉性 + no-cloning</strong>。</p>
+
+        <h3>7.12.2 概念速查表</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>概念</th><th>数学形式</th><th>物理意义</th><th>Bloch 球几何</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>$\hat{I}$ 门</td><td>$I$</td><td>恒等</td><td>不动</td></tr>
+            <tr><td>$\hat{X}$ 门</td><td>$\sigma_x$</td><td>Bit-flip,NOT</td><td>绕 $x$ 轴 180°</td></tr>
+            <tr><td>$\hat{Y}$ 门</td><td>$\sigma_y$</td><td>Bit-phase-flip</td><td>绕 $y$ 轴 180°</td></tr>
+            <tr><td>$\hat{Z}$ 门</td><td>$\sigma_z$</td><td>Phase-flip,加 $\pi$</td><td>绕 $z$ 轴 180°</td></tr>
+            <tr><td>$\hat{H}$ 门</td><td>$\frac{1}{\sqrt{2}}(\hat{X}+\hat{Z})$</td><td>创造叠加,切换基</td><td>绕 $(x+z)/\sqrt{2}$ 180°</td></tr>
+            <tr><td>$\hat{S}$ 门</td><td>$\hat{R}_z(\pi/2)$</td><td>加 $\pi/2$ 相位</td><td>绕 $z$ 90°</td></tr>
+            <tr><td>$\hat{T}$ 门</td><td>$\hat{R}_z(\pi/4)$</td><td>加 $\pi/4$ 相位,非 Clifford</td><td>绕 $z$ 45°</td></tr>
+            <tr><td>$\hat{R}_n(\theta)$ 门</td><td>$e^{-i\theta\hat{n}\cdot\vec{\sigma}/2}$</td><td>绕 $\hat{n}$ 转 $\theta$</td><td>绕 $\hat{n}$ 转 $\theta$</td></tr>
+            <tr><td>CNOT 门</td><td>$\|0\rangle\langle 0\| \otimes I + \|1\rangle\langle 1\| \otimes X$</td><td>纠缠"开关"</td><td>4 维 Hilbert 空间</td></tr>
+            <tr><td>CZ 门</td><td>$\|0\rangle\langle 0\| \otimes I + \|1\rangle\langle 1\| \otimes Z$</td><td>条件加 $\pi$ 相位</td><td>对称</td></tr>
+            <tr><td>SWAP 门</td><td>交换两个 qubit</td><td>物理位置交换</td><td>4 维 Hilbert 空间</td></tr>
+            <tr><td>$\sqrt{\text{SWAP}}$ 门</td><td>$\text{SWAP}^{1/2}$</td><td>天然 2 qubit 相互作用</td><td>XY 耦合对应</td></tr>
+            <tr><td>Toffoli 门</td><td>CCX,双控制 NOT</td><td>可逆经典通用门</td><td>8 维 Hilbert 空间</td></tr>
+            <tr><td>Fredkin 门</td><td>CSWAP,单控制 SWAP</td><td>可逆经典通用门</td><td>8 维 Hilbert 空间</td></tr>
+            <tr><td>Clifford 群</td><td>把 Pauli 映到 Pauli</td><td>Gottesman-Knill 可模拟</td><td>—</td></tr>
+            <tr><td>通用门集</td><td>$\{\hat{H}, \hat{T}, \text{CNOT}\}$ 等</td><td>任意酉可逼近</td><td>—</td></tr>
+            <tr><td>Solovay-Kitaev 定理</td><td>$O(\log^c(1/\epsilon))$ 门逼近</td><td>单 qubit 通用</td><td>—</td></tr>
+          </tbody>
+        </table>
+
+        <h3>7.12.3 7 大物理约束</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>约束</th><th>经典</th><th>量子</th><th>后果</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>无扇出</strong>(no-fanout)</td><td>✅ bit 自由复制</td><td>❌ no-cloning 禁止</td><td>1→n qubit "复制" 需 $n-1$ 个 CNOT</td></tr>
+            <tr><td><strong>无反馈</strong>(no-feedback)</td><td>✅ if-then-else</td><td>❌ 测后塌缩</td><td>中间不测量,保持叠加到末尾</td></tr>
+            <tr><td><strong>无循环</strong>(no-loops)</td><td>✅ while/for</td><td>❌ 酉无记忆</td><td>量子电路是 DAG</td></tr>
+            <tr><td><strong>Landauer 擦除耗能</strong></td><td>✅ $k_B T \ln 2$</td><td>✅ 测量 + 复位耗能</td><td>酉操作理想不耗能,测量 + 复位耗能</td></tr>
+            <tr><td><strong>门时延</strong></td><td>—</td><td>✅ 有限时间演化</td><td>总时间 = 门数 × 门时延 &lt; 相干时间</td></tr>
+            <tr><td><strong>门错误率</strong></td><td>—</td><td>❌ $F^N$ 指数衰减</td><td>容错阈值 ~99.99%</td></tr>
+            <tr><td><strong>qubit 连通性</strong></td><td>—</td><td>✅ 受限耦合</td><td>SWAP 链布局,layout-aware 算法</td></tr>
+          </tbody>
+        </table>
+
+        <h3>7.12.4 思考题(为 ch08 铺垫)</h3>
+        <ol>
+          <li><strong>基础</strong>(简单):证明 $\hat{H}\hat{X}\hat{H} = \hat{Z}$。</li>
+          <li><strong>基础</strong>(简单):把 $|+\rangle$ 写成 Bloch 球坐标。计算 $\hat{H}|+\rangle$ 的<strong>所有</strong> Bloch 球坐标变化。</li>
+          <li><strong>进阶</strong>(中等):证明 Toffoli 门 = 6 个 CNOT + $\hat{H}, \hat{T}$(提示:用 $\hat{H}\hat{X}\hat{H} = \hat{Z}$ 把 Toffoli 转化)。</li>
+          <li><strong>进阶</strong>(中等):用 Solovay-Kitaev 估算,把 $\hat{R}_z(\pi/100)$ 逼近到 $\epsilon = 10^{-3}$ 需要多少 $\hat{H}, \hat{T}$ 门?</li>
+          <li><strong>挑战</strong>(难):<strong>证明</strong> 任何 2 qubit 酉算符可由 3 个 CNOT + 15 个单 qubit 门实现(Vatan-Williams 2004 的构造)。</li>
+        </ol>
+
+        <h3>7.12.5 为后续章节铺路</h3>
+        <table class="concept-table">
+          <thead>
+            <tr><th>后续章节</th><th>用到本章的什么</th><th>简介</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>ch08 量子电路模型</strong></td><td>$\hat{H}, \hat{T}, \text{CNOT}$ 通用集</td><td>完整的电路数学 + 复杂度类 BQP</td></tr>
+            <tr><td><strong>ch09 QFT</strong></td><td>$\hat{H}, \text{C-}R_k$ 受控相位门</td><td>QFT 电路实现,Shor 算法核心</td></tr>
+            <tr><td><strong>ch10 Grover</strong></td><td>$\hat{H}, X, \text{CZ}$, oracle</td><td>Grover 反射 + 扩散算符</td></tr>
+            <tr><td><strong>ch11 Shor</strong></td><td>QFT + 受控模幂</td><td>量子周期查找的电路</td></tr>
+            <tr><td><strong>ch13 VQE/QAOA</strong></td><td>$\hat{R}_x, \hat{R}_z, \text{CNOT}$</td><td>参数化电路 + 变分原理</td></tr>
+            <tr><td><strong>ch14 量子机器学习</strong></td><td>$\hat{H}, \text{CNOT}, \text{SWAP}$</td><td>量子神经网络 + 量子内核</td></tr>
+            <tr><td><strong>ch17 量子纠错</strong></td><td>Stabilizer (Clifford) + T 门</td><td>表面码 = 大 Clifford + T</td></tr>
+          </tbody>
+        </table>
+
+        <h3>7.12.6 推荐阅读</h3>
+        <ul>
+          <li><strong>Nielsen & Chuang,《Quantum Computation and Quantum Information》</strong> ch4.1-4.5 — 单/多 qubit 门标准入门</li>
+          <li><strong>Mermin,《Quantum Computer Science》</strong> ch3 — 更物理导向</li>
+          <li><strong>A. Barenco et al., Phys. Rev. A 52, 3457 (1995)</strong> — 2 qubit 通用门分解的经典论文</li>
+          <li><strong>C. M. Dawson, M. A. Nielsen,《Quantum Information and Computation》6(1):81-95 (2006)</strong> — Solovay-Kitaev 教程</li>
+          <li><strong>V. V. Shende, I. L. Markov, S. S. Bullock, Phys. Rev. A 69, 062321 (2004)</strong> — 最小 2 qubit 分解</li>
+          <li><strong>D. Gottesman, Phys. Rev. A 57, 127 (1998)</strong> — Stabilizer 形式体系</li>
+        </ul>
+
+        <h3>7.12.7 三个核心问题(章末回顾)</h3>
+        <p><strong>问题 1</strong>: <strong>怎么描述一个量子门?</strong></p>
+        <ul>
+          <li><strong>答</strong>: 用 $2^n \times 2^n$ <strong>酉矩阵</strong> $\hat{U}$($\hat{U}^\dagger \hat{U} = I$)</li>
+          <li><strong>几何</strong>: $n=1$ 时是 Bloch 球上的 3D 旋转(3 个实参数);$n \geq 2$ 时是张量积空间中的"多维旋转"</li>
+        </ul>
+        <p><strong>问题 2</strong>: <strong>怎么"创造"叠加?怎么"创造"纠缠?</strong></p>
+        <ul>
+          <li><strong>答</strong>:
+            <ul>
+              <li><strong>叠加</strong> = Hadamard 门 $\hat{H}$(创造 $|+\rangle$ 等)</li>
+              <li><strong>相位</strong> = $\hat{S}, \hat{T}, \hat{R}_z(\phi)$ 门</li>
+              <li><strong>纠缠</strong> = CNOT 门(配合 $\hat{H}$ 创造 Bell 态)</li>
+              <li><strong>交换</strong> = SWAP 门(配合 CNOT 链)</li>
+              <li><strong>通用经典</strong> = Toffoli / Fredkin 门(可逆经典计算)</li>
+            </ul>
+          </li>
+        </ul>
+        <p><strong>问题 3</strong>: <strong>需要多少门才能逼近"任意"酉算符?</strong></p>
+        <ul>
+          <li><strong>答</strong>: Nielsen-Chuang 定理:<strong>3 个门</strong> $\{\hat{H}, \hat{T}, \text{CNOT}\}$ <strong>通用</strong></li>
+          <li><strong>精度</strong> $10^{-3}$: ~10 个门;<strong>精度</strong> $10^{-6}$: ~100 个门(Solovay-Kitaev)</li>
+        </ul>
+
+        <h3>7.12.8 章末"概念全景图"</h3>
+        <pre><code>               量子门 = 酉算符 Û
+                    │
+     ┌──────────────┼──────────────┐
+     │              │              │
+ 单 qubit 门      多 qubit 门    Clifford vs 非 Clifford
+     │              │              │
+┌────┼────┐    ┌────┼────┐    ┌────┴────┐
+│    │    │    │    │    │    │         │
+Pauli  H  Phase CNOT SWAP Toffoli Clifford  T
+│    │    │    │    │    │    │         │
+X  Y  Z     │   控制 目标   经典     Gottesman-  量子
+           S, T 纠缠 交换 可逆      Knill     优势
+           R_n(θ)               可模拟    来源
+
+几何: Bloch 球上的 3D 旋转(SO(3))
+
+通用集: {H, T, CNOT} ≈ 任何酉算符
+
+物理约束: 无扇出/无反馈/无循环/Landauer</code></pre>
+
+        <!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch06.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 6 章 量子比特 — 量子信息的基本单元</span>
+          </a>
+          <a href="ch08.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 8 章 量子电路的数学模型</span>
+            <span class="pager-tag">即将推出</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
