@@ -110,7 +110,7 @@
       </div>
       <div class="hero-stats">
         <div class="stat-item">
-          <div class="stat-number">12</div>
+          <div class="stat-number">28</div>
           <div class="stat-label">章节</div>
         </div>
         <div class="stat-item">
@@ -181,7 +181,7 @@
         <h2>📑 章节总览</h2>
         <div class="section-divider"></div>
         <p class="section-subtitle">
-          全书共12章，从量子力学的历史出发，涵盖量子计算的全部核心主题
+          全书共 28 章 6 大部分，从量子力学的历史出发，涵盖量子计算的全部核心主题
         </p>
       </div>
 
@@ -266,6 +266,11 @@
           </div>
         </a>
 
+        <!-- ===== 第二部分：量子计算基础 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent-cyan, #00d4ff);">
+          <h3 style="margin:0; color: var(--accent-cyan, #00d4ff);">📐 第二部分：量子计算基础（5 章）</h3>
+        </div>
+
         <!-- Chapter 7 (placeholder) -->
         <div class="chapter-card reveal reveal-delay-1">
           <div class="status-badge status-planned">规划中</div>
@@ -282,11 +287,11 @@
         <div class="chapter-card reveal reveal-delay-2">
           <div class="status-badge status-planned">规划中</div>
           <div class="chapter-number">第 8 章</div>
-          <h3>量子纠错</h3>
-          <p>量子噪声、量子纠错码、表面码与容错量子计算。</p>
+          <h3>量子电路的数学模型</h3>
+          <p>酉变换、张量积线路、可逆计算与通用量子门集的存在性证明。</p>
           <div class="chapter-tags">
-            <span class="tag tag-purple">纠错</span>
-            <span class="tag tag-green">容错</span>
+            <span class="tag tag-purple">电路模型</span>
+            <span class="tag tag-cyan">酉变换</span>
           </div>
         </div>
 
@@ -294,11 +299,11 @@
         <div class="chapter-card reveal reveal-delay-3">
           <div class="status-badge status-planned">规划中</div>
           <div class="chapter-number">第 9 章</div>
-          <h3>量子信息理论</h3>
-          <p>量子熵、量子信道容量、Holevo界与量子密码学。</p>
+          <h3>量子傅里叶变换</h3>
+          <p>QFT 的定义、电路实现、与经典 FFT 的复杂度对比——Shor 算法的核心子程序。</p>
           <div class="chapter-tags">
-            <span class="tag tag-cyan">信息论</span>
-            <span class="tag tag-pink">密码学</span>
+            <span class="tag tag-cyan">QFT</span>
+            <span class="tag tag-purple">算法</span>
           </div>
         </div>
 
@@ -306,23 +311,28 @@
         <div class="chapter-card reveal reveal-delay-1">
           <div class="status-badge status-planned">规划中</div>
           <div class="chapter-number">第 10 章</div>
-          <h3>量子机器学习</h3>
-          <p>量子核方法、变分量子算法、量子神经网络与量子优势。</p>
+          <h3>量子搜索算法 — Grover 算法</h3>
+          <p>无序搜索的平方根加速——振幅放大、几何可视化、复杂度下界证明。</p>
           <div class="chapter-tags">
-            <span class="tag tag-purple">机器学习</span>
-            <span class="tag tag-cyan">VQE</span>
+            <span class="tag tag-pink">Grover</span>
+            <span class="tag tag-cyan">振幅放大</span>
           </div>
+        </div>
+
+        <!-- ===== 第三部分：量子算法与复杂性 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent-purple, #7c3aed);">
+          <h3 style="margin:0; color: var(--accent-purple, #7c3aed);">🧮 第三部分：量子算法与复杂性（5 章）</h3>
         </div>
 
         <!-- Chapter 11 (placeholder) -->
         <div class="chapter-card reveal reveal-delay-2">
           <div class="status-badge status-planned">规划中</div>
           <div class="chapter-number">第 11 章</div>
-          <h3>量子硬件与实现</h3>
-          <p>超导量子比特、离子阱、拓扑量子计算与量子计算物理实现。</p>
+          <h3>Shor 因式分解算法</h3>
+          <p>周期查找 + QFT——经典多项式时间破解 RSA 的量子算法里程碑。</p>
           <div class="chapter-tags">
-            <span class="tag tag-green">硬件</span>
-            <span class="tag tag-purple">物理实现</span>
+            <span class="tag tag-pink">Shor</span>
+            <span class="tag tag-cyan">密码学</span>
           </div>
         </div>
 
@@ -330,11 +340,218 @@
         <div class="chapter-card reveal reveal-delay-3">
           <div class="status-badge status-planned">规划中</div>
           <div class="chapter-number">第 12 章</div>
-          <h3>前沿与展望</h3>
-          <p>量子优势的最新进展、量子互联网、量子传感与未来方向。</p>
+          <h3>量子相位估计</h3>
+          <p>QPE 算法——许多量子算法的核心子程序（隐含子群、量子化学模拟）。</p>
           <div class="chapter-tags">
-            <span class="tag tag-pink">前沿</span>
-            <span class="tag tag-cyan">展望</span>
+            <span class="tag tag-purple">QPE</span>
+            <span class="tag tag-cyan">算法</span>
+          </div>
+        </div>
+
+        <!-- Chapter 13 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 13 章</div>
+          <h3>变分量子算法 (VQE / QAOA)</h3>
+          <p>近term 量子优势：参数化线路 + 经典优化——VQE、QAOA 与量子化学应用。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">VQE</span>
+            <span class="tag tag-purple">QAOA</span>
+          </div>
+        </div>
+
+        <!-- Chapter 14 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 14 章</div>
+          <h3>量子机器学习</h3>
+          <p>量子核方法、量子神经网络、变分量子分类器——NISQ 时代的 ML。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">QML</span>
+            <span class="tag tag-cyan">量子优势</span>
+          </div>
+        </div>
+
+        <!-- Chapter 15 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 15 章</div>
+          <h3>量子复杂性理论</h3>
+          <p>BQP、QMA、量子查询模型与复杂性类的层级——量子计算的理论极限。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">复杂性</span>
+            <span class="tag tag-cyan">BQP</span>
+          </div>
+        </div>
+
+        <!-- ===== 第四部分：量子纠错与容错 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent-green, #10b981);">
+          <h3 style="margin:0; color: var(--accent-green, #10b981);">🛡 第四部分：量子纠错与容错（4 章）</h3>
+        </div>
+
+        <!-- Chapter 16 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 16 章</div>
+          <h3>量子噪声与退相干</h3>
+          <p>量子信道、Pauli 错误模型、退相干时间 T1/T2——NISQ 设备的物理瓶颈。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">噪声</span>
+            <span class="tag tag-pink">退相干</span>
+          </div>
+        </div>
+
+        <!-- Chapter 17 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 17 章</div>
+          <h3>量子纠错码 — Shor 码、Steane 码</h3>
+          <p>经典纠错回顾、量子纠错的不可能定理、Shor 9 量子比特码与 Steane 7 量子比特码。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-purple">纠错码</span>
+            <span class="tag tag-green">稳定子</span>
+          </div>
+        </div>
+
+        <!-- Chapter 18 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 18 章</div>
+          <h3>表面码与拓扑量子计算</h3>
+          <p>表面码、拓扑保护、任意子与拓扑量子计算——通向容错的工程路径。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">表面码</span>
+            <span class="tag tag-cyan">拓扑</span>
+          </div>
+        </div>
+
+        <!-- Chapter 19 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 19 章</div>
+          <h3>容错量子计算</h3>
+          <p>容错阈值定理、magic state distillation、容错线路——让大规模量子计算成为可能。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">容错</span>
+            <span class="tag tag-purple">阈值</span>
+          </div>
+        </div>
+
+        <!-- ===== 第五部分：量子硬件 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent-pink, #ec4899);">
+          <h3 style="margin:0; color: var(--accent-pink, #ec4899);">⚙ 第五部分：量子硬件（5 章）</h3>
+        </div>
+
+        <!-- Chapter 20 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 20 章</div>
+          <h3>超导量子比特</h3>
+          <p>transmon、coplanar waveguide、稀释制冷机——IBM / Google 主流量子硬件路线。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">超导</span>
+            <span class="tag tag-purple">transmon</span>
+          </div>
+        </div>
+
+        <!-- Chapter 21 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 21 章</div>
+          <h3>离子阱量子计算机</h3>
+          <p>Paul 阱、激光冷却、模态耦合——IonQ / Quantinuum 的高保真度路线。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">离子阱</span>
+            <span class="tag tag-cyan">高保真</span>
+          </div>
+        </div>
+
+        <!-- Chapter 22 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 22 章</div>
+          <h3>光量子计算</h3>
+          <p>光子的偏振/路径编码、KLM 方案、玻色采样——Xanadu / PsiQuantum 路线。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">光量子</span>
+            <span class="tag tag-purple">玻色采样</span>
+          </div>
+        </div>
+
+        <!-- Chapter 23 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 23 章</div>
+          <h3>拓扑量子计算</h3>
+          <p>Majorana 费米子、拓扑保护、Microsoft Station Q 路线——天然容错的愿景。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">拓扑</span>
+            <span class="tag tag-pink">Majorana</span>
+          </div>
+        </div>
+
+        <!-- Chapter 24 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 24 章</div>
+          <h3>中性原子量子计算机</h3>
+          <p>光镊阵列、Rydberg 阻塞、可重构原子阵列——QuEra / Pasqal 的新兴路线。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">中性原子</span>
+            <span class="tag tag-purple">Rydberg</span>
+          </div>
+        </div>
+
+        <!-- ===== 第六部分：前沿与展望 ===== -->
+        <div class="part-header" style="grid-column: 1 / -1; margin: 32px 0 8px; padding-left: 8px; border-left: 3px solid var(--accent-pink, #ec4899);">
+          <h3 style="margin:0; color: var(--accent-pink, #ec4899);">🔭 第六部分：前沿与展望（4 章）</h3>
+        </div>
+
+        <!-- Chapter 25 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 25 章</div>
+          <h3>量子优势与量子霸权</h3>
+          <p>随机线路采样、玻色采样、量子优势的严格定义与争议——Sycamore/九章路线。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">量子优势</span>
+            <span class="tag tag-cyan">Sycamore</span>
+          </div>
+        </div>
+
+        <!-- Chapter 26 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-2">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 26 章</div>
+          <h3>量子互联网与量子通信</h3>
+          <p>量子隐形传态、量子中继器、量子密钥分发 (QKD)——未来的量子网络基础设施。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-cyan">量子互联网</span>
+            <span class="tag tag-purple">QKD</span>
+          </div>
+        </div>
+
+        <!-- Chapter 27 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-3">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 27 章</div>
+          <h3>量子计算与 AI 的融合</h3>
+          <p>量子-经典混合算法、量子强化学习、用 AI 设计量子线路——双向赋能。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-pink">量子 AI</span>
+            <span class="tag tag-cyan">融合</span>
+          </div>
+        </div>
+
+        <!-- Chapter 28 (placeholder) -->
+        <div class="chapter-card reveal reveal-delay-1">
+          <div class="status-badge status-planned">规划中</div>
+          <div class="chapter-number">第 28 章</div>
+          <h3>量子计算的未来展望</h3>
+          <p>通用容错量子计算机的时间表、产业化路径、量子计算对社会的影响。</p>
+          <div class="chapter-tags">
+            <span class="tag tag-green">未来</span>
+            <span class="tag tag-purple">展望</span>
           </div>
         </div>
       </div>
@@ -404,7 +621,7 @@
             <span class="percentage">100%</span>
           </div>
           <div class="progress-item">
-            <span class="label">第7-12章</span>
+            <span class="label">第7-28章</span>
             <div class="bar-track">
               <div class="bar-fill" data-progress="0"></div>
             </div>

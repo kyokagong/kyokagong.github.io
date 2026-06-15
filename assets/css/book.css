@@ -1169,6 +1169,126 @@ img {
   flex-direction: row-reverse;
 }
 
+/* ---------- Chapter pager (新一代分页导航，class="chapter-pager") ---------- */
+/*  使用类名：chapter-pager / pager-link / pager-prev / pager-next
+    内部：.pager-label（小标）/ .pager-title（章名）/ .pager-tag（徽标） */
+/*  注意：本样式与上面的 .chapter-nav 兼容，HTML 选哪个类名都行。 */
+.chapter-pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 16px;
+  margin: 56px 0 8px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+  max-width: 100%;
+}
+
+.pager-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 48%;
+  padding: 16px 20px;
+  border-radius: var(--radius-md, 12px);
+  background: var(--bg-glass, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border-glass, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #e2e8f0);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pager-link:hover {
+  background: var(--bg-glass-hover, rgba(255, 255, 255, 0.08));
+  border-color: var(--border-accent, rgba(0, 212, 255, 0.4));
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.pager-next {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.pager-prev {
+  align-items: flex-start;
+}
+
+.pager-link .pager-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-cyan, #00d4ff);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.pager-link .pager-title {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary, #e2e8f0);
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.pager-link .pager-tag {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted, #94a3b8);
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  letter-spacing: 0.05em;
+}
+
+/* disabled 状态：下一章未发布 */
+.pager-link.pager-disabled,
+.pager-link[aria-disabled="true"] {
+  opacity: 0.4;
+  pointer-events: none;
+  background: transparent;
+  border-style: dashed;
+}
+
+.pager-link.pager-disabled:hover,
+.pager-link[aria-disabled="true"]:hover {
+  transform: none;
+  box-shadow: none;
+  background: transparent;
+  border-color: var(--border-glass, rgba(255, 255, 255, 0.08));
+}
+
+/* 当只有 disabled 的另一侧时，让有效的一侧占满 */
+.chapter-pager:has(.pager-disabled:only-child) {
+  justify-content: flex-end;
+}
+
+/* 移动端：竖排 */
+@media (max-width: 640px) {
+  .chapter-pager {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pager-link {
+    max-width: 100%;
+  }
+  .pager-next {
+    text-align: left;
+    align-items: flex-start;
+  }
+  .pager-link .pager-title {
+    font-size: 0.9rem;
+  }
+}
+
 /* ---------- Footer ---------- */
 .site-footer {
   background: var(--bg-secondary);
