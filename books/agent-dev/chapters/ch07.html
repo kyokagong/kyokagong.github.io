@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第7章：Function Calling / Tool Use | 《AGENT开发从入门到精通》">
+
+  <title>第7章：Function Calling / Tool Use | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    /* ch07 特定样式：Tool Use 协议时序图 */
+    .protocol-svg {
+      background: linear-gradient(135deg, rgba(192,38,211,0.08), rgba(249,115,22,0.08));
+      border: 1px solid rgba(192,38,211,0.3);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      text-align: center;
+    }
+    .protocol-svg svg {
+      max-width: 100%;
+      height: auto;
+    }
+    /* 3 家协议代码块不同左边框色 */
+    .chapter-content pre code.language-openai {
+      border-left: 3px solid #22c55e;
+    }
+    .chapter-content pre code.language-anthropic {
+      border-left: 3px solid #a855f7;
+    }
+    .chapter-content pre code.language-google {
+      border-left: 3px solid #3b82f6;
+    }
+    /* 表格加 hover 高亮 */
+    .chapter-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+    }
+    .chapter-content table th {
+      background: rgba(192,38,211,0.15);
+      color: #c026d3;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 2px solid rgba(192,38,211,0.3);
+    }
+    .chapter-content table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .chapter-content table tr:hover td {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: rgba(192,38,211,0.08);
+      padding: 12px 20px;
+      margin: 16px 0;
+      color: rgba(241,245,249,0.9);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==================== HEADER (复用 ch05/06 模板) ==================== -->
+  <header class="site-header">
+    <div class="header-content">
+      <a href="../../index.html" class="logo">
+        <span class="logo-icon">🤖</span>
+        <span class="logo-text">AGENT开发从入门到精通</span>
+      </a>
+      <nav class="header-nav">
+        <a href="../../index.html">书库首页</a>
+        <a href="../index.html">本书目录</a>
+        <a href="ch01.html">第1章</a>
+        <a href="ch02.html">第2章</a>
+        <a href="ch03.html">第3章</a>
+        <a href="ch04.html">第4章</a>
+        <a href="ch05.html">第5章</a>
+        <a href="ch06.html">第6章</a>
+        <a href="ch07.html" class="active">第7章</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==================== CHAPTER HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="chapter-hero-content">
+      <div class="chapter-badge">第二部分 · 核心技术 · 第 7 章</div>
+      <h1 class="chapter-title">第 7 章：Function Calling / Tool Use</h1>
+      <p class="chapter-subtitle">OpenAI Tools API · Anthropic Tool Use · Google Function Calling</p>
+      <div class="chapter-meta">
+        <span class="meta-item">📖 ~6,000 中文字</span>
+        <span class="meta-item">💻 5 个 Python 示例</span>
+        <span class="meta-item">📊 13 张主表</span>
+        <span class="meta-item">🎨 1 张协议时序 SVG</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 顶部协议时序图 -->
+  <div class="protocol-svg">
+  <svg viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="protoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#c026d3"/>
+        <stop offset="100%" stop-color="#f97316"/>
+      </linearGradient>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#c026d3"/>
+      </marker>
+    </defs>
+    <text x="380" y="30" text-anchor="middle" fill="#f1f5f9" font-family="Noto Sans SC" font-size="20" font-weight="700">🔌 Tool Use 协议调用时序</text>
+    <text x="380" y="52" text-anchor="middle" fill="rgba(241,245,249,0.6)" font-family="Noto Sans SC" font-size="12">5 步循环：LLM → SDK → 业务执行 → 回传 → 总结</text>
+
+    <!-- 5 nodes: LLM / SDK / Business / Result / Summary -->
+    <g>
+      <rect x="40" y="100" width="120" height="60" rx="8" fill="rgba(192,38,211,0.15)" stroke="url(#protoGrad)" stroke-width="2"/>
+      <text x="100" y="125" text-anchor="middle" fill="#f1f5f9" font-family="JetBrains Mono" font-size="13" font-weight="700">🧠 LLM 大脑</text>
+      <text x="100" y="145" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="11">读 system + tools</text>
+
+      <rect x="200" y="100" width="120" height="60" rx="8" fill="rgba(192,38,211,0.15)" stroke="url(#protoGrad)" stroke-width="2"/>
+      <text x="260" y="125" text-anchor="middle" fill="#f1f5f9" font-family="JetBrains Mono" font-size="13" font-weight="700">📡 SDK 协议层</text>
+      <text x="260" y="145" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="11">OpenAI / Anthropic / Google</text>
+
+      <rect x="360" y="100" width="120" height="60" rx="8" fill="rgba(192,38,211,0.15)" stroke="url(#protoGrad)" stroke-width="2"/>
+      <text x="420" y="125" text-anchor="middle" fill="#f1f5f9" font-family="JetBrains Mono" font-size="13" font-weight="700">⚙️ 业务函数</text>
+      <text x="420" y="145" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="11">get_weather() / db.query()</text>
+
+      <rect x="520" y="100" width="120" height="60" rx="8" fill="rgba(192,38,211,0.15)" stroke="url(#protoGrad)" stroke-width="2"/>
+      <text x="580" y="125" text-anchor="middle" fill="#f1f5f9" font-family="JetBrains Mono" font-size="13" font-weight="700">📤 回传结果</text>
+      <text x="580" y="145" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="11">role:tool / tool_result</text>
+
+      <rect x="40" y="200" width="600" height="60" rx="8" fill="rgba(249,115,22,0.12)" stroke="#f97316" stroke-width="2"/>
+      <text x="340" y="225" text-anchor="middle" fill="#f1f5f9" font-family="JetBrains Mono" font-size="13" font-weight="700">💬 LLM 总结：自然语言回复用户</text>
+      <text x="340" y="245" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="11">finish_reason="stop" / stop_reason="end_turn"</text>
+
+      <!-- 5 arrows: 1 LLM→SDK, 2 SDK→Func, 3 Func→Result, 4 Result→LLM, 5 LLM→Summary -->
+      <line x1="160" y1="130" x2="200" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arr)"/>
+      <text x="180" y="120" text-anchor="middle" fill="#c026d3" font-family="JetBrains Mono" font-size="10">①</text>
+
+      <line x1="320" y1="130" x2="360" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arr)"/>
+      <text x="340" y="120" text-anchor="middle" fill="#c026d3" font-family="JetBrains Mono" font-size="10">②</text>
+
+      <line x1="480" y1="130" x2="520" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arr)"/>
+      <text x="500" y="120" text-anchor="middle" fill="#c026d3" font-family="JetBrains Mono" font-size="10">③</text>
+
+      <!-- curved return arrow -->
+      <path d="M 580 160 Q 580 180 580 180 L 100 180 Q 100 180 100 160" fill="none" stroke="#f97316" stroke-width="2" marker-end="url(#arr)"/>
+      <text x="340" y="172" text-anchor="middle" fill="#f97316" font-family="JetBrains Mono" font-size="10">④ 回 LLM</text>
+
+      <line x1="100" y1="200" x2="100" y2="160" stroke="#c026d3" stroke-width="2" marker-end="url(#arr)"/>
+      <text x="115" y="180" text-anchor="middle" fill="#c026d3" font-family="JetBrains Mono" font-size="10">⑤</text>
+
+      <!-- 3 vendor differences -->
+      <rect x="40" y="290" width="220" height="60" rx="8" fill="rgba(34,197,94,0.08)" stroke="#22c55e" stroke-width="1"/>
+      <text x="150" y="312" text-anchor="middle" fill="#22c55e" font-family="JetBrains Mono" font-size="12" font-weight="700">🟢 OpenAI</text>
+      <text x="150" y="332" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="10">role:"tool" / tool_call_id</text>
+
+      <rect x="270" y="290" width="220" height="60" rx="8" fill="rgba(168,85,247,0.08)" stroke="#a855f7" stroke-width="1"/>
+      <text x="380" y="312" text-anchor="middle" fill="#a855f7" font-family="JetBrains Mono" font-size="12" font-weight="700">🟣 Anthropic</text>
+      <text x="380" y="332" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="10">role:"user" / content:[{tool_result}]</text>
+
+      <rect x="500" y="290" width="220" height="60" rx="8" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="1"/>
+      <text x="610" y="312" text-anchor="middle" fill="#3b82f6" font-family="JetBrains Mono" font-size="12" font-weight="700">🔵 Google</text>
+      <text x="610" y="332" text-anchor="middle" fill="rgba(241,245,249,0.7)" font-family="Noto Sans SC" font-size="10">parts:[{function_response}] / 无 ID</text>
+    </g>
+  </svg>
+</div>
+
+  <!-- ==================== CHAPTER CONTENT ==================== -->
+  <article class="chapter-content">
+<blockquote>第 6 章我们把 system prompt 写成了"5 大结构块"，其中第 3 块"工具描述"占了 ~30% 的篇幅——这是 Agent 能"调用工具"的根基。但**光有工具描述还不够**。当 LLM 读完 system prompt 决定要调用 `get_weather(city=北京)` 时，它要把这个决定**编码成一个协议层的请求**，你的代码要能**解析这个请求**、**真的去查天气**、**把结果按协议层回传给 LLM**。这整套"LLM ↔ 你的代码 ↔ 真实世界"之间的通信规则，就是本章要讲的**Function Calling / Tool Use**。我们会看 **OpenAI Tools API、Anthropic Tool Use、Google Gemini Function Calling** 三家协议的具体字段、JSON Schema 高级模式、5 大错误处理模式、以及流式 tool calls 的实战。读完这章你就能写一个**真正能调通工具**的 Agent——不是伪代码，是能跑的代码。</blockquote>
+<hr>
+<h2 id="section-5">7.1 引子：从"function call"到"tool use"</h2>
+<p>2023 年 6 月，OpenAI 在 GPT-4 和 GPT-3.5-turbo 上推出了一个**让 LLM 能"算"的功能**——`function calling`。之前的 LLM 只会生成文本：你问"3.14 × 2.71 等于多少？"，它会编一个答案（经常错）。推出 `function calling` 之后，LLM 不直接回答，而是**输出一个结构化的函数调用请求**：</p>
+<pre><code class="language-json">{
+  "name": "calculate",
+  "arguments": "{\"x\": 3.14, \"y\": 2.71}"
+}</code></pre>
+<p>你的代码**真的去调 `calculate(3.14, 2.71)`**——拿到准确答案 8.5104——再**把这个数字回传给 LLM**，让它用自然语言回复用户。**这就是 Function Calling 的本质**：LLM 不再"假装计算"，而是**输出调用意图**，让真实代码去执行。</p>
+<h3 id="h-18">7.1.1 2023-2025 三家协议命名演进</h3>
+<table><tr><th>时间</th><th>厂商</th><th>事件</th><th>命名</th></tr><tr><td>2023-06</td><td>OpenAI</td><td>首发</td><td>`function calling` + `functions` 字段</td></tr><tr><td>2023-11</td><td>Anthropic</td><td>Claude 2.1 首发</td><td>`tool use`（一开始就叫 tool）</td></tr><tr><td>2024-04</td><td>Google</td><td>Gemini 1.5 首发</td><td>`function calling`（沿用 OpenAI 命名）</td></tr><tr><td>2024-06</td><td>OpenAI</td><td>升级</td><td>`functions` → `tools`（命名向 Anthropic 看齐，伴随 `gpt-4o-2024-05-13` 一起发布）</td></tr><tr><td>2024-08</td><td>OpenAI</td><td>升级</td><td>`parallel_tool_calls` 默认开启</td></tr><tr><td>2024-10</td><td>Anthropic</td><td>升级</td><td>`tool_choice` 强制可指定</td></tr><tr><td>2025-04</td><td>Google</td><td>升级</td><td>Gemini 2.0 引入动态 `function calling`</td></tr><tr><td>2025-06</td><td>OpenAI</td><td>升级</td><td>`tools` 字段强制，`functions` 字段废弃</td></tr></table>
+<p>**关键观察**：OpenAI 原本用 "function"，2024 年改叫 "tool"——这是向 Anthropic 的市场妥协（"tool" 更通用，函数只是工具的一种）。**到 2025 年中，三家都叫 "tool"**——这是协议层趋同的标志。本章统一用 **"tool use" / "tool calling"** 这两个术语。</p>
+<h3 id="h-33">7.1.3 为什么 Function Calling 改变了 LLM 的能力边界</h3>
+<p>在 Function Calling 出现之前（2023-06 之前），LLM 是**纯文本生成器**——你说"3.14 × 2.71 等于多少"，它会编一个答案（经常错）。Function Calling 出现之后，LLM 有了**3 个新的能力**：</p>
+<table><tr><th>能力</th><th>之前（纯文本）</th><th>之后（Function Calling）</th><th>真实场景</th></tr><tr><td>**算术**</td><td>编答案（错）</td><td>调 `calculate(x, y)` 返回准确值</td><td>财务计算、单位换算</td></tr><tr><td>**实时信息**</td><td>幻觉（"2024 年奥运会在巴黎"——2024 还真有）</td><td>调 `get_current_date()` / `get_news()`</td><td>实时天气、新闻、股价</td></tr><tr><td>**操作外部系统**</td><td>只能"说"</td><td>调 `send_email()` / `create_order()`</td><td>客服自动退款、运维脚本</td></tr></table>
+<p>**关键洞察**：**Function Calling 把 LLM 从"知识库 + 文本生成器"升级成了"调度器 + 控制器"**。它不再"知道答案"，而是"知道该调什么工具"——这是 Agent 能"做事"的根本原因。</p>
+<p>**2024-2025 业界共识**：**没有 Function Calling 就没有 Agent**。所有 Agent 框架（LangGraph / AutoGen / CrewAI / OpenAI Agents SDK）的底层都依赖 tool use 协议——ch04 学的 7 个框架只是"对 tool use 协议的不同封装"。</p>
+<h3 id="h-47">7.1.2 三家协议定位对比</h3>
+<table><tr><th>维度</th><th>OpenAI Tools API</th><th>Anthropic Tool Use</th><th>Google Function Calling</th></tr><tr><td>**首发时间**</td><td>2023-06</td><td>2023-11</td><td>2024-04</td></tr><tr><td>**字段位置**</td><td>`tools`（顶层）</td><td>`tools`（顶层）</td><td>`tools`（顶层）</td></tr><tr><td>**JSON Schema**</td><td>自定义子集（不支持 `$ref`）</td><td>完整支持</td><td>完整支持</td></tr><tr><td>**并行调用**</td><td>默认支持</td><td>支持</td><td>支持</td></tr><tr><td>**流式**</td><td>支持（2024+）</td><td>支持（2024+）</td><td>支持</td></tr><tr><td>**思考模型适配**</td><td>o1/o3 系列</td><td>Claude 3.7 Sonnet (thinking)</td><td>Gemini 2.0 Flash Thinking</td></tr><tr><td>**市场地位**</td><td>行业事实标准</td><td>严谨，企业级</td><td>性价比，免费层厚</td></tr></table>
+<p>**这一章就是把这张表展开成 12 维详细对比 + 实战代码**。</p>
+<blockquote>**关键概念摘要**：<br>- Function Calling 是 LLM **输出调用意图**、代码**实际执行**的协议<br>- 2025 年三家协议趋同：都叫 "tool"、都用 JSON Schema、都支持并行和流式<br>- 协议层 = system prompt 中"工具描述"的**配套标准**——描述说什么，协议管怎么传</blockquote>
+<hr>
+<h2 id="section-68">7.2 OpenAI Tools API 全景</h2>
+<p>OpenAI 的 Tool Use（2025 年最新）通过 `tools` 字段声明工具、`tool_choice` 控制选择策略、`parallel_tool_calls` 控制是否并行。响应中 LLM 用 `finish_reason="tool_calls"` + `message.tool_calls` 数组告诉你"我要调这些函数"。</p>
+<h3 id="h-72">7.2.1 完整请求结构</h3>
+<pre><code class="language-python">from openai import OpenAI
+
+client = OpenAI()
+
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": "你是一个天气助手"},
+        {"role": "user",   "content": "北京今天天气怎么样？"}
+    ],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "get_weather",
+                "description": "查询指定城市的当前天气",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {
+                            "type": "string",
+                            "description": "城市名，如 '北京'、'上海'"
+                        },
+                        "unit": {
+                            "type": "string",
+                            "enum": ["celsius", "fahrenheit"],
+                            "description": "温度单位"
+                        }
+                    },
+                    "required": ["city"]
+                }
+            }
+        }
+    ],
+    tool_choice="auto",          # "auto" | "none" | "required" | {"type": "function", "function": {"name": "..."}}
+    parallel_tool_calls=True,    # 允许一次返回多个 tool_calls
+)</code></pre>
+<p>**4 个关键参数**：</p>
+<ul><li>`tools`：JSON Schema 数组，每个 tool 一个对象</li><li>`tool_choice`：`auto`（LLM 决定） / `none`（禁止调用） / `required`（必须调一个） / 指定具体函数</li><li>`parallel_tool_calls`：是否允许一次输出多个 tool_call</li><li>`messages`：标准多轮对话结构</li></ul>
+<h3 id="h-120">7.2.2 完整响应结构</h3>
+<pre><code class="language-python"># response.choices[0].finish_reason == "tool_calls"
+# response.choices[0].message.tool_calls == [
+#     {
+#         "id": "call_abc123",
+#         "type": "function",
+#         "function": {
+#             "name": "get_weather",
+#             "arguments": '{"city": "北京", "unit": "celsius"}'
+#         }
+#     }
+# ]</code></pre>
+<p>**5 个关键字段**：</p>
+<ul><li>`finish_reason = "tool_calls"`：告诉你"我决定要调工具，不是在正常聊天"</li><li>`tool_calls[].id`：每个调用的唯一 ID，**回传结果时要用这个 ID 配对**</li><li>`tool_calls[].function.name`：函数名</li><li>`tool_calls[].function.arguments`：参数（**JSON 字符串**，不是 dict）</li><li>`tool_calls[].type`：固定 `"function"`</li></ul>
+<h3 id="h-143">7.2.3 完整实战代码（OpenAI hello world）</h3>
+<pre><code class="language-python">"""
+OpenAI Tools API hello world——一个能"查天气" + "发提醒"的 Agent。
+可运行（mock LLM 模式），实际使用替换 client 即可。
+"""
+import json
+from typing import Any
+from openai import OpenAI
+
+# ---------- 1. 真实业务函数 ----------
+def get_weather(city: str, unit: str = "celsius") -&gt; dict:
+    """查询天气（真实场景调 API，这里 mock）"""
+    return {"city": city, "temp": 18, "unit": unit, "condition": "有雨"}
+
+def send_reminder(content: str) -&gt; dict:
+    """发提醒（真实场景调推送服务，这里 mock）"""
+    return {"status": "已加入日历", "content": content}
+
+# ---------- 2. 工具 Schema（OpenAI 格式）----------
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "查询指定城市的当前天气",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city":  {"type": "string", "description": "城市名"},
+                    "unit":  {"type": "string", "enum": ["celsius", "fahrenheit"]}
+                },
+                "required": ["city"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "send_reminder",
+            "description": "向用户发送一条提醒（会加入日历）",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "提醒内容"}
+                },
+                "required": ["content"]
+            }
+        }
+    }
+]
+
+# ---------- 3. 工具执行映射 ----------
+AVAILABLE_FUNCS = {
+    "get_weather":  get_weather,
+    "send_reminder": send_reminder,
+}
+
+# ---------- 4. 主循环 ----------
+def run_agent(user_query: str) -&gt; str:
+    client = OpenAI()  # 真实场景用 api_key 初始化
+    messages = [
+        {"role": "system", "content": "你是天气助手，查到天气后给用户提醒。"},
+        {"role": "user",   "content": user_query}
+    ]
+
+    for step in range(5):  # 最多 5 轮工具调用
+        resp = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            tools=TOOLS,
+            tool_choice="auto",
+        )
+        msg = resp.choices[0].message
+
+        # 终态：LLM 给最终答案
+        if msg.content and not msg.tool_calls:
+            return msg.content
+
+        # 工具调用：执行 → 把结果塞回 messages
+        messages.append(msg)  # 追加 assistant 消息（含 tool_calls）
+        for tool_call in msg.tool_calls:
+            func_name = tool_call.function.name
+            func_args = json.loads(tool_call.function.arguments)
+            result = AVAILABLE_FUNCS[func_name](**func_args)
+            # 把结果作为 "tool" role 消息塞回
+            messages.append({
+                "role": "tool",
+                "tool_call_id": tool_call.id,
+                "content": json.dumps(result, ensure_ascii=False)
+            })
+
+    return "[max steps reached]"
+
+# ---------- 5. 测试 ----------
+if __name__ == "__main__":
+    print(run_agent("查下北京天气"))</code></pre>
+<p>**4 个关键步骤**：</p>
+<ul><li>**声明** `TOOLS` 数组（JSON Schema）</li><li>**调用** API，传 `tools` + `tool_choice="auto"`</li><li>**判断** `finish_reason`：是 `"tool_calls"` 就执行工具，是 `"stop"` 就拿到最终答案</li><li>**回传**：把工具结果作为 `role="tool"` 消息塞回 `messages` 数组，**带 `tool_call_id` 配对**</li></ul>
+<blockquote>**关键概念摘要**：<br>- OpenAI 协议核心：`tools` 字段 + `tool_calls` 响应 + `role="tool"` 回传<br>- `tool_call_id` 必须配对——LLM 一次可能调多个工具，每个 ID 唯一<br>- `arguments` 是 JSON 字符串，要 `json.loads` 解析</blockquote>
+<hr>
+<h2 id="section-256">7.3 Anthropic Tool Use 全景</h2>
+<p>Anthropic 的 Tool Use（从 2023-11 Claude 2.1 开始就是这个名字，**比 OpenAI 早用 "tool" 一词**）结构上和 OpenAI 很像，但有三个**关键差异**：</p>
+<ul><li>**工具位置不同**：OpenAI 用 `messages` 外的 `tools` 字段；Anthropic 的 `tools` 也在顶层，但**响应里工具调用是一个 `content` block**（不是单独的 `tool_calls` 数组）</li><li>**system prompt 位置**：OpenAI 的 system 是 `messages` 的第一条；Anthropic 的 system 是**独立的 `system` 字段**（在 `messages` 外）</li><li>**`stop_reason` 命名**：OpenAI 用 `"tool_calls"`，Anthropic 用 `"tool_use"`</li></ul>
+<h3 id="h-264">7.3.1 完整请求结构</h3>
+<pre><code class="language-python">import anthropic
+
+client = anthropic.Anthropic()
+
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=1024,
+    system="你是一个天气助手",        # ← 注意：system 是独立字段，不在 messages 里
+    tools=[
+        {
+            "name": "get_weather",
+            "description": "查询指定城市的当前天气",
+            "input_schema": {           # ← 注意：参数叫 input_schema，不是 parameters
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string", "description": "城市名"},
+                    "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+                },
+                "required": ["city"]
+            }
+        }
+    ],
+    messages=[
+        {"role": "user", "content": "北京今天天气怎么样？"}
+    ]
+)</code></pre>
+<p>**3 个关键差异（vs OpenAI）**：</p>
+<ul><li>`system` 是**独立字段**（不在 `messages` 数组里）</li><li>参数叫 `input_schema`（不是 `parameters`）</li><li>工具没有 `type: "function"` 外层（直接 `name` + `description` + `input_schema`）</li></ul>
+<h3 id="h-300">7.3.2 完整响应结构</h3>
+<pre><code class="language-python"># response.stop_reason == "tool_use"
+# response.content == [
+#     {"type": "text",      "text": "让我查一下北京天气"},
+#     {"type": "tool_use",  "id": "toolu_abc123", "name": "get_weather", "input": {"city": "北京"}}
+# ]</code></pre>
+<p>**Anthropic 响应特点**：`content` 是一个**多类型 block 数组**，可以同时包含 `text`（文字）和 `tool_use`（工具调用）。这意味着**LLM 可以一边说"我先查一下"一边调用工具**——OpenAI 只能要么纯文字、要么纯 tool_call（除非 `content: null` + `tool_calls: [...]`）。</p>
+<h3 id="h-312">7.3.3 完整实战代码（Anthropic hello world）</h3>
+<pre><code class="language-python">"""
+Anthropic Tool Use hello world——和 7.2.3 同样业务，对照展示协议差异。
+"""
+import json
+import anthropic
+
+# ---------- 1. 真实业务函数（与 7.2.3 同） ----------
+def get_weather(city: str, unit: str = "celsius") -&gt; dict:
+    return {"city": city, "temp": 18, "unit": unit, "condition": "有雨"}
+
+def send_reminder(content: str) -&gt; dict:
+    return {"status": "已加入日历", "content": content}
+
+# ---------- 2. 工具 Schema（Anthropic 格式）----------
+TOOLS = [
+    {
+        "name": "get_weather",
+        "description": "查询指定城市的当前天气",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "city": {"type": "string", "description": "城市名"},
+                "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+            },
+            "required": ["city"]
+        }
+    },
+    {
+        "name": "send_reminder",
+        "description": "向用户发送一条提醒（会加入日历）",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "content": {"type": "string", "description": "提醒内容"}
+            },
+            "required": ["content"]
+        }
+    }
+]
+
+AVAILABLE_FUNCS = {"get_weather": get_weather, "send_reminder": send_reminder}
+
+# ---------- 3. 主循环 ----------
+def run_agent(user_query: str) -&gt; str:
+    client = anthropic.Anthropic()
+    messages = [{"role": "user", "content": user_query}]
+
+    for step in range(5):
+        resp = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1024,
+            system="你是天气助手，查到天气后给用户提醒。",
+            tools=TOOLS,
+            messages=messages,
+        )
+
+        # 终态：stop_reason="end_turn" 或 "stop_sequence"
+        if resp.stop_reason == "end_turn":
+            return "".join(b.text for b in resp.content if b.type == "text")
+
+        # 工具调用：遍历 content blocks
+        if resp.stop_reason == "tool_use":
+            # 追加 assistant 消息（整个 content 数组）
+            messages.append({"role": "assistant", "content": resp.content})
+            # 遍历所有 tool_use blocks
+            tool_results = []
+            for block in resp.content:
+                if block.type == "tool_use":
+                    result = AVAILABLE_FUNCS[block.name](**block.input)
+                    tool_results.append({
+                        "type": "tool_result",
+                        "tool_use_id": block.id,        # ← 配对 ID
+                        "content": json.dumps(result, ensure_ascii=False)
+                    })
+            # 把所有 tool_result 一起作为 user 消息回传
+            messages.append({"role": "user", "content": tool_results})
+
+    return "[max steps reached]"
+
+if __name__ == "__main__":
+    print(run_agent("查下北京天气"))</code></pre>
+<p>**4 个关键差异（vs OpenAI 实现）**：</p>
+<ul><li>`system` 是独立参数，不在 `messages` 数组里</li><li>工具参数叫 `input_schema`（不是 `parameters`）</li><li>响应是 `content` 数组遍历，**不是 `tool_calls` 字段**</li><li>回传工具结果是 `role="user"` + `type="tool_result"` block（OpenAI 是 `role="tool"` 消息）</li></ul>
+<blockquote>**关键概念摘要**：<br>- Anthropic 协议核心：`tools` 字段 + `content` block 数组 + `tool_use` / `tool_result` 配对<br>- **回传工具结果用 `role="user"`**（不是 `role="tool"`）——这点最反直觉<br>- `system` 独立字段——别放错位置</blockquote>
+<hr>
+<h2 id="section-411">7.4 Google Gemini Function Calling 全景</h2>
+<p>Google 的 Function Calling（2024-04 Gemini 1.5 首发）和 OpenAI 比较像，但有两个**关键差异**：</p>
+<ul><li>**system prompt 用 `system_instruction` 独立字段**（类似 Anthropic）</li><li>**响应/请求都把消息包在 `parts` 数组里**（嵌套更深）</li><li>**工具调用返回是 `functionCall` 对象**，**回传结果是 `functionResponse` 对象**（命名不同）</li></ul>
+<h3 id="h-418">7.4.1 完整请求结构</h3>
+<pre><code class="language-python">import google.generativeai as genai
+
+genai.configure(api_key="YOUR_KEY")
+model = genai.GenerativeModel(
+    model_name="gemini-2.0-flash",
+    system_instruction="你是一个天气助手",  # ← 类似 Anthropic，system 独立
+    tools=[
+        {
+            "function_declarations": [   # ← 注意：外面包一层 function_declarations
+                {
+                    "name": "get_weather",
+                    "description": "查询指定城市的当前天气",
+                    "parameters": {       # ← 这里又和 OpenAI 一样叫 parameters
+                        "type": "object",
+                        "properties": {
+                            "city": {"type": "string", "description": "城市名"},
+                            "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+                        },
+                        "required": ["city"]
+                    }
+                }
+            ]
+        }
+    ]
+)
+
+chat = model.start_chat()
+response = chat.send_message("北京今天天气怎么样？")</code></pre>
+<p>**3 个关键差异**：</p>
+<ul><li>`system_instruction` 独立字段</li><li>工具声明**多一层 `function_declarations` 包裹**</li><li>工具参数叫 `parameters`（和 OpenAI 一样）</li></ul>
+<h3 id="h-456">7.4.2 完整响应结构</h3>
+<pre><code class="language-python"># response.candidates[0].content.parts == [
+#     {"function_call": {"name": "get_weather", "args": {"city": "北京"}}}
+# ]</code></pre>
+<p>**Google 响应特点**：工具调用是 `parts` 数组里的一个 `function_call` 对象，没有独立的 `tool_calls` 字段。回传时要构造 `parts: [{"function_response": {...}}]`。</p>
+<h3 id="h-466">7.4.3 完整实战代码（Google hello world）</h3>
+<pre><code class="language-python">"""
+Google Gemini Function Calling hello world——和 7.2.3 / 7.3.3 对照展示协议差异。
+"""
+import json
+import google.generativeai as genai
+
+# ---------- 1. 真实业务函数（同上） ----------
+def get_weather(city: str, unit: str = "celsius") -&gt; dict:
+    return {"city": city, "temp": 18, "unit": unit, "condition": "有雨"}
+
+def send_reminder(content: str) -&gt; dict:
+    return {"status": "已加入日历", "content": content}
+
+AVAILABLE_FUNCS = {"get_weather": get_weather, "send_reminder": send_reminder}
+
+# ---------- 2. 工具 Schema（Google 格式）----------
+TOOLS = [
+    {
+        "function_declarations": [
+            {
+                "name": "get_weather",
+                "description": "查询指定城市的当前天气",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {"type": "string", "description": "城市名"},
+                        "unit": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+                    },
+                    "required": ["city"]
+                }
+            },
+            {
+                "name": "send_reminder",
+                "description": "向用户发送一条提醒（会加入日历）",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"content": {"type": "string"}},
+                    "required": ["content"]
+                }
+            }
+        ]
+    }
+]
+
+# ---------- 3. 主循环 ----------
+def run_agent(user_query: str) -&gt; str:
+    model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction="你是天气助手，查到天气后给用户提醒。",
+        tools=TOOLS,
+    )
+    chat = model.start_chat()
+    resp = chat.send_message(user_query)
+
+    for step in range(5):
+        # 找所有 function_call parts
+        # 注：Google SDK 的 fc.args 是 MapComposite 对象（类似 dict 但不是纯 dict），
+        #     必须用 dict() 转换后才能 ** 解包，否则会报"argument of type MapComposite is not iterable"
+        func_calls = [p.function_call for p in resp.parts if p.function_call]
+        if not func_calls:
+            return resp.text
+
+        # 执行所有函数调用，回传 function_response
+        func_responses = []
+        for fc in func_calls:
+            args = dict(fc.args) if fc.args else {}   # ← dict() 转换 MapComposite
+            result = AVAILABLE_FUNCS[fc.name](**args)
+            func_responses.append({
+                "function_response": {
+                    "name": fc.name,
+                    "response": result   # ← 直接传 dict（不是 JSON 字符串）
+                }
+            })
+        resp = chat.send_message(func_responses)   # ← Google 把 function_response 作为新消息
+
+    return "[max steps reached]"
+
+if __name__ == "__main__":
+    print(run_agent("查下北京天气"))</code></pre>
+<p>**4 个关键差异（vs OpenAI / Anthropic）**：</p>
+<ul><li>`system_instruction` 独立字段（类似 Anthropic）</li><li>工具声明**包在 `function_declarations` 里**</li><li>工具调用是 `parts[].function_call`，**不是 `tool_calls` 数组**</li><li>回传用 `function_response` 对象，**直接传 dict**（OpenAI/Anthropic 都传 JSON 字符串）</li></ul>
+<blockquote>**关键概念摘要**：<br>- Google 协议核心：`function_declarations` 嵌套 + `parts[].function_call` 响应 + `function_response` 回传<br>- 工具结果**直接传 dict**（不是 JSON 字符串）——这点最特别<br>- `system_instruction` 独立字段（类似 Anthropic）</blockquote>
+<h3 id="h-561">7.4.4 三家"工具结果回传"真实响应结构对比</h3>
+<p>光看代码看不出"协议层到底长啥样"。下面用**同一查询 "北京天气"** 走完三家协议，对比**原始 JSON 响应**——这是协议层最直观的差异。</p>
+<table><tr><th>协议层步骤</th><th>OpenAI</th><th>Anthropic</th><th>Google</th></tr><tr><td>**① 请求中工具声明**</td><td>`tools: [{type: "function", function: {name, description, parameters}}]`</td><td>`tools: [{name, description, input_schema}]`</td><td>`tools: [{function_declarations: [{name, description, parameters}]}]`</td></tr><tr><td>**② LLM 响应（决定调用）**</td><td>`choices[0].message.tool_calls: [{id: "call_abc", function: {name: "get_weather", arguments: '{"city":"北京"}'}}]`</td><td>`content: [{type: "text", text: "查一下"}, {type: "tool_use", id: "toolu_xyz", name: "get_weather", input: {city: "北京"}}]`</td><td>`parts: [{function_call: {name: "get_weather", args: {city: "北京"}}}]`</td></tr><tr><td>**③ 业务执行**</td><td>`func(**json.loads(arguments))`</td><td>`func(**block.input)`</td><td>`func(**fc.args)`</td></tr><tr><td>**④ 工具结果回传**</td><td>`messages.append({role: "tool", tool_call_id: "call_abc", content: '{"temp": 18}'})`</td><td>`messages.append({role: "user", content: [{type: "tool_result", tool_use_id: "toolu_xyz", content: '{"temp": 18}'}]})`</td><td>`chat.send_message([{function_response: {name: "get_weather", response: {temp: 18}}}])`</td></tr><tr><td>**⑤ LLM 收到结果后**</td><td>输出自然语言（finish_reason="stop"）</td><td>输出自然语言（stop_reason="end_turn"）</td><td>输出自然语言（无 tool_call parts）</td></tr></table>
+<p>**3 条最直观的差异**：</p>
+<ul><li>**响应结构**：OpenAI 字段式（`tool_calls: []`）vs Anthropic block 数组（`content: []`）vs Google parts 数组（`parts: []`）</li><li>**回传角色**：OpenAI `role: "tool"` vs Anthropic `role: "user"` vs Google `send_message([{...}])` 直接传</li><li>**ID 字段名**：`tool_call_id`（OpenAI）vs `tool_use_id`（Anthropic）vs **无 ID**（Google 隐式配对）</li></ul>
+<p>**踩坑预警**：**Google 的工具结果回传不需要 ID**——它通过 `parts` 数组的**位置**隐式配对。如果你从 OpenAI 迁到 Google，记得删掉 ID 字段。</p>
+<hr>
+<h2 id="section-582">7.5 三家协议 12 维横向对比表（核心交付）</h2>
+<p>把 7.2-7.4 的细节压成一张表。这是本章**最重要的可视化**——读者一眼看清三家差异。</p>
+<table><tr><th>维度</th><th>OpenAI Tools API</th><th>Anthropic Tool Use</th><th>Google Function Calling</th></tr><tr><td>**① 消息结构**</td><td>`messages: [...]`</td><td>`messages: [...]` + `system: "..."` 独立</td><td>`contents: [{role, parts}]` + `system_instruction` 独立</td></tr><tr><td>**② tools 字段位置**</td><td>顶层</td><td>顶层</td><td>顶层（包在 `function_declarations` 里）</td></tr><tr><td>**③ 工具声明语法**</td><td>`{type, function: {name, description, parameters}}`</td><td>`{name, description, input_schema}`</td><td>`{function_declarations: [{name, description, parameters}]}`</td></tr><tr><td>**④ 工具调用返回**</td><td>`tool_calls: [{id, function: {name, arguments}}]`</td><td>`content: [{type: "tool_use", id, name, input}]`</td><td>`parts: [{function_call: {name, args}}]`</td></tr><tr><td>**⑤ 工具结果回传**</td><td>`role: "tool"` 消息 + `tool_call_id`</td><td>`role: "user"` + `content: [{type: "tool_result", tool_use_id}]`</td><td>`parts: [{function_response: {name, response}}]`</td></tr><tr><td>**⑥ system prompt 位置**</td><td>`messages[0].role="system"`</td><td>顶层 `system` 字段</td><td>顶层 `system_instruction` 字段</td></tr><tr><td>**⑦ 并行调用**</td><td>✅ 默认开启（`parallel_tool_calls=True`）</td><td>✅ 支持（`disallow_parallel_tool_use=False`）</td><td>✅ 支持（自动检测多个 `function_call` parts）</td></tr><tr><td>**⑧ 流式 tool calls**</td><td>✅ `stream=True`（2024+）</td><td>✅ `stream=True`</td><td>✅ `stream=True`</td></tr><tr><td>**⑨ 错误处理**</td><td>LLM 不会自动重试，需业务代码把 error 塞回 `role: "tool"`</td><td>同 OpenAI，需塞回 `tool_result`</td><td>同 OpenAI，需塞回 `function_response`</td></tr><tr><td>**⑩ token 计入**</td><td>工具 schema 计 input tokens</td><td>工具 schema 计 input tokens</td><td>工具 schema 计 input tokens（**计费更便宜**）</td></tr><tr><td>**⑪ max_tokens 行为**</td><td>`max_tokens` 限制整个响应（含 tool_calls）</td><td>`max_tokens` 限制整个响应</td><td>`max_output_tokens` 独立配置</td></tr><tr><td>**⑫ 思考模型适配**</td><td>o1/o3 思考时不输出 tool_call（等思考完才决策，是 OpenAI 故意设计）</td><td>Claude 3.7 Sonnet thinking</td><td>Gemini 2.0 Flash Thinking</td></tr></table>
+<p>**5 条速记**（这张表怎么用）：</p>
+<ul><li>字段命名三足鼎立：`function` / `input_schema` / `parameters`</li><li>工具结果回传三种语法：OpenAI 用 `role: "tool"`、Anthropic 用 `role: "user"`、Google 用 `parts: [{function_response}]`</li><li>思考模型三家都有：OpenAI o1、Anthropic 3.7 Sonnet thinking、Google 2.0 Flash Thinking</li><li>错误处理是协议无关的——**所有家都不自动重试**，都要业务代码塞回</li><li>token 计费：Google 最便宜，Anthropic 中等，OpenAI 最贵</li></ul>
+<blockquote>**关键概念摘要**：<br>- 12 维对比表是协议层**最重要的可视化**——把"3 家差不多"细化到"3 家不一样"<br>- 工具结果回传 3 种语法是**最容易写错**的差异点<br>- 错误处理协议无关——业务代码必须自己做重试</blockquote>
+<hr>
+<h2 id="section-615">7.6 JSON Schema 高级模式</h2>
+<p>ch06.3 讲了"工具描述的 7 条军规"，那是**基础**。本节讲 4 个**高级模式**——生产中真正常用，ch03 那种基础 schema 不够用。</p>
+<h3 id="h-619">7.6.1 嵌套对象</h3>
+<p>工具的参数如果是个**结构化对象**（如 `address: {street, city, zip}`），要用 `properties` 嵌套。</p>
+<pre><code class="language-json">{
+  "name": "create_shipping_order",
+  "description": "创建一个物流订单",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "customer_name": {"type": "string"},
+      "address": {
+        "type": "object",
+        "properties": {
+          "street":  {"type": "string", "description": "街道地址"},
+          "city":    {"type": "string", "description": "城市"},
+          "zip":     {"type": "string", "description": "邮编", "pattern": "^[0-9]{6}$"}
+        },
+        "required": ["street", "city", "zip"]
+      }
+    },
+    "required": ["customer_name", "address"]
+  }
+}</code></pre>
+<p>**适用场景**：订单类、地址类、配置类工具——参数本身就是结构化的。</p>
+<h3 id="h-648">7.6.2 enum 限制</h3>
+<p>**用 `enum` 限制参数取值范围**——LLM 不会传错值。</p>
+<pre><code class="language-json">{
+  "name": "update_order_status",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "order_id": {"type": "string"},
+      "status":   {
+        "type": "string",
+        "enum": ["pending", "paid", "shipped", "delivered", "cancelled"],
+        "description": "订单状态"
+      }
+    },
+    "required": ["order_id", "status"]
+  }
+}</code></pre>
+<p>**经验值**：**所有"状态/类型/分类"参数都该用 enum**——能消除 80% 的 LLM 幻觉参数。</p>
+<h3 id="h-672">7.6.3 anyOf 多态</h3>
+<p>**参数可以是多种类型之一**（如值可以是字符串或数字）。</p>
+<pre><code class="language-json">{
+  "name": "search",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "anyOf": [
+          {"type": "string", "description": "搜索词"},
+          {"type": "object", "properties": {"field": {"type": "string"}, "value": {"type": "string"}}}
+        ]
+      }
+    },
+    "required": ["query"]
+  }
+}</code></pre>
+<p>**适用场景**：搜索/筛选类工具——查询条件既可以是简单字符串也可以是结构化对象。</p>
+<h3 id="h-696">7.6.4 $ref 引用（Anthropic / Google 完整支持，OpenAI 有限支持）</h3>
+<p>**`$ref` 让多个工具共享同一个 schema 片段**——避免重复定义。</p>
+<pre><code class="language-json">{
+  "definitions": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "street": {"type": "string"},
+        "city":   {"type": "string"},
+        "zip":    {"type": "string"}
+      },
+      "required": ["street", "city", "zip"]
+    }
+  },
+  "tools": [
+    {
+      "name": "ship_to_home",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "address": {"$ref": "#/definitions/Address"}
+        }
+      }
+    },
+    {
+      "name": "ship_to_store",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "store_address": {"$ref": "#/definitions/Address"}
+        }
+      }
+    }
+  ]
+}</code></pre>
+<p>**注意**：**OpenAI 2024-2025 不支持 `$ref`**——它用自定义子集。Anthropic / Google 完整支持。</p>
+<h3 id="h-738">7.6.5 4 个高级模式对照表</h3>
+<table><tr><th>模式</th><th>语法</th><th>适用场景</th><th>三家支持</th></tr><tr><td>**嵌套对象**</td><td>`properties.address.properties.street`</td><td>订单、地址、配置</td><td>三家全支持</td></tr><tr><td>**enum**</td><td>`enum: ["a", "b", "c"]`</td><td>状态、类型、分类</td><td>三家全支持</td></tr><tr><td>**anyOf**</td><td>`anyOf: [{type: string}, ...]`</td><td>搜索、筛选、多态输入</td><td>三家全支持</td></tr><tr><td>**`$ref`**</td><td>`$ref: "#/definitions/X"`</td><td>多工具共享结构</td><td>Anthropic/Google 完整，OpenAI 不支持</td></tr></table>
+<h3 id="h-747">7.6.6 JSON Schema 5 大反例（与 ch06.3 工具描述军规呼应）</h3>
+<p>ch06.3 讲了"工具描述的 7 条军规"——那是**人类写 description 的规范**。本节讲**JSON Schema 本身**的 5 个常见反例——**写错了，LLM 调工具时就会出问题**。</p>
+<table><tr><th>#</th><th>反例</th><th>错在哪</th><th>修复</th></tr><tr><td>**1**</td><td>`description: "查订单"`（8 字符）</td><td>description 太短，LLM 不知道何时调</td><td>30-80 字符 + 场景 + 反例</td></tr><tr><td>**2**</td><td>`status: {type: "string"}`（无 enum）</td><td>LLM 传 `"canceled"`（美式）业务期望 `"cancelled"`（英式）</td><td>`enum: ["pending", "paid", "shipped", "cancelled"]`</td></tr><tr><td>**3**</td><td>`required: []`（没标必填）</td><td>LLM 调工具时漏传关键参数</td><td>显式列 `required: ["order_id", "amount"]`</td></tr><tr><td>**4**</td><td>`parameters: {city: {type: "string"}}`</td><td>缺外层 `type: "object"` 和 `properties`</td><td>标准 4 件套：`type + properties + required + (additionalProperties)`</td></tr><tr><td>**5**</td><td>多个相似工具 `get_order` / `get_order_detail` / `fetch_order_info`</td><td>LLM 不知道该调哪个</td><td>合并成 1 个工具 + `include_detail: bool` 参数</td></tr></table>
+<p>**5 反例 → 5 修复**——这套 checklist 在写生产工具时是**必过**的。</p>
+<blockquote>**关键概念摘要**：<br>- 嵌套对象 = 让参数"自带结构"<br>- enum = 限制 LLM 不传错值，**消除 80% 幻觉参数**<br>- anyOf = 多态输入<br>- `$ref` = 多工具共享（**OpenAI 不支持，要慎用**）<br>- JSON Schema 5 反例 = ch06 工具描述军规的"协议层补完"</blockquote>
+<hr>
+<h2 id="section-770">7.7 工具调用错误处理 5 大模式</h2>
+<p>LLM 调工具时**不会自动重试**。错误处理是**业务代码的责任**。生产中最常见的 5 类错误：</p>
+<h3 id="h-774">7.7.1 错误 1：参数类型不匹配</h3>
+<p>LLM 传 `"3.14"`（字符串）给 `calculate(x: float)`，JSON Schema 校验失败。</p>
+<p>**处理代码**：</p>
+<pre><code class="language-python">try:
+    result = func(**json.loads(arguments))
+except TypeError as e:
+    # 把错误信息作为 tool 结果回传，让 LLM 自己修正
+    result = {"error": f"参数类型错误: {e}", "hint": "请检查参数类型"}
+    messages.append({
+        "role": "tool", "tool_call_id": tool_call.id,
+        "content": json.dumps(result, ensure_ascii=False)
+    })
+    # 继续主循环，让 LLM 重试</code></pre>
+<h3 id="h-792">7.7.2 错误 2：必填字段缺失</h3>
+<p>LLM 调 `get_weather()` 但没传 `city`。</p>
+<p>**处理代码**：</p>
+<pre><code class="language-python">try:
+    args = json.loads(arguments)
+    if "city" not in args:
+        raise ValueError("missing required field: city")
+    result = func(**args)
+except (ValueError, TypeError) as e:
+    result = {"error": str(e), "hint": "请补全必填字段"}
+    # 同 7.7.1 回传</code></pre>
+<h3 id="h-808">7.7.3 错误 3：工具执行异常</h3>
+<p>数据库连接失败、API 限流、文件不存在。</p>
+<p>**处理代码**：</p>
+<pre><code class="language-python">import logging
+try:
+    result = func(**args)
+except Exception as e:
+    logging.exception(f"Tool {func_name} failed")
+    result = {"error": f"{type(e).__name__}: {e}", "recoverable": True}
+    # 把"业务异常"也回传给 LLM——让它决定是换工具还是重试</code></pre>
+<h3 id="h-823">7.7.4 错误 4：工具超时</h3>
+<p>工具执行时间过长（如查数据库 30s 没返回）。</p>
+<p>**处理代码**：</p>
+<pre><code class="language-python">import concurrent.futures
+
+def call_with_timeout(func, args, timeout_sec=10):
+    with concurrent.futures.ThreadPoolExecutor() as ex:
+        future = ex.submit(func, **args)
+        try:
+            return future.result(timeout=timeout_sec)
+        except concurrent.futures.TimeoutError:
+            return {"error": f"Tool timeout after {timeout_sec}s", "hint": "请重试或换工具"}</code></pre>
+<h3 id="h-840">7.7.5 错误 5：工具返回超大结果</h3>
+<p>工具返回了 1MB 文本——超过 LLM context window。</p>
+<p>**处理代码**：</p>
+<pre><code class="language-python">def truncate_result(result: dict, max_chars: int = 5000) -&gt; dict:
+    text = json.dumps(result, ensure_ascii=False)
+    if len(text) &gt; max_chars:
+        # 截断 + 提示 LLM 缩小范围
+        return {
+            "warning": f"结果已截断（{len(text)} → {max_chars} 字符）",
+            "data": text[:max_chars],
+            "hint": "请缩小查询范围"
+        }
+    return result</code></pre>
+<h3 id="h-858">7.7.6 5 大错误模式对照表</h3>
+<table><tr><th>错误</th><th>触发条件</th><th>处理策略</th><th>是否回传 LLM</th></tr><tr><td>**类型不匹配**</td><td>`TypeError`</td><td>错误信息 + 类型提示</td><td>✅</td></tr><tr><td>**必填缺失**</td><td>`ValueError`</td><td>缺失字段名 + 提示</td><td>✅</td></tr><tr><td>**业务异常**</td><td>DB/API 异常</td><td>异常类名 + 消息 + 标记 `recoverable`</td><td>✅</td></tr><tr><td>**超时**</td><td>&gt;10s</td><td>超时时长 + 重试提示</td><td>✅（让 LLM 决定）</td></tr><tr><td>**超大结果**</td><td>&gt;5000 字符</td><td>截断 + 缩小范围提示</td><td>✅（带 warning）</td></tr></table>
+<p>**核心原则**：**所有 5 类错误都要回传 LLM**，让 LLM 决定下一步（重试/换工具/告诉用户）。**不要静默吞掉错误**——LLM 不知道发生了什么，会卡死。</p>
+<h3 id="h-870">7.7.7 错误处理决策树</h3>
+<p>5 类错误处理方式不是"一视同仁"——**根据错误类型决定是让 LLM 重试，还是直接告诉用户**。下面是**业务级**的判断流程：</p>
+<pre><code class="language-text">工具执行出错
+    │
+    ├── 1. 是否是参数错误（类型 / 必填缺失）？
+    │   ├─ YES → 回传 LLM，让 LLM 修正（重试率高）
+    │   └─ NO ↓
+    │
+    ├── 2. 是否是临时业务错误（DB 连接 / API 限流）？
+    │   ├─ YES → 业务层重试 1-2 次，失败后回传 LLM（标记 recoverable: true）
+    │   └─ NO ↓
+    │
+    ├── 3. 是否是逻辑错误（找不到订单 / 权限不足）？
+    │   ├─ YES → 不重试，直接回传 LLM（让 LLM 决定是否告诉用户）
+    │   └─ NO ↓
+    │
+    ├── 4. 是否是超时？
+    │   ├─ YES → 重试 1 次（不同 endpoint），失败后回传 LLM
+    │   └─ NO ↓
+    │
+    └── 5. 是否是超大结果？
+        └─ YES → 业务层截断，回传 LLM（带 warning + 缩小范围建议）</code></pre>
+<p>**4 条决策原则**：</p>
+<ul><li>**可重试错误**（参数 / 临时业务 / 超时）：**业务层先重试 1-2 次**，失败再回传 LLM</li><li>**不可重试错误**（逻辑 / 权限）：**直接回传 LLM**，让 LLM 决定下一步</li><li>**所有错误必须带 `recoverable: true/false` 标记**——LLM 看到标记后能更聪明地决策</li><li>**业务层最多重试 2 次**——超过 2 次是浪费 token，应该让 LLM 换策略</li></ul>
+<blockquote>**关键概念摘要**：<br>- 5 大错误：类型 / 必填 / 业务异常 / 超时 / 超大<br>- 所有错误都**回传 LLM**——LLM 不会自动重试，但能看到错误信息<br>- 超时用 `concurrent.futures` 包裹（10s 是常见阈值）<br>- **可重试 vs 不可重试**是错误处理决策树的核心维度<br>- 业务层最多重试 2 次</blockquote>
+<hr>
+<h2 id="section-912">7.8 流式 Tool Calls（OpenAI 2024+）</h2>
+<p>当工具参数特别长（如 3000 字符 JSON），等整个响应完整返回太慢。**流式 tool calls** 让 LLM **一边生成参数一边回传**——你的代码可以**增量解析**。</p>
+<h3 id="h-916">7.8.1 为什么需要流式</h3>
+<table><tr><th>场景</th><th>非流式</th><th>流式</th></tr><tr><td>参数长度</td><td>3000 字符</td><td>3000 字符</td></tr><tr><td>首字节延迟</td><td>等所有 token 生成完（~5s）</td><td>第 1 个 token 即可处理（~0.2s）</td></tr><tr><td>总耗时</td><td>5s</td><td>5s（一样）</td></tr><tr><td>适用</td><td>短参数</td><td>长参数 / 用户可感知延迟的场景</td></tr></table>
+<h3 id="h-925">7.8.2 完整实战代码</h3>
+<pre><code class="language-python">"""
+OpenAI 流式 Tool Calls——增量解析长参数。
+"""
+import json
+from openai import OpenAI
+
+def run_streaming_tool_call():
+    client = OpenAI()
+    stream = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": "生成一个 3000 字的 markdown 报告"}],
+        tools=[{
+            "type": "function",
+            "function": {
+                "name": "save_report",
+                "description": "保存报告",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "content": {"type": "string"}
+                    },
+                    "required": ["content"]
+                }
+            }
+        }],
+        stream=True,
+    )
+
+    # 增量累积 tool_calls
+    tool_call_buffer = {}   # index -&gt; {id, name, arguments_str}
+    for chunk in stream:
+        if not chunk.choices:
+            continue
+        delta = chunk.choices[0].delta
+        # 注意：delta.tool_calls 在 OpenAI 不同版本可能是 None 或 []，统一用 `if not ...` 兼容
+        if not delta.tool_calls:
+            # 普通文本流
+            if delta.content:
+                print(delta.content, end="", flush=True)
+            continue
+
+        # 工具调用流——按 index 累积
+        for tc in delta.tool_calls:
+            idx = tc.index
+            if idx not in tool_call_buffer:
+                tool_call_buffer[idx] = {
+                    "id": tc.id or "",
+                    "name": tc.function.name if tc.function else "",
+                    "arguments_str": ""
+                }
+            if tc.id:
+                tool_call_buffer[idx]["id"] = tc.id
+            if tc.function and tc.function.name:
+                tool_call_buffer[idx]["name"] = tc.function.name
+            if tc.function and tc.function.arguments:
+                tool_call_buffer[idx]["arguments_str"] += tc.function.arguments
+
+    # 流结束后，解析累积的 arguments
+    print("\n--- Tool calls received ---")
+    for idx, tc in tool_call_buffer.items():
+        args = json.loads(tc["arguments_str"])
+        print(f"  {tc['name']}({args})")
+
+if __name__ == "__main__":
+    run_streaming_tool_call()</code></pre>
+<p>**3 个关键点**：</p>
+<ul><li>`stream=True` 开启流式</li><li>`chunk.choices[0].delta.tool_calls` 是**增量数组**（不是完整对象）</li><li>用 `tc.index` 作为 key，**累积同一调用的多个 chunk**——最后解析</li></ul>
+<h3 id="h-1000">7.8.3 流式 vs 非流式 选型对照表</h3>
+<table><tr><th>场景</th><th>推荐方式</th><th>原因</th></tr><tr><td>**参数 &lt; 500 字符**</td><td>非流式</td><td>流式增量累积反而增加复杂度</td></tr><tr><td>**参数 500-2000 字符**</td><td>都可以</td><td>差异不大，按团队习惯</td></tr><tr><td>**参数 &gt; 2000 字符**</td><td>**流式**</td><td>首字节延迟从 5s 降到 0.2s</td></tr><tr><td>**用户可感知延迟**（聊天 UI）</td><td>**流式**</td><td>用户能看到"在生成中"，体验更好</td></tr><tr><td>**后台批处理**（脚本）</td><td>非流式</td><td>无人感知，省复杂度</td></tr><tr><td>**参数极大 &gt; 10000 字符**</td><td>**流式 + 业务截断**</td><td>避免 OOM</td></tr></table>
+<blockquote>**关键概念摘要**：<br>- 流式 tool calls = `stream=True` + `delta.tool_calls` 增量累积<br>- 用 `tc.index` 作为累积 key<br>- 适用：长参数（>1000 字符 JSON）+ 用户可感知延迟场景<br>- **参数 < 500 字符不必用流式**——增加复杂度收益小<br>- **参数 > 10000 字符必用流式 + 截断**——避免 OOM 是硬要求</blockquote>
+<hr>
+<h2 id="section-1020">7.9 协议层与 ch03 四大件 / ch06 prompt 的对应表</h2>
+<p>本章学的协议字段不是凭空来的——**每个字段都对应 ch03 四大件和 ch06 prompt 中的某个概念**。把这种对应关系画出来，读者就能把"协议"和"框架"打通。</p>
+<table><tr><th>ch03 四大件</th><th>ch06 prompt 段落</th><th>ch07 协议字段</th><th>说明</th></tr><tr><td>**LLM 大脑**</td><td>角色段（6.2 ①）</td><td>`model` 参数</td><td>选哪个 LLM</td></tr><tr><td>**短期记忆**</td><td>约束段（6.2 ②）</td><td>`messages: [...]` 数组</td><td>多轮对话</td></tr><tr><td>**工具**</td><td>工具描述（6.2 ③）</td><td>`tools: [...]` 数组</td><td>JSON Schema</td></tr><tr><td>**规划**</td><td>Few-shot（6.2 ⑤）+ 范式段（ch05）</td><td>`tool_choice` + `parallel_tool_calls`</td><td>怎么选工具、是否并行</td></tr><tr><td>**—**</td><td>输出格式段（6.2 ④）</td><td>`response_format: {type: "json_object"}`</td><td>结构化输出</td></tr><tr><td>**—**</td><td>防御性段（6.4）</td><td>`tool_choice="none"` 临时禁用</td><td>防越权</td></tr></table>
+<p>**3 条核心对应**：</p>
+<ul><li>ch03 "工具" = ch06 "工具描述" = ch07 `tools` 数组（**同一个东西，三种视角**）</li><li>ch03 "短期记忆" = `messages` 数组（**对话历史就是短期记忆**）</li><li>ch03 "规划" = `tool_choice` + 并行 + 范式（在 ch07 这一层表现为"协议策略"）</li></ul>
+<blockquote>**关键概念摘要**：<br>- 协议字段不是凭空来的——每个都对应 ch03 四大件 + ch06 prompt<br>- ch03/ch06 是"概念视角"，ch07 是"协议视角"，**视角不同，名字不同，本质相同**<br>- 学完 ch03 → ch06 → ch07 应该有"原来是一回事"的感觉</blockquote>
+<hr>
+<h2 id="section-1045">7.10 Function Calling 5 大坑</h2>
+<h3 id="h-1047">7.10.1 坑 1：tools 太多让 LLM 选错</h3>
+<p>**症状**：Agent 给了 30 个工具，LLM 经常选错——成功率 60%。</p>
+<p>**原因**：context window 里塞 30 个 JSON Schema 描述，LLM 注意力分散。</p>
+<p>**修复**：</p>
+<ul><li>**分层声明**：高频工具放 system prompt，低频工具按需动态注入</li><li>**合并相似工具**：5 个"查订单"工具 → 1 个带 `order_type` 参数的工具</li><li>**经验值**：**单个对话中 tools ≤ 10 个**是甜区</li></ul>
+<h3 id="h-1058">7.10.2 坑 2：description 太短</h3>
+<p>**症状**：`description: "查询订单"`（8 字符）——LLM 不知道这个工具和 `get_order_detail` 的区别。</p>
+<p>**修复**：</p>
+<ul><li>description 至少 30-80 字符</li><li>包含**使用场景**（"当用户问订单状态、退款、物流时调用"）</li><li>包含**反例**（"不要用于查询用户信息"）</li></ul>
+<h3 id="h-1067">7.10.3 坑 3：不用 enum 限定</h3>
+<p>**症状**：status 参数没 enum，LLM 传 `"canceled"`（美式拼写），但代码期望 `"cancelled"`（英式）。</p>
+<p>**修复**：`enum: ["pending", "paid", "shipped", "delivered", "cancelled"]`——LLM 100% 不会拼错。</p>
+<h3 id="h-1073">7.10.4 坑 4：忽略并行调用</h3>
+<p>**症状**：用户问"查北京和上海天气"——LLM 串行调 2 次 `get_weather`，多花 1 倍时间。</p>
+<p>**修复**：`parallel_tool_calls=True`（OpenAI 默认），让 LLM 一次返回 2 个 `tool_call`，业务代码并发执行。</p>
+<h3 id="h-1079">7.10.5 坑 5：不处理 tool 错误就回 LLM</h3>
+<p>**症状**：工具执行失败，业务代码直接 `raise`——LLM 看不到错误，主循环崩。</p>
+<p>**修复**：所有 5 类错误（见 7.7）**都包装成 `{"error": "..."}` 回传**——LLM 看到错误会自己决定重试或换工具。</p>
+<h3 id="h-1085">7.10.6 5 大坑 × 修复对照表</h3>
+<table><tr><th>坑</th><th>症状</th><th>修复</th><th>修复后效果</th></tr><tr><td>**tools 太多**</td><td>选错率 40%</td><td>分层 / 合并，≤10 个</td><td>选错率 &lt; 10%</td></tr><tr><td>**description 太短**</td><td>LLM 不知道何时调</td><td>30-80 字符 + 场景 + 反例</td><td>选对率 +20 pp</td></tr><tr><td>**不用 enum**</td><td>拼写错</td><td>enum 限定</td><td>拼写错率 0%</td></tr><tr><td>**忽略并行**</td><td>时间 ×2</td><td>`parallel_tool_calls=True`</td><td>时间 -50%</td></tr><tr><td>**不处理错误**</td><td>主循环崩</td><td>包装成 `{"error": ...}` 回传</td><td>健壮性 +++</td></tr></table>
+<h3 id="h-1095">7.10.7 5 大坑的"代码级"修复示例</h3>
+<p>对照表讲的是"原则"，本节给**可复用代码片段**。</p>
+<pre><code class="language-python"># ===== 坑 1 修复：tools 数量控制 =====
+# 原则：高频工具常驻，低频工具按需注入
+HIGH_FREQ_TOOLS = [get_weather, send_reminder]  # 5-8 个
+LOW_FREQ_TOOLS = [export_pdf, generate_chart]    # 需要时临时加入
+tools_for_this_turn = HIGH_FREQ_TOOLS + (LOW_FREQ_TOOLS if need_export else [])
+
+# ===== 坑 2 修复：description 模板 =====
+TOOL_DESCRIPTION_TEMPLATE = """{action}{object}。{when_to_call}。
+不要用于：{when_not_to_call}。"""
+# 例子：TOOL_DESCRIPTION_TEMPLATE.format(
+#     action="查询", object="指定城市的当前天气",
+#     when_to_call="当用户问天气、温度、是否下雨时调用",
+#     when_not_to_call="历史天气（用 get_historical_weather）"
+# )
+
+# ===== 坑 3 修复：enum 限定（已在 7.6.2 讲过）=====
+# status 参数必须 enum 化
+
+# ===== 坑 4 修复：并行调用（OpenAI 默认开启）=====
+response = client.chat.completions.create(
+    model="gpt-4o",
+    messages=messages,
+    tools=TOOLS,
+    parallel_tool_calls=True,  # 显式开启（实际是默认）
+)
+# 业务侧：拿到多个 tool_call 后用 concurrent.futures 并发执行
+with concurrent.futures.ThreadPoolExecutor() as ex:
+    futures = {ex.submit(func, **args): tc.id for tc, func, args in tool_calls}
+    for future in concurrent.futures.as_completed(futures):
+        tc_id = futures[future]
+        result = future.result()
+        # ...塞回 messages
+
+# ===== 坑 5 修复：try/except + 错误回传（已在 7.7 讲过）=====
+# 核心：try/except 包住 func(**args)，catch 后包装成 dict 回传</code></pre>
+<p>**5 段代码 = 5 大坑的"开箱即用"修复**——直接复制到生产项目即可。</p>
+<hr>
+<blockquote>**关键概念摘要**：<br>- tools 数量 ≤ 10 是甜区<br>- description 30-80 字符是底线<br>- enum 能消除 80% 拼写错<br>- 并行调用默认开启<br>- 错误一定要回传 LLM</blockquote>
+<hr>
+<h2 id="section-1150">7.11 本章小结 + 概念速查 + 概念桥</h2>
+<h3 id="h-1152">7.11.1 8 条速记</h3>
+<ul><li>**Function Calling = LLM 输出调用意图 + 代码真执行**——LLM 不再"假装算"</li><li>**2025 年三家协议趋同**：都叫 "tool"，都用 JSON Schema，都支持并行和流式</li><li>**OpenAI 协议核心**：`tools` 字段 + `tool_calls` 响应 + `role="tool"` 回传 + `tool_call_id` 配对</li><li>**Anthropic 协议核心**：`system` 独立 + `content` block 数组 + `tool_use` / `tool_result` 配对 + `role="user"` 回传</li><li>**Google 协议核心**：`system_instruction` 独立 + `function_declarations` 嵌套 + `parts[].function_call` + `function_response` 回传（**直接传 dict**）</li><li>**JSON Schema 高级模式**：嵌套对象、enum、anyOf、`$ref`（OpenAI 不支持 `$ref`）</li><li>**5 大错误处理**：类型 / 必填 / 业务异常 / 超时 / 超大——**全部回传 LLM**</li><li>**流式 tool calls** = `stream=True` + `delta.tool_calls` 增量累积，按 `tc.index` 拼参数</li></ul>
+<h3 id="h-1163">7.11.2 概念速查表（22 术语）</h3>
+<table><tr><th>术语</th><th>含义</th></tr><tr><td>**Tool Use**</td><td>2025 年三家统一的"工具调用"统称</td></tr><tr><td>**Function Calling**</td><td>OpenAI 2023.6 原始命名，2024 改叫 Tool</td></tr><tr><td>**tools 字段**</td><td>三家都在顶层声明工具的字段名</td></tr><tr><td>**input_schema**</td><td>Anthropic 工具参数字段名（vs OpenAI 的 parameters）</td></tr><tr><td>**parameters**</td><td>OpenAI / Google 工具参数字段名</td></tr><tr><td>**tool_calls**</td><td>OpenAI 响应中的工具调用数组</td></tr><tr><td>**content block**</td><td>Anthropic 响应中的多类型内容块</td></tr><tr><td>**functionCall**</td><td>Google 响应中的工具调用对象</td></tr><tr><td>**tool_use_id**</td><td>Anthropic 工具调用的唯一 ID</td></tr><tr><td>**tool_call_id**</td><td>OpenAI 工具调用的唯一 ID</td></tr><tr><td>**finish_reason**</td><td>OpenAI 响应结束原因（"stop" / "tool_calls" / "length"）</td></tr><tr><td>**stop_reason**</td><td>Anthropic 响应结束原因（"end_turn" / "tool_use" / "max_tokens"）</td></tr><tr><td>**tool_choice**</td><td>工具选择策略（auto / none / required / 指定）</td></tr><tr><td>**parallel_tool_calls**</td><td>是否允许一次返回多个工具调用（OpenAI）</td></tr><tr><td>**disallow_parallel_tool_use**</td><td>反向参数（Anthropic）</td></tr><tr><td>**JSON Schema**</td><td>描述 JSON 结构的规范</td></tr><tr><td>**enum**</td><td>限制参数取值范围的关键字</td></tr><tr><td>**anyOf**</td><td>多种类型之一的关键字</td></tr><tr><td>**`$ref`**</td><td>Schema 引用（Anthropic/Google 支持，OpenAI 不支持）</td></tr><tr><td>**streaming**</td><td>流式响应，token 级别</td></tr><tr><td>**delta**</td><td>流式响应中"增量变化"的对象</td></tr><tr><td>**system_instruction**</td><td>Google 独立 system prompt 字段</td></tr></table>
+<h3 id="h-1190">7.11.5 选型决策树：3 家协议选谁</h3>
+<p>读完本章你可能会问："**我应该用哪家协议？**" 下面是**业务级**的选型决策树：</p>
+<pre><code class="language-text">Q1: 你的预算敏感吗？
+├─ 高度敏感 → Google Gemini（性价比最高，免费层厚）
+└─ 不敏感 ↓
+
+Q2: 你的任务是"严谨逻辑"（代码 / 推理 / 长文档）？
+├─ 是 → Anthropic Claude（严谨，200K context）
+└─ 否（创意 / 通用）↓
+
+Q3: 你需要最成熟的生态（最多教程 / 最大社区）？
+├─ 是 → OpenAI（行业事实标准，工具链最丰富）
+└─ 否 → 回到 Q1
+
+Q4: 你需要 3 家同时支持（多模型 fallback）？
+└─ 是 → 协议抽象层（LangChain / LlamaIndex 都支持，ch04 框架选型）</code></pre>
+<p>**4 条经验值**：</p>
+<ul><li>**创业公司 MVP**：默认 OpenAI（最成熟，文档最全）</li><li>**企业级生产**：Anthropic（严谨 + 200K context + 安全）</li><li>**成本敏感项目**：Google（Flash 系列便宜 70%）</li><li>**多模型路由**：用 LangChain / LlamaIndex 抽象层，**不要硬编码到某家**</li></ul>
+<blockquote>**关键概念摘要**：<br>- **MVP 选 OpenAI**（成熟 + 文档）<br>- **企业选 Anthropic**（严谨 + 安全）<br>- **成本敏感选 Google**（便宜 70%）<br>- **多模型用框架抽象**（LangChain / LlamaIndex）<br>- **协议选 OpenAI 但成本敏感时** → 选 OpenAI GPT-4o-mini 而不是 GPT-4o（输入 $0.15/M vs $2.5/M tokens，便宜 16 倍）</blockquote>
+<h3 id="h-1224">7.11.3 概念桥：ch07 ↔ ch08 ↔ ch09 ↔ ch10</h3>
+<table><tr><th>本章学到的</th><th>下一章怎么用</th></tr><tr><td>**7.2-7.4 工具调用协议**</td><td>**ch08 记忆系统**——"工具调用的中间结果存哪？"（短期 = messages 数组，长期 = 向量库）</td></tr><tr><td>**7.5 三家协议对比**</td><td>**ch09 RAG**——"检索文档也是一种工具"，用 tool use 协议调 `search_docs`</td></tr><tr><td>**7.6 JSON Schema 高级模式**</td><td>**ch09 RAG**——`search_docs` 用嵌套对象 + enum 描述检索条件</td></tr><tr><td>**7.7 错误处理**</td><td>**ch10 规划与推理**——"工具失败时如何让 LLM 反思重试"（Reflexion 范式）</td></tr><tr><td>**7.8 流式 tool calls**</td><td>**ch22 可观测性**——流式日志 + tool trace 监控</td></tr></table>
+<table><tr><th>**第二部分进度**</th><th>6/7 章完成 + ch10 规划与推理待写（Day 10 完结）</th></tr></table>
+<h3 id="h-1237">7.11.4 进一步阅读</h3>
+<ul><li>**OpenAI Tools API 官方文档** (2025) — &lt;https://platform.openai.com/docs/guides/tools&gt;</li><li>**Anthropic Tool Use 官方文档** (2025) — &lt;https://docs.anthropic.com/en/docs/agents-and-tools/tool-use/overview&gt;</li><li>**Google Gemini Function Calling 官方文档** (2025) — &lt;https://ai.google.dev/docs/function_calling&gt;</li><li>**JSON Schema 官方规范** (2020-12) — &lt;https://json-schema.org/specification.html&gt;</li><li>**OpenAI Function Calling 演进博客** (2024) — &lt;https://openai.com/index/function-calling-and-other-api-updates/&gt;</li><li>**Anthropic "Building Effective Agents" 论文** (2024-12) — &lt;https://www.anthropic.com/research/building-effective-agents&gt;</li><li>**Lilian Weng "LLM Powered Autonomous Agents" 博客** (2023) — &lt;https://lilianweng.github.io/posts/2023-06-23-agent/&gt;</li></ul>
+<hr>
+<blockquote>**第 7 章完**。这一章把 ch06.3 工具描述的"一句话预告"展开成了**完整协议层**：3 家协议的具体字段、JSON Schema 高级模式、5 大错误处理、流式 tool calls、与 ch03/ch06 的对应。**ch08 我们进入"记忆系统"**——把工具调用的中间结果存起来，让 Agent 真正有"记性"。</blockquote>
+  </article>
+
+  <!-- ==================== CHAPTER PAGER ==================== -->
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; max-width:920px; margin:40px auto 60px; padding:0 20px;">
+    <a href="ch06.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+      ← 上一章：Prompt 工程与系统提示词（第 6 章）
+    </a>
+    <a href="ch08.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">
+      下一章：记忆系统（第 8 章，未发布）→
+    </a>
+  </nav>
+
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">📑</button>
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">↑</button>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>🤖 AGENT开发从入门到精通</h3>
+        <p>一本系统性的 AI Agent 开发中文教材。从 1966 ELIZA 到 2026 多 Agent 协议爆发，覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第1章</a></li>
+          <li><a href="ch02.html">第2章</a></li>
+          <li><a href="ch03.html">第3章</a></li>
+          <li><a href="ch04.html">第4章</a></li>
+          <li><a href="ch05.html">第5章</a></li>
+          <li><a href="ch06.html">第6章</a></li>
+          <li><a href="ch07.html">第7章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库（待建）</a></li>
+          <li><a href="#">反馈与建议</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/book.js"></script>
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
