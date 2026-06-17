@@ -203,11 +203,20 @@
          │
 q1: ─────X──</code></pre>
 
+<blockquote class="chapter-quote"><p><strong>控制 vs 目标的约定</strong>(跟 ch07 7.7.6 一致):</p>
+<ul>
+<li><strong>上方</strong>的 q0 是<strong>控制 qubit</strong>(实心圆点 ●)</li>
+<li><strong>下方</strong>的 q1 是<strong>目标 qubit</strong>(带圈十字 ⊕)</li>
+<li>即"控制 = 圆点 ●,目标 = ⊕" —— 当 q0 = |1⟩ 时,$\hat{X}$ 作用在 q1 上</li>
+<li><strong>从左到右</strong>读电路:先看最左的初始化 → 一层一层向<strong>右</strong>推进 → 最后测量</li>
+</ul>
+</blockquote>
+
 <p><strong>电路分析</strong>:</p>
 <ul>
 <li>$n = 2$ 个 qubit,$t = 2$ 个时间步</li>
 <li>第 1 步: $\hat{U}_1 = \hat{H} \otimes \hat{I}$(Hadamard 在 q0)</li>
-<li>第 2 步: $\hat{U}_2 = \text{CNOT}_{0 \to 1}$(受控门,q0 控制 q1)</li>
+<li>第 2 步: $\hat{U}_2 = \text{CNOT}_{0 \to 1}$(受控门,q0 控制 q1,目标 q1)</li>
 </ul>
 
 <p><strong>作用</strong>:</p>
@@ -671,8 +680,19 @@ q_sum ───────────X──X───</code></pre>
 <li>1 个 CNOT 张成 $\sim 4^2 = 16$ 维空间(配合单 qubit 门)</li>
 <li>2 个 CNOT 张成 $\sim 4^4$ 维空间</li>
 <li>3 个 CNOT 张成 $\sim 4^6$ 维空间 = <strong>覆盖</strong> SU(4) 的 15 维</li>
-<li>严格证明见 Vatan &amp; Williams (2004)</li>
 </ul>
+
+<blockquote class="chapter-quote"><p><strong>严格 sketch 证明</strong>(Vatan-Williams 2004):</p>
+<p><strong>直觉</strong>: 把"CNOT 数"看作"局部参数轴"。SU(4) 是一个 <strong>15 维</strong>实李群($\dim \text{SU}(4) = 4^2 - 1 = 15$)。</p>
+<ul>
+<li><strong>0 个</strong> CNOT + 单 qubit 门 → 只覆盖<strong>局部队列</strong> $\text{SU}(2) \otimes \text{SU}(2)$ (6 维) ✗</li>
+<li><strong>1 个</strong> CNOT + 单 qubit 门 → 张成"1 个纠缠轴"的子群(8 维) ✗</li>
+<li><strong>2 个</strong> CNOT + 单 qubit 门 → 张成"2 个纠缠轴"的子群(12 维) ✗</li>
+<li><strong>3 个</strong> CNOT + 单 qubit 门 → 3 个独立"纠缠轴" + 局部队列 = <strong>15 维 = dim SU(4)</strong> ✓</li>
+</ul>
+<p><strong>核心论证</strong>: 每个 CNOT 加局部门生成 <strong>3 个新的"轴"参数</strong>(3 个转动自由度),$k$ 个 CNOT 加局部门 = $6 + 3k$ 维;当 $6 + 3k \geq 15$ 时即 $k \geq 3$ 才能覆盖整个 SU(4)。<strong>严格</strong>归一化分析见 Vatan-Williams (Phys. Rev. A 69, 032315, 2004)。</p>
+<p><strong>物理图像</strong>: CNOT 是 SU(4) 中的"局部生成元",每个新增的 CNOT 都在<strong>纠缠方向</strong>上增加新的可达区域。3 个 CNOT 提供的"方向"恰好覆盖 SU(4) 的全部 15 个独立参数。</p>
+</blockquote>
 
 <p><strong>工程含义</strong>: 实现一个"通用" 2 qubit 酉,<strong>最少</strong> 3 个 CNOT —— 这是<strong>硬件设计</strong>的下界。</p>
 
@@ -823,6 +843,27 @@ q1: ──A_2──┘         └──B_2──</code></pre>
 <li><strong>QSD 的 4^n 远小于"暴力" 4^n</strong> —— 通过递归减少</li>
 </ul>
 
+<p><strong>QSD 递归图</strong>:</p>
+<pre><code>         ┌── 任意 n qubit 酉 Û_n ──┐
+         │                          │
+   ┌─────┴──────┬──────────────┬────┴─────┐
+   │            │              │          │
+ (n-1) qubit  (n-1) qubit     单 qubit  多路分解
+ 受控酉 Û_(n-1)^0  Û_(n-1)^1  Û_A        multiplex
+   │            │              │
+   ↓            ↓              ↓
+ (继续递归:    (继续递归:     (**基础情形**:
+  n-1 → n-2     n-1 → n-2      用 ZYZ 分解
+  → ... → 1)    → ... → 1)     1 qubit 酉
+                = 3 个旋转)
+</code></pre>
+<ul>
+<li>节点 1-2: <strong>(n-1) qubit 受控酉</strong> —— 各自<strong>继续递归</strong>(递归深度 $n$)</li>
+<li>节点 3: <strong>单 qubit 酉 $\hat{A}$</strong> —— <strong>基础情形</strong>(base case),用 8.4 的 ZYZ 分解</li>
+<li>节点 4: <strong>多路分解(multiplex)</strong> —— 用"复用技术"实现 (n-1) qubit 控制 + 1 qubit 目标</li>
+</ul>
+<p><strong>递归终止条件</strong>: 当 $n = 1$ 时退化为单 qubit 酉(8.4 的 ZYZ 分解)。</p>
+
 <h3>8.6.3 例子:QSD 对 2 qubit 酉</h3>
 
 <p><strong>任意</strong> 2 qubit 酉 $\hat{U}_2$:</p>
@@ -966,6 +1007,17 @@ q1: ──R_y(β)──X──R_z(γ)──X──R_y(ε)──</code></pre>
 </ul>
 
 <p><strong>这就是</strong> $\log^c(1/\epsilon)$ 的来源 —— 来自<strong>群结构</strong>的<strong>递归</strong>利用。</p>
+
+<blockquote class="chapter-quote"><p><strong>1D 直观类比</strong>(对不熟悉李群的读者):</p>
+<p>想象 $S^1$ 上的旋转(0 到 $2\pi$)。设我们有一组"基本旋转" $\mathcal{G} = \{e^{i\pi/100}, e^{i\pi/50}, \ldots\}$(即每隔 $\pi/100$ 的旋转)。</p>
+<ul>
+<li><strong>暴力逼近</strong>:要把任意角度 $\theta$ 逼近到精度 $\epsilon = 10^{-6}$,需要"步进"约 $1/\epsilon = 10^6$ 次</li>
+<li><strong>群结构递归</strong>:利用 $S^1$ 的<strong>阿贝尔群结构</strong>(角度可加),可以<strong>两步</strong>逼近:先用 $n_1$ 步达到中间精度 $\sqrt{\epsilon}$,再用 $n_2$ 步从 $\sqrt{\epsilon}$ 达到 $\epsilon$ —— <strong>总共</strong> $2n = O(\log(1/\epsilon))$ 步</li>
+<li>严格推导: $N \sim 1/\epsilon^{1/2^n}$,解得 $n \sim \log(\log(1/\epsilon))$,门数 $\sim 2^n = 2^{\log(\log(1/\epsilon))} = \log(1/\epsilon)$</li>
+</ul>
+<p><strong>量子情况类似</strong>: SU(d) 是<strong>连续非阿贝尔</strong>群,而不是阿贝尔群,<strong>但</strong>有限门集 $\mathcal{G}$ 生成一个<strong>稠密</strong>子群 → 类似的对数复杂度。<strong>非阿贝尔</strong>意味着复合顺序很重要,但只要"覆盖半径"足够小,递归仍然有效。</p>
+<p><strong>关键</strong>: $S^1$ 类比给出"为什么对数"的直觉;<strong>严格证明</strong>需要用到李群覆盖半径 + 群字问题等技术(Dawson-Nielsen 2006 教程)。</p>
+</blockquote>
 
 <h3>8.7.4 Solovay-Kitaev 算法的实际成本</h3>
 
@@ -1212,6 +1264,9 @@ q1: ──R_y(β)──X──R_z(γ)──X──R_y(ε)──</code></pre>
 <td>未知</td>
 </tr>
 </tbody></table>
+
+<blockquote class="chapter-quote"><p><strong>数据时效性免责</strong>: 上表为 <strong>2024-2025 年</strong>的"快照"。<strong>物理 / 数学原理</strong>(5 个核心指标的定义、Solovay-Kitaev 等)<strong>不过时</strong>,但<strong>工程数字</strong>(qubit 数、门错误率)会<strong>快速过时</strong>。读者查最新数据请参考各硬件厂商的<strong>官方公告</strong>和 <strong>Quantum Computing Report</strong> 等聚合网站。Quantum Computing Report 每月都会更新 NISQ 硬件基准。</p>
+</blockquote>
 
 <p><strong>含义</strong>: <strong>NISQ 时代</strong> 资源<strong>有限</strong>——Shor-2048 等"杀手应用"还<strong>远</strong>;变分算法(VQE/QAOA, ch13) 是<strong>当前</strong>可行方向。</p>
 
@@ -1651,10 +1706,9 @@ q1 (ancilla): ──|0⟩──┐         │
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 7 章 量子逻辑门与量子线路</span>
           </a>
-          <a href="ch09.html" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch09.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
             <span class="pager-title">第 9 章 量子傅里叶变换</span>
-            <span class="pager-tag">即将推出</span>
           </a>
         </nav>
 
@@ -1700,7 +1754,9 @@ q1 (ancilla): ──|0⟩──┐         │
           <li><a href="ch04.html">第 4 章</a></li>
           <li><a href="ch05.html">第 5 章</a></li>
           <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
           <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

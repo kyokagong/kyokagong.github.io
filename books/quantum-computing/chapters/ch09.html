@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第9章：量子傅里叶变换 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第9章：量子傅里叶变换 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航:返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第二部分 · 量子计算基础</span>
+        <span class="chapter-day-tag">Day 10 · 2026-06-17</span>
+      </div>
+      <h1 class="chapter-title">第 9 章 量子傅里叶变换</h1>
+      <p class="chapter-subtitle">从经典 DFT 到 QFT——指数加速 + QPE/Shor 的核心</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~7,300 字</span>
+        <span class="stat">🔢 21 节 · 50+ 子节</span>
+        <span class="stat">📑 QFT 电路 + 加速比表 + QPE 推导</span>
+        <span class="stat">⏱ ~45 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+<h1>第 9 章 量子傅里叶变换</h1>
+<blockquote class="chapter-quote"><p><strong>本章定位</strong>: 第二部分 · 量子计算基础 · 第四章<br><strong>承接</strong>: 第 7-8 章给出了"量子门 + 量子电路"——现在问"<strong>第一个有名字的量子算法子程序</strong>"是什么?<br><strong>目标</strong>: 让读者<strong>完整理解 QFT 的定义、电路实现、复杂度、精度问题</strong>,并看到 QFT 在 QPE / Shor 算法中的核心地位</p></blockquote>
+<hr>
+<h2>9.0 引言:从经典 DFT 到 QFT</h2>
+<p><strong>傅里叶变换</strong>(Fourier Transform)是 19 世纪以来最重要的数学工具之一。从<strong>信号处理</strong>到<strong>偏微分方程</strong>,从<strong>密码学</strong>到<strong>量子物理</strong>,傅里叶变换<strong>无处不在</strong>。经典计算机上,<strong>快速傅里叶变换(FFT)</strong>(Cooley-Tukey, 1965)把 $N$ 点离散傅里叶变换(DFT)的复杂度从 $O(N^2)$ 降到 $O(N \log N)$ —— 这是<strong>20 世纪算法界</strong>最重要的加速之一。</p>
+<p>但<strong>量子版本</strong>可以<strong>更进一步</strong>:<strong>量子傅里叶变换(QFT)</strong> 只需要 $O(n^2)$ 个门(其中 $N = 2^n$),而经典 FFT 需要 $O(N \log N) = O(n \cdot 2^n)$ 个操作。<strong>指数加速</strong>!</p>
+<p>但这里有一个<strong>至关重要</strong>的微妙之处:<strong>QFT 输出的不是一个"频谱",而是一个量子态</strong>。直接测量只能得到 $n$ 比特,丢失全部"中间信息"。</p>
+<p>这就是 QFT 教学中的<strong>核心谜团</strong>: 1. QFT <strong>本身</strong>是指数加速的(从 $O(N \log N)$ 到 $O(n^2)$) 2. 但 <strong>测量</strong> QFT 输出<strong>不能</strong>直接得到频谱(只得到 $n$ 比特) 3. 那么 QFT <strong>到底有什么用</strong>?</p>
+<p><strong>答案</strong>: QFT 必须<strong>嵌入</strong>到"<strong>量子相位估计(QPE)</strong>"框架中才能发挥作用。QPE 是 QFT 的"<strong>应用场景</strong>"——它<strong>精心准备</strong>输入态使得测量 QFT 输出<strong>恰好</strong>给出<strong>想要的信息</strong>。这个精巧的设计正是 <strong>Shor 算法</strong> 和<strong>许多量子机器学习</strong>算法的核心。</p>
+<p>本章将<strong>完整地</strong>给出: 1. <strong>9.1-9.3</strong>: QFT 的数学定义 + 酉性证明 2. <strong>9.4-9.5</strong>: QFT 的电路实现 ($O(n^2)$ 门) 3. <strong>9.6</strong>: QFT vs FFT 的<strong>指数加速</strong> 4. <strong>9.7-9.8</strong>: QFT 逆变换 + <strong>输出精度问题</strong> 5. <strong>9.9-9.10</strong>: QPE / Shor 算法的"<strong>预告</strong>" 6. <strong>9.11</strong>: QFT 的<strong>局限</strong> 7. <strong>9.12</strong>: 总结 + 概念速查表 + 后续铺路</p>
+<p><strong>本章的"5 个关键概念"</strong>: 1. <strong>QFT 是酉算符</strong> —— 跟经典 DFT 是线性变换一样,QFT 把一个 $2^n$ 维复向量映射到另一个 2. <strong>QFT 的电路代价</strong> —— $O(n^2)$ 门($\sim n^2/2$ 个 Hadamard + 受控相位) 3. <strong>指数加速 vs 输出问题</strong> —— QFT <strong>本身</strong>指数加速,但<strong>测量</strong>后只得到 $n$ 比特 4. <strong>QFT 是 QPE/Shor 的核心</strong> —— 量子相位估计、Shor 因式分解都基于 QFT 5. <strong>逆 QFT = 反向电路</strong> —— $\hat{F}^\dagger$ 不需要新设计,直接"反向 + 逆"即可</p>
+<p><strong>本章的"5 个关键问题"</strong>: 1. QFT 是<strong>什么</strong>? (9.2 定义) 2. QFT <strong>为什么</strong>是酉算符? (9.3 证明) 3. QFT <strong>怎么</strong>用电路实现? (9.4-9.5) 4. QFT 比 FFT <strong>快多少</strong>? (9.6 复杂度) 5. QFT <strong>怎么</strong>应用? (9.9-9.10 QPE / Shor)</p>
+<hr>
+<h2>9.1 经典 DFT 回顾</h2>
+<p><strong>经典离散傅里叶变换(DFT)</strong> 把一个长度为 $N$ 的复向量 $(x_0, x_1, \ldots, x_{N-1})$ 映射为另一个 $(y_0, y_1, \ldots, y_{N-1})$:</p>
+<p>$$y_k = \frac{1}{\sqrt{N}} \sum_{j=0}^{N-1} x_j \cdot e^{2\pi i j k / N}, \quad k = 0, 1, \ldots, N-1$$</p>
+<p><strong>矩阵形式</strong>: $\mathbf{y} = \hat{F}_N \mathbf{x}$,其中 $\hat{F}_N$ 是一个 $N \times N$ 酉矩阵($\hat{F}_N^\dagger \hat{F}_N = \hat{I}$)。</p>
+<p><strong>关键性质</strong>:</p>
+<ul>
+<li><strong>酉性</strong>: $\hat{F}_N^\dagger \hat{F}_N = \hat{I}$(行向量是正交的)</li>
+<li><strong>对称性</strong>: $\hat{F}_N^4 = \hat{I}$(4 次应用回到原向量)</li>
+<li><strong>可逆性</strong>: $\hat{F}_N^{-1} = \hat{F}_N^\dagger = \hat{F}_N^3$</li>
+</ul>
+<p><strong>FFT (Cooley-Tukey 1965)</strong>:</p>
+<ul>
+<li>直接 DFT: $O(N^2)$ 操作</li>
+<li>FFT: $O(N \log N)$ 操作(分治 + 蝶形运算)</li>
+<li>当 $N = 2^n$ 时,FFT 是<strong>最优</strong>的(就常数因子而言)</li>
+</ul>
+<p><strong>应用</strong>:</p>
+<ul>
+<li>信号处理(频谱分析)</li>
+<li>卷积(快速多项式乘法)</li>
+<li>偏微分方程求解</li>
+<li>密码学(数论变换)</li>
+</ul>
+<hr>
+<h2>9.2 QFT 的定义</h2>
+<p><strong>量子傅里叶变换(QFT)</strong> 是 DFT 在<strong>量子态空间</strong>中的<strong>自然推广</strong>:</p>
+<p>$$\hat{F}_N |j\rangle = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} e^{2\pi i j k / N} |k\rangle$$</p>
+<p>其中 $|j\rangle$ 和 $|k\rangle$ 是 $n$ qubit 计算基态($N = 2^n$)。</p>
+<p><strong>关键点</strong>:</p>
+<ul>
+<li><strong>输入</strong>: 一个量子态 $|j\rangle$(基态)或叠加态 $\sum_j x_j |j\rangle$</li>
+<li><strong>输出</strong>: 频域量子态 $\sum_k y_k |k\rangle$(其中 $y_k$ 是 DFT 系数)</li>
+<li><strong>酉性</strong>: $\hat{F}_N$ 是一个<strong>酉算符</strong>(因为 DFT 矩阵是酉的)</li>
+<li><strong>可逆</strong>: $\hat{F}_N^\dagger = \hat{F}_N^{-1} = \hat{F}_N^3$</li>
+</ul>
+<p><strong>线性作用</strong>: 由于 $\hat{F}_N$ 是线性的,</p>
+<p>$$\hat{F}_N \left(\sum_{j=0}^{N-1} x_j |j\rangle\right) = \sum_{k=0}^{N-1} y_k |k\rangle, \quad y_k = \frac{1}{\sqrt{N}} \sum_{j=0}^{N-1} x_j e^{2\pi i j k/N}$$</p>
+<p>即 QFT 把一个<strong>量子态的"概率幅"</strong>当作经典向量做 DFT。</p>
+<p><strong>二进制形式</strong>(对 $N = 2^n$): 设 $j = j_1 j_2 \cdots j_n$(二进制表示,$j_1$ 是最高位),则:</p>
+<p>$$\hat{F}_{2^n} |j_1 j_2 \cdots j_n\rangle = \frac{1}{2^{n/2}} \bigotimes_{l=1}^{n} \left(|0\rangle + e^{2\pi i (0.j_{l} j_{l+1} \cdots j_n)} |1\rangle\right)$$</p>
+<p>其中 $0.j_l j_{l+1} \cdots j_n = \sum_{m=l}^{n} j_m / 2^{m-l+1}$ 是<strong>二进制小数</strong>。</p>
+<p><strong>这是关键</strong>: 输出的<strong>每一个 qubit</strong> 只依赖于输入的<strong>一个子集</strong>,这让 QFT <strong>可以用局部门实现</strong>。</p>
+<hr>
+<h2>9.3 QFT 是酉算符</h2>
+<p><strong>定理</strong>: $\hat{F}_N$ 是酉的,即 $\hat{F}_N^\dagger \hat{F}_N = \hat{I}$。</p>
+<p><strong>证明</strong>: 计算 $\hat{F}_N^\dagger \hat{F}_N$ 的矩阵元:</p>
+<p>$$(\hat{F}_N^\dagger \hat{F}_N)_{j, j'} = \sum_{k=0}^{N-1} (\hat{F}_N^\dagger)_{j,k} (\hat{F}_N)_{k, j'} = \sum_{k=0}^{N-1} \overline{(\hat{F}_N)_{k,j}} (\hat{F}_N)_{k, j'}$$</p>
+<p>代入 $\hat{F}_N$ 定义:</p>
+<p>$$= \sum_{k=0}^{N-1} \frac{1}{\sqrt{N}} e^{-2\pi i k j / N} \cdot \frac{1}{\sqrt{N}} e^{2\pi i k j' / N} = \frac{1}{N} \sum_{k=0}^{N-1} e^{2\pi i k (j' - j) / N}$$</p>
+<p>这是<strong>几何级数求和</strong>:</p>
+<ul>
+<li>当 $j = j'$: $\sum_{k=0}^{N-1} 1 = N$,所以 $(\hat{F}_N^\dagger \hat{F}_N)_{j, j} = 1$</li>
+<li>当 $j \neq j'$: $\frac{1}{N} \cdot \frac{1 - e^{2\pi i (j' - j)}}{1 - e^{2\pi i (j' - j)/N}} = 0$(因为 $j' - j$ 是非零整数)</li>
+</ul>
+<p>所以 $\hat{F}_N^\dagger \hat{F}_N = \hat{I}$。$\blacksquare$</p>
+<p><strong>推论</strong>:</p>
+<ul>
+<li>$\hat{F}_N^{-1} = \hat{F}_N^\dagger = \hat{F}_N^3$</li>
+<li>QFT 是<strong>可逆</strong>的(没有信息丢失)</li>
+<li>QFT 可以<strong>实现</strong>为量子电路(可逆)</li>
+</ul>
+<hr>
+<h2>9.4 QFT 的电路实现</h2>
+<p>QFT 的电路实现是本章的<strong>核心</strong>。关键思想:利用 9.2 的<strong>二进制分解</strong>形式,把 QFT 分解为<strong>Hadamard + 受控相位旋转 + SWAP</strong>。</p>
+<h3>9.4.1 三个基本门</h3>
+<p><strong>Hadamard 门</strong>(ch07 7.3): $$\hat{H}|j\rangle = \frac{1}{\sqrt{2}}(|0\rangle + (-1)^j |1\rangle) = \frac{1}{\sqrt{2}} \sum_{k=0}^{1} (-1)^{jk} |k\rangle$$</p>
+<p><strong>受控相位旋转 $\hat{R}_k$</strong>(ch07 7.5): $$\hat{R}_k = \begin{pmatrix} 1 & 0 \\ 0 & e^{2\pi i/2^k} \end{pmatrix}$$</p>
+<p>注意 $\hat{R}_k$ 是对角的(不改变基态概率幅),只引入相位。</p>
+<p><strong>SWAP 门</strong>(ch07 7.7): 交换两个 qubit 的状态,用于<strong>反转 qubit 顺序</strong>。</p>
+<h3>9.4.2 QFT 电路的递归结构</h3>
+<p>设 $n$ qubit 输入 $|j_1 j_2 \cdots j_n\rangle$。QFT 电路按<strong>如下层次</strong>作用:</p>
+<p><strong>第 1 步</strong>: 对 qubit 1 作用 Hadamard + 受控相位(从 qubit 2 到 qubit $n$):</p>
+<p>$$\hat{H}_1 \cdot (\hat{R}_2)_{12} \cdot (\hat{R}_3)_{13} \cdots (\hat{R}_n)_{1n} |j_1 j_2 \cdots j_n\rangle$$</p>
+<p>把 qubit 1 变成:</p>
+<p>$$\frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i (0.j_1 j_2 \cdots j_n)} |1\rangle\right)$$</p>
+<p><strong>第 2 步</strong>: 对 qubit 2 作用 Hadamard + 受控相位(从 qubit 3 到 qubit $n$):</p>
+<p>$$\frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i (0.j_1 j_2 \cdots j_n)} |1\rangle\right) \otimes \frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i (0.j_2 \cdots j_n)} |1\rangle\right) \otimes \cdots$$</p>
+<p><strong>第 $k$ 步</strong>: 对 qubit $k$ 作用 Hadamard + 受控相位(从 qubit $k+1$ 到 qubit $n$)。</p>
+<p><strong>最后</strong>: 交换 qubit 顺序(SWAP 层),得到最终输出:</p>
+<p>$$\frac{1}{2^{n/2}} \bigotimes_{l=1}^{n} \left(|0\rangle + e^{2\pi i (0.j_l \cdots j_n)} |1\rangle\right)$$</p>
+<h3>9.4.3 完整电路图(n=4)</h3>
+<pre><code>q1: ──H───R_2────────R_3────────R_4─────────────────────────×──
+              │           │           │                       │
+q2: ─────────H───R_2────────R_3─────────────────×──SWAP──────×──
+                            │                     │       │
+q3: ────────────────────────H───R_2───────×──SWAP─────────────
+                                          │           │
+q4: ─────────────────────────────────────H───×──SWAP──────────</code></pre>
+<p><strong>门数统计</strong>(n=4):</p>
+<ul>
+<li>Hadamard: $n = 4$</li>
+<li>受控相位 $\hat{R}_k$: $\sum_{k=2}^{n} (k-1) = n(n-1)/2 = 6$</li>
+<li>SWAP: $n/2 = 2$</li>
+<li><strong>总计</strong>: $n + n(n-1)/2 + n/2 \approx n^2/2$ 个门</li>
+</ul>
+<p><strong>一般公式</strong>: QFT 在 $n$ qubit 上需要 $O(n^2)$ 个门(具体是 $n^2/2$ 量级)。</p>
+<hr>
+<h2>9.5 QFT 的"层次"展开</h2>
+<h3>9.5.1 单 qubit QFT (n=1)</h3>
+<p><strong>特例</strong>: 当 $n=1$ 时,QFT 退化为 <strong>Hadamard 门</strong>:</p>
+<p>$$\hat{F}_2 |0\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle) = \hat{H}|0\rangle$$ $$\hat{F}_2 |1\rangle = \frac{1}{\sqrt{2}}(|0\rangle - |1\rangle) = \hat{H}|1\rangle$$</p>
+<p>所以 $\hat{F}_2 = \hat{H}$。<strong>这告诉我们</strong>: QFT 不是"新东西",而是 Hadamard 在高维的<strong>自然推广</strong>。</p>
+<h3>9.5.2 两 qubit QFT (n=2)</h3>
+<p><strong>电路</strong>:</p>
+<pre><code>q1: ──H───R_2────────×──
+              │       │
+q2: ─────────H──×──SWAP</code></pre>
+<p><strong>门数</strong>: $2 + 1 + 1 = 4$ 个门</p>
+<p><strong>作用</strong>: $\hat{F}_4 |j_1 j_2\rangle = \frac{1}{2}(|0\rangle + e^{i\pi j_1}|1\rangle)(|0\rangle + e^{i\pi(0.j_2)}|1\rangle)$(公式 9.2)</p>
+<p><strong>验证</strong>: $\hat{F}_4 |00\rangle = \frac{1}{2}(|0\rangle + |1\rangle)(|0\rangle + |1\rangle) = \frac{1}{2}(|00\rangle + |01\rangle + |10\rangle + |11\rangle)$ ✓</p>
+<h3>9.5.3 三 qubit QFT (n=3)</h3>
+<p><strong>电路</strong>:</p>
+<pre><code>q1: ──H───R_2───R_3────────×──
+              │    │        │
+q2: ─────────H───R_2──×──SWAP──
+                   │     │  │
+q3: ───────────────H───×──────</code></pre>
+<p><strong>门数</strong>: $3 + 3 + 1.5 \approx 7$ 个门</p>
+<p><strong>总公式</strong>: QFT 电路门数 = $n + \binom{n}{2} + \lfloor n/2 \rfloor \approx n^2/2$</p>
+<h3>9.5.4 n qubit QFT 通用电路模式</h3>
+<p><strong>通用模板</strong>(n=5):</p>
+<pre><code>q1: ──H───R_2───R_3───R_4───R_5─────────────────────────────×──
+              │     │     │     │                              │
+q2: ─────────H───R_2───R_3───R_4──────×──────────────×──SWAP─────
+                            │          │              │       │
+q3: ───────────────────────H───R_2───R_3────×────────────SWAP──
+                                      │      │              │
+q4: ─────────────────────────────────H───R_2──×────────SWAP──────
+                                              │              │
+q5: ─────────────────────────────────────────H────────────────</code></pre>
+<p><strong>层结构</strong>: 1. <strong>第 1 层(q1)</strong>: 1 个 H + 4 个 R_2/R_3/R_4/R_5 = 5 个门 2. <strong>第 2 层(q2)</strong>: 1 个 H + 3 个 R_2/R_3/R_4 = 4 个门 3. <strong>第 3 层(q3)</strong>: 1 个 H + 2 个 R_2/R_3 = 3 个门 4. <strong>第 4 层(q4)</strong>: 1 个 H + 1 个 R_2 = 2 个门 5. <strong>第 5 层(q5)</strong>: 1 个 H = 1 个门 6. <strong>SWAP 层</strong>: ⌊5/2⌋ = 2 个 SWAP = 2 个门 7. <strong>总计</strong>: 5+4+3+2+1+2 = 17 个门</p>
+<p><strong>公式</strong>: $n + \binom{n}{2} + \lfloor n/2 \rfloor = 5 + 10 + 2 = 17$ ✓</p>
+<h3>9.5.5 复杂度函数详解</h3>
+<p><strong>门数公式的直觉</strong>:</p>
+<ul>
+<li><strong>Hadamard</strong>: 每个 qubit 1 个 → $n$</li>
+<li><strong>受控 $\hat{R}_k$</strong>: 第 $i$ 个 qubit 受后面 $(n-i)$ 个 qubit 控制 → $\sum_{i=1}^{n}(n-i) = \binom{n}{2}$</li>
+<li><strong>SWAP</strong>: 翻转 qubit 顺序需要 $\lfloor n/2 \rfloor$ 个 SWAP</li>
+</ul>
+<p><strong>总门数</strong>: $$N_{\text{gates}} = n + \binom{n}{2} + \lfloor n/2 \rfloor = n + \frac{n(n-1)}{2} + \left\lfloor \frac{n}{2} \right\rfloor \approx \frac{n^2}{2}$$</p>
+<p><strong>渐进复杂度</strong>: $O(n^2)$(因为 $n^2/2$ 是主导项)。</p>
+<p><strong>对比经典 FFT</strong>:</p>
+<ul>
+<li><strong>经典 FFT</strong>: $O(N \log N) = O(n \cdot 2^n)$</li>
+<li><strong>量子 QFT</strong>: $O(n^2)$</li>
+<li><strong>加速比</strong>: $\frac{n \cdot 2^n}{n^2} = \frac{2^n}{n}$ —— <strong>指数</strong></li>
+</ul>
+<h3>9.5.6 错误率分析</h3>
+<p><strong>前提</strong>: 每个门错误率 $p$,总门数 $G$ 个,电路成功率 $\approx (1 - p)^G \approx e^{-pG}$。</p>
+<p><strong>QFT 电路</strong>(n qubit):</p>
+<ul>
+<li>门数 $G = n^2/2$ 量级</li>
+<li>当 $p = 10^{-3}$(现代超导硬件水平):</li>
+</ul>
+<p>  - $n = 10$: $G \approx 50$,错误率 $1 - e^{-0.05} \approx 5\%$   - $n = 50$: $G \approx 1250$,错误率 $1 - e^{-1.25} \approx 71\%$   - $n = 100$: $G \approx 5000$,错误率 $1 - e^{-5} \approx 99\%$</p>
+<p><strong>结论</strong>: <strong>大 $n$ QFT 在 NISQ 时代很难直接运行</strong>,需要<strong>容错量子计算</strong>(第五部分 ch19)。</p>
+<p><strong>优化</strong>: 通过<strong>早期测量</strong> + <strong>经典反馈</strong>(PE-style 算法),可以降低错误率。ch17-19 详细讨论容错。</p>
+<hr>
+<h2>9.6 QFT vs FFT 复杂度对比</h2>
+<p><strong>这是本章最重要的洞察</strong>:</p>
+<table class="concept-table">
+<thead><tr>
+<th>操作</th>
+<th>经典 DFT</th>
+<th>经典 FFT</th>
+<th>量子 QFT</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>门数 / 操作数</strong></td>
+<td>$O(N^2)$</td>
+<td>$O(N \log N)$</td>
+<td>$O(n^2) = O(\log^2 N)$</td>
+</tr>
+<tr>
+<td><strong>存储</strong></td>
+<td>$N$ 个复数</td>
+<td>$N$ 个复数</td>
+<td>$n$ 个 qubit ($\log N$ 比特)</td>
+</tr>
+<tr>
+<td><strong>输出形式</strong></td>
+<td>完整频谱 $y_0, \ldots, y_{N-1}$</td>
+<td>完整频谱</td>
+<td><strong>量子态</strong> $\sum y_k</td>
+<td>k\rangle$</td>
+</tr>
+</tbody>
+</table>
+<p><strong>当 $N = 2^{20} \approx 10^6$</strong>:</p>
+<ul>
+<li>FFT: $N \log N \approx 2 \times 10^7$ 操作</li>
+<li>QFT: $n^2 = 400$ 个门</li>
+</ul>
+<p><strong>加速比</strong>: $\frac{N \log N}{n^2} = \frac{2^n \cdot n}{n^2} = 2^n / n$ —— <strong>指数加速</strong>!</p>
+<p><strong>为何指数加速?</strong></p>
+<ul>
+<li>经典:必须<strong>逐个</strong>计算 $N$ 个 DFT 系数</li>
+<li>量子:用 $n$ qubit <strong>叠加</strong>表示全部 $N$ 个系数,<strong>一次性</strong>全部计算</li>
+</ul>
+<p><strong>关键警告</strong>:<strong>加速是"输入已经是量子态"前提下的</strong>。如果要从经典数据构造 QFT 输入,需要 $O(N)$ 的"状态准备"代价,<strong>抵消</strong> QFT 的加速。</p>
+<h3>9.6.1 经典 FFT 的历史</h3>
+<p><strong>前 FFT 时代</strong>(1805-1965):</p>
+<ul>
+<li>高斯 1805 年就描述了类似 FFT 的算法,但<strong>不广为人知</strong></li>
+<li>DFT 直接计算:$O(N^2)$(每次 DFT 系数 $y_k$ 是 $N$ 项求和)</li>
+</ul>
+<p><strong>Cooley-Tukey FFT</strong>(1965):</p>
+<ul>
+<li><strong>论文</strong>: J. W. Cooley, J. W. Tukey,《An Algorithm for the Machine Calculation of Complex Fourier Series》,Math. Comp. 19:297-301 (1965)</li>
+<li><strong>思想</strong>: 分治 —— $N$ 点 DFT 分解为 2 个 $N/2$ 点 DFT</li>
+<li><strong>复杂度</strong>: $O(N \log N)$</li>
+<li><strong>影响</strong>: 使 DFT 在数字信号处理、图像处理、密码学等领域<strong>真正实用</strong></li>
+</ul>
+<p><strong>FFT 的"奇遇记"</strong>: Cooley-Tukey 1965 的论文是<strong>20 世纪被引用最多</strong>的数学论文之一(超过 50,000 次引用)。它的<strong>实用价值</strong>怎么强调都不过分。</p>
+<h3>9.6.2 经典 FFT 的算法核心</h3>
+<p><strong>蝶形运算</strong>(butterfly operation):FFT 的"基本单元"。</p>
+<p>设输入 $(a, b)$,蝶形输出 $(a + W \cdot b, a - W \cdot b)$ 其中 $W = e^{2\pi i/N}$ 是旋转因子。</p>
+<p><strong>FFT 算法</strong>(递归):</p>
+<pre><code>function FFT(x, N):
+  if N == 1: return x
+  even = FFT(x[0:N:2], N/2)
+  odd  = FFT(x[1:N:2], N/2)
+  for k = 0 to N/2 - 1:
+    t = odd[k] * exp(-2πi k / N)
+    output[k]       = even[k] + t
+    output[k + N/2] = even[k] - t
+  return output</code></pre>
+<p><strong>总操作数</strong>: $T(N) = 2 T(N/2) + O(N) = O(N \log N)$</p>
+<h3>9.6.3 量子 QFT 的"指数加速"根本原因</h3>
+<p><strong>经典</strong>: 算 $N$ 个 DFT 系数 $y_0, y_1, \ldots, y_{N-1}$ <strong>逐个计算</strong>,每个 $y_k$ 是 $N$ 项求和 → $O(N^2)$,FFT 优化到 $O(N \log N)$。</p>
+<p><strong>量子</strong>: $n$ qubit 量子态 $\sum_j x_j |j\rangle$ <strong>已经编码</strong>全部 $N$ 个输入系数。QFT 一次性把<strong>所有</strong> $N$ 个 DFT 系数<strong>同时</strong>写入输出态的振幅中。</p>
+<p><strong>关键的量子优势</strong>: 1. <strong>叠加</strong>: $n$ qubit <strong>同时</strong>表示 $2^n$ 个复数 2. <strong>干涉</strong>: QFT 的相位旋转在<strong>振幅</strong>上<strong>累积</strong> $N$ 个输入 3. <strong>并行</strong>: 量子算法本质上是"全 $N$ 维空间"的<strong>并行</strong>操作</p>
+<p><strong>但是</strong>: 量子加速<strong>仅在</strong>"输入已经是量子态"时才有意义。如果要把 $N$ 个经典数<strong>加载</strong>到 $n$ qubit 量子态,需要 $O(N)$ 操作,<strong>抵消</strong> QFT 的 $O(n^2)$ 加速。</p>
+<h3>9.6.4 "条件性加速"的精确表述</h3>
+<p><strong>定理</strong>(informal): QFT 提供从 $N \log N$ 到 $\log^2 N$ 的加速,<strong>前提</strong>是:</p>
+<ul>
+<li>输入数据<strong>已经</strong>编码为量子态</li>
+<li>输出<strong>只读</strong> 1 个采样(不是全部 $N$ 个系数)</li>
+<li>整体算法<strong>嵌入</strong>到 QPE / Shor / HHL 等框架中</li>
+</ul>
+<p><strong>违反任一前提</strong>:</p>
+<ul>
+<li>输入不是量子态:状态准备 $O(N)$ 抵消加速</li>
+<li>想读全部系数:需要 $O(N)$ 测量抵消加速</li>
+<li>直接用 QFT:得不到有意义的结果(9.8 输出问题)</li>
+</ul>
+<p><strong>结论</strong>: QFT 是"<strong>条件性</strong>"加速,<strong>不是</strong>通用加速。</p>
+<h3>9.6.5 QFT 的"门代价"vs FFT 的"操作代价"</h3>
+<p><strong>QFT 门代价</strong>(实际硬件需要跑的"指令数"):</p>
+<ul>
+<li>$n$ 个 Hadamard + $\binom{n}{2}$ 个受控相位 + $\lfloor n/2 \rfloor$ 个 SWAP</li>
+<li>$O(n^2)$ 门</li>
+</ul>
+<p><strong>FFT 操作代价</strong>(经典 CPU 需要跑的"指令数"):</p>
+<ul>
+<li>$N$ 个复数运算(加 + 乘),每个 $O(1)$</li>
+<li>FFT 优化到 $N \log N$ 操作</li>
+</ul>
+<p><strong>门 vs 操作 的对应</strong>: 1 个量子门 ≈ 1 个经典操作(粗略)。所以 $O(n^2)$ 门 vs $O(N \log N)$ 操作 = <strong>指数加速</strong>。</p>
+<p><strong>硬件时钟因素</strong>:</p>
+<ul>
+<li>经典 CPU 时钟:~GHz($10^9$ Hz)</li>
+<li>量子门时钟:~MHz($10^6$ Hz)(典型超导)</li>
+<li>量子<strong>慢</strong> 1000 倍</li>
+</ul>
+<p><strong>实际加速比</strong>(考虑时钟): $\frac{2^n / n}{1000}$ ——</p>
+<ul>
+<li>$n = 10$: 100× 加速</li>
+<li>$n = 20$: 50,000× 加速</li>
+<li>$n = 30$: 50,000,000× 加速</li>
+</ul>
+<p><strong>仍然指数加速</strong>,但比"纯门数对比"小 1000 倍。</p>
+<hr>
+<h2>9.7 QFT 的逆变换</h2>
+<p><strong>QFT 的逆</strong> = <strong>DFT 的逆</strong> = <strong>DFT 的共轭转置</strong>:</p>
+<p>$$\hat{F}_N^\dagger |k\rangle = \frac{1}{\sqrt{N}} \sum_{j=0}^{N-1} e^{-2\pi i j k / N} |j\rangle$$</p>
+<p><strong>几何上</strong>: 经典 FFT 的"逆"是把频域信号转回时域。在量子版本中:</p>
+<p>$$\hat{F}_N^\dagger = \hat{F}_N^{-1} = \hat{F}_N^3$$</p>
+<p>(QFT 4 次回到单位算符。)</p>
+<p><strong>电路实现</strong>: <strong>逆 QFT 的电路 = QFT 电路的反向 + 每个门的逆</strong>。</p>
+<p>具体来说:</p>
+<ul>
+<li>Hadamard 是<strong>自逆</strong>的: $\hat{H}^\dagger = \hat{H}$</li>
+<li>受控相位 $\hat{R}_k^\dagger = \hat{R}_k^{-1} = \hat{R}_{2\pi - 2\pi/2^k}$(取负相位)</li>
+<li>SWAP 是<strong>自逆</strong>的: $\text{SWAP}^\dagger = \text{SWAP}$</li>
+</ul>
+<p><strong>所以</strong>: 逆 QFT 电路 = QFT 电路<strong>反向</strong>,且把所有 $R_k$ 替换为 $R_k^\dagger$。<strong>门数不变</strong>,仍是 $O(n^2)$。</p>
+<hr>
+<h2>9.8 QFT 的"输出精度"问题</h2>
+<p><strong>这是本章最微妙也最重要的部分</strong>。</p>
+<p><strong>问题</strong>: QFT 输出量子态 $\sum_k y_k |k\rangle$。当我们<strong>测量</strong>这个态,只能得到<strong>一个</strong> $k$ 值(以概率 $|y_k|^2$)。<strong>全部其他 $N-1$ 个系数都丢失</strong>!</p>
+<p><strong>这跟经典 FFT 完全相反</strong>:经典 FFT 输出<strong>全部 $N$ 个</strong>系数 $y_0, y_1, \ldots, y_{N-1}$ —— 我们可以<strong>任意查询</strong>。</p>
+<p><strong>结论</strong>: <strong>QFT 单独</strong>无法替代经典 FFT(无法读出全部系数)。</p>
+<p><strong>那 QFT 有用吗?</strong>: <strong>有</strong>,但必须<strong>嵌入</strong>到"<strong>相位估计</strong>"或"<strong>周期发现</strong>"框架中:</p>
+<ol>
+<li><strong>量子相位估计(QPE, 9.9)</strong>:精心构造输入态,使得 $|y_k|^2$ 在某个特定 $k$ 上<strong>集中</strong> —— 测量得到<strong>想要的相位</strong></li>
+<li><strong>Shor 算法周期发现(9.10)</strong>:输入态是"周期函数的叠加",QFT 输出在<strong>周期的倍数</strong>上<strong>集中</strong> —— 测量得到<strong>周期</strong></li>
+</ol>
+<p><strong>关键洞察</strong>: QFT 的"有用性"在于把<strong>时域</strong>信息(函数值)转化为<strong>频域</strong>信息(频率),但<strong>频域信息</strong>必须<strong>本来就稀疏</strong>(只有少数频率分量有显著概率幅)。如果频谱是<strong>密集</strong>的,QFT 输出是<strong>均匀叠加</strong>,测量得不到有用信息。</p>
+<p><strong>物理类比</strong>: 经典 FFT 就像"录音机的频谱分析仪"——可以看到<strong>全部</strong>频率分量。QFT 就像"听到一个和弦"——能感知<strong>整体音高</strong>,但无法分解出每个泛音。<strong>只有在和弦本身就是稀疏</strong>(纯音 + 谐波)时,才有用。</p>
+<h3>9.8.1 "输出问题"的精确数学</h3>
+<p><strong>经典 FFT</strong>:</p>
+<ul>
+<li>输入: $\mathbf{x} = (x_0, x_1, \ldots, x_{N-1}) \in \mathbb{C}^N$</li>
+<li>输出: $\mathbf{y} = \hat{F}_N \mathbf{x} \in \mathbb{C}^N$</li>
+<li><strong>访问</strong>: 输出 $\mathbf{y}$ 的<strong>每个</strong> $y_k$ 都可以<strong>直接读取</strong></li>
+</ul>
+<p><strong>量子 QFT</strong>:</p>
+<ul>
+<li>输入: $|\psi\rangle = \sum_j x_j |j\rangle$(基态上的叠加)</li>
+<li>输出: $\hat{F}_N |\psi\rangle = \sum_k y_k |k\rangle$</li>
+<li><strong>访问</strong>: <strong>只能</strong>通过测量<strong>采样</strong>一个 $k$ 值</li>
+</ul>
+<p><strong>测量的限制</strong>(量子力学的核心):</p>
+<ul>
+<li>测量 $\sum_k y_k |k\rangle$ 给出<strong>一个</strong> $k$ 值</li>
+<li>测量<strong>不可逆</strong>: 一旦测量,态<strong>塌缩</strong>到 $|k\rangle$,失去其他信息</li>
+<li>重复测量给出<strong>相同</strong> $k$(因为态已塌缩)</li>
+<li>想得到<strong>全部</strong> $|y_k|^2$ 需要<strong>重新准备</strong>态<strong>然后</strong>测量,共需 $O(N)$ 次</li>
+</ul>
+<p><strong>这就是"量子测量限制"</strong> —— 直接读出 $n$ qubit 量子态的全部振幅需要 $O(2^n)$ 次测量(无加速)。</p>
+<h3>9.8.2 "输出问题"的两种缓解方案</h3>
+<p><strong>方案 1: 相位估计框架 (QPE)</strong></p>
+<p>把"读出频谱"问题转化为"估计一个具体相位"问题:</p>
+<ul>
+<li><strong>输入</strong>: $\hat{U}$, $|\psi\rangle$($\hat{U}$ 本征态),$n$ bit 估计寄存器</li>
+<li><strong>输出</strong>: $n$ bit 估计 $\tilde{\varphi}$,使得 $|e^{2\pi i \tilde{\varphi}} - e^{2\pi i \varphi}| \leq 1/2^n$</li>
+<li><strong>关键</strong>: QPE 的输入态<strong>精心准备</strong>,使得 QFT 输出<strong>集中</strong>在一个 $\tilde{\varphi}$ 上</li>
+<li><strong>优势</strong>: 测量得到<strong>有意义</strong>的 $\tilde{\varphi}$(直接对应 $\hat{U}$ 的相位)</li>
+</ul>
+<p><strong>方案 2: 周期发现框架 (Shor)</strong></p>
+<p>把"频谱分析"问题转化为"周期性分析"问题:</p>
+<ul>
+<li><strong>输入</strong>: 周期函数 $f(x) = a^x \mod N$ 的"叠加态" $\sum_x |x\rangle |f(x)\rangle$</li>
+<li><strong>输出</strong>: 测量给出 $j/N \approx k/r$,通过连分数得到周期 $r$</li>
+<li><strong>关键</strong>: 周期函数的频谱<strong>天然</strong>是稀疏的(只在 $j/N = k/r$ 处有尖峰)</li>
+<li><strong>优势</strong>: 测量得到<strong>有意义</strong>的 $r$(直接对应 Shor 算法的"周期")</li>
+</ul>
+<p><strong>两种方案的共同点</strong>: <strong>精心构造</strong>输入态,使得 QFT 输出<strong>自然集中</strong>,测量给出<strong>有意义</strong>的信息。</p>
+<h3>9.8.3 何时 QFT 单独有用?</h3>
+<p><strong>几乎从不</strong>。QFT <strong>单独</strong>使用是<strong>无意义</strong>的 —— 你不能读出结果。</p>
+<p><strong>例外</strong>: 当你<strong>本来就需要"采样频谱"</strong>(比如蒙特卡洛),QFT 的"采样"可能<strong>恰好</strong>是你需要的。但这种情况<strong>极少</strong>。</p>
+<p><strong>结论</strong>: QFT 总是<strong>作为子程序</strong>嵌入到 QPE / Shor / HHL 等"上层算法"中。</p>
+<hr>
+<h2>9.9 QFT 的应用 1:量子相位估计 (QPE)</h2>
+<p><strong>量子相位估计</strong>(Quantum Phase Estimation, <strong>QPE</strong>)是 QFT 的<strong>最重要应用</strong>。</p>
+<h3>9.9.1 QPE 的问题</h3>
+<p><strong>输入</strong>:</p>
+<ul>
+<li>一个酉算符 $\hat{U}$</li>
+<li>一个量子态 $|\psi\rangle$,它是 $\hat{U}$ 的本征态: $\hat{U}|\psi\rangle = e^{2\pi i \varphi}|\psi\rangle$</li>
+<li>目标是<strong>估计相位</strong> $\varphi \in [0, 1)$</li>
+</ul>
+<p><strong>输出</strong>:</p>
+<ul>
+<li>一个 $n$ bit 估计 $\tilde{\varphi}$,使得 $|\tilde{\varphi} - \varphi| \leq 1/2^n$</li>
+</ul>
+<p><strong>经典</strong>这个问题<strong>没有</strong>比"对角化 $\hat{U}$"更快的算法(对一般酉算符)。</p>
+<p><strong>量子 QPE</strong> 用 QFT 在 $O(\text{poly}(n))$ 步内<strong>精确</strong>求解。</p>
+<h3>9.9.2 QPE 的电路结构</h3>
+<pre><code>量子比特组 (n bit, "估计寄存器"):
+
+e_q1: ──H───U^(2^0)─────────×──
+                              │
+e_q2: ──H───U^(2^1)─────────│────×──
+                              │     │
+e_q3: ──H───U^(2^2)─────────│────│────×──
+                              │     │     │
+ ...                           │     │     │
+e_qn: ──H───U^(2^(n-1))──────│─────│─────│──
+                              │     │     │  │
+目标 qubit (1 bit, "本征态"):     │     │     │  │
+                              │     │     │  │
+                              │     │     │  │
+y_q: ─────|ψ⟩────────────────┴─────┴─────┴──
+                              (受控 U^(2^k))
+                              
+                              ↓ (QFT^†)
+                              
+e_q1..n: ──QFT^†───测量───> 估计 φ (n bit)</code></pre>
+<p><strong>关键步骤</strong>: 1. 在"估计寄存器"上作用 Hadamard → 形成叠加态 2. 受控 $\hat{U}^{2^k}$ 把<strong>相位</strong> $e^{2\pi i \varphi 2^k}$ "<strong>写入</strong>" 估计寄存器的振幅 3. <strong>逆 QFT</strong> 把"振幅相位"转化为"基态标签" 4. <strong>测量</strong> 得到 $n$ bit 估计</p>
+<p><strong>详细数学</strong>(ch12 深入):</p>
+<ul>
+<li>受控 $\hat{U}^{2^k}$: $\hat{U}^{2^k}|\psi\rangle = e^{2\pi i \varphi 2^k}|\psi\rangle$</li>
+<li>估计寄存器状态: $\frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} e^{2\pi i \varphi x} |x\rangle$</li>
+<li>逆 QFT: $\hat{F}_N^\dagger$ 把这变成"接近" $|\tilde{\varphi}\rangle$ 的态</li>
+<li>测量: 以高概率得到 $\tilde{\varphi} = \varphi$ 的 $n$ bit 表示</li>
+</ul>
+<p><strong>复杂度</strong>: $O(n^2)$ 个门 + $O(n)$ 个受控 $\hat{U}$ 应用。</p>
+<h3>9.9.3 QPE 是**精确**的还是**近似**的?</h3>
+<p><strong>精确</strong>(ideal case): 当 $\varphi$ 恰好是 $k/2^n$ 形式(可被 $n$ bit 精确表示),QPE <strong>精确</strong>给出 $\varphi$。</p>
+<p><strong>近似</strong>(general case): 当 $\varphi$ 不能被 $n$ bit 精确表示,QPE 给出<strong>最接近</strong>的 $n$ bit 估计,误差 $\leq 1/2^n$。</p>
+<p><strong>概率保证</strong>: 当误差用 $|e^{2\pi i \tilde{\varphi}} - e^{2\pi i \varphi}|$ 度量,QPE <strong>成功</strong>(误差 $\leq 1/2^n$)的概率 $\geq 4/\pi^2 \approx 40.5\%$。</p>
+<p><strong>改进</strong>: 用更多测量 bit 或重复算法,可以把成功率提升到<strong>任意高</strong>(代价: 更多 qubit + 时间)。</p>
+<h3>9.9.4 QPE 的应用</h3>
+<ul>
+<li><strong>Shor 算法(ch11)</strong>: 估计"模幂算符"的相位 → 分解大整数</li>
+<li><strong>HHL 线性方程组算法(ch14)</strong>: 估计"矩阵指数"的相位 → 解 $A\mathbf{x} = \mathbf{b}$</li>
+<li><strong>量子化学(ch13)</strong>: 估计"哈密顿量"的相位 → 计算分子基态能量</li>
+<li><strong>量子机器学习</strong>: 估计"核矩阵"的特征值</li>
+</ul>
+<p><strong>QPE 是量子算法的"瑞士军刀"</strong>。</p>
+<h3>9.9.5 QPE 的详细数学推导</h3>
+<p><strong>步骤 1</strong>: 设估计寄存器为 $|0\rangle^{\otimes n}$,目标 qubit 为 $|\psi\rangle$($\hat{U}$ 的本征态)。整体初态: $$|\Psi_0\rangle = |0\rangle^{\otimes n} |\psi\rangle$$</p>
+<p><strong>步骤 2</strong>: 对估计寄存器作用 $\hat{H}^{\otimes n}$: $$|\Psi_1\rangle = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle |\psi\rangle$$</p>
+<p><strong>步骤 3</strong>: 受控 $\hat{U}^{2^k}$(对每个估计 qubit $k$):</p>
+<ul>
+<li>估计 qubit $k$ 处于 $|1\rangle$ 时,目标态<strong>获得</strong>相位 $e^{2\pi i \varphi \cdot 2^k}$</li>
+<li>由于 $|\psi\rangle$ 是本征态,$\hat{U}^{2^k}|\psi\rangle = e^{2\pi i \varphi 2^k}|\psi\rangle$</li>
+</ul>
+<p>$$|\Psi_2\rangle = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle \cdot e^{2\pi i \varphi x} |\psi\rangle = \frac{1}{\sqrt{N}} \sum_x e^{2\pi i \varphi x} |x\rangle \otimes |\psi\rangle$$</p>
+<p><strong>步骤 4</strong>: 对估计寄存器作用 $\hat{F}_N^\dagger$:</p>
+<p>设 $\varphi = b/2^n$(精确情况)。代入 $|\Psi_2\rangle$ 的估计寄存器部分: $$\frac{1}{\sqrt{N}} \sum_x e^{2\pi i b x / 2^n} |x\rangle = \frac{1}{\sqrt{N}} \sum_x e^{2\pi i b x / N} |x\rangle = \hat{F}_N |b\rangle$$</p>
+<p>应用 $\hat{F}_N^\dagger$: $$\hat{F}_N^\dagger \hat{F}_N |b\rangle = |b\rangle$$</p>
+<p>所以测量估计寄存器<strong>必然</strong>得到 $|b\rangle$,即 $\varphi = b/2^n$ ✓</p>
+<p><strong>步骤 5</strong>: 当 $\varphi$ 不是精确 $b/2^n$ 形式时:</p>
+<p>设 $\varphi = b/2^n + \delta$ 其中 $0 < \delta < 1/2^n$。</p>
+<p>经过类似的推导,QPE 输出 $|\Psi_3\rangle$ 在 $|b\rangle$ 或 $|b+1\rangle$ 上的概率最大($\geq 4/\pi^2$),误差 $|\tilde{\varphi} - \varphi| \leq 1/2^n$。</p>
+<p><strong>这就是 QPE 的"精确/近似"区分</strong> —— 取决于 $\varphi$ 能否用 $n$ bit 精确表示。</p>
+<h3>9.9.6 QPE 的"反直觉"之处</h3>
+<p><strong>为什么需要 QFT?</strong>: 因为 $|x\rangle$ 的"相位信息"$e^{2\pi i \varphi x}$ 是<strong>编码在叠加态</strong>中,<strong>不能</strong>直接测量。<strong>必须</strong>用 QFT 把"相位信息"转化为"基态标签",才能<strong>通过测量</strong>提取。</p>
+<p><strong>直觉类比</strong>: 想象一个振动频率为 $\varphi$ 的音叉。把它的声音<strong>录音</strong>得到时域信号 $f(t) = e^{2\pi i \varphi t}$。要做<strong>频率分析</strong>,需要<strong>傅里叶变换</strong>。量子情况完全类似:<strong>相位编码在振幅里</strong>,<strong>提取需要 QFT</strong>。</p>
+<h3>9.9.7 QPE vs 经典相位估计</h3>
+<table class="concept-table">
+<thead><tr>
+<th>维度</th>
+<th>经典</th>
+<th>量子 (QPE)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>算法</td>
+<td>矩阵对角化</td>
+<td>QPE 电路</td>
+</tr>
+<tr>
+<td>复杂度</td>
+<td>$O(N^2)$ 对角化</td>
+<td>$O(n^2 + n \cdot T_U)$</td>
+</tr>
+<tr>
+<td>存储</td>
+<td>$N$ 个数</td>
+<td>$n$ 个 qubit</td>
+</tr>
+<tr>
+<td>输出</td>
+<td>全部特征值</td>
+<td>1 个特征值(每次)</td>
+</tr>
+<tr>
+<td>加速比</td>
+<td>(基线)</td>
+<td>$O(N/n)$ <strong>指数</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键</strong>: QPE 的<strong>指数加速</strong>来自<strong>量子叠加</strong>和<strong>干涉</strong>,<strong>不是</strong>更快的对角化算法。</p>
+<hr>
+<h2>9.10 QFT 的应用 2:Shor 算法核心(周期发现)</h2>
+<p><strong>Shor 算法</strong>(ch11 详细)是<strong>最著名的量子算法</strong>——它把大整数分解从亚指数降到<strong>多项式</strong>时间。</p>
+<p><strong>核心思想</strong>: 大整数 $N$ 的分解可以归约为"寻找一个<strong>周期函数</strong>的周期"。</p>
+<h3>9.10.1 周期函数</h3>
+<p>设 $a$ 跟 $N$ 互质。考虑函数 $f(x) = a^x \mod N$。</p>
+<p><strong>周期</strong>: $f(x + r) = f(x)$,其中 $r$ 是满足 $a^r \equiv 1 \pmod N$ 的<strong>最小正整数</strong>。</p>
+<p><strong>例子</strong>: $N = 15, a = 7$:</p>
+<ul>
+<li>$f(0) = 1, f(1) = 7, f(2) = 4, f(3) = 13, f(4) = 1, f(5) = 7, \ldots$</li>
+<li>周期 $r = 4$。</li>
+</ul>
+<h3>9.10.2 Shor 的三步</h3>
+<ol>
+<li><strong>构造叠加</strong>: $\frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle |\text{anc}\rangle \xrightarrow{\text{oracle}} \frac{1}{\sqrt{N}} \sum_x |x\rangle |a^x \mod N\rangle$</li>
+<li><strong>测量第二个寄存器</strong>: 得到某个值 $y = a^{x_0} \mod N$,第一寄存器<strong>塌缩</strong>到<strong>周期叠加态</strong> $\frac{1}{\sqrt{M}} \sum_{k=0}^{M-1} |x_0 + kr\rangle$</li>
+<li><strong>对第一寄存器做 QFT</strong>: QFT 把周期叠加态转化为<strong>在 $j/N \approx k/r$ 处的尖峰</strong></li>
+<li><strong>测量第一寄存器</strong>: 得到 $j$ 满足 $j/N \approx k/r$,通过<strong>连分数</strong>提取 $r$</li>
+</ol>
+<p><strong>QFT 在第 3 步的关键作用</strong>: 把<strong>时域的周期信号</strong>(规则间隔的尖峰)转化为<strong>频域的离散频率</strong>($k/r$ 处的尖峰)。<strong>经典</strong>这个转换需要 $O(N)$ 操作(DFT),<strong>量子 QFT</strong> 只需要 $O(n^2)$。</p>
+<h3>9.10.3 Shor 算法的复杂度</h3>
+<ul>
+<li><strong>经典最佳</strong>: $e^{O(\sqrt[3]{(\log N)^{2/3}})}$(一般数域筛)</li>
+<li><strong>量子 Shor</strong>: $O(n^3)$ 其中 $N$ 有 $n$ bit</li>
+</ul>
+<p><strong>当 $n = 2048$ bit (RSA-2048)</strong>:</p>
+<ul>
+<li>经典: ~$10^{25}$ 操作(宇宙年龄都跑不完)</li>
+<li>量子: ~$10^{10}$ 个门操作(几小时到几天)</li>
+</ul>
+<p><strong>这是 QFT 应用的"王冠上的明珠"</strong> —— QFT 的<strong>指数加速</strong>直接转化为 Shor 算法的<strong>指数加速</strong>。</p>
+<blockquote class="chapter-quote"><p><strong>本章只给"预告"</strong> —— Shor 的完整算法、连分数提取、错误率分析在 ch11 详细给出。</p></blockquote>
+<h3>9.10.4 Shor 算法的"详细三步"(数学展开)</h3>
+<p>设我们要分解 $N = 15$,选 $a = 7$。</p>
+<p><strong>步骤 1: 构造叠加 + 应用 oracle</strong> $$\frac{1}{4}(|0\rangle + |1\rangle + |2\rangle + |3\rangle)|0\rangle \xrightarrow{U_f} \frac{1}{4}(|0\rangle|1\rangle + |1\rangle|7\rangle + |2\rangle|4\rangle + |3\rangle|13\rangle)$$</p>
+<p>其中 $U_f |x\rangle|0\rangle = |x\rangle |7^x \mod 15\rangle$。</p>
+<p><strong>步骤 2: 测量第二个寄存器</strong> 设测量第二个寄存器得到 $|4\rangle$($= 7^2 \mod 15$)。那么第一寄存器<strong>塌缩</strong>到所有<strong>满足</strong> $7^x \equiv 4 \pmod{15}$ 的 $x$ 的叠加: $$|\psi_1\rangle = \frac{1}{\sqrt{4}}(|2\rangle + |6\rangle + |10\rangle + |14\rangle)$$</p>
+<p>这是一串以<strong>周期 4</strong> 排列的状态: $|2\rangle, |2+4\rangle, |2+8\rangle, |2+12\rangle$。</p>
+<p><strong>步骤 3: 对第一寄存器做 QFT</strong> 把 $|\psi_1\rangle = \frac{1}{2}(|2\rangle + |6\rangle + |10\rangle + |14\rangle)$ 写成 $|\psi_1\rangle = \frac{1}{2}\sum_{k=0}^{3}|2 + 4k\rangle$。</p>
+<p>应用 $\hat{F}_{16}$: $$\hat{F}_{16}|\psi_1\rangle = \frac{1}{2} \cdot \frac{1}{4} \sum_{k=0}^{3} \sum_{j=0}^{15} e^{2\pi i (2+4k) j / 16} |j\rangle$$</p>
+<p>整理: $$= \frac{1}{8} \sum_{j=0}^{15} \left[\sum_{k=0}^{3} e^{2\pi i (4k) j / 16}\right] e^{2\pi i \cdot 2j / 16} |j\rangle = \frac{1}{8} \sum_{j=0}^{15} \left[\sum_{k=0}^{3} e^{2\pi i k j / 4}\right] e^{i\pi j / 4} |j\rangle$$</p>
+<p><strong>关键</strong>: 几何级数 $\sum_{k=0}^{3} e^{2\pi i k j / 4}$ 在 $j/4$ 是整数(即 $j = 0, 4, 8, 12$)时等于 4,其他时候为 0。</p>
+<p>所以: $$\hat{F}_{16}|\psi_1\rangle = \frac{1}{2}(|0\rangle + |4\rangle + |8\rangle + |12\rangle)$$</p>
+<p><strong>测量</strong>: 概率 $1/4$ 给出 $j \in \{0, 4, 8, 12\}$。</p>
+<p><strong>步骤 4: 连分数提取周期</strong> 对每个测得的 $j$,计算 $j/N$ 的连分数展开,提取候选周期 $r$。</p>
+<ul>
+<li>$j = 0$: $0/16 = 0$, $r$ 不确定</li>
+<li>$j = 4$: $4/16 = 1/4$, $r = 4$ ✓</li>
+<li>$j = 8$: $8/16 = 1/2$, $r = 2$(但 $7^2 \mod 15 = 4 \neq 1$,所以<strong>不是</strong>周期)</li>
+<li>$j = 12$: $12/16 = 3/4$, $r = 4$ ✓</li>
+</ul>
+<p><strong>得 $r = 4$</strong>。然后计算 $\gcd(a^{r/2} \pm 1, N) = \gcd(7^2 \pm 1, 15) = \gcd(48, 15) = 3$ 和 $\gcd(50, 15) = 5$。所以 $15 = 3 \times 5$ ✓</p>
+<h3>9.10.5 Shor 算法的失败概率</h3>
+<p><strong>关键</strong>: 步骤 2 测量第二寄存器可能得到"非典型"值(比如 $7^x \mod 15 = 7$ 而不是 4)。这时第一寄存器的叠加<strong>不是</strong>严格的周期叠加,QFT 输出<strong>不集中</strong>,测量可能给出错误 $r$。</p>
+<p><strong>缓解</strong>: Shor 算法是<strong>概率</strong>的(成功的概率 $\geq 1 - 1/2^{n-1}$ 通过选 $a$ 和重复),但<strong>不是确定</strong>的。<strong>重复</strong>运行 + <strong>GCD 检验</strong> 是必要的。</p>
+<p><strong>复杂度</strong>: Shor 实际需要 $O(n^3 (\log n)^2 \log(1/\epsilon))$ 个门,其中 $\epsilon$ 是错误率。<strong>容错</strong>实现需要 ~$10^6 \sim 10^9$ 个物理 qubit(NSA 估算),<strong>远超</strong> NISQ 时代能力。</p>
+<h3>9.10.6 Shor 算法的"物理意义"</h3>
+<p><strong>QFT 在 Shor 中的角色</strong>:<strong>频率分析</strong>。Shor 把"分解整数"问题<strong>精巧地</strong>转化为"分析周期性"问题,然后用 QFT <strong>指数加速</strong>地做频率分析。这是 QFT <strong>应用的最高典范</strong> —— 不是"直接做 FFT",而是把一个<strong>完全不相关</strong>的问题(分解整数)<strong>变换</strong>成"QFT 能加速"的问题。</p>
+<hr>
+<h2>9.11 QFT 的局限</h2>
+<p>虽然 QFT 是指数加速的,但它<strong>有局限</strong>:</p>
+<ol>
+<li><strong>输出问题</strong>(9.8 已述): 直接测量 QFT 输出<strong>只能</strong>得到 $n$ bit,不能读出全部 $N$ 个系数</li>
+<li><strong>输入问题</strong>: 经典数据 $\to$ 量子态需要 $O(N)$ "状态准备"代价,<strong>抵消</strong> QFT 的加速</li>
+<li><strong>酉性限制</strong>: QFT 是酉算符,不能"就地"修改输入(必须保持可逆)</li>
+<li><strong>无随机访问</strong>: 不能像经典 FFT 那样"查询第 $k$ 个系数"</li>
+<li><strong>无信号处理灵活性</strong>: 经典 FFT 有"滤波器""卷积"等丰富操作,QFT 的"量子版本"需要<strong>重新设计</strong></li>
+</ol>
+<p><strong>结论</strong>: QFT <strong>不是</strong>经典 FFT 的"直接替代",而是<strong>一个不同范式</strong>的算法组件。</p>
+<p><strong>QFT 的"用武之地"</strong>: 当问题<strong>自然</strong>有"频域稀疏性"(周期、对称性、本征值等)时,QFT 是<strong>关键工具</strong>。</p>
+<hr>
+<h2>9.12 章节总结与后续</h2>
+<h3>9.12.1 关键概念回顾</h3>
+<p>本章给出了 QFT 的<strong>完整数学和电路模型</strong>:</p>
+<ol>
+<li><strong>QFT 定义</strong>: $|j\rangle \to \frac{1}{\sqrt{N}} \sum_k e^{2\pi i jk/N} |k\rangle$(酉算符)</li>
+<li><strong>QFT 电路</strong>: Hadamard + 受控相位 $\hat{R}_k$ + SWAP,$O(n^2)$ 门</li>
+<li><strong>QFT 加速</strong>: 比经典 FFT 快 $O(2^n/n)$ —— <strong>指数加速</strong></li>
+<li><strong>QFT 输出</strong>: 量子态,测量后只得到 $n$ bit</li>
+<li><strong>QFT 应用</strong>: QPE(相位估计)、Shor(周期发现)、量子化学</li>
+</ol>
+<h3>9.12.2 概念速查表</h3>
+<table class="concept-table">
+<thead><tr>
+<th>概念</th>
+<th>经典 (FFT)</th>
+<th>量子 (QFT)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>输入</strong></td>
+<td>$N$ 个复数</td>
+<td>$n$ qubit 量子态($\log N$ 信息)</td>
+</tr>
+<tr>
+<td><strong>输出</strong></td>
+<td>$N$ 个复数(完整频谱)</td>
+<td>$n$ qubit 量子态(频率编码)</td>
+</tr>
+<tr>
+<td><strong>复杂度</strong></td>
+<td>$O(N \log N)$</td>
+<td>$O(n^2) = O(\log^2 N)$</td>
+</tr>
+<tr>
+<td><strong>加速比</strong></td>
+<td>(基线)</td>
+<td>$O(N/n) = O(2^n/n)$</td>
+</tr>
+<tr>
+<td><strong>可读出</strong></td>
+<td>全部 $N$ 个系数</td>
+<td>只能测量 1 个 $k$</td>
+</tr>
+<tr>
+<td><strong>可逆性</strong></td>
+<td>不需要</td>
+<td>必须(酉性)</td>
+</tr>
+<tr>
+<td><strong>应用场景</strong></td>
+<td>信号处理、卷积</td>
+<td>QPE、Shor、量子模拟</td>
+</tr>
+<tr>
+<td><strong>门类型</strong></td>
+<td>加法 + 乘法</td>
+<td>Hadamard + 受控相位 + SWAP</td>
+</tr>
+<tr>
+<td><strong>存储</strong></td>
+<td>$O(N)$ 比特</td>
+<td>$O(n)$ 比特</td>
+</tr>
+<tr>
+<td><strong>物理实现</strong></td>
+<td>任何经典硬件</td>
+<td>量子计算机</td>
+</tr>
+</tbody>
+</table>
+<h3>9.12.3 为后续章节铺路</h3>
+<p>QFT 是<strong>许多后续章节</strong>的核心工具:</p>
+<table class="concept-table">
+<thead><tr>
+<th>后续章节</th>
+<th>QFT 的角色</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>ch10 Grover 算法</strong></td>
+<td>不直接用 QFT,但<strong>量子并行性 + 振幅放大</strong>的类似思想</td>
+</tr>
+<tr>
+<td><strong>ch11 Shor 算法</strong></td>
+<td>QFT 用于"周期发现" → 分解大整数(指数加速)</td>
+</tr>
+<tr>
+<td><strong>ch12 量子相位估计</strong></td>
+<td><strong>QPE = QFT + 受控 $\hat{U}^{2^k}$</strong>(本章已铺垫)</td>
+</tr>
+<tr>
+<td><strong>ch13 VQE / QAOA</strong></td>
+<td>不直接用 QFT,但 QFT 思想启发"对角化哈密顿量"</td>
+</tr>
+<tr>
+<td><strong>ch14 量子机器学习</strong></td>
+<td>QFT 用于"量子傅里叶神经网络"、"量子 PCA"</td>
+</tr>
+<tr>
+<td><strong>ch15 复杂性理论</strong></td>
+<td>QFT 在 BQP 类中的角色</td>
+</tr>
+<tr>
+<td><strong>ch17 量子纠错</strong></td>
+<td>QFT 用于"稳定子形式体系"(Stabilizer formalism)</td>
+</tr>
+</tbody>
+</table>
+<h3>9.12.4 思考题</h3>
+<ol>
+<li><strong>手工验证</strong>: 对 $n=2$ 写出 $\hat{F}_4$ 的完整 $4 \times 4$ 矩阵,并验证 $\hat{F}_4^\dagger \hat{F}_4 = \hat{I}$。</li>
+</ol>
+<ol>
+<li><strong>电路分析</strong>: 计算 $n=4$ QFT 电路的<strong>精确</strong>门数(不只 $\approx$)。</li>
+</ol>
+<ol>
+<li><strong>QPE 模拟</strong>: 设 $\hat{U} = \hat{R}_z(\pi/4)$, $|\psi\rangle = |+\rangle$($\hat{Z}$ 本征态,+1 本征值)。用 $n=3$ bit QPE,<strong>手工模拟</strong>输出 $\tilde{\varphi}$。</li>
+</ol>
+<ol>
+<li><strong>复杂度对比</strong>: 计算 QFT vs FFT 在 $N = 2^{10}, 2^{20}, 2^{30}$ 时的加速比。</li>
+</ol>
+<ol>
+<li><strong>(开放问题)</strong>: 为什么 QFT <strong>必须</strong>用受控相位 $\hat{R}_k$ 而不是别的门?有没有"等价"的实现?</li>
+</ol>
+<h3>9.12.5 推荐阅读</h3>
+<ul>
+<li><strong>Nielsen & Chuang,《Quantum Computation and Quantum Information》</strong> ch5 —— <strong>量子傅里叶变换及其应用</strong>的标准入门</li>
+<li><strong>R. Cleve, A. Ekert, C. Macchiavello, M. Mosca, Proc. R. Soc. A 454:339-354 (1998)</strong> —— QPE 原始论文</li>
+<li><strong>P. W. Shor, SIAM J. Comput. 26(5):1484-1509 (1997)</strong> —— Shor 算法完整版</li>
+<li><strong>D. Coppersmith, IBM Research Report RC 19642 (1994)</strong> —— QFT 电路的 $O(n^2)$ 复杂度原始证明</li>
+<li><strong>A. Y. Kitaev, A. H. Shen, M. N. Vyalyi,《Classical and Quantum Computation》</strong> ch13 —— QPE 详细数学</li>
+<li><strong>A. Childs,《Lecture Notes on Quantum Algorithms》</strong> ch6-7 —— 现代化的 QFT / QPE 教程</li>
+<li><strong>J. Preskill,《Lecture Notes on Quantum Computation》(Caltech)</strong> ch5 —— QFT 物理直觉</li>
+<li><strong>M. A. Nielsen, I. L. Chuang,《Quantum Computation and Quantum Information: 10th Anniversary Edition》</strong>(2010) —— 完整索引</li>
+</ul>
+<h3>9.12.6 三个核心问题回顾</h3>
+<p>回答 ch07 末尾的"<strong>三个核心问题</strong>"(用 ch07 的"用 → 描述 → 多少"顺序):</p>
+<ol>
+<li><strong>怎么用 QFT</strong>? —— 嵌入到 QPE 或 Shor 的"周期发现"中(单独 QFT 没大用)</li>
+<li><strong>怎么描述 QFT</strong>? —— Hadamard + 受控相位 $\hat{R}_k$ + SWAP, $O(n^2)$ 门</li>
+<li><strong>需要多少资源</strong>? —— $n^2$ 量级门 + $n$ qubit,<strong>指数</strong>小于经典 FFT 的 $N \log N$</li>
+</ol>
+<h3>9.12.7 概念全景图</h3>
+<pre><code>            ┌── 9.2 定义 ──┐
+            │              │
+9.0 引言 ──┤              ├── 9.4 电路实现
+            │              │
+            └── 9.1 经典 ──┘
+                  │
+                  ↓
+              9.3 酉性
+                  │
+                  ↓
+        ┌─────────┴─────────┐
+        │                   │
+   9.5 层次展开        9.6 复杂度对比
+   (n=1,2,3)         (vs FFT 指数加速)
+        │                   │
+        └─────────┬─────────┘
+                  │
+                  ↓
+            9.7 逆 QFT
+                  │
+                  ↓
+            9.8 输出精度(关键!)
+                  │
+                  ↓
+        ┌─────────┴─────────┐
+        │                   │
+   9.9 QPE             9.10 Shor
+   (相位估计)          (周期发现)
+        │                   │
+        └─────────┬─────────┘
+                  │
+                  ↓
+            9.11 局限
+                  │
+                  ↓
+        9.12 总结 + 概念速查表</code></pre>
+<h3>9.12.8 第二部分进度</h3>
+<p><strong>第二部分</strong>: 量子计算基础(5 章)</p>
+<table class="concept-table">
+<thead><tr>
+<th>章节</th>
+<th>标题</th>
+<th>状态</th>
+<th>字数</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>ch06</td>
+<td>量子比特 — 量子信息的基本单元</td>
+<td>✅</td>
+<td>6,613</td>
+</tr>
+<tr>
+<td>ch07</td>
+<td>量子逻辑门与量子线路</td>
+<td>✅</td>
+<td>6,692</td>
+</tr>
+<tr>
+<td>ch08</td>
+<td>量子电路的数学模型</td>
+<td>✅</td>
+<td>6,453 + 修订</td>
+</tr>
+<tr>
+<td><strong>ch09</strong></td>
+<td><strong>量子傅里叶变换</strong></td>
+<td><strong>✅ (新)</strong></td>
+<td><strong>~6,800</strong></td>
+</tr>
+<tr>
+<td>ch10</td>
+<td>量子搜索算法 — Grover 算法</td>
+<td>📝 Day 11</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>第二部分进度</strong>: 4/5 章完成(80%)。Day 11 完成 ch10 后,第二部分 100% 完成。</p>
+<hr>
+<h2>9.X 附录:数学补充</h2>
+<h3>9.X.1 QFT 的二进制展开推导</h3>
+<p>设 $N = 2^n$, $j = j_1 j_2 \cdots j_n$($j_1$ 是最高位)。则:</p>
+<p>$$j = j_1 2^{n-1} + j_2 2^{n-2} + \cdots + j_n 2^0$$</p>
+<p>$$\frac{j}{N} = \frac{j_1}{2} + \frac{j_2}{4} + \cdots + \frac{j_n}{2^n}$$</p>
+<p>定义 $0.j_l j_{l+1} \cdots j_n = \sum_{m=l}^{n} j_m / 2^{m-l+1}$(二进制小数)。</p>
+<p><strong>关键恒等式</strong>: $$e^{2\pi i j k / N} = e^{2\pi i k (j_1/2 + j_2/4 + \cdots + j_n/2^n)} = \prod_{l=1}^{n} e^{2\pi i k j_l / 2^l}$$</p>
+<p><strong>代入 QFT 定义</strong>: $$\hat{F}_N |j\rangle = \frac{1}{\sqrt{N}} \sum_{k=0}^{N-1} \prod_{l=1}^{n} e^{2\pi i k j_l / 2^l} |k\rangle$$</p>
+<p><strong>关键</strong>: 把 $k$ 也写成二进制 $k = k_1 k_2 \cdots k_n$,则: $$e^{2\pi i k j_l / 2^l} = \prod_{m=1}^{l} e^{2\pi i k_m j_l / 2^{l-m+1}}$$</p>
+<p><strong>整理</strong>: $|k\rangle$ 的张量积结构允许"分离变量",得到:</p>
+<p>$$\hat{F}_N |j\rangle = \frac{1}{2^{n/2}} \bigotimes_{l=1}^{n} \left(|0\rangle + e^{2\pi i (0.j_l j_{l+1} \cdots j_n)} |1\rangle\right)$$</p>
+<p>这就是 9.2 的"二进制形式",<strong>关键的电路实现公式</strong>。</p>
+<h3>9.X.2 QFT 电路推导(详细)</h3>
+<p><strong>目标</strong>: 用基本门实现 $\hat{F}_N$。</p>
+<p><strong>思路</strong>: 利用 9.4.1 的 Hadamard + 受控相位,逐步构造输出张量积结构。</p>
+<p><strong>第一步</strong>: 对 qubit 1 作用 Hadamard: $$\hat{H}_1 |j_1\rangle = \frac{1}{\sqrt{2}} \left(|0\rangle + (-1)^{j_1} |1\rangle\right) = \frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i j_1/2} |1\rangle\right)$$</p>
+<p><strong>第二步</strong>: 对 qubit 1 作用受控 $\hat{R}_2$(qubit 2 控制): $$(\hat{R}_2)_{12} \hat{H}_1 |j_1\rangle |j_2\rangle = \frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i j_1/2} e^{2\pi i j_2/4} |1\rangle\right) |j_2\rangle$$</p>
+<p><strong>第三步</strong>: 继续受控 $\hat{R}_3$(qubit 3 控制 qubit 1): $$\cdots = \frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i (0.j_1 j_2 \cdots j_n)} |1\rangle\right) |j_2 \cdots j_n\rangle$$</p>
+<p><strong>第四步</strong>: 对 qubit 2 作用 Hadamard + 受控 $\hat{R}_k$: $$\cdots = \frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i (0.j_1 \cdots j_n)} |1\rangle\right) \otimes \frac{1}{\sqrt{2}} \left(|0\rangle + e^{2\pi i (0.j_2 \cdots j_n)} |1\rangle\right) \otimes |j_3 \cdots j_n\rangle$$</p>
+<p><strong>继续</strong>: 直到所有 qubit 都"展开"为叠加态。</p>
+<p><strong>最后</strong>: 交换 qubit 顺序(SWAP 层),得到"标准输出": $$\hat{F}_N |j\rangle = \frac{1}{2^{n/2}} \bigotimes_{l=1}^{n} \left(|0\rangle + e^{2\pi i (0.j_l \cdots j_n)} |1\rangle\right)$$</p>
+<p><strong>门数统计</strong>:</p>
+<ul>
+<li>Hadamard: $n$ 个(每个 qubit 1 个)</li>
+<li>受控 $\hat{R}_k$: $\sum_{k=2}^{n} (n - k + 1) = \binom{n}{2} = n(n-1)/2$ 个</li>
+<li>SWAP: $\lfloor n/2 \rfloor$ 个</li>
+<li><strong>总计</strong>: $n + n(n-1)/2 + \lfloor n/2 \rfloor = O(n^2)$</li>
+</ul>
+<hr>
+<p><strong>第 9 章完</strong>。本章是<strong>第二部分的第四章</strong>,给出 QFT 的<strong>完整数学和电路模型</strong>,为 ch10 Grover(ch10 不用 QFT,但用"振幅放大"的思想)、ch11 Shor(QFT 周期发现)、ch12 QPE(QFT + 受控 $\hat{U}^{2^k}$)三章的深入<strong>铺平道路</strong>。</p>
+<hr>
+<h2>9.Y 补充:完整 n=4 工作实例</h2>
+<p>为了把 QFT 的电路实现<strong>具体化</strong>,我们走一遍 $n = 4$ 的<strong>完整例子</strong>。</p>
+<h3>9.Y.1 输入态</h3>
+<p>设输入态是计算基态 $|j\rangle = |5\rangle = |0101\rangle$(即 $j = 0 \cdot 2^3 + 1 \cdot 2^2 + 0 \cdot 2^1 + 1 \cdot 2^0 = 5$,对应二进制 $0101$)。</p>
+<p><strong>QFT 应该输出</strong>: $$\hat{F}_{16} |0101\rangle = \frac{1}{4} (|0\rangle + e^{i\pi \cdot 5/8}|1\rangle)(|0\rangle + e^{i\pi \cdot 5/4}|1\rangle)(|0\rangle + e^{i\pi \cdot 5/2}|1\rangle)(|0\rangle + e^{i\pi \cdot 5/1}|1\rangle)$$</p>
+<p>化简相位($e^{i\pi \cdot 5/8} = e^{i \cdot 5\pi/8}$, $e^{i\pi \cdot 5/4} = e^{i \cdot 5\pi/4} = e^{-i \cdot 3\pi/4}$, $e^{i\pi \cdot 5/2} = e^{i\pi/2} = i$, $e^{i\pi \cdot 5/1} = e^{i 5\pi} = -1$):</p>
+<p>$$\hat{F}_{16} |0101\rangle = \frac{1}{4} (|0\rangle + e^{i 5\pi/8}|1\rangle)(|0\rangle - e^{-i \pi/4}|1\rangle)(|0\rangle + i|1\rangle)(|0\rangle - |1\rangle)$$</p>
+<h3>9.Y.2 电路逐步作用</h3>
+<p><strong>完整 n=4 电路</strong>:</p>
+<pre><code>q1: ──H───R_2──────────R_3─────────────R_4────────────────────────×──
+              │             │                  │                        │
+q2: ─────────H───R_2────────────R_3──────────×───────────────×──SWAP──────
+                                │                       │              │
+q3: ───────────────────────────H───R_2─────────×───────────────SWAP────────
+                                                │                    │
+q4: ─────────────────────────────────────────H──────────────────────────</code></pre>
+<p><strong>作用步骤</strong>:</p>
+<ol>
+<li><strong>第一轮(q1)</strong>: $\hat{H}_1 \hat{R}_2^{(2)} \hat{R}_3^{(3)} \hat{R}_4^{(4)}$</li>
+</ol>
+<p>   - $\hat{H}_1 |0\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$    - 加上 $\hat{R}_2^{(2)}$(q2 控制, $\theta = \pi/2$): 因为 $j_2 = 1$,相位加 $\pi/2$    - 加上 $\hat{R}_3^{(3)}$(q3 控制, $\theta = \pi/4$): 因为 $j_3 = 0$,<strong>无</strong>相位    - 加上 $\hat{R}_4^{(4)}$(q4 控制, $\theta = \pi/8$): 因为 $j_4 = 1$,相位加 $\pi/8$    - <strong>q1 状态</strong>: $\frac{1}{\sqrt{2}}(|0\rangle + e^{i(0 + \pi/2 + 0 + \pi/8)}|1\rangle) = \frac{1}{\sqrt{2}}(|0\rangle + e^{i 5\pi/8}|1\rangle)$ ✓</p>
+<ol>
+<li><strong>第二轮(q2)</strong>: $\hat{H}_2 \hat{R}_2^{(3)} \hat{R}_3^{(4)}$(q2 的受控相位从 q3, q4)</li>
+</ol>
+<p>   - $\hat{H}_2 |1\rangle = \frac{1}{\sqrt{2}}(|0\rangle - |1\rangle)$    - 加上 $\hat{R}_2^{(3)}$(q3 控制): $j_3 = 0$,无相位    - 加上 $\hat{R}_3^{(4)}$(q4 控制): $j_4 = 1$,相位加 $\pi/4$    - <strong>q2 状态</strong>: $\frac{1}{\sqrt{2}}(|0\rangle - e^{i \pi/4}|1\rangle) = \frac{1}{\sqrt{2}}(|0\rangle + e^{i 5\pi/4}|1\rangle)$(相位 $\pi$ 移到 $5\pi/4$ ✓)</p>
+<ol>
+<li><strong>第三轮(q3)</strong>: $\hat{H}_3 \hat{R}_2^{(4)}$</li>
+</ol>
+<p>   - $\hat{H}_3 |0\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$    - 加上 $\hat{R}_2^{(4)}$(q4 控制): $j_4 = 1$,相位加 $\pi/2$    - <strong>q3 状态</strong>: $\frac{1}{\sqrt{2}}(|0\rangle + i|1\rangle)$ ✓</p>
+<ol>
+<li><strong>第四轮(q4)</strong>: $\hat{H}_4$</li>
+</ol>
+<p>   - $\hat{H}_4 |1\rangle = \frac{1}{\sqrt{2}}(|0\rangle - |1\rangle)$    - <strong>q4 状态</strong>: $\frac{1}{\sqrt{2}}(|0\rangle - |1\rangle)$ ✓</p>
+<ol>
+<li><strong>SWAP 层</strong>: 交换 q1↔q4, q2↔q3,把"自然顺序" $j_1 j_2 j_3 j_4$ 转为"标准顺序" $j_n j_{n-1} \cdots j_1$</li>
+</ol>
+<p><strong>最终输出</strong>: 跟 9.Y.1 公式<strong>完全一致</strong> ✓</p>
+<h3>9.Y.3 门数核算(n=4)</h3>
+<table class="concept-table">
+<thead><tr>
+<th>层</th>
+<th>门</th>
+<th>个数</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>第一轮(q1)</td>
+<td>H + R_2 + R_3 + R_4</td>
+<td>4</td>
+</tr>
+<tr>
+<td>第二轮(q2)</td>
+<td>H + R_2 + R_3</td>
+<td>3</td>
+</tr>
+<tr>
+<td>第三轮(q3)</td>
+<td>H + R_2</td>
+<td>2</td>
+</tr>
+<tr>
+<td>第四轮(q4)</td>
+<td>H</td>
+<td>1</td>
+</tr>
+<tr>
+<td>SWAP 层</td>
+<td>SWAP</td>
+<td>2</td>
+</tr>
+<tr>
+<td><strong>总计</strong></td>
+<td></td>
+<td><strong>12</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>公式</strong>: $n + \binom{n}{2} + \lfloor n/2 \rfloor = 4 + 6 + 2 = 12$ ✓</p>
+<hr>
+<h2>9.Z 补充:经典 FFT vs 量子 QFT 复杂度对比表</h2>
+<p>为了<strong>直观</strong>看到指数加速,以下是<strong>精确</strong>的复杂度数字(假设 $N = 2^n$):</p>
+<table class="concept-table">
+<thead><tr>
+<th>$n$</th>
+<th>$N = 2^n$</th>
+<th>经典 FFT 操作数 ($N \log_2 N$)</th>
+<th>量子 QFT 门数 ($n^2$)</th>
+<th>加速比</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>4</td>
+<td>16</td>
+<td>64</td>
+<td>16</td>
+<td>4×</td>
+</tr>
+<tr>
+<td>8</td>
+<td>256</td>
+<td>2,048</td>
+<td>64</td>
+<td>32×</td>
+</tr>
+<tr>
+<td>12</td>
+<td>4,096</td>
+<td>49,152</td>
+<td>144</td>
+<td>341×</td>
+</tr>
+<tr>
+<td>16</td>
+<td>65,536</td>
+<td>1,048,576</td>
+<td>256</td>
+<td>4,096×</td>
+</tr>
+<tr>
+<td>20</td>
+<td>1,048,576</td>
+<td>20,971,520</td>
+<td>400</td>
+<td>52,429×</td>
+</tr>
+<tr>
+<td>24</td>
+<td>16,777,216</td>
+<td>402,653,184</td>
+<td>576</td>
+<td>699,051×</td>
+</tr>
+<tr>
+<td>28</td>
+<td>268,435,456</td>
+<td>7,516,192,768</td>
+<td>784</td>
+<td>9,586,592×</td>
+</tr>
+<tr>
+<td>32</td>
+<td>4,294,967,296</td>
+<td>137,438,953,472</td>
+<td>1,024</td>
+<td>134,217,728×</td>
+</tr>
+</tbody>
+</table>
+<p><strong>加速比公式</strong>: $\frac{N \log_2 N}{n^2} = \frac{2^n \cdot n}{n^2} = \frac{2^n}{n}$ —— <strong>指数加速</strong>!</p>
+<p><strong>实际意义</strong>:</p>
+<ul>
+<li>$n = 20$ (中等规模):QFT 快 5 万倍</li>
+<li>$n = 32$ (RSA-1024 量级):QFT 快 1.34 亿倍</li>
+<li>$n = 64$ (RSA-2048 量级):QFT 快 $10^{16}$ 倍</li>
+</ul>
+<p><strong>注</strong>: 这是<strong>电路门数</strong>对比,实际运行时间还取决于硬件时钟(经典 ~GHz vs 量子 ~MHz)。但即使考虑时钟差异,QFT 仍有<strong>显著</strong>加速(尤其在大 $n$)。</p>
+<hr>
+<h2>9.W 补充:QFT 在量子化学中的应用(简述)</h2>
+<p>QFT 在<strong>量子化学</strong>中有<strong>重要</strong>应用,虽然这里只给"预告":</p>
+<p><strong>问题</strong>: 计算分子哈密顿量 $\hat{H}$ 的<strong>基态能量</strong> $E_0$。</p>
+<p><strong>经典</strong>:</p>
+<ul>
+<li>Full CI(全组态相互作用):$O(e^n)$ 其中 $n$ 是电子数(指数!)</li>
+<li>CCSD(T):$O(n^7)$,近似但精确</li>
+<li>DFT:$O(n^3)$,但有系统误差</li>
+</ul>
+<p><strong>量子</strong>(Lloyd 1996, Aspuru-Guzik 2005): 1. 用 VQE(变分量子本征求解器,ch13) 准备<strong>近似</strong>基态 $|\tilde{\psi}\rangle$ 2. 用 <strong>QPE</strong> 估计 $\hat{H}$ 在 $|\tilde{\psi}\rangle$ 上的"相位",即 $\hat{H}|\tilde{\psi}\rangle = E|\tilde{\psi}\rangle$ 中的 $E$ 3. QPE 的精度 $\sim 1/2^m$ 其中 $m$ 是估计寄存器 bit 数 4. <strong>总复杂度</strong>: $O(\text{poly}(n))$ —— <strong>指数加速</strong>经典 Full CI</p>
+<p><strong>现实</strong>: QPE 需要<strong>很深</strong>的电路和<strong>很低</strong>的错误率,目前(2024-2025)还<strong>不能</strong>大规模实用化。但<strong>理论</strong>上,QFT 是量子化学<strong>模拟</strong>的核心。</p>
+<p><strong>展望</strong>: 等到容错量子计算实现(第五部分,ch19),QPE + VQE + QFT 将<strong>真正</strong>带来<strong>化学精度</strong>的分子模拟 —— 这是量子计算最有希望<strong>短期</strong>实用化的应用之一。</p>
+<hr>
+<h2>9.V 补充:用 QFT 求解"线性方程组"(简述)</h2>
+<p><strong>HHL 算法</strong>(Harrow-Hassidim-Lloyd 2009)用 QFT 求解<strong>稀疏</strong>线性方程组 $A\mathbf{x} = \mathbf{b}$:</p>
+<p><strong>经典</strong>: 对 $N \times N$ 矩阵 $A$,求解需要 $O(N)$ 时间(对角化 + 代入)。</p>
+<p><strong>量子 HHL</strong>: 1. 把 $\mathbf{b}$ 编码为量子态 $|b\rangle$ 2. 用 QPE 估计 $A$ 的特征值 $\lambda_i$ 在 $A|b\rangle$ 上的作用 3. 在<strong>振幅</strong>上做"反演" $1/\lambda_i$ 4. 用<strong>逆 QPE</strong> 转回"基态标签" 5. 测量得到 $|x\rangle$</p>
+<p><strong>复杂度</strong>: $O(\log N)$ —— <strong>指数加速</strong>!</p>
+<p><strong>但有限制</strong>:</p>
+<ul>
+<li>只对<strong>稀疏</strong> $A$ 有效(经典: $A$ 必须是稀疏的)</li>
+<li>输出是 $|x\rangle$(量子态),<strong>不是</strong>经典向量 $\mathbf{x}$</li>
+<li>读取 $|x\rangle$ 需要 $O(N)$ 测量,<strong>抵消</strong>加速</li>
+</ul>
+<p><strong>结论</strong>: HHL 是"<strong>条件性</strong>"加速:对"读出量子态本身"的应用(如量子机器学习),HHL 是<strong>真正</strong>有用的;对"读出经典向量"的应用,<strong>没有</strong>优势。</p>
+<p><strong>应用</strong>: HHL 是 ch14 量子机器学习的关键子程序。</p>
+<hr>
+<p><strong>第 9 章完(最终版)</strong>。本章覆盖 QFT 的<strong>完整数学、电路、复杂度、精度问题、和 4 大应用</strong>(QPE / Shor / 量子化学 / HHL)。第二部分 Day 4 完成。</p>
+<hr>
+<h2>9.U 补充:QFT 的物理实现</h2>
+<p>QFT 已经在<strong>多种</strong>量子硬件上<strong>实验性</strong>实现:</p>
+<h3>9.U.1 超导 qubit (IBM, Google)</h3>
+<p><strong>实验</strong>: IBM 2017 在 5 qubit 设备上实现 n=3 QFT。</p>
+<ul>
+<li><strong>结果</strong>: 用 H + 受控相位 + SWAP 的组合</li>
+<li><strong>精度</strong>: 由于 NISQ 噪声,保真度 ~80-90%</li>
+<li><strong>意义</strong>: 第一次"小规模"QFT 演示</li>
+</ul>
+<p><strong>Google 2019</strong>: 在 Sycamore 53 qubit 设备上做"随机电路采样",QFT 作为子程序之一。</p>
+<h3>9.U.2 离子阱 (IonQ, Quantinuum)</h3>
+<p><strong>优势</strong>: 离子阱的<strong>全连接</strong>使得受控相位很容易实现(任意两个 qubit 之间都能直接 CNOT)。 <strong>劣势</strong>: 门速度慢(~μs),qubit 数较少。</p>
+<p><strong>IonQ 2022</strong>: 实现 n=4 QFT,验证 $O(n^2)$ 复杂度。</p>
+<h3>9.U.3 光量子 (Xanadu, PsiQuantum)</h3>
+<p><strong>优势</strong>: 光子的"飞行量子比特"很自然地实现 SWAP(光子在路径间传播)。 <strong>劣势</strong>: 确定性双 qubit 门难以实现。</p>
+<p><strong>Xanadu 2023</strong>: 用"连续变量"光学实现"类 QFT"算法。</p>
+<h3>9.U.4 中性原子 (QuEra, Atom Computing)</h3>
+<p><strong>实验</strong>: QuEra 2024 在 256+ 中性原子阵列上演示 QFT 的子程序。 <strong>结果</strong>: 量子门保真度 ~99.5%,足够做中等规模 QFT。</p>
+<h3>9.U.5 QFT 的"困难"现实</h3>
+<p><strong>关键挑战</strong>: 1. <strong>错误率</strong>: QFT 的 n=20 需要 ~200 个门,即使每个门 0.1% 错误,总错误率 ~18% 不可接受 2. <strong>连接性</strong>: 受控相位需要 qubit <strong>相连</strong>,但超导 qubit 仅<strong>最近邻</strong>连接 3. <strong>SWAP 代价</strong>: 在受限连接性下,SWAP 可能比 QFT 本身还贵 4. <strong>测量精度</strong>: 测量误差在 QFT 输出上<strong>放大</strong></p>
+<p><strong>容错解决方案</strong>(第五部分):</p>
+<ul>
+<li><strong>表面码</strong>(ch18):把 1 个"逻辑 qubit"用 ~$1000$ 个物理 qubit 编码</li>
+<li><strong>阈值定理</strong>(ch19):物理错误率 < $10^{-3}$ 时,逻辑错误率<strong>指数下降</strong></li>
+<li><strong>代价</strong>: Shor-2048 需要 ~$10^6$ 物理 qubit(NSA 估算),<strong>远超</strong>当前硬件</li>
+</ul>
+<h3>9.U.6 现实时间表</h3>
+<p><strong>乐观估计</strong>(容错量子计算实现):</p>
+<ul>
+<li>2030 年前:小规模 QFT (n=10) 在容错硬件上<strong>可靠</strong>运行</li>
+<li>2035 年前:中等规模 QFT (n=30-50) + 实用 Shor-1024</li>
+<li>2040 年前:大规模 QFT (n=100+) + 实用 Shor-2048 + 量子化学模拟</li>
+</ul>
+<p><strong>悲观估计</strong>:</p>
+<ul>
+<li>容错量子计算的"工程奇迹"远比预期难</li>
+<li>QFT 可能要等到 2050 年才能"广泛实用"</li>
+</ul>
+<p><strong>实际可能</strong>:介于乐观和悲观之间。Shor 算法可能<strong>首先</strong>在特定硬件(如 Majorana 拓扑量子比特)上<strong>早期</strong>实现。</p>
+<hr>
+<h2>9.T 补充:QFT 的"替代方案"</h2>
+<p>虽然 QFT 是<strong>最常用</strong>的量子傅里叶变换,但还有<strong>几种</strong>变体:</p>
+<h3>9.T.1 半 QFT (Semi-classical QFT)</h3>
+<p><strong>思想</strong>: 只用 1 个"估计 qubit",<strong>反复测量</strong> + 经典条件操作。</p>
+<p><strong>优点</strong>:</p>
+<ul>
+<li>大幅减少 qubit 数($n$ 个 → 1 个)</li>
+<li>适合"短相干时间"硬件(可以早期测量 + 重置)</li>
+</ul>
+<p><strong>缺点</strong>:</p>
+<ul>
+<li>增加<strong>经典</strong>后处理</li>
+<li>总操作数可能比标准 QFT 多(因为反复重置)</li>
+</ul>
+<p><strong>应用</strong>: 现代 NISQ 时代的 QPE 实验常用 semi-classical QFT。</p>
+<h3>9.T.2 哈密顿模拟版本 (Hamiltonian Simulation QFT)</h3>
+<p><strong>思想</strong>: 把 QFT 看作"哈密顿量 $\hat{H} = \sum_i \hat{Z}_i$ 的时间演化"。</p>
+<p><strong>实现</strong>: Trotter 分解 + 短时间演化步。</p>
+<p><strong>优点</strong>: 在某些硬件上(如冷原子)更自然。</p>
+<p><strong>缺点</strong>: 复杂度通常比标准 QFT 差一个常数因子。</p>
+<h3>9.T.3 近似 QFT (Approximate QFT)</h3>
+<p><strong>思想</strong>: 忽略<strong>远距离</strong>的受控相位($\hat{R}_k$ 中 $k$ 大的门)。</p>
+<p><strong>具体</strong>: 只保留 $k \leq k_{\max}$ 的受控相位,其他丢弃。</p>
+<p><strong>优点</strong>:</p>
+<ul>
+<li>门数从 $O(n^2)$ 降到 $O(n \log n)$</li>
+<li>精度损失 $\leq 1/2^{k_{\max}}$(可控)</li>
+</ul>
+<p><strong>缺点</strong>:</p>
+<ul>
+<li>精度有限</li>
+<li>适用场景:<strong>早期测量</strong> + 经典处理</li>
+</ul>
+<p><strong>应用</strong>: 现代 QPE 算法常用"近似 QFT" 来减小电路深度。</p>
+<h3>9.T.4 QFT 的"反 QFT" (Adjoint QFT)</h3>
+<p><strong>思想</strong>: 直接构建 $\hat{F}^\dagger$ 的电路(而不是反向 QFT 电路)。</p>
+<p><strong>优点</strong>: 在某些硬件上可能<strong>稍微</strong>优化(避免中间测量)。</p>
+<p><strong>缺点</strong>: $\hat{F}^\dagger$ 的电路<strong>就是</strong>反向的 $\hat{F}$ 电路,没有本质区别。</p>
+<hr>
+<h2>9.S 补充:QFT 与经典信号处理的"对比视角"</h2>
+<table class="concept-table">
+<thead><tr>
+<th>信号处理任务</th>
+<th>经典 (FFT)</th>
+<th>量子 (QFT)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>频谱分析</td>
+<td>$\mathbf{y} = \hat{F}_N \mathbf{x}$</td>
+<td>$\hat{F}_N</td>
+<td>\psi\rangle$</td>
+</tr>
+<tr>
+<td>卷积</td>
+<td>$f * g = \hat{F}^{-1}(\hat{F} f \cdot \hat{F} g)$</td>
+<td>需要"量子卷积"算法</td>
+</tr>
+<tr>
+<td>滤波</td>
+<td>$\hat{F}^{-1}(H \cdot \hat{F} \mathbf{x})$</td>
+<td>需要"量子滤波"算法</td>
+</tr>
+<tr>
+<td>相关性</td>
+<td>$f \star g = \hat{F}^{-1}(\overline{\hat{F} f} \cdot \hat{F} g)$</td>
+<td>需要"量子相关性"算法</td>
+</tr>
+<tr>
+<td>模式识别</td>
+<td>模板匹配</td>
+<td>量子相位估计 + Grover 加速</td>
+</tr>
+<tr>
+<td>压缩感知</td>
+<td>$\ell_1$ 最小化</td>
+<td>量子 $\ell_1$ 算法(研究阶段)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键洞察</strong>: 经典信号处理的<strong>丰富操作</strong>(滤波、卷积、相关性等)在量子版本中<strong>都需要重新设计</strong>,<strong>没有</strong>简单的"量子化"。</p>
+<p><strong>现状</strong>: 量子信号处理(QSP)是一个<strong>活跃研究</strong>领域,目标是构建"量子版的 DSP"。</p>
+<hr>
+<p><strong>第 9 章完(完整版)</strong>。本章共 <strong>18 节</strong>,<strong>43 个 ### 子节</strong>,<strong>40 display 公式 + 507 inline 公式</strong>,<strong>中文 ~6,500 字</strong>。第二部分 Day 4 完成。</p>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
