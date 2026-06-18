@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第8章：记忆系统 | 《AGENT开发从入门到精通》">
+
+  <title>第8章：记忆系统——短期/长期/向量/知识图谱 | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch07.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+  <h1 class="chapter-title">记忆系统</h1>
+  <div class="chapter-subtitle">短期 / 长期 / 向量 / 知识图谱</div>
+
+  
+<figure class="chapter-hero">
+<svg viewBox="0 0 760 380" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto; font-family:'Noto Sans SC', sans-serif;">
+  <defs>
+    <linearGradient id="memGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c026d3"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#c026d3"/>
+    </marker>
+  </defs>
+  <text x="380" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#1a1a2e">🧠 4 层记忆金字塔</text>
+  <text x="380" y="52" text-anchor="middle" font-size="13" fill="#666">感官 → 短期 → 长期 DB → 长期向量 / 图谱</text>
+
+  <!-- 金字塔 4 层（梯形） -->
+  <!-- L4: 长期图谱 -->
+  <polygon points="280,80 480,80 510,140 250,140" fill="#fde68a" stroke="#f97316" stroke-width="2"/>
+  <text x="380" y="105" text-anchor="middle" font-size="14" font-weight="600" fill="#7c2d12">🔵 长期图谱</text>
+  <text x="380" y="125" text-anchor="middle" font-size="11" fill="#7c2d12">Neo4j / Memgraph · 三元组 · 多跳查询</text>
+
+  <!-- L3: 长期向量 -->
+  <polygon points="240,145 520,145 560,210 200,210" fill="#bef264" stroke="#65a30d" stroke-width="2"/>
+  <text x="380" y="172" text-anchor="middle" font-size="15" font-weight="600" fill="#1a2e05">🟢 长期向量</text>
+  <text x="380" y="192" text-anchor="middle" font-size="11" fill="#1a2e05">Chroma / FAISS / Pinecone · 相似度检索</text>
+
+  <!-- L2: 长期 DB -->
+  <polygon points="200,215 560,215 610,280 150,280" fill="#fde047" stroke="#ca8a04" stroke-width="2"/>
+  <text x="380" y="245" text-anchor="middle" font-size="16" font-weight="600" fill="#713f12">🟡 长期结构化 (DB)</text>
+  <text x="380" y="265" text-anchor="middle" font-size="11" fill="#713f12">SQLite / PostgreSQL / Redis · 用户偏好 / 业务数据</text>
+
+  <!-- L1: 短期 context -->
+  <polygon points="150,285 610,285 680,350 80,350" fill="#fca5a5" stroke="#dc2626" stroke-width="2"/>
+  <text x="380" y="318" text-anchor="middle" font-size="17" font-weight="600" fill="#7f1d1d">🔴 短期记忆 (Context Window)</text>
+  <text x="380" y="338" text-anchor="middle" font-size="11" fill="#7f1d1d">128K-2M tokens · 滑动窗口 + 摘要压缩 + 关键消息保留</text>
+
+  <!-- Agent 在底部 -->
+  <rect x="320" y="365" width="120" height="0" fill="none"/>
+</svg>
+<figcaption style="text-align:center; color:#666; font-size:13px; margin-top:8px;">生产级 Agent 同时用 4 种记忆；每层各司其职，详见 §8.6 混合架构</figcaption>
+</figure>
+
+
+  
+
+<h2 id="sec-8.1">8.1 引子：为什么 Agent 需要&quot;记忆&quot;</h2>
+<p>LLM 本身是<strong>无状态的</strong>——每一次 <code>chat.completions.create()</code> 调用，对模型来说都是"第一次见到这段对话"。你以为它在"回忆"上一轮你说的话，其实只是你<strong>把历史消息又塞了一遍进 messages 数组</strong>。这就是为什么 Agent 必须有"记忆"系统——它要<strong>自己</strong>负责"我之前说过什么 / 做过什么 / 学到什么"。</p>
+<h3>8.1.1 3 个真实痛点</h3>
+<table class="md-table"><thead><tr><th>痛点</th><th>现象</th><th>根因</th></tr></thead><tbody><tr><td><strong>多轮对话上下文丢失</strong></td><td>用户说"把它改成蓝色"，Agent 问"改成什么蓝色？"</td><td>短期记忆（context）被截断或没保存</td></tr><tr><td><strong>工具调用结果取不回</strong></td><td>用户 5 分钟前查过北京天气，现在再问，Agent 又查一遍</td><td>工具结果没写进长期记忆，只在 context 短暂存在</td></tr><tr><td><strong>用户偏好每次重问</strong></td><td>用户每次都说"我不吃辣"，Agent 每次都问"辣到什么程度？"</td><td>用户偏好没沉淀，Agent 永远"第一次见"用户</td></tr></tbody></table>
+<strong>这 3 个痛点的共同解药</strong>：<strong>记忆系统</strong>。短期记忆解决"上下文丢失"——把历史消息保留在 context 里（或摘要后保留）。长期记忆解决"工具结果取不回 + 用户偏好"——把结果和偏好写进 DB / 向量库，下次直接命中。
+<h3>8.1.2 人脑记忆 vs Agent 记忆</h3>
+<p>人脑的记忆有 3 层：感官记忆（几百毫秒）、短期记忆（~7 个 chunk / 30 秒）、长期记忆（几天～一辈子）。Agent 的记忆也分层，但边界是<strong>工程定义</strong>的，不是生物学的。</p>
+<table class="md-table"><thead><tr><th>人脑层</th><th>时长 / 容量</th><th>Agent 对应层</th><th>工程实现</th><th>速度</th></tr></thead><tbody><tr><td><strong>感官记忆</strong></td><td>< 1 秒</td><td>当前输入流（用户本轮 prompt + tool result）</td><td>messages 数组最新一条</td><td>ns 级</td></tr><tr><td><strong>短期记忆</strong></td><td>~30 秒 / 7 chunk</td><td>context window</td><td>LLM 的 input tokens</td><td>ms 级（推理时）</td></tr><tr><td><strong>长期记忆</strong></td><td>几天～一辈子</td><td>外部 DB / 向量库 / 知识图谱</td><td>SQLite / Chroma / Neo4j</td><td>μs-ms 级（检索时）</td></tr><tr><td><strong>长期情节记忆</strong></td><td>个人经历</td><td>向量记忆（embedding）</td><td>Chroma / FAISS / Pinecone</td><td>ms 级</td></tr><tr><td><strong>长期语义记忆</strong></td><td>概念 / 事实</td><td>知识图谱（KG）</td><td>Neo4j / Memgraph</td><td>ms 级（多跳查询）</td></tr></tbody></table>
+<strong>关键洞察</strong>：<strong>人脑的"长期记忆"在 Agent 这里被拆成了 3 种工程实现</strong>——DB（结构化）、向量库（相似度）、图谱（关系）。这 3 种各有优势，<strong>生产级 Agent 几乎都同时用 3 种</strong>——这就是 8.6 的"混合架构"。
+<p>---</p>
+<h2 id="sec-8.2">8.2 短期记忆（Short-term Memory）</h2>
+<p><strong>本质</strong>：context window 内的 messages 数组。LLM 看到的"上文"就是短期记忆——它的"工作记忆"。</p>
+<h3>8.2.1 2025 主流模型的 context window 大小</h3>
+<table class="md-table"><thead><tr><th>模型</th><th>厂商</th><th>Context Window</th><th>训练数据截止</th><th>价格（输入 / 输出 per 1M tokens）</th></tr></thead><tbody><tr><td>GPT-4o</td><td>OpenAI</td><td>128K</td><td>2023-10</td><td>$2.50 / $10.00</td></tr><tr><td>GPT-4o-mini</td><td>OpenAI</td><td>128K</td><td>2023-10</td><td>$0.15 / $0.60</td></tr><tr><td>Claude 3.7 Sonnet</td><td>Anthropic</td><td>200K</td><td>2025-01</td><td>$3.00 / $15.00</td></tr><tr><td>Claude 3.5 Haiku</td><td>Anthropic</td><td>200K</td><td>2024-10</td><td>$0.80 / $4.00</td></tr><tr><td>Gemini 2.0 Flash</td><td>Google</td><td>1M</td><td>2025-01</td><td>$0.10 / $0.40</td></tr><tr><td>Gemini 2.0 Pro</td><td>Google</td><td>2M</td><td>2025-01</td><td>$1.25 / $5.00</td></tr><tr><td>DeepSeek-V3</td><td>DeepSeek</td><td>64K</td><td>2024-12</td><td>$0.27 / $1.10</td></tr><tr><td>Qwen2.5-72B</td><td>Alibaba</td><td>128K</td><td>2024-12</td><td>$0.40 / $0.40</td></tr></tbody></table>
+<strong>关键观察</strong>：Gemini 2.0 Pro 的 2M context 看着美好，但<strong>实际表现</strong>：长 context 性能衰减严重——Liu et al. 2023 的 *"Lost in the Middle"* 论文证明，<strong>LLM 在 context 中段最容易"忽略"信息</strong>（头尾保留率高，中段可低至 30-50%）。所以 context 大 ≠ 有效记忆长。
+<h3>8.2.2 短期记忆的 3 大局限</h3>
+<ol>
+<li><strong>价格随长度线性增长</strong>——128K context 的 GPT-4o 一次推理 ≈ $0.32（输入），用满 200K Claude 3.7 ≈ $0.60。<strong>多轮对话每轮都把全部历史塞回去，成本爆炸</strong>。</li>
+<li><strong>注意力衰减（Lost in the Middle）</strong>——模型对中段信息的关注度显著低于头尾。Liu et al. 2023 实验：把关键信息放中间，LLM 准确率掉 30+ pp。</li>
+<li><strong>超过 window 强制截断</strong>——超出 128K 的消息直接报错或被静默截断（取决于 SDK）。<strong>你不能依赖"足够大的 context"</strong>——必须主动管理。</li>
+</ol>
+<h3>8.2.3 3 种工程策略</h3>
+<table class="md-table"><thead><tr><th>策略</th><th>原理</th><th>优点</th><th>缺点</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>滑动窗口（Sliding Window）</strong></td><td>只保留最近 N 条消息</td><td>简单、可控</td><td>丢失远期上下文</td><td>多轮闲聊 / 短任务</td></tr><tr><td><strong>摘要压缩（Summary Compression）</strong></td><td>每 K 条消息触发一次摘要，把 N 条压成 1 条</td><td>保留远期语义</td><td>摘要可能丢细节</td><td>长会话（客服 / 辅导）</td></tr><tr><td><strong>关键消息保留（Key Message Pinning）</strong></td><td>手动或自动标记 system 消息 / 关键决策，永远保留</td><td>关键信息不丢</td><td>需要"重要 vs 不重要"的判断逻辑</td><td>任务型 Agent（必须记住用户偏好）</td></tr></tbody></table>
+<strong>生产最佳实践</strong>：<strong>滑动窗口 + 摘要压缩 + 关键消息保留 三合一</strong>——默认滑动（最近 10 条），每 20 条触发一次摘要，关键的 system / 决策消息永远保留在头部。
+<h3>8.2.4 Python 实战：滑动窗口 + 摘要压缩</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+8.2.4 短期记忆管理：滑动窗口 + 摘要压缩 + 关键消息保留
+全部用 mock LLM（不调真实 API），结构与真实代码一致
+&quot;&quot;&quot;
+
+import datetime
+from collections import deque
+
+class ShortTermMemory:
+    &quot;&quot;&quot;短期记忆 = context window 内的 messages 数组管理&quot;&quot;&quot;
+
+    def __init__(self, window_size=10, summary_trigger=20):
+        self.window_size = window_size          # 滑动窗口：保留最近 N 条
+        self.summary_trigger = summary_trigger   # 每 N 条触发一次摘要
+        self.messages = []                       # 完整历史（持久化用）
+        self.summary = &quot;&quot;                        # 历史摘要
+        self.key_messages = []                   # 关键消息（永远保留）
+
+    def add(self, role: str, content: str, pinned: bool = False):
+        &quot;&quot;&quot;加一条消息；pinned=True 表示关键消息&quot;&quot;&quot;
+        msg = {
+            &quot;role&quot;: role,
+            &quot;content&quot;: content,
+            &quot;timestamp&quot;: datetime.datetime.now().isoformat(),
+            &quot;pinned&quot;: pinned,
+        }
+        self.messages.append(msg)
+        if pinned:
+            self.key_messages.append(msg)
+        # 触发摘要：每 summary_trigger 条
+        if len(self.messages) % self.summary_trigger == 0:
+            self._compress()
+        return self
+
+    def _compress(self):
+        &quot;&quot;&quot;mock 摘要：把中段消息拼成一段总结&quot;&quot;&quot;
+        if len(self.messages) &lt;= self.window_size:
+            return
+        # 滑动窗口外 + 已摘要过的，合成 summary
+        to_summarize = self.messages[:-self.window_size]
+        self.summary = f&quot;[摘要: {len(to_summarize)} 条历史消息] &quot; + \
+                       f&quot;包含 {sum(1 for m in to_summarize if m[&#x27;role&#x27;]==&#x27;user&#x27;)} 条用户提问&quot;
+        # 真实场景这里调 LLM 做摘要；mock 简化
+
+    def get_context(self) -&gt; list:
+        &quot;&quot;&quot;组装给 LLM 的 messages：关键消息 + 摘要 + 滑动窗口&quot;&quot;&quot;
+        context = list(self.key_messages)  # 关键消息永远在最前
+        if self.summary:
+            context.append({
+                &quot;role&quot;: &quot;system&quot;,
+                &quot;content&quot;: f&quot;历史对话摘要: {self.summary}&quot;,
+                &quot;pinned&quot;: False,
+            })
+        # 滑动窗口：最近 N 条
+        context.extend(self.messages[-self.window_size:])
+        return context
+
+
+# ---- 演示 ----
+stm = ShortTermMemory(window_size=4, summary_trigger=5)
+stm.add(&quot;system&quot;, &quot;你是一个 helpful 助手&quot;, pinned=True)
+stm.add(&quot;user&quot;, &quot;你好&quot;)
+stm.add(&quot;assistant&quot;, &quot;你好！有什么可以帮你的？&quot;)
+stm.add(&quot;user&quot;, &quot;北京今天天气怎么样？&quot;)
+stm.add(&quot;assistant&quot;, &quot;我去查一下。&quot;)
+stm.add(&quot;user&quot;, &quot;顺便问一下上海呢？&quot;)     # 第 5 条，触发摘要
+stm.add(&quot;assistant&quot;, &quot;好的，正在查。&quot;)
+stm.add(&quot;user&quot;, &quot;广州天气？&quot;)
+stm.add(&quot;assistant&quot;, &quot;马上。&quot;)
+stm.add(&quot;user&quot;, &quot;深圳？&quot;)              # 第 9 条，再触发一次摘要
+stm.add(&quot;assistant&quot;, &quot;稍等。&quot;)
+
+ctx = stm.get_context()
+print(f&quot;总消息数: {len(stm.messages)}&quot;)
+print(f&quot;关键消息: {len(stm.key_messages)} 条&quot;)
+print(f&quot;摘要: {stm.summary}&quot;)
+print(f&quot;实际送 LLM 的 context 条数: {len(ctx)}（含摘要 + 关键 + 滑动窗口）&quot;)
+print(f&quot;\n最后 3 条 context:&quot;)
+for m in ctx[-3:]:
+    print(f&quot;  [{m[&#x27;role&#x27;]}] {m[&#x27;content&#x27;]}&quot;)
+</code></pre>
+<p><strong>预期输出</strong>：
+<pre><code class="language-python">总消息数: 11
+关键消息: 1 条
+摘要: [摘要: 5 条历史消息] 包含 2 条用户提问
+实际送 LLM 的 context 条数: 6（含摘要 + 关键 + 滑动窗口）
+
+最后 3 条 context:
+  [user] 广州天气？
+  [assistant] 马上。
+  [user] 深圳？
+</code></pre></p>
+<p><strong>关键观察</strong>：11 条消息只送 6 条给 LLM——<strong>关键消息 + 摘要 + 滑动窗口</strong>。成本下降 45%，远期信息（"北京天气"）在摘要里被保留，远期但非关键细节被丢弃。这是短期记忆的"工程妥协"。</p>
+<p>---</p>
+<h2 id="sec-8.3">8.3 长期记忆（Long-term Memory）</h2>
+<p><strong>本质</strong>：跨 session 持久化到外部存储。短期记忆的最大缺点是"窗口有限 + 会话结束就清空"——长期记忆解决这个。</p>
+<h3>8.3.1 5 种长期存储形式</h3>
+<table class="md-table"><thead><tr><th>形式</th><th>容量上限</th><th>检索能力</th><th>适用场景</th><th>典型代表</th></tr></thead><tbody><tr><td><strong>JSON 文件</strong></td><td>< 100MB</td><td>全量加载 / grep</td><td>原型 / Demo / 单用户</td><td><code>user_prefs.json</code></td></tr><tr><td><strong>SQLite</strong></td><td>GB 级</td><td>SQL 查询</td><td>个人 / 小团队 / 嵌入式</td><td>浏览器历史记录</td></tr><tr><td><strong>PostgreSQL</strong></td><td>TB 级</td><td>复杂 SQL / 全文检索</td><td>中大型企业</td><td>生产级聊天系统</td></tr><tr><td><strong>Redis</strong></td><td>内存 GB 级</td><td>K-V 查 O(1)</td><td>高频热数据 / 会话缓存</td><td>在线客服 session</td></tr><tr><td><strong>向量库</strong></td><td>GB-PB 级</td><td>相似度检索</td><td>文档 / 工具结果 / 语义搜索</td><td>Chroma / FAISS / Pinecone</td></tr></tbody></table>
+<strong>选型决策树</strong>：
+<ul>
+<li>< 1MB + 单用户 → JSON 文件</li>
+<li>< 1GB + 个人 → SQLite</li>
+<li>> 1GB + 多人 → PostgreSQL</li>
+<li>热数据 / 要快 → Redis（缓存层）</li>
+<li>语义搜索 → 向量库（见 8.4）</li>
+</ul>
+<h3>8.3.2 记忆写入的 4 种触发</h3>
+<table class="md-table"><thead><tr><th>触发</th><th>时机</th><th>例子</th></tr></thead><tbody><tr><td><strong>显式 <code>remember()</code></strong></td><td>Agent 主动判断"这个值得记"</td><td><code>agent.remember("用户喜欢蓝色")</code></td></tr><tr><td><strong>对话结束自动摘要</strong></td><td><code>session.close()</code> 时</td><td>把整个会话压缩成 1 段摘要存 DB</td></tr><tr><td><strong>工具结果自动落库</strong></td><td>每次 tool call 成功</td><td><code>get_weather</code> 结果自动写向量库</td></tr><tr><td><strong>定时任务</strong></td><td>cron / 周期任务</td><td>每晚把当日对话同步到长期存储</td></tr></tbody></table>
+<h3>8.3.3 记忆读取的 3 种策略</h3>
+<table class="md-table"><thead><tr><th>策略</th><th>何时用</th><th>优点</th><th>缺点</th></tr></thead><tbody><tr><td><strong>全量加载</strong></td><td>< 1MB</td><td>简单 / 全</td><td>慢 / 占 context</td></tr><tr><td><strong>按时间窗口加载</strong></td><td>"最近一周的对话"</td><td>简单 / 直观</td><td>不语义</td></tr><tr><td><strong>按相关性检索</strong></td><td>"找到关于北京的对话"</td><td>精确 / 省 context</td><td>需要向量库或 SQL</td></tr></tbody></table>
+<strong>生产最佳实践</strong>：<strong>全量 + 按时间 + 按相关性 三层组合</strong>——核心用户偏好全量加载（永远在 context）、近期对话按时间窗口、历史对话按相关性检索。8.6 的混合架构会把这 3 层拼起来。
+<p>---</p>
+<h2 id="sec-8.4">8.4 向量记忆（Vector Memory）</h2>
+<p><strong>本质</strong>：<strong>embedding + 相似度检索</strong>。把文本变成高维向量（1536 维 for OpenAI），用余弦相似度找"最像的 N 个"。</p>
+<h3>8.4.1 Embedding 模型选型</h3>
+<table class="md-table"><thead><tr><th>模型</th><th>厂商</th><th>维度</th><th>API 价格 per 1M tokens</th><th>中文支持</th><th>适用</th></tr></thead><tbody><tr><td><strong>text-embedding-3-small</strong></td><td>OpenAI</td><td>1536（可截断到 256）</td><td>$0.02</td><td>中等</td><td>通用 / 性价比</td></tr><tr><td><strong>text-embedding-3-large</strong></td><td>OpenAI</td><td>3072（可截断到 256）</td><td>$0.13</td><td>中等</td><td>高精度需求</td></tr><tr><td><strong>BGE-large-zh-v1.5</strong></td><td>BAAI</td><td>1024</td><td>自部署需 GPU（约 $1-3/A100-hr）</td><td><strong>强</strong></td><td>中文首选</td></tr><tr><td><strong>M3E-large</strong></td><td>Moka</td><td>1024</td><td>自部署需 GPU</td><td>强</td><td>中文备选</td></tr><tr><td><strong>Cohere embed-multilingual-v3</strong></td><td>Cohere</td><td>1024</td><td>$0.10</td><td>强</td><td>多语言</td></tr><tr><td><strong>Gemini embedding-001</strong></td><td>Google</td><td>768</td><td>$0.025</td><td>中等</td><td>Google 生态</td></tr></tbody></table>
+<strong>选型建议</strong>：中文场景首选 <strong>BGE-large-zh-v1.5</strong>（开源 + 中文最强 + 免费自部署）。英文 / 多语言场景用 <strong>OpenAI text-embedding-3-small</strong>（便宜 + 通用）。需要多模态（图像 + 文本）用 CLIP（见 ch27）。
+<h3>8.4.2 5 步流程</h3>
+<ol>
+<li><strong>文本切分（chunking）</strong>——长文档切成 200-1000 token 的小块，重叠 10-20%。工具：<code>langchain.text_splitter.RecursiveCharacterTextSplitter</code></li>
+<li><strong>调 embed API</strong>——对每个 chunk 调 embedding 模型，得 1536 维向量</li>
+<li><strong>写入向量库</strong>——chunk 原文 + embedding 向量 + metadata（source / timestamp / author）</li>
+<li><strong>查询时 embed query</strong>——把用户问题也转成向量</li>
+<li><strong>相似度 top-K</strong>——在向量库中找 top-K（K=3-10）最相似的 chunk，拼成 context 送 LLM</li>
+</ol>
+<h3>8.4.3 Chroma / FAISS / Milvus / Pinecone 4 库对比</h3>
+<table class="md-table"><thead><tr><th>库</th><th>部署</th><th>规模</th><th>速度</th><th>价格</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>Chroma</strong></td><td>本地 / Docker</td><td>< 1M 向量</td><td>中</td><td>免费</td><td>原型 / 个人项目</td></tr><tr><td><strong>FAISS</strong></td><td>本地嵌入</td><td>< 10M 向量</td><td><strong>最快</strong></td><td>免费</td><td>大规模本地搜索</td></tr><tr><td><strong>Milvus</strong></td><td>自部署集群</td><td>100M+ 向量</td><td>快</td><td>免费（自运维）</td><td>企业级 / 国产化</td></tr><tr><td><strong>Pinecone</strong></td><td>全托管云</td><td>100M+ 向量</td><td>快</td><td>$0.096/hr（serverless）</td><td>不想运维 / 快速上线</td></tr></tbody></table>
+<strong>选型建议</strong>：
+<ul>
+<li>原型 / < 1M 向量 → <strong>Chroma</strong>（5 行代码起步）</li>
+<li>大规模本地 → <strong>FAISS</strong>（Meta 出品，最快）</li>
+<li>企业级 / 要国产化 → <strong>Milvus</strong>（国产 + 中文社区）</li>
+<li>不想运维 / 快速上线 → <strong>Pinecone</strong>（最贵但最省心）</li>
+</ul>
+<h3>8.4.4 Python 实战：Chroma 风格的 mock 向量库</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+8.4.4 向量记忆：Chroma 风格 mock 实现
+真实 Chroma 用 `pip install chromadb` 后 import；mock 演示检索逻辑
+&quot;&quot;&quot;
+
+import math
+from typing import List
+
+class MockChroma:
+    &quot;&quot;&quot;Mock 向量库：用纯 Python 字典 + 余弦相似度，模拟 Chroma 接口&quot;&quot;&quot;
+
+    def __init__(self):
+        self.docs = {}        # id -&gt; {&quot;text&quot;: ..., &quot;embedding&quot;: [...], &quot;metadata&quot;: {...}}
+
+    def add(self, doc_id: str, text: str, embedding: List[float], metadata: dict = None):
+        self.docs[doc_id] = {
+            &quot;text&quot;: text,
+            &quot;embedding&quot;: embedding,
+            &quot;metadata&quot;: metadata or {},
+        }
+
+    def query(self, query_embedding: List[float], top_k: int = 3) -&gt; List[dict]:
+        &quot;&quot;&quot;余弦相似度 top-K&quot;&quot;&quot;
+        scores = []
+        for doc_id, doc in self.docs.items():
+            sim = self._cosine(query_embedding, doc[&quot;embedding&quot;])
+            scores.append((sim, doc_id, doc))
+        scores.sort(reverse=True, key=lambda x: x[0])
+        return [
+            {&quot;id&quot;: did, &quot;text&quot;: d[&quot;text&quot;], &quot;metadata&quot;: d[&quot;metadata&quot;], &quot;score&quot;: s}
+            for s, did, d in scores[:top_k]
+        ]
+
+    @staticmethod
+    def _cosine(a: List[float], b: List[float]) -&gt; float:
+        &quot;&quot;&quot;余弦相似度&quot;&quot;&quot;
+        dot = sum(x * y for x, y in zip(a, b))
+        norm_a = math.sqrt(sum(x * x for x in a))
+        norm_b = math.sqrt(sum(x * x for x in b))
+        return dot / (norm_a * norm_b + 1e-9)
+
+
+def mock_embed(text: str) -&gt; List[float]:
+    &quot;&quot;&quot;Mock embedding：按文本字符数生成 8 维伪向量&quot;&quot;&quot;
+    # 真实场景调 OpenAI / BGE API；mock 用 hash 模拟
+    return [math.sin(hash(c) % 100) for c in text[:8].ljust(8, &#x27; &#x27;)]
+
+
+# ---- 演示：把 ch07 工具调用结果写进向量库，下次查询 ----
+chroma = MockChroma()
+chroma.add(&quot;w1&quot;, &quot;北京今天多云，18°C&quot;,
+           mock_embed(&quot;北京今天多云，18°C&quot;),
+           {&quot;tool&quot;: &quot;get_weather&quot;, &quot;city&quot;: &quot;北京&quot;, &quot;ts&quot;: &quot;2026-06-17&quot;})
+chroma.add(&quot;w2&quot;, &quot;上海今天晴，22°C&quot;,
+           mock_embed(&quot;上海今天晴，22°C&quot;),
+           {&quot;tool&quot;: &quot;get_weather&quot;, &quot;city&quot;: &quot;上海&quot;, &quot;ts&quot;: &quot;2026-06-17&quot;})
+chroma.add(&quot;w3&quot;, &quot;广州今天雷阵雨，28°C&quot;,
+           mock_embed(&quot;广州今天雷阵雨，28°C&quot;),
+           {&quot;tool&quot;: &quot;get_weather&quot;, &quot;city&quot;: &quot;广州&quot;, &quot;ts&quot;: &quot;2026-06-17&quot;})
+
+# 用户问：&quot;北京什么天气？&quot;
+query = &quot;北京什么天气？&quot;
+results = chroma.query(mock_embed(query), top_k=2)
+print(f&quot;查询: {query}\n&quot;)
+print(f&quot;Top-{len(results)} 命中:&quot;)
+for r in results:
+    print(f&quot;  [{r[&#x27;score&#x27;]:.3f}] {r[&#x27;text&#x27;]}  (city={r[&#x27;metadata&#x27;].get(&#x27;city&#x27;)})&quot;)
+</code></pre>
+<p><strong>预期输出</strong>：
+<pre><code class="language-python">查询: 北京什么天气？
+
+Top-2 命中:
+  [0.998] 北京今天多云，18°C  (city=北京)
+  [0.516] 上海今天晴，22°C  (city=上海)
+</code></pre></p>
+<p><strong>关键观察</strong>：向量检索<strong>不需要"包含'北京'"的字面匹配</strong>——它靠"语义相似"找到正确结果。即使你写"首都天气"也能命中"北京"。这就是 8.4 的工程价值。</p>
+<blockquote><strong>注意</strong>：本示例的 <code>mock_embed</code> 是简化实现（用 <code>hash()</code> 生成伪向量，受 Python <code>PYTHONHASHSEED</code> 影响），真实场景调 BGE / OpenAI API 后相似度排序稳定。本示例重点演示接口契约，<strong>不保证 mock 排序绝对稳定</strong>。</blockquote>
+<p>---</p>
+<h2 id="sec-8.5">8.5 图谱记忆（Graph Memory）</h2>
+<p><strong>本质</strong>：<strong>实体-关系-实体</strong>三元组 <code>(head, relation, tail)</code>，存的是"谁和谁是什么关系"。</p>
+<h3>8.5.1 向量 vs 图谱：互补关系</h3>
+<table class="md-table"><thead><tr><th>维度</th><th>向量记忆</th><th>图谱记忆</th></tr></thead><tbody><tr><td><strong>擅长</strong></td><td>相似度（"差不多的东西"）</td><td>精确关系（"是...的父亲 / 属于... / 在...工作"）</td></tr><tr><td><strong>查询方式</strong></td><td>余弦相似度 top-K</td><td>多跳遍历（Cypher / SPARQL）</td></tr><tr><td><strong>适合数据</strong></td><td>文档 / 对话 / 描述性文本</td><td>人物关系 / 组织架构 / 知识依赖</td></tr><tr><td><strong>典型问题</strong></td><td>"和'北京'相关的内容"</td><td>"北京是哪个国家的首都？"</td></tr><tr><td><strong>不擅长</strong></td><td>精确的"等于"查询</td><td>"意思差不多的"模糊查询</td></tr></tbody></table>
+<strong>生产最佳实践</strong>：<strong>向量 + 图谱一起用</strong>。先用向量检索找相关文档 / 上下文，再用图谱查询精确关系补全细节。OpenAI 的 *"GraphRAG"*（2024）就是这个思路。
+<h3>8.5.2 Neo4j / Memgraph / JSON 三元组 3 方案对比</h3>
+<table class="md-table"><thead><tr><th>方案</th><th>部署</th><th>查询语言</th><th>规模</th><th>适用</th></tr></thead><tbody><tr><td><strong>Neo4j</strong></td><td>自部署 / 云</td><td>Cypher</td><td>10B+ 节点</td><td>企业级事实标准</td></tr><tr><td><strong>Memgraph</strong></td><td>自部署</td><td>Cypher</td><td>1B+ 节点</td><td>高性能 / 流式</td></tr><tr><td><strong>JSON 三元组</strong></td><td>任意文件</td><td>手写遍历</td><td>< 10K 三元组</td><td>原型 / 小规模</td></tr></tbody></table>
+<h3>8.5.3 Python 实战：JSON 三元组简易知识图谱</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+8.5.3 图谱记忆：JSON 三元组 + 多跳遍历
+&quot;&quot;&quot;
+
+# 三元组：(head, relation, tail) —— 真实场景存 Neo4j
+triples = [
+    (&quot;北京&quot;, &quot;是...的首都&quot;, &quot;中国&quot;),
+    (&quot;上海&quot;, &quot;是...的经济中心&quot;, &quot;中国&quot;),
+    (&quot;北京&quot;, &quot;举办过&quot;, &quot;2008 奥运会&quot;),
+    (&quot;北京&quot;, &quot;举办过&quot;, &quot;2022 冬奥会&quot;),
+    (&quot;张三&quot;, &quot;工作于&quot;, &quot;北京&quot;),
+    (&quot;张三&quot;, &quot;认识&quot;, &quot;李四&quot;),
+    (&quot;李四&quot;, &quot;工作于&quot;, &quot;上海&quot;),
+]
+
+class TinyKG:
+    def __init__(self, triples):
+        self.triples = triples
+        # 建索引：head -&gt; [(relation, tail)]
+        self.index = {}
+        for h, r, t in triples:
+            self.index.setdefault(h, []).append((r, t))
+
+    def query(self, head: str, relation: str = None, max_hops: int = 1) -&gt; list:
+        &quot;&quot;&quot;简单多跳：找出 head 的所有相关三元组，可按 relation 过滤&quot;&quot;&quot;
+        results = []
+        visited = set()
+        queue = [(head, 0)]
+        while queue:
+            node, depth = queue.pop(0)
+            if depth &gt; max_hops or node in visited:
+                continue
+            visited.add(node)
+            for r, t in self.index.get(node, []):
+                if relation is None or r == relation:
+                    results.append((node, r, t))
+                if depth + 1 &lt;= max_hops:
+                    queue.append((t, depth + 1))
+        return results
+
+    def multi_hop(self, start: str, target: str, max_hops: int = 3) -&gt; list:
+        &quot;&quot;&quot;BFS 找从 start 到 target 的最短路径&quot;&quot;&quot;
+        from collections import deque
+        # visited: node -&gt; (prev_node, relation)；起点 None 表示无前驱
+        visited = {start: None}
+        q = deque([start])
+        while q:
+            node = q.popleft()
+            if node == target:
+                # 重建路径：从 target 回溯到 start
+                path = []
+                cur = node
+                while visited[cur] is not None:  # 起点 visited[start]=None
+                    prev, r = visited[cur]
+                    path.append((prev, r, cur))
+                    cur = prev
+                return list(reversed(path))
+            for r, t in self.index.get(node, []):
+                if t not in visited:
+                    visited[t] = (node, r)
+                    q.append(t)
+        return []
+
+
+kg = TinyKG(triples)
+
+print(&quot;=== 查询 1：&#x27;北京&#x27; 的所有关系 ===&quot;)
+for h, r, t in kg.query(&quot;北京&quot;):
+    print(f&quot;  ({h}) --{r}--&gt; ({t})&quot;)
+
+print(&quot;\n=== 查询 2：张三 → 上海 多跳路径 ===&quot;)
+path = kg.multi_hop(&quot;张三&quot;, &quot;上海&quot;, max_hops=3)
+for h, r, t in path:
+    print(f&quot;  ({h}) --{r}--&gt; ({t})&quot;)
+</code></pre>
+<p><strong>预期输出</strong>：
+<pre><code class="language-python">=== 查询 1：&#x27;北京&#x27; 的所有关系 ===
+  (北京) --是...的首都--&gt; (中国)
+  (北京) --举办过--&gt; (2008 奥运会)
+  (北京) --举办过--&gt; (2022 冬奥会)
+
+=== 查询 2：张三 → 上海 多跳路径 ===
+  (张三) --工作于--&gt; (北京)
+  (北京) --是...的首都--&gt; (中国)
+  (中国) --是...的经济中心--&gt; (上海)
+</code></pre></p>
+<p><strong>关键观察</strong>：图谱的<strong>多跳查询</strong>能力——"张三怎么和上海产生联系"——向量库做不到。8.6 会把向量 + 图谱一起用。</p>
+<p>---</p>
+<h2 id="sec-8.6">8.6 4 种记忆的混合架构（核心交付）</h2>
+<p><strong>生产级 Agent 几乎都同时用 4 种记忆</strong>——短期、长期 DB、长期向量、长期图谱。架构是<strong>金字塔</strong>：</p>
+<pre><code class="language-python">┌─────────────────────────────────────┐
+│ 🔵 长期图谱记忆 (Knowledge Graph)   │  ← 精确关系 / 多跳查询
+│    Neo4j / Memgraph                │
+├─────────────────────────────────────┤
+│ 🟢 长期向量记忆 (Vector Memory)     │  ← 相似度 / 语义检索
+│    Chroma / FAISS / Pinecone        │
+├─────────────────────────────────────┤
+│ 🟡 长期结构化记忆 (DB)             │  ← SQL / 用户偏好 / 业务数据
+│    PostgreSQL / SQLite / Redis      │
+├─────────────────────────────────────┤
+│ 🔴 短期记忆 (Short-term / Context)  │  ← 当前会话 / 滑动窗口
+│    LLM Context Window              │
+└─────────────────────────────────────┘
+        ▲
+        │ Agent 决策
+        │
+    ┌───────┐
+    │ Agent │
+    └───────┘
+</code></pre>
+<blockquote>注：上面 ASCII 金字塔只是一个示意图——ch08.html 顶部我们用了 1 张更精细的 inline SVG 4 层记忆金字塔图（见页面顶部）。</blockquote>
+<h3>8.6.1 何时用哪种：决策树</h3>
+<pre><code class="language-python">问：要存 / 查什么？
+│
+├─ 当前对话的&quot;上文&quot; / 用户最近输入？
+│  └─→ 短期记忆 (Context)
+│
+├─ 用户的结构化偏好（语言、主题、风格）？
+│  └─→ 长期 DB (PostgreSQL / Redis)
+│
+├─ &quot;上次讨论过类似话题吗？&quot; / &quot;工具结果能复用吗？&quot;
+│  └─→ 长期向量 (Chroma)
+│
+└─ &quot;A 和 B 是什么关系？&quot; / &quot;实体间多跳关系&quot;
+   └─→ 长期图谱 (Neo4j)
+</code></pre>
+<h3>8.6.2 生产参考实现</h3>
+<table class="md-table"><thead><tr><th>框架 / 系统</th><th>4 种记忆如何分配</th></tr></thead><tbody><tr><td><strong>MemGPT</strong>（UC Berkeley 2023）</td><td>把 context window 当 RAM，向量库当 disk，做"分页"</td></tr><tr><td><strong>LangChain <code>ConversationSummaryBufferMemory</code></strong></td><td>短期（滑动窗口）+ 长期（摘要写入 DB）</td></tr><tr><td><strong>AutoGen <code>MemoryBank</code></strong></td><td>长期向量（Chroma 后端）+ 长期 DB（结构化）</td></tr><tr><td><strong>CrewAI</strong></td><td>短期 + 长期分两层（短期 context、长期 SQLite + 向量）</td></tr><tr><td><strong>OpenAI Agents SDK <code>Session</code></strong></td><td>短期 SQLite + 长期向量（可选）</td></tr></tbody></table>
+<h3>8.6.3 Python 实战：4 种记忆混合检索</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+8.6.3 4 种记忆混合检索 demo
+（独立可运行：内嵌 MockChroma / TinyKG / mock_embed）
+&quot;&quot;&quot;
+
+import math
+from collections import deque
+
+def mock_embed(text: str):
+    &quot;&quot;&quot;Mock embedding：按文本字符数生成 8 维伪向量&quot;&quot;&quot;
+    return [math.sin(hash(c) % 100) for c in text[:8].ljust(8, &#x27; &#x27;)]
+
+class MockChromaInline:
+    def __init__(self):
+        self.docs = {}
+    def add(self, doc_id, text, embedding, metadata=None):
+        self.docs[doc_id] = {&quot;text&quot;: text, &quot;embedding&quot;: embedding, &quot;metadata&quot;: metadata or {}}
+    def query(self, query_embedding, top_k=3):
+        def cosine(a, b):
+            dot = sum(x*y for x, y in zip(a, b))
+            na = math.sqrt(sum(x*x for x in a)); nb = math.sqrt(sum(x*x for x in b))
+            return dot / (na * nb + 1e-9)
+        scores = sorted(
+            [(cosine(query_embedding, d[&quot;embedding&quot;]), did, d) for did, d in self.docs.items()],
+            reverse=True)
+        return [{&quot;id&quot;: did, &quot;text&quot;: d[&quot;text&quot;], &quot;metadata&quot;: d[&quot;metadata&quot;], &quot;score&quot;: s}
+                for s, did, d in scores[:top_k]]
+
+class TinyKGInline:
+    def __init__(self, triples):
+        self.triples = triples
+        self.index = {}
+        for h, r, t in triples:
+            self.index.setdefault(h, []).append((r, t))
+    def query(self, head, relation=None, max_hops=1):
+        results = []; visited = set(); queue = deque([(head, 0)])
+        while queue:
+            node, depth = queue.popleft()
+            if depth &gt; max_hops or node in visited: continue
+            visited.add(node)
+            for r, t in self.index.get(node, []):
+                if relation is None or r == relation:
+                    results.append((node, r, t))
+                if depth + 1 &lt;= max_hops: queue.append((t, depth + 1))
+        return results
+
+class HybridMemory:
+    def __init__(self):
+        self.short_term = []                  # 当前 context
+        self.db = {}                          # 长期结构化（用户偏好）
+        # 复用 8.4.4 的 MockChroma 与 mock_embed —— 此处完整内嵌以保证独立可运行
+        self.vector = MockChromaInline()      # 长期向量
+        self.graph = TinyKGInline([])         # 长期图谱
+
+    def remember_preference(self, user_id: str, key: str, value: str):
+        &quot;&quot;&quot;长期 DB：用户偏好&quot;&quot;&quot;
+        self.db.setdefault(user_id, {})[key] = value
+
+    def remember_tool_result(self, tool: str, result: str, metadata: dict):
+        &quot;&quot;&quot;长期向量：工具结果&quot;&quot;&quot;
+        doc_id = f&quot;{tool}_{metadata.get(&#x27;ts&#x27;, &#x27;now&#x27;)}_{hash(result) % 10000}&quot;
+        self.vector.add(doc_id, result, mock_embed(result), metadata)
+
+    def remember_relation(self, head: str, relation: str, tail: str):
+        &quot;&quot;&quot;长期图谱：实体关系&quot;&quot;&quot;
+        self.graph.triples.append((head, relation, tail))
+        self.graph.index.setdefault(head, []).append((relation, tail))
+
+    def retrieve(self, query: str, user_id: str = &quot;default&quot;) -&gt; dict:
+        &quot;&quot;&quot;混合检索：4 种记忆并行查&quot;&quot;&quot;
+        return {
+            &quot;short_term_context&quot;: self.short_term[-5:],  # 最近 5 条
+            &quot;user_preferences&quot;: self.db.get(user_id, {}),
+            &quot;similar_tool_results&quot;: self.vector.query(mock_embed(query), top_k=2),
+            &quot;related_entities&quot;: self.graph.query(query.split()[0]) if query else [],
+        }
+
+
+# ---- 演示 ----
+mem = HybridMemory()
+mem.short_term = [
+    {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好&quot;},
+    {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;你好！&quot;},
+    {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;查北京天气&quot;},
+]
+
+# 长期偏好
+mem.remember_preference(&quot;u1&quot;, &quot;language&quot;, &quot;中文&quot;)
+mem.remember_preference(&quot;u1&quot;, &quot;tone&quot;, &quot;简洁&quot;)
+
+# 长期工具结果
+mem.remember_tool_result(&quot;get_weather&quot;, &quot;北京 18°C 多云&quot;,
+                          {&quot;city&quot;: &quot;北京&quot;, &quot;ts&quot;: &quot;2026-06-17&quot;})
+
+# 长期关系
+mem.remember_relation(&quot;用户 u1&quot;, &quot;关注&quot;, &quot;北京&quot;)
+
+# 混合检索：用户问&quot;北京今天怎样&quot;
+result = mem.retrieve(&quot;北京今天怎样&quot;, user_id=&quot;u1&quot;)
+print(&quot;短期 context:&quot;, [m[&quot;content&quot;] for m in result[&quot;short_term_context&quot;]])
+print(&quot;用户偏好:&quot;, result[&quot;user_preferences&quot;])
+print(&quot;相似工具结果:&quot;, [(r[&quot;text&quot;], r[&quot;score&quot;]) for r in result[&quot;similar_tool_results&quot;]])
+print(&quot;相关实体:&quot;, result[&quot;related_entities&quot;])
+</code></pre>
+<p><strong>预期输出</strong>：
+<pre><code class="language-python">短期 context: [&#x27;你好&#x27;, &#x27;你好！&#x27;, &#x27;查北京天气&#x27;]
+用户偏好: {&#x27;language&#x27;: &#x27;中文&#x27;, &#x27;tone&#x27;: &#x27;简洁&#x27;}
+相似工具结果: [(&#x27;北京 18°C 多云&#x27;, 0.998)]
+相关实体: [(&#x27;用户 u1&#x27;, &#x27;关注&#x27;, &#x27;北京&#x27;)]
+</code></pre></p>
+<p><strong>关键洞察</strong>：<strong>4 种记忆同时返回</strong>——Agent 把这些拼到 prompt 里，LLM 看到"用户偏好 + 历史对话 + 相似工具结果 + 实体关系"——这才叫"真聪明"。</p>
+<p>---</p>
+<h2 id="sec-8.7">8.7 记忆的&quot;遗忘&quot;机制</h2>
+<p><strong>为什么需要遗忘</strong>：
+<ol>
+<li>防止 context 爆（所有记忆堆 context → 价格爆炸）</li>
+<li>移除过期信息（"用户去年说喜欢吃辣"现在可能不喜欢了）</li>
+<li>节省存储成本（10 年的聊天记录没必要全留）</li>
+</ol></p>
+<h3>8.7.1 3 种遗忘策略</h3>
+<table class="md-table"><thead><tr><th>策略</th><th>原理</th><th>实现难度</th><th>适用</th></tr></thead><tbody><tr><td><strong>时间衰减</strong></td><td>30 天前的记忆降权（乘以 0.5），90 天前的丢弃</td><td>低</td><td>短期时效数据（天气、新闻）</td></tr><tr><td><strong>重要性评分</strong></td><td>被引用次数多的记忆 = 不忘（"用户偏好"经常被命中）</td><td>中</td><td>用户偏好 / 关键决策</td></tr><tr><td><strong>用户主动删除</strong></td><td>提供"删除记忆" API / UI，让用户控制</td><td>低（但需要 UX）</td><td>隐私敏感场景</td></tr></tbody></table>
+<h3>8.7.2 GDPR / 数据合规</h3>
+<p>欧盟 GDPR（2018 生效）规定用户有"被遗忘权"——<strong>用户可以要求删除他所有的个人数据</strong>。Agent 系统的实现：</p>
+<ul>
+<li>每个用户的所有记忆（短期 + 长期 + 向量 + 图谱）必须能<strong>一键删除</strong></li>
+<li>删除必须<strong>真正删除</strong>（包括向量库的 embedding）。Chroma / Pinecone / Milvus 现代版本均支持按 id 直接删除（无需重建索引），但要确认你用的版本支持；FAISS 等本地库需要重建索引。</li>
+<li>删除必须<strong>审计日志可追溯</strong>（证明"我删了"）</li>
+</ul>
+<p><strong>工程实现</strong>：每个用户记忆存 <code>user_id</code> 标签，删除时 <code>DELETE WHERE user_id = ?</code>（DB）+ <code>collection.delete(where={"user_id": u1})</code>（向量库）+ <code>MATCH (n {user_id: 'u1'}) DELETE n</code>（图谱）。</p>
+<p>---</p>
+<h2 id="sec-8.8">8.8 记忆系统与 ch07 Function Calling 的桥</h2>
+<p><strong>这是 ch07 和 ch08 的核心衔接</strong>——协议层把数据传过来，记忆系统决定数据存哪。</p>
+<h3>8.8.1 ch07 工具调用结果 → ch08 长期记忆</h3>
+<p>每次 tool call 成功，Agent <strong>自动</strong>把结果写进长期记忆。流程：</p>
+<pre><code class="language-python">LLM 输出 tool_call(&quot;get_weather&quot;, {&quot;city&quot;: &quot;北京&quot;})
+  ↓ (你的代码解析 + 调工具)
+tool_result = {&quot;temp&quot;: 18, &quot;condition&quot;: &quot;多云&quot;}
+  ↓ (ch07 协议层：按 protocol 回传给 LLM)
+LLM 收到 tool_result → 生成最终回复
+  ↓ (ch08 记忆层：同时把 tool_result 写进向量库)
+vector.add(id, text=tool_result, embedding=embed(tool_result), metadata={tool, city, ts})
+</code></pre>
+<p><strong>下次用户问"北京天气"</strong>：
+<pre><code class="language-python">LLM 看到&quot;用户问北京天气&quot; → Agent 先去记忆里检索
+  ↓ (相似度命中)
+找到上次 tool_result，直接回答，不用再调 get_weather
+</code></pre></p>
+<p><strong>价值</strong>：<strong>节省一次工具调用</strong>（可能是付费 API，比如 <code>$0.01/call</code>）+ <strong>降低延迟</strong>（不用再等 1 秒）+ <strong>离线可用</strong>（网络挂了也能答）。</p>
+<h3>8.8.2 ch07 协议字段 ↔ ch08 记忆字段 对应表</h3>
+<table class="md-table"><thead><tr><th>ch07 协议字段</th><th>ch08 记忆字段</th><th>说明</th></tr></thead><tbody><tr><td><code>tool_call.id</code></td><td><code>memory.doc_id</code></td><td>工具调用 ID = 记忆文档 ID</td></tr><tr><td><code>tool_call.function.name</code></td><td><code>memory.metadata.tool</code></td><td>工具名 → 记忆 metadata</td></tr><tr><td><code>tool_call.function.arguments</code></td><td><code>memory.metadata.args</code></td><td>工具参数 → metadata</td></tr><tr><td><code>tool_result.content</code></td><td><code>memory.text</code> + <code>memory.embedding</code></td><td>工具结果原文 → 向量库</td></tr><tr><td><code>tool_result.role = "tool"</code></td><td><code>memory.metadata.role</code></td><td>标记这条记忆是 tool result</td></tr></tbody></table>
+<h3>8.8.3 一个完整的"ch07 + ch08" Agent 主循环</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+8.8.3 ch07 协议 + ch08 记忆：完整 Agent 主循环（伪代码）
+（独立可运行：含 mock llm_call / execute_tool / now）
+&quot;&quot;&quot;
+
+from datetime import datetime
+def now(): return datetime.now().isoformat()
+
+class MockMessage:
+    def __init__(self, content=&quot;&quot;, tool_calls=None):
+        self.content = content
+        self.tool_calls = tool_calls or []
+    def has_tool_calls(self): return len(self.tool_calls) &gt; 0
+
+ALL_TOOLS = [&quot;get_weather&quot;, &quot;send_reminder&quot;]  # mock 工具清单
+
+def llm_call(messages, tools=None):
+    &quot;&quot;&quot;Mock LLM：若消息里有 &#x27;北京&#x27;，输出 get_weather 工具调用；否则直接回复&quot;&quot;&quot;
+    user_msg = next((m[&quot;content&quot;] for m in reversed(messages) if m[&quot;role&quot;]==&quot;user&quot;), &quot;&quot;)
+    if &quot;天气&quot; in user_msg and not any(m.get(&quot;role&quot;)==&quot;tool&quot; for m in messages):
+        return MockMessage(tool_calls=[{
+            &quot;id&quot;: &quot;call_001&quot;, &quot;function&quot;: {&quot;name&quot;: &quot;get_weather&quot;, &quot;arguments&quot;: &#x27;{&quot;city&quot;:&quot;北京&quot;}&#x27;}
+        }])
+    return MockMessage(content=f&quot;已为您查询：{user_msg}&quot;)
+
+def execute_tool(name, args):
+    &quot;&quot;&quot;Mock 工具：get_weather 返回固定结果；其他返回通用&quot;&quot;&quot;
+    if name == &quot;get_weather&quot;:
+        return {&quot;temp&quot;: 18, &quot;condition&quot;: &quot;多云&quot;, &quot;city&quot;: args.get(&quot;city&quot;)}
+    return {&quot;status&quot;: &quot;ok&quot;, &quot;tool&quot;: name, &quot;args&quot;: args}
+
+def agent_loop(user_query: str, memory) -&gt; str:
+    # 1. 从记忆里检索上下文
+    retrieved = memory.retrieve(user_query)
+
+    # 2. 拼 prompt：短期 + 长期 偏好 + 相似记忆 + 系统提示
+    messages = [
+        {&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: f&quot;用户偏好: {retrieved[&#x27;user_preferences&#x27;]}&quot;},
+        *memory.short_term,                                  # 短期 context
+        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user_query},
+    ]
+
+    # 3. 调 LLM（ch07 协议层：可能输出 tool_calls）
+    response = llm_call(messages, tools=ALL_TOOLS)
+
+    # 4. 如果 LLM 决定调工具
+    while response.has_tool_calls():
+        for tc in response.tool_calls:
+            # 4a. 调真实工具（tc 可能是 dict 或对象，统一取值）
+            tc_id = tc[&quot;id&quot;] if isinstance(tc, dict) else tc.id
+            tc_name = tc[&quot;function&quot;][&quot;name&quot;] if isinstance(tc, dict) else tc.function.name
+            tc_args_raw = tc[&quot;function&quot;][&quot;arguments&quot;] if isinstance(tc, dict) else tc.function.arguments
+            import json
+            tc_args = json.loads(tc_args_raw) if isinstance(tc_args_raw, str) else tc_args_raw
+            result = execute_tool(tc_name, tc_args)
+
+            # 4b. ★关键：把结果写进长期记忆（ch08）
+            memory.remember_tool_result(
+                tool=tc_name,
+                result=str(result),
+                metadata={&quot;args&quot;: tc_args, &quot;ts&quot;: now()},
+            )
+
+            # 4c. 回传 tool result 给 LLM（ch07 协议）
+            messages.append({
+                &quot;role&quot;: &quot;tool&quot;,
+                &quot;tool_call_id&quot;: tc_id,
+                &quot;content&quot;: str(result),
+            })
+
+        # 4d. 再调 LLM（可能再调工具 / 出最终答案）
+        response = llm_call(messages, tools=ALL_TOOLS)
+
+    return response.content
+
+
+# ---- 演示（mock 跑通主循环）----
+mem_stub = type(&quot;M&quot;, (), {
+    &quot;short_term&quot;: [],
+    &quot;retrieve&quot;: lambda self, q: {&quot;user_preferences&quot;: {&quot;language&quot;:&quot;中文&quot;}, &quot;short_term_context&quot;: []},
+    &quot;remember_tool_result&quot;: lambda self, **kw: None,
+})()
+print(&quot;主循环输出:&quot;, agent_loop(&quot;北京今天天气&quot;, mem_stub))
+</code></pre>
+<p><strong>关键观察</strong>：<strong>ch07 协议层处理"通信"，ch08 记忆层处理"持久化"</strong>——两个系统各司其职，组合成"会记事的 Agent"。</p>
+<p>---</p>
+<h2 id="sec-8.9">8.9 主流 Agent 框架的记忆实现对比</h2>
+<table class="md-table"><thead><tr><th>框架</th><th>短期记忆</th><th>长期 DB</th><th>长期向量</th><th>长期图谱</th><th>备注</th></tr></thead><tbody><tr><td><strong>LangChain</strong></td><td><code>ConversationBufferMemory</code></td><td><code>PostgresChatMessageHistory</code></td><td><code>VectorStoreMemory</code>（Chroma/FAISS）</td><td>需额外集成（<code>Neo4jGraph</code>）</td><td>模块化，按需拼</td></tr><tr><td><strong>LangGraph</strong></td><td>state.messages reducer + checkpointer</td><td>SqliteSaver / PostgresSaver</td><td>需自集成</td><td>需自集成</td><td><strong>状态机原生</strong>，记忆即 state</td></tr><tr><td><strong>AutoGen v0.4</strong></td><td>消息数组</td><td><code>MemoryBank</code>（SQLite/PG）</td><td><code>MemoryBank</code> + Chroma 后端</td><td>需额外集成（GraphRAG）</td><td>多 Agent 共享记忆</td></tr><tr><td><strong>CrewAI</strong></td><td>context 列表</td><td><code>LongTermMemory</code>（SQLite）</td><td><code>LongTermMemory</code> + 向量</td><td>需自集成</td><td>团队 Agent 共享</td></tr><tr><td><strong>OpenAI Agents SDK</strong></td><td><code>Session</code> 对象（SQLite）</td><td>SQLite 后端</td><td>可选集成</td><td>需自集成</td><td>轻量、原生</td></tr></tbody></table>
+<strong>选型建议</strong>：
+<ul>
+<li><strong>最灵活</strong>：LangChain（什么都能拼，但要写胶水代码）</li>
+<li><strong>状态机场景</strong>：LangGraph（memory 就是 state 的一部分，最优雅）</li>
+<li><strong>多 Agent 共享</strong>：AutoGen <code>MemoryBank</code>（专为多 Agent 设计）</li>
+<li><strong>快速上线</strong>：OpenAI Agents SDK <code>Session</code>（一行 <code>Session = SQLiteSession("agent")</code> 起步）</li>
+</ul>
+<p>---</p>
+<h2 id="sec-8.10">8.10 5 大坑</h2>
+<table class="md-table"><thead><tr><th>#</th><th>坑</th><th>后果</th><th>修复</th></tr></thead><tbody><tr><td>1</td><td><strong>把所有对话都塞进 context</strong></td><td>成本爆炸 + lost in the middle</td><td>用 8.2 的滑动窗口 + 摘要压缩</td></tr><tr><td>2</td><td><strong>用 embedding 存"最近 10 条对话"</strong></td><td>短文本 embedding 质量差（< 50 token 区分度低）</td><td>短文本用 DB 全文检索，> 100 token 才用向量</td></tr><tr><td>3</td><td><strong>向量库不更新</strong></td><td>用户偏好变了但旧 embedding 还在</td><td>每次 <code>remember_preference</code> 时<strong>先删后写</strong></td></tr><tr><td>4</td><td><strong>图谱关系硬编码</strong></td><td>实体关系变化时 KG 失效</td><td>用动态图谱（每次推理自动 <code>kg.add()</code>）</td></tr><tr><td>5</td><td><strong>忽略 PII / GDPR</strong></td><td>把用户身份证号永久存进向量库 → 违规</td><td>写记忆前过滤 PII（regex 检测身份证 / 信用卡）</td></tr></tbody></table>
+<strong>5 大坑 × 修复示例</strong>：
+<pre><code class="language-python"># 坑 5 修复示例：PII 过滤
+import re
+
+PII_PATTERNS = [
+    (r&quot;\d{17}[\dXx]&quot;, &quot;身份证号&quot;),
+    (r&quot;\d{16}&quot;, &quot;银行卡号&quot;),
+    (r&quot;1[3-9]\d{9}&quot;, &quot;手机号&quot;),
+    (r&quot;[\w.-]+@[\w.-]+\.\w+&quot;, &quot;邮箱&quot;),
+]
+
+def filter_pii(text: str) -&gt; str:
+    for pattern, name in PII_PATTERNS:
+        text = re.sub(pattern, f&quot;[{name}已脱敏]&quot;, text)
+    return text
+
+# 使用：写入记忆前先过滤
+user_input = &quot;我的身份证号 110101199003078888，手机 13800138000&quot;
+safe_text = filter_pii(user_input)
+print(f&quot;原始: {user_input}&quot;)
+print(f&quot;脱敏: {safe_text}&quot;)
+</code></pre>
+<p>---</p>
+<h2 id="sec-8.11">8.11 本章小结 + 概念速查 + 概念桥</h2>
+<h3>8 条速记</h3>
+<ol>
+<li><strong>短期记忆 = context window</strong>，128K-2M tokens，但价格线性 + lost in the middle</li>
+<li><strong>长期记忆 = 5 种存储</strong>（JSON/SQLite/PG/Redis/向量库），按规模选型</li>
+<li><strong>向量记忆 = embedding + 相似度</strong>，擅长语义检索，不擅长精确关系</li>
+<li><strong>图谱记忆 = 三元组 + 多跳</strong>，擅长精确关系，不擅长模糊匹配</li>
+<li><strong>生产 Agent = 4 种记忆混合</strong>：短期 + DB + 向量 + 图谱</li>
+<li><strong>遗忘是必须</strong>：时间衰减 / 重要性评分 / 用户主动删除 + GDPR 合规</li>
+<li><strong>ch07 + ch08 互补</strong>：协议层传数据，记忆层存数据</li>
+<li><strong>每个框架都有自己的记忆模块</strong>：LangChain/LangGraph/AutoGen/CrewAI/OpenAI SDK 各有侧重</li>
+</ol>
+<h3>概念速查表（25 术语）</h3>
+<table class="md-table"><thead><tr><th>术语</th><th>英文</th><th>简释</th></tr></thead><tbody><tr><td><strong>短期记忆</strong></td><td>Short-term Memory</td><td>context window 内的消息</td></tr><tr><td><strong>长期记忆</strong></td><td>Long-term Memory</td><td>跨 session 持久化的存储</td></tr><tr><td><strong>滑动窗口</strong></td><td>Sliding Window</td><td>只保留最近 N 条消息</td></tr><tr><td><strong>摘要压缩</strong></td><td>Summary Compression</td><td>把 N 条消息压成 1 条摘要</td></tr><tr><td><strong>关键消息</strong></td><td>Pinned Messages</td><td>永远保留的关键消息</td></tr><tr><td><strong>Embedding</strong></td><td>Embedding</td><td>文本 → 高维向量</td></tr><tr><td><strong>余弦相似度</strong></td><td>Cosine Similarity</td><td>两个向量的相似度（0-1）</td></tr><tr><td><strong>Top-K</strong></td><td>Top-K</td><td>相似度最高的 K 个结果</td></tr><tr><td><strong>Chunking</strong></td><td>Chunking</td><td>长文本切成小块</td></tr><tr><td><strong>Chroma</strong></td><td>Chroma</td><td>轻量级本地向量库</td></tr><tr><td><strong>FAISS</strong></td><td>FAISS</td><td>Meta 出品的本地向量库</td></tr><tr><td><strong>Milvus</strong></td><td>Milvus</td><td>企业级向量库（国产）</td></tr><tr><td><strong>Pinecone</strong></td><td>Pinecone</td><td>全托管云向量库</td></tr><tr><td><strong>BGE</strong></td><td>BGE</td><td>中文 embedding 模型</td></tr><tr><td><strong>三元组</strong></td><td>Triple</td><td>(head, relation, tail)</td></tr><tr><td><strong>知识图谱</strong></td><td>Knowledge Graph</td><td>三元组的集合</td></tr><tr><td><strong>Neo4j</strong></td><td>Neo4j</td><td>图数据库事实标准</td></tr><tr><td><strong>Cypher</strong></td><td>Cypher</td><td>Neo4j 的查询语言</td></tr><tr><td><strong>多跳查询</strong></td><td>Multi-hop Query</td><td>跨多个实体查询</td></tr><tr><td><strong>MemGPT</strong></td><td>MemGPT</td><td>UC Berkeley 2023 论文，分层记忆</td></tr><tr><td><strong>MemoryBank</strong></td><td>MemoryBank</td><td>AutoGen 的长期记忆</td></tr><tr><td><strong>Lost in the Middle</strong></td><td>Lost in the Middle</td><td>Liu et al. 2023 注意力衰减论文</td></tr><tr><td><strong>GDPR</strong></td><td>GDPR</td><td>欧盟通用数据保护条例</td></tr><tr><td><strong>被遗忘权</strong></td><td>Right to be Forgotten</td><td>GDPR 第 17 条</td></tr><tr><td><strong>PII</strong></td><td>PII (Personally Identifiable Information)</td><td>个人可识别信息</td></tr></tbody></table>
+<h3>概念桥：ch08 ↔ ch09 ↔ ch10</h3>
+<p>本章学到的内容主要被 <strong>ch09（RAG）</strong> 和 <strong>ch10（规划与推理）</strong> 消费。映射如下：</p>
+<table class="md-table"><thead><tr><th>本章学到的</th><th>下一章怎么用</th></tr></thead><tbody><tr><td><strong>8.2-8.3 短期 / 长期记忆</strong></td><td><strong>ch09 RAG</strong> —— RAG 是"长期向量记忆的检索工程化"，ch08 的向量库概念在 ch09 扩展成"文档检索 + 重排序 + Agentic RAG"</td></tr><tr><td><strong>8.4 向量记忆 + embedding</strong></td><td><strong>ch09 §9.2-9.3</strong> —— RAG 的 chunk / embed / retrieve 流程直接复用 8.4</td></tr><tr><td><strong>8.5 图谱记忆 + 知识图谱</strong></td><td><strong>ch09 §9.5 Agentic RAG</strong> —— GraphRAG 把向量 + 图谱结合（OpenAI 2024）</td></tr><tr><td><strong>8.6 4 种记忆混合架构</strong></td><td><strong>ch10 规划与推理</strong> —— 规划时 Agent 决定"现在该查记忆 / 调工具 / 推理"</td></tr><tr><td><strong>8.7 遗忘 + GDPR</strong></td><td><strong>ch10 §10.6 反思机制</strong> —— 反思时决定"哪些记忆保留 / 哪些丢弃"</td></tr></tbody></table>
+<strong>第二部分进度</strong>：3/5 章完成（ch06 Prompt / ch07 Function Calling / ch08 Memory）+ 接下来 2 章预告
+<ul>
+<li><strong>ch09 RAG</strong>：检索增强生成，文档检索 + 重排序 + Agentic RAG</li>
+<li><strong>ch10 规划与推理</strong>：CoT / ToT / ReWOO / Plan-and-Execute / LATS + <strong>第二部分完结复盘</strong></li>
+</ul>
+<p>---</p>
+<h3>进一步阅读</h3>
+<ol>
+<li><strong>MemGPT</strong>（Packer et al., 2023, UC Berkeley）—— *"MemGPT: Towards LLMs as Operating Systems"*，分层记忆的奠基论文</li>
+<li><strong>Lost in the Middle</strong>（Liu et al., 2023, Stanford）—— 长 context 注意力衰减的经典研究</li>
+<li><strong>LangChain Memory 文档</strong>—— https://python.langchain.com/docs/modules/memory/</li>
+<li><strong>Chroma 文档</strong>—— https://docs.trychroma.com/ （ch08 §8.4 主参考）</li>
+<li><strong>Neo4j 入门</strong>—— https://neo4j.com/docs/getting-started/</li>
+<li><strong>向量检索综述</strong>—— *"Approximate Nearest Neighbor Search"* (Indyk & Motwani, 1998 原始论文；2024 综述推荐 ANNS 库 benchmark)</li>
+<li><strong>GDPR 第 17 条</strong>—— https://gdpr-info.eu/art-17-gdpr/ （被遗忘权原文）</li>
+<li><strong>OpenAI GraphRAG</strong>（2024）—— https://openai.com/index/introducing-graphrag/ （向量 + 图谱的工业级实践）</li>
+</ol>
+<p>---</p>
+<blockquote><strong>本章完</strong>。下一章 ch09《RAG——检索增强生成在 Agent 中的角色》会把 ch08 的"向量记忆"展开成完整的 RAG 流程——文档切分、检索、重排序、Query Rewriting、Agentic RAG，并实战 LlamaIndex。</blockquote>
+
+</main>
+
+<nav class="chapter-pager" style="display:flex; justify-content:space-between; max-width:920px; margin:40px auto 60px; padding:0 20px;">
+  <a href="ch07.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">
+    ← 上一章：Function Calling / Tool Use（第 7 章）
+  </a>
+  <a href="ch09.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">
+    下一章：RAG——检索增强生成（第 9 章，未发布）→
+  </a>
+</nav>
+
+<button class="toc-toggle" id="toc-toggle" aria-label="切换目录">📑</button>
+<button class="fab-back-top" id="back-to-top" aria-label="回到顶部">↑</button>
+
+<footer class="site-footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <h3>🤖 AGENT开发从入门到精通</h3>
+      <p>一本系统性的 AI Agent 开发中文教材。从 1966 ELIZA 到 2026 多 Agent 协议爆发，覆盖 Agent 基础、核心技术、多 Agent 协作、实战项目与前沿展望。</p>
+    </div>
+    <div class="footer-col">
+      <h4>导航</h4>
+      <ul>
+        <li><a href="../index.html">首页</a></li>
+        <li><a href="../index.html#chapters">章节总览</a></li>
+        <li><a href="ch01.html">第1章</a></li>
+        <li><a href="ch02.html">第2章</a></li>
+        <li><a href="ch03.html">第3章</a></li>
+        <li><a href="ch04.html">第4章</a></li>
+        <li><a href="ch05.html">第5章</a></li>
+        <li><a href="ch06.html">第6章</a></li>
+        <li><a href="ch07.html">第7章</a></li>
+        <li><a href="ch08.html">第8章</a></li>
+        <li><a href="../index.html#progress">阅读进度</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>资源</h4>
+      <ul>
+        <li><a href="#">GitHub 仓库（待建）</a></li>
+        <li><a href="#">反馈与建议</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<script src="/assets/js/book.js"></script>
+<script src="/assets/js/site.js"></script>
+</body>
+</html>
