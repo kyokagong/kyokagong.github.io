@@ -365,19 +365,33 @@ q5: ─────────────────────────�
 <li>FFT 优化到 $N \log N$ 操作</li>
 </ul>
 <p><strong>门 vs 操作 的对应</strong>: 1 个量子门 ≈ 1 个经典操作(粗略)。所以 $O(n^2)$ 门 vs $O(N \log N)$ 操作 = <strong>指数加速</strong>。</p>
-<p><strong>硬件时钟因素</strong>:</p>
+<p><strong>硬件时钟因素</strong>(典型值):</p>
+<table class="concept-table">
+<thead><tr><th>平台</th><th>量子门时间</th><th>时钟频率</th></tr></thead>
+<tbody>
+<tr><td><strong>经典 CPU</strong></td><td>—</td><td>3-5 GHz</td></tr>
+<tr><td><strong>超导量子比特</strong> (IBM, Google)</td><td>10-100 ns</td><td>10-100 MHz</td></tr>
+<tr><td><strong>离子阱</strong> (IonQ, Quantinuum)</td><td>1-100 μs</td><td>10 kHz-1 MHz</td></tr>
+<tr><td><strong>光量子</strong> (Xanadu, PsiQuantum)</td><td>ps 量级</td><td>~THz</td></tr>
+<tr><td><strong>中性原子</strong> (QuEra)</td><td>μs 量级</td><td>~MHz</td></tr>
+</tbody>
+</table>
+<p><strong>量子-经典时钟比</strong>(典型):</p>
+<table class="concept-table">
+<thead><tr><th>平台</th><th>时钟比</th><th>备注</th></tr></thead>
+<tbody>
+<tr><td>超导</td><td>~10-100 倍(慢)</td><td>跟 QFT 加速比相当或略小</td></tr>
+<tr><td>离子阱</td><td>~1000-10000 倍(慢)</td><td>比 QFT 加速比大 100-10000 倍</td></tr>
+<tr><td>光量子</td><td>~0.001-0.01 倍(快!)</td><td><strong>量子更快</strong>!但双 qubit 门难做</td></tr>
+</tbody>
+</table>
+<p><strong>实际加速比</strong>(考虑时钟): $\frac{2^n / n}{\text{时钟比}}$ ——</p>
 <ul>
-<li>经典 CPU 时钟:~GHz($10^9$ Hz)</li>
-<li>量子门时钟:~MHz($10^6$ Hz)(典型超导)</li>
-<li>量子<strong>慢</strong> 1000 倍</li>
+<li><strong>超导 + n=30</strong>: 50,000,000 / 100 = 500,000× 加速</li>
+<li><strong>离子阱 + n=30</strong>: 50,000,000 / 1000 = 50,000× 加速</li>
+<li><strong>光量子 + n=30</strong>: 50,000,000 / 0.001 = 5×10^10× 加速(理论)</li>
 </ul>
-<p><strong>实际加速比</strong>(考虑时钟): $\frac{2^n / n}{1000}$ ——</p>
-<ul>
-<li>$n = 10$: 100× 加速</li>
-<li>$n = 20$: 50,000× 加速</li>
-<li>$n = 30$: 50,000,000× 加速</li>
-</ul>
-<p><strong>仍然指数加速</strong>,但比"纯门数对比"小 1000 倍。</p>
+<p><strong>仍然指数加速</strong>,但<strong>强烈依赖于硬件选择</strong>。<strong>离子阱</strong>最有利于放大 QFT 的理论加速。</p>
 <hr>
 <h2>9.7 QFT 的逆变换</h2>
 <p><strong>QFT 的逆</strong> = <strong>DFT 的逆</strong> = <strong>DFT 的共轭转置</strong>:</p>
@@ -445,6 +459,12 @@ q5: ─────────────────────────�
 <li><strong>优势</strong>: 测量得到<strong>有意义</strong>的 $r$(直接对应 Shor 算法的"周期")</li>
 </ul>
 <p><strong>两种方案的共同点</strong>: <strong>精心构造</strong>输入态,使得 QFT 输出<strong>自然集中</strong>,测量给出<strong>有意义</strong>的信息。</p>
+<blockquote class="chapter-quote">
+<p><strong>📌 关键架构澄清</strong>:<strong>QPE 和 Shor 不是并列</strong>的——Shor 算法<strong>内部使用</strong> QPE(9.10 详述)。QPE 是更<strong>基础</strong>的"相位信息提取"工具,Shor / HHL / 量子化学等都是 QPE 的<strong>应用场景</strong>。</p>
+<p>严格的<strong>依赖关系</strong>:</p>
+<pre><code>QFT (基础算符) → QPE (提取相位) → Shor / HHL / 量子化学 (具体应用)</code></pre>
+<p>9.9 详细讲 QPE,9.10 讲 Shor,9.V 简述 HHL,9.W 简述量子化学——<strong>都是 QPE 的应用</strong>。</p>
+</blockquote>
 <h3>9.8.3 何时 QFT 单独有用?</h3>
 <p><strong>几乎从不</strong>。QFT <strong>单独</strong>使用是<strong>无意义</strong>的 —— 你不能读出结果。</p>
 <p><strong>例外</strong>: 当你<strong>本来就需要"采样频谱"</strong>(比如蒙特卡洛),QFT 的"采样"可能<strong>恰好</strong>是你需要的。但这种情况<strong>极少</strong>。</p>
@@ -564,6 +584,12 @@ e_q1..n: ──QFT^†───测量───> 估计 φ (n bit)</code></pre>
 </tbody>
 </table>
 <p><strong>关键</strong>: QPE 的<strong>指数加速</strong>来自<strong>量子叠加</strong>和<strong>干涉</strong>,<strong>不是</strong>更快的对角化算法。</p>
+<blockquote class="chapter-quote">
+<p><strong>📌 复杂度组成</strong>: $O(n^2 + n \cdot T_U)$ 中, $n^2$ 来自<strong>逆 QFT</strong> 的门数(9.7), $n \cdot T_U$ 来自<strong>受控 $\hat{U}^{2^k}$ 序列</strong>($k = 0, 1, \ldots, n-1$ 共 $n$ 个)。</p>
+<p><strong>$T_U$ 的定义</strong>:实现<strong>受控 $\hat{U}^{2^k}$</strong> 的代价。如果 $\hat{U}$ 本身需要 $T$ 个门实现,那么"<strong>直接重复</strong>"实现 $\hat{U}^{2^k}$ 需要 $2^k \cdot T$ 个门——这会<strong>爆炸</strong>!</p>
+<p><strong>实际做法</strong>:用<strong>平方技巧</strong>(classical modular exponentiation 思路), $\hat{U}^{2^k}$ 用 $O(\text{poly}(\log T, k))$ 个门实现(因为可以"复用"前一步结果,<strong>只多做一个乘法</strong>)。所以<strong>总</strong> $T_U = O(\text{poly}(\log T) \cdot n)$。</p>
+<p>综合: $O(n^2 + n \cdot \text{poly}(\log T) \cdot n) = O(n^2 \cdot \text{poly}(\log T))$ ——<strong>输入 $n$ 多项式</strong>, $T$ 多项式对数。</p>
+</blockquote>
 <hr>
 <h2>9.10 QFT 的应用 2:Shor 算法核心(周期发现)</h2>
 <p><strong>Shor 算法</strong>(ch11 详细)是<strong>最著名的量子算法</strong>——它把大整数分解从亚指数降到<strong>多项式</strong>时间。</p>
@@ -622,6 +648,30 @@ e_q1..n: ──QFT^†───测量───> 估计 φ (n bit)</code></pre>
 <p><strong>复杂度</strong>: Shor 实际需要 $O(n^3 (\log n)^2 \log(1/\epsilon))$ 个门,其中 $\epsilon$ 是错误率。<strong>容错</strong>实现需要 ~$10^6 \sim 10^9$ 个物理 qubit(NSA 估算),<strong>远超</strong> NISQ 时代能力。</p>
 <h3>9.10.6 Shor 算法的"物理意义"</h3>
 <p><strong>QFT 在 Shor 中的角色</strong>:<strong>频率分析</strong>。Shor 把"分解整数"问题<strong>精巧地</strong>转化为"分析周期性"问题,然后用 QFT <strong>指数加速</strong>地做频率分析。这是 QFT <strong>应用的最高典范</strong> —— 不是"直接做 FFT",而是把一个<strong>完全不相关</strong>的问题(分解整数)<strong>变换</strong>成"QFT 能加速"的问题。</p>
+<blockquote class="chapter-quote">
+<p><strong>📌 为什么"周期"能用来"分解"?</strong></p>
+<p><strong>关键定理</strong>:设 $N$ 待分解, $a$ 是 $[2, N-1]$ 随机选的数, $\gcd(a, N) = 1$。如果能找到 $a^r \equiv 1 \pmod N$ 的<strong>最小</strong>周期 $r$,并且 $r$ 是<strong>偶数</strong>, $a^{r/2} \not\equiv -1 \pmod N$,那么</p>
+<p>$$\gcd(a^{r/2} - 1, N) \text{ 和 } \gcd(a^{r/2} + 1, N)$$</p>
+<p><strong>都是 $N$ 的非平凡因子</strong>(可能等于 1 或 $N$ 本身,需重试)。</p>
+<p><strong>完整例子</strong> $N = 15$, $a = 7$:</p>
+<ol>
+<li>$7^1 = 7, 7^2 = 49 \equiv 4, 7^3 = 343 \equiv 13, 7^4 = 2401 \equiv 1 \pmod{15}$</li>
+<li>所以 $r = 4$ (偶数 ✓)</li>
+<li>$7^{r/2} = 7^2 = 49 \equiv 4 \pmod{15}$</li>
+<li>$4 \not\equiv -1 \pmod{15}$(因为 $-1 \equiv 14 \pmod{15}$) ✓</li>
+<li>$\gcd(49 - 1, 15) = \gcd(48, 15) = 3$</li>
+<li>$\gcd(49 + 1, 15) = \gcd(50, 15) = 5$</li>
+<li>$15 = 3 \times 5$ ✓ <strong>分解成功</strong>!</li>
+</ol>
+<p><strong>所以"分解"完全归约为"找周期"</strong>。<strong>经典</strong>找周期需要 $O(N)$ 次 oracle 调用(逐一计算 $a^x \mod N$ 直到重复);<strong>量子 Shor</strong> 用 QPE 把 oracle 调用降到 $O(1)$(叠加 + 干涉后<strong>一步</strong>找到 $r$)。这就是 QFT <strong>指数加速</strong>的来源。</p>
+<p><strong>失败情形</strong>:</p>
+<ul>
+<li>$r$ 是奇数 → 重选 $a$</li>
+<li>$a^{r/2} \equiv -1 \pmod N$ → 重选 $a$</li>
+<li>$\gcd = 1$ 或 $N$ → 重选 $a$</li>
+</ul>
+<p>成功概率 $\geq 1 - 1/2^{n-1}$,只需重试几次。</p>
+</blockquote>
 <hr>
 <h2>9.11 QFT 的局限</h2>
 <p>虽然 QFT 是指数加速的,但它<strong>有局限</strong>:</p>
@@ -1076,6 +1126,15 @@ q4: ─────────────────────────�
 <p><strong>第 9 章完(最终版)</strong>。本章覆盖 QFT 的<strong>完整数学、电路、复杂度、精度问题、和 4 大应用</strong>(QPE / Shor / 量子化学 / HHL)。第二部分 Day 4 完成。</p>
 <hr>
 <h2>9.U 补充:QFT 的物理实现</h2>
+<blockquote class="chapter-quote">
+<p><strong>📌 数据时效性说明</strong>: 以下实验时间为 <strong>2024-2025 快照</strong>。<strong>物理原理</strong>(QFT 电路结构)不变,但<strong>实验数据</strong>(qubit 数、保真度、错误率)会<strong>快速更新</strong>。读者查询最新进展请参考:</p>
+<ul>
+<li><strong>arXiv quant-ph</strong>(每日新论文)</li>
+<li><strong>Quantum Computing Report</strong>(q-computing.com)</li>
+<li><strong>各硬件厂商的官方公告</strong>(IBM Quantum, IonQ, Quantinuum, Xanadu, QuEra, PsiQuantum)</li>
+<li><strong>量子计算基准测试</strong>(Quantum Benchmarking, QED-C benchmarks)</li>
+</ul>
+</blockquote>
 <p>QFT 已经在<strong>多种</strong>量子硬件上<strong>实验性</strong>实现:</p>
 <h3>9.U.1 超导 qubit (IBM, Google)</h3>
 <p><strong>实验</strong>: IBM 2017 在 5 qubit 设备上实现 n=3 QFT。</p>
@@ -1200,6 +1259,18 @@ q4: ─────────────────────────�
 <hr>
 <p><strong>第 9 章完(完整版)</strong>。本章共 <strong>18 节</strong>,<strong>43 个 ### 子节</strong>,<strong>40 display 公式 + 507 inline 公式</strong>,<strong>中文 ~6,500 字</strong>。第二部分 Day 4 完成。</p>
 
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch08.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 8 章 量子电路的数学模型</span>
+          </a>
+          <a href="ch10.html" class="pager-link pager-next">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 10 章 量子搜索算法 — Grover</span>
+          </a>
+        </nav>
+
         </article>
     </main>
 
@@ -1245,6 +1316,7 @@ q4: ─────────────────────────�
           <li><a href="ch07.html">第 7 章</a></li>
           <li><a href="ch08.html">第 8 章</a></li>
           <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

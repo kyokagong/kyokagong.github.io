@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第10章：量子搜索算法 — Grover | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第10章：量子搜索算法 — Grover | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航:返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第二部分 · 量子计算基础 · 完结章</span>
+        <span class="chapter-day-tag">Day 11 · 2026-06-18</span>
+      </div>
+      <h1 class="chapter-title">第 10 章 量子搜索算法 — Grover</h1>
+      <p class="chapter-subtitle">振幅放大 + 几何旋转 + 二次加速——第二部分完结 🎉</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~7,100 字</span>
+        <span class="stat">🔢 30 节 · 52 子节</span>
+        <span class="stat">📑 2D 几何 + 完整电路 + 10 概念表</span>
+        <span class="stat">⏱ ~45 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+<h1>第 10 章 量子搜索算法 — Grover 算法</h1>
+<blockquote class="chapter-quote"><strong>本章定位</strong>: 第二部分 · 量子计算基础 · 第五章(完结章)
+
+<strong>承接</strong>: 第 9 章给出了 QFT(指数加速) —— 现在问"<strong>有比经典平方根快一点</strong>的算法吗?"
+
+<strong>目标</strong>: 让读者<strong>完整理解 Grover 算法的"振幅放大"思想</strong>,掌握<strong>几何旋转</strong>的严格数学,看到<strong>二次加速</strong>的精确来源,以及<strong>应用 + 限制</strong>的诚实评估</blockquote>
+<hr>
+<h2>10.0 引言:从经典搜索到量子搜索</h2>
+<p><strong>搜索</strong>(search)是计算机科学最基础的操作之一:给定一个 $N$ 项的"无序"集合,找到满足某个条件的元素。<strong>经典计算机</strong>需要逐一检查,需要 $O(N)$ 次查询。</p>
+<p>1996 年,Lov Grover 在他的开创性论文 <em>"A fast quantum mechanical algorithm for database search"</em> [G96] 中提出了一种<strong>量子算法</strong>,只需要 $O(\sqrt{N})$ 次查询 —— <strong>二次加速</strong>(quadratic speedup)。</p>
+<p><strong>这是 QFT / Shor 的"指数加速"(exponential) 之外的另一种范式</strong>:</p>
+<ul>
+<li>Shor / QFT: <strong>指数</strong>加速(从 $O(N)$ 到 $O(\log N)$)</li>
+<li>Grover: <strong>二次</strong>加速(从 $O(N)$ 到 $O(\sqrt{N})$)</li>
+</ul>
+<p>虽然 Grover 的加速比 Shor 小,但它的<strong>适用范围更广</strong> —— 不依赖于问题的代数结构,只需要一个"oracle"。</p>
+<p><strong>Grover 算法的核心思想</strong>:<strong>振幅放大</strong>(amplitude amplification)。通过巧妙的<strong>反射操作</strong>(reflection),把"目标态" $|w\rangle$ 的概率幅从 $1/\sqrt{N}$ 放大到接近 1,然后测量<strong>几乎必然</strong>得到目标。</p>
+<p><strong>几何直觉</strong>: Grover 算法可以看作一个 <strong>2D 平面上的旋转</strong>。起始态 $|\psi\rangle$ 在 2D 平面上,经过 Grover 迭代,系统地<strong>旋转</strong>到接近 $|w\rangle$。每一步旋转 $2\theta$,其中 $\sin\theta = \sqrt{M/N}$ ($M$ 是目标数)。</p>
+<p><strong>本章的"5 个关键概念"</strong>:</p>
+<ol>
+<li><strong>振幅放大</strong> —— 量子叠加 + 干涉 = 系统性放大目标态</li>
+<li><strong>两次反射</strong> —— Oracle 反射 + 平均反射 = 旋转 $2\theta$</li>
+<li><strong>二次加速</strong> —— $O(\sqrt{N})$ 来自"每步旋转 $2\theta$,总需 $\pi/(4\theta)$ 步"</li>
+<li><strong>最优性</strong> —— Bennett-Bernstein-Brassard-Vazirani 1997 证明 $\Omega(\sqrt{N})$ 是<strong>下界</strong></li>
+<li><strong>适用性</strong> —— 无结构数据 + Oracle 访问 + $M \ll N$ 才能加速</li>
+</ol>
+<p><strong>本章的"5 个关键问题"</strong>:</p>
+<ol>
+<li>Grover <strong>解决什么问题</strong>? (10.1-10.2 经典 vs 问题形式化)</li>
+<li>Grover 的<strong>核心思想</strong>是什么? (10.3 振幅放大)</li>
+<li>Grover 怎么<strong>用电路实现</strong>? (10.4-10.6 数学 + 电路)</li>
+<li>Grover <strong>快多少</strong>? 为什么? (10.7 迭代次数)</li>
+<li>Grover 能<strong>应用</strong>到什么场景? (10.10-10.11 应用 + 限制)</li>
+</ol>
+<hr>
+<h2>10.1 经典无结构搜索</h2>
+<p><strong>问题</strong>: 给定一个 $N$ 项的集合 $S = \{x_0, x_1, \ldots, x_{N-1}\}$,找出一个满足 $f(x_w) = 1$ 的 $x_w$。</p>
+<p><strong>假设</strong>:</p>
+<ul>
+<li>$f: \{0, 1, \ldots, N-1\} \to \{0, 1\}$ 是一个"黑盒"函数(oracle)</li>
+<li>$f(x) = 1$ 表示 $x$ 是"目标"(可能多个)</li>
+<li>$f(x) = 0$ 表示 $x$ 不是"目标"</li>
+<li><strong>唯一的访问方式</strong>就是"查询" $f(x)$(即把 $x$ 输入,读出 $f(x)$)</li>
+<li>数据<strong>无结构</strong>(no structure) —— 没有排序、没有哈希</li>
+</ul>
+<p><strong>经典算法的下界</strong>: 任何<strong>确定性</strong>算法在最坏情况下需要 $\Omega(N)$ 次查询 —— 因为目标可能在最后才找到。<strong>随机</strong>算法期望 $N/2$ 次。</p>
+<p><strong>直观</strong>: 你必须"看"过每一个元素才能确认没找到。"无结构" = 没有任何"提示"告诉你"再往哪边看"。</p>
+<hr>
+<h2>10.2 问题形式化:量子 Oracle</h2>
+<p>在量子情形,我们把 oracle 实现为一个<strong>酉 oracle</strong> $\hat{O}_w$:</p>
+<p>$$\hat{O}_w |x\rangle = (-1)^{f(x)} |x\rangle = \begin{cases} |x\rangle & \text{if } f(x) = 0 \\ -|x\rangle & \text{if } f(x) = 1 \end{cases}$$</p>
+<p><strong>关键点</strong>:</p>
+<ul>
+<li>$\hat{O}_w$ <strong>只对目标态 $|w\rangle$ 添加 $-1$ 相位</strong>(其他不变)</li>
+<li>这是一个<strong>条件相位翻转</strong>(conditional phase flip)</li>
+<li>$\hat{O}_w$ 是<strong>酉</strong>的(因为是恒等或对角 ±1)</li>
+<li><strong>不"读出" $f(x)$</strong>(不投影到基态)—— 保持量子相干性</li>
+</ul>
+<p><strong>Oracle 的物理实现</strong>: Oracle 不是免费的 —— 实现 $\hat{O}_w$ 需要把 $f$ "嵌入"到量子电路中,这通常需要 $O(\text{poly}(n))$ 个门(假设 $f$ 的经典实现已知)。</p>
+<p><strong>记号</strong>: 假设有 $M$ 个目标,$\{w_1, w_2, \ldots, w_M\}$。定义:</p>
+<p>$$|w\rangle = \frac{1}{\sqrt{M}} \sum_{i=1}^{M} |w_i\rangle, \quad |w^\perp\rangle = \frac{1}{\sqrt{N-M}} \sum_{x \notin \{w_i\}} |x\rangle$$</p>
+<p><strong>目标态空间</strong>是 span$(|w\rangle)$,<strong>非目标态空间</strong>是 span$(|w^\perp\rangle)$。</p>
+<hr>
+<h2>10.3 Grover 算法的核心思想</h2>
+<p><strong>核心思想</strong>:<strong>振幅放大</strong>(amplitude amplification)。把 $|w\rangle$ 的振幅从 $1/\sqrt{N}$ 放大到接近 1,需要 $O(\sqrt{N})$ 步迭代。</p>
+<p><strong>每次 Grover 迭代 = 两个反射</strong>:</p>
+<ol>
+<li><strong>Oracle 反射</strong> $\hat{O}_w$:在 $|w\rangle$ 方向翻转(添加 $-1$ 相位)</li>
+<li><strong>平均反射</strong>(diffusion) $\hat{R}_s = 2|s\rangle\langle s| - \hat{I}$:在均匀叠加 $|s\rangle$ 方向翻转</li>
+</ol>
+<p><strong>两个反射的几何意义</strong>:</p>
+<ul>
+<li>在 span$(|w\rangle, |w^\perp\rangle)$ 这个 2D 子空间中,$\hat{O}_w$ 是<strong>关于 $|w^\perp\rangle$ 轴</strong>的反射</li>
+<li>$\hat{R}_s$ 是<strong>关于 $|s\rangle$ 轴</strong>的反射</li>
+<li>两个反射的乘积 = <strong>关于 $w$ 和 $s$ 之间夹角平分线的旋转</strong> = 旋转 $2\theta$</li>
+</ul>
+<p><strong>关键观察</strong>: $|s\rangle$ 在 2D 空间中的方向就是"平均方向"。每步 Grover 迭代把态向量<strong>向 $|w\rangle$ 方向旋转 $2\theta$</strong>。经过 $\pi/(4\theta)$ 步后,态向量<strong>接近</strong> $|w\rangle$,测量<strong>几乎必然</strong>得到目标。</p>
+<hr>
+<h2>10.4 Grover 迭代的数学</h2>
+<p><strong>定义均匀叠加态</strong>:</p>
+<p>$$|s\rangle = \hat{H}^{\otimes n} |0\rangle^{\otimes n} = \frac{1}{\sqrt{N}} \sum_{x=0}^{N-1} |x\rangle$$</p>
+<p><strong>将 $|s\rangle$ 分解为 $|w\rangle$ 和 $|w^\perp\rangle$</strong>:</p>
+<p>$$|s\rangle = \sqrt{\frac{M}{N}} |w\rangle + \sqrt{\frac{N-M}{N}} |w^\perp\rangle = \sin\theta |w\rangle + \cos\theta |w^\perp\rangle$$</p>
+<p>其中 $\sin\theta = \sqrt{M/N}$, $\theta \in [0, \pi/2]$。</p>
+<p><strong>两个反射算符</strong>:</p>
+<p>$$\hat{O}_w = \hat{I} - 2|w\rangle\langle w|, \quad \hat{R}_s = 2|s\rangle\langle s| - \hat{I}$$</p>
+<ul>
+<li>$\hat{O}_w$ <strong>保留</strong> $|w^\perp\rangle$ 不变,<strong>翻转</strong> $|w\rangle$(变为 $-|w\rangle$)</li>
+<li>$\hat{R}_s$ <strong>保留</strong> $|s\rangle$ 不变,<strong>翻转</strong> $|s^\perp\rangle$ 为 $-|s^\perp\rangle$(其中 $|s^\perp\rangle$ 是与 $|s\rangle$ 正交的方向)</li>
+</ul>
+<p><strong>Grover 迭代算符</strong>:</p>
+<p>$$\hat{G} = \hat{R}_s \cdot \hat{O}_w = (2|s\rangle\langle s| - \hat{I})(\hat{I} - 2|w\rangle\langle w|)$$</p>
+<p><strong>关键定理</strong>:<strong>在 span$(|w\rangle, |w^\perp\rangle)$ 这个 2D 子空间中,$\hat{G}$ 是角度为 $2\theta$ 的旋转</strong>。</p>
+<p><strong>证明思路</strong>:</p>
+<ol>
+<li>$\hat{O}_w$ 把 $|s\rangle = \sin\theta |w\rangle + \cos\theta |w^\perp\rangle$ 变为 $-\sin\theta |w\rangle + \cos\theta |w^\perp\rangle$ —— <strong>关于 $|w^\perp\rangle$ 轴的反射</strong></li>
+<li>$\hat{R}_s$ 把上述向量(关于 $|s\rangle$ 轴)反射 —— 新的向量是 $|s\rangle$ 关于原 $|s\rangle$ 的对称</li>
+<li><strong>两步合起来 = 关于 $|s\rangle$ 和 $|w\rangle$ 夹角平分线的旋转,角度为 $2\theta$</strong> —— <strong>绕 2D 子空间中垂直于 $|s\rangle$ 和 $|w\rangle$ 夹角平分线的轴的旋转</strong></li>
+</ol>
+<p><strong>几何图像</strong>: 在 2D 平面中,以 $|w^\perp\rangle$ 为水平轴, $|w\rangle$ 为垂直轴,$|s\rangle$ 在第一象限(角度 $\theta$)。$\hat{O}_w$ 关于水平轴反射, $\hat{R}_s$ 关于斜率为 $\theta$ 的轴反射,两步合起来 = 旋转 $2\theta$。</p>
+<hr>
+<h2>10.5 几何可视化</h2>
+<p><strong>2D 平面</strong>:</p>
+<ul>
+<li>水平轴: $|w^\perp\rangle$ 方向</li>
+<li>垂直轴: $|w\rangle$ 方向</li>
+<li>$|s\rangle$ 位置: 角度 $\theta$(从水平轴算起)</li>
+</ul>
+<p><strong>单步 Grover 迭代 = 旋转 $2\theta$</strong>:</p>
+<ul>
+<li>起始: $|s\rangle$ 在角度 $\theta$</li>
+<li>应用 $\hat{O}_w$: 角度变为 $-\theta$(关于水平轴反射)</li>
+<li>应用 $\hat{R}_s$: 角度变为 $3\theta$(关于 $\theta$ 角对称)</li>
+<li><strong>净效果</strong>: 角度从 $\theta$ 变为 $3\theta$ —— <strong>旋转了 $2\theta$</strong></li>
+</ul>
+<p><strong>$k$ 步 Grover 迭代后</strong>: 角度变为 $(2k+1)\theta$。态向量在 $(2k+1)\theta$ 方向,<strong>振幅</strong>为:</p>
+<ul>
+<li>$|w\rangle$ 方向: $\sin((2k+1)\theta)$</li>
+<li>$|w^\perp\rangle$ 方向: $\cos((2k+1)\theta)$</li>
+</ul>
+<p><strong>测量得到目标的概率</strong>: $\sin^2((2k+1)\theta)$。</p>
+<p><strong>最优迭代次数</strong>: 当 $(2k+1)\theta = \pi/2$,即 $k = \pi/(4\theta) - 1/2$。此时 $\sin^2 = 1$,<strong>测量必然</strong>得到目标。</p>
+<p><strong>近似最优</strong>: 取 $k = \lfloor \pi/(4\theta) \rfloor$,此时 $\sin^2((2k+1)\theta) \geq 1 - \epsilon$ 对小 $\epsilon$。</p>
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" style="max-width:600px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#10b981"/>
+      </marker>
+      <marker id="arrowhead-w" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#ef4444"/>
+      </marker>
+      <marker id="arrowhead-s" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#3b82f6"/>
+      </marker>
+    </defs>
+    <!-- 坐标轴 -->
+    <line x1="300" y1="350" x2="300" y2="50" stroke="#6b7280" stroke-width="1.5"/>
+    <line x1="50" y1="200" x2="550" y2="200" stroke="#6b7280" stroke-width="1.5"/>
+    <text x="305" y="55" fill="#6b7280" font-size="14">|w⟩</text>
+    <text x="555" y="205" fill="#6b7280" font-size="14">|w⊥⟩</text>
+    <!-- 原点 -->
+    <circle cx="300" cy="200" r="3" fill="#9ca3af"/>
+    <text x="280" y="220" fill="#9ca3af" font-size="11">O</text>
+    <!-- |s⟩ 向量 (蓝色,起始) -->
+    <line x1="300" y1="200" x2="438" y2="125" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrowhead-s)"/>
+    <text x="450" y="125" fill="#3b82f6" font-size="14" font-weight="bold">|s⟩</text>
+    <text x="450" y="140" fill="#3b82f6" font-size="11">θ (起始)</text>
+    <!-- θ 角弧线 -->
+    <path d="M 360 200 A 60 60 0 0 0 401 165" fill="none" stroke="#9ca3af" stroke-width="1" stroke-dasharray="3 2"/>
+    <text x="385" y="190" fill="#9ca3af" font-size="13" font-style="italic">θ</text>
+    <!-- 第一次迭代后 (绿色) -->
+    <line x1="300" y1="200" x2="513" y2="62" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrowhead)"/>
+    <text x="525" y="60" fill="#10b981" font-size="14" font-weight="bold">3θ</text>
+    <!-- 第二次迭代后 (绿色更深) -->
+    <line x1="300" y1="200" x2="450" y2="50" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.7"/>
+    <text x="455" y="48" fill="#10b981" font-size="12" font-style="italic">5θ</text>
+    <!-- 目标 |w⟩ (红色) -->
+    <line x1="300" y1="200" x2="300" y2="100" stroke="#ef4444" stroke-width="2" marker-end="url(#arrowhead-w)" stroke-dasharray="2 2"/>
+    <text x="270" y="92" fill="#ef4444" font-size="14" font-weight="bold">|w⟩</text>
+    <text x="262" y="106" fill="#ef4444" font-size="11">(目标)</text>
+    <!-- 旋转方向箭头 -->
+    <path d="M 410 130 A 130 130 0 0 1 430 110" fill="none" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="430" y="105" fill="#fbbf24" font-size="12" font-weight="bold">↺ 旋转 2θ</text>
+    <!-- 标题 -->
+    <text x="300" y="30" fill="#e5e7eb" font-size="16" font-weight="bold" text-anchor="middle">图 10.1: Grover 几何 — 2D 平面上的振幅旋转</text>
+    <text x="300" y="380" fill="#9ca3af" font-size="12" text-anchor="middle">每步 Grover 迭代:态向量逆时针旋转 2θ, |s⟩ → 接近 |w⟩</text>
+  </svg>
+  <figcaption>图 10.1: Grover 算法的几何可视化。在 span(|w⟩, |w⊥⟩) 二维子空间中,起始态 |s⟩ 位于第一象限(角度 θ)。每次 Grover 迭代 = 两次反射 = 旋转 2θ,经过 k 步后态向量在 (2k+1)θ 方向,接近目标 |w⟩。</figcaption>
+</figure>
+
+<hr>
+<h2>10.6 完整 Grover 电路</h2>
+<p><strong>Grover 电路的 3 部分</strong>:</p>
+<ol>
+<li><strong>初始化</strong>: $n$ 个 Hadamard 门,把 $|0\rangle^{\otimes n}$ 变成 $|s\rangle$</li>
+<li><strong>Grover 迭代</strong> $\hat{G}$(重复 $k$ 次):</li>
+</ol>
+<ul>
+<li><strong>Oracle</strong> $\hat{O}_w = \hat{I} - 2|w\rangle\langle w|$</li>
+<li><strong>Diffusion</strong> $\hat{R}_s = 2|s\rangle\langle s| - \hat{I}$</li>
+</ul>
+<ol>
+<li><strong>测量</strong>: 在计算基下测量</li>
+</ol>
+<p><strong>完整电路图</strong>(n=3 例子,$N = 8$,假设 $w = 5 = |101\rangle$):</p>
+<pre><code>q0: ──H───■───────────H───■───────────H───■───────────H──
+          │              │              │              │
+q1: ──H───X───Oracle────H───X───Diff───H───X───Oracle──H──
+                         │              │              │
+q2: ──H─────────────────H───X───Diff───H─────────────H──</code></pre>
+<p><strong>注</strong>: 实际电路中,Oracle 和 Diffusion 都展开为<strong>多 qubit 门</strong>:</p>
+<ul>
+<li>Oracle $\hat{O}_w$ 用<strong>条件相位门 + 多 X 门</strong>实现</li>
+<li>Diffusion $\hat{R}_s$ = $\hat{H}^{\otimes n} \cdot \hat{O}_0 \cdot \hat{H}^{\otimes n}$(其中 $\hat{O}_0 = \hat{I} - 2|0\rangle\langle 0|$ 是"0 标记" oracle)</li>
+</ul>
+<p><strong>门数估算</strong>:</p>
+<ul>
+<li>Oracle $\hat{O}_w$: $O(n)$ 个门(条件相位 + 标记 $w$ 的 X 门)</li>
+<li>Diffusion $\hat{R}_s$: $O(n)$ 个门(2 个 Hadamard 层 + 中心控制 Z)</li>
+<li>单步 $\hat{G}$: $O(n)$ 个门</li>
+<li>总 $k$ 步: $O(k \cdot n)$ 个门,$k = O(\sqrt{N}) = O(2^{n/2})$</li>
+<li><strong>总门数</strong>: $O(n \cdot 2^{n/2})$ —— <strong>仍然指数</strong>,但<strong>只有 $N^{1/2}$</strong></li>
+</ul>
+<p><strong>注意</strong>: Grover 电路的<strong>深度</strong>是 $O(\sqrt{N})$ 步,<strong>每步</strong>深度 $O(n)$。<strong>总深度</strong>: $O(n \cdot 2^{n/2})$。<strong>这比 Shor 的 $O(n^3)$ 深度大得多</strong>,但 Grover <strong>适用范围更广</strong>。</p>
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" style="max-width:700px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <defs>
+      <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#e5e7eb"/>
+      </marker>
+    </defs>
+    <!-- Title -->
+    <text x="350" y="28" fill="#e5e7eb" font-size="16" font-weight="bold" text-anchor="middle">图 10.2: 完整 Grover 电路 (n=3, N=8, w=|101⟩)</text>
+    <text x="350" y="48" fill="#9ca3af" font-size="11" text-anchor="middle">H 初始化 → Oracle × k → Diffusion × k → 测量</text>
+
+    <!-- Time line separators -->
+    <line x1="40" y1="60" x2="660" y2="60" stroke="#374151" stroke-width="1"/>
+    <text x="50" y="55" fill="#9ca3af" font-size="11">初始</text>
+    <text x="180" y="55" fill="#9ca3af" font-size="11">Oracle 1</text>
+    <text x="320" y="55" fill="#9ca3af" font-size="11">Diffusion 1</text>
+    <text x="460" y="55" fill="#9ca3af" font-size="11">Oracle 2</text>
+    <text x="600" y="55" fill="#9ca3af" font-size="11">Diffusion 2</text>
+
+    <!-- q0 wire -->
+    <line x1="40" y1="100" x2="660" y2="100" stroke="#e5e7eb" stroke-width="1.5"/>
+    <text x="15" y="105" fill="#3b82f6" font-size="13" font-weight="bold">q0</text>
+    <!-- H gate on q0 (init) -->
+    <rect x="55" y="80" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="70" y="105" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Oracle: control on q0 (filled dot) at x=160 -->
+    <circle cx="160" cy="100" r="6" fill="#ef4444"/>
+    <!-- Diffusion: control on q0 at x=300 -->
+    <circle cx="300" cy="100" r="6" fill="#10b981"/>
+    <!-- Oracle 2: control on q0 at x=440 -->
+    <circle cx="440" cy="100" r="6" fill="#ef4444"/>
+    <!-- Diffusion 2: control on q0 at x=580 -->
+    <circle cx="580" cy="100" r="6" fill="#10b981"/>
+
+    <!-- q1 wire -->
+    <line x1="40" y1="170" x2="660" y2="170" stroke="#e5e7eb" stroke-width="1.5"/>
+    <text x="15" y="175" fill="#3b82f6" font-size="13" font-weight="bold">q1</text>
+    <!-- H gate on q1 (init) -->
+    <rect x="55" y="150" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="70" y="175" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Vertical line from q0 to q1 (Oracle CNOT 1) -->
+    <line x1="160" y1="100" x2="160" y2="170" stroke="#ef4444" stroke-width="1.5"/>
+    <line x1="160" y1="170" x2="220" y2="170" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <text x="180" y="135" fill="#ef4444" font-size="11" font-weight="bold">Oracle</text>
+    <text x="180" y="148" fill="#ef4444" font-size="11">O_w</text>
+    <!-- H on q1 after Oracle 1 -->
+    <rect x="245" y="150" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="260" y="175" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Diffusion on q1: Hadamard at x=300 (dot) -->
+    <circle cx="300" cy="170" r="6" fill="#10b981"/>
+    <line x1="300" y1="170" x2="300" y2="240" stroke="#10b981" stroke-width="1.5"/>
+    <text x="315" y="200" fill="#10b981" font-size="11" font-weight="bold">Diff</text>
+    <text x="315" y="213" fill="#10b981" font-size="11">R_s</text>
+    <!-- H on q1 after Diff 1 -->
+    <rect x="385" y="150" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="400" y="175" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Oracle 2 on q1 -->
+    <line x1="440" y1="100" x2="440" y2="170" stroke="#ef4444" stroke-width="1.5"/>
+    <line x1="440" y1="170" x2="500" y2="170" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="2 2"/>
+    <text x="450" y="135" fill="#ef4444" font-size="11" font-weight="bold">Oracle</text>
+    <text x="450" y="148" fill="#ef4444" font-size="11">O_w</text>
+    <!-- H on q1 after Oracle 2 -->
+    <rect x="525" y="150" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="540" y="175" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Diff 2 on q1 -->
+    <circle cx="580" cy="170" r="6" fill="#10b981"/>
+    <line x1="580" y1="170" x2="580" y2="240" stroke="#10b981" stroke-width="1.5"/>
+    <text x="600" y="200" fill="#10b981" font-size="11" font-weight="bold">Diff</text>
+    <text x="600" y="213" fill="#10b981" font-size="11">R_s</text>
+
+    <!-- q2 wire -->
+    <line x1="40" y1="240" x2="660" y2="240" stroke="#e5e7eb" stroke-width="1.5"/>
+    <text x="15" y="245" fill="#3b82f6" font-size="13" font-weight="bold">q2</text>
+    <!-- H on q2 (init) -->
+    <rect x="55" y="220" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="70" y="245" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Diff 1 on q2 (X target) -->
+    <rect x="280" y="220" width="40" height="40" fill="#065f46" stroke="#10b981" stroke-width="1.5"/>
+    <text x="300" y="245" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">X</text>
+    <!-- H on q2 after Diff 1 -->
+    <rect x="385" y="220" width="30" height="40" fill="#1e40af" stroke="#60a5fa" stroke-width="1"/>
+    <text x="400" y="245" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">H</text>
+    <!-- Diff 2 on q2 -->
+    <rect x="560" y="220" width="40" height="40" fill="#065f46" stroke="#10b981" stroke-width="1.5"/>
+    <text x="580" y="245" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">X</text>
+
+    <!-- Measurement -->
+    <rect x="640" y="80" width="35" height="180" fill="#7c3aed" stroke="#a78bfa" stroke-width="1.5" rx="3"/>
+    <text x="657" y="165" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">M</text>
+    <text x="657" y="183" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">e</text>
+    <text x="657" y="201" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">a</text>
+    <text x="657" y="219" fill="#fff" font-size="14" font-weight="bold" text-anchor="middle">s</text>
+    <text x="657" y="255" fill="#a78bfa" font-size="11" text-anchor="middle">测量</text>
+
+    <!-- Legend -->
+    <rect x="50" y="290" width="20" height="20" fill="#1e40af" stroke="#60a5fa"/>
+    <text x="78" y="305" fill="#9ca3af" font-size="12">Hadamard 门</text>
+    <circle cx="200" cy="300" r="5" fill="#ef4444"/>
+    <text x="215" y="305" fill="#9ca3af" font-size="12">Oracle 控制</text>
+    <rect x="320" y="290" width="20" height="20" fill="#065f46" stroke="#10b981"/>
+    <text x="348" y="305" fill="#9ca3af" font-size="12">Diffusion 门</text>
+    <rect x="480" y="290" width="20" height="20" fill="#7c3aed" stroke="#a78bfa"/>
+    <text x="508" y="305" fill="#9ca3af" font-size="12">测量</text>
+    <text x="50" y="335" fill="#9ca3af" font-size="11" font-style="italic">注:Diffusion R_s = H⊗n · O_0 · H⊗n (中心控制 Z 门,这里简化为 X 符号)</text>
+    <text x="50" y="350" fill="#9ca3af" font-size="11" font-style="italic">完整 Grover = H⊗n + (Oracle · Diffusion)×k + 测量,总门数 O(n·2^(n/2))</text>
+  </svg>
+  <figcaption>图 10.2: n=3 qubit Grover 完整电路。初始化(3 个 H 门产生均匀叠加)|s⟩) → Grover 迭代 k = O(√N) 次,每次 = Oracle Ŝ_w(条件相位翻转)+ Diffusion R̂_s(均匀反射)→ 计算基测量。N=8 时 k≈2-3 次,得到目标 |w⟩ 概率接近 100%。</figcaption>
+</figure>
+
+<hr>
+<h2>10.7 迭代次数与加速比</h2>
+<p><strong>精确公式</strong>: 设 $M$ 是目标数,$N$ 是总数。最优迭代次数 $k_{\text{opt}}$ 满足:</p>
+<p>$$k_{\text{opt}} = \left\lfloor \frac{\pi}{4\theta} \right\rfloor, \quad \sin\theta = \sqrt{M/N}$$</p>
+<p><strong>典型情形</strong>(假设 $M \ll N$,所以 $\theta \approx \sqrt{M/N}$):</p>
+<p>$$k_{\text{opt}} \approx \frac{\pi}{4} \sqrt{\frac{N}{M}}$$</p>
+<p><strong>$M = 1$ 情形</strong>: $k_{\text{opt}} \approx \frac{\pi}{4} \sqrt{N} \approx 0.785 \sqrt{N}$。</p>
+<table class="concept-table">
+<thead><tr><th>$N$</th><th>经典查询次数</th><th>Grover 查询次数</th><th>加速比</th></tr></thead>
+<tbody><tr><td>100</td><td>100</td><td>8</td><td>12.5×</td></tr><tr><td>10,000</td><td>10,000</td><td>79</td><td>127×</td></tr><tr><td>1,000,000</td><td>1,000,000</td><td>785</td><td>1,273×</td></tr><tr><td>10^6</td><td>10^6</td><td>785</td><td>1,273×</td></tr><tr><td>10^9</td><td>10^9</td><td>24,803</td><td>40,310×</td></tr><tr><td>10^12</td><td>10^12</td><td>785,398</td><td>1,273,000×</td></tr></tbody>
+</table>
+<p><strong>加速比 $\sim \sqrt{N}$</strong> —— <strong>二次加速</strong>。</p>
+<p><strong>当 $M$ 未知时</strong>: 可以用 <strong>量子计数</strong>(quantum counting) 先估计 $M$,再选择 $k$。或者用 "<strong>随机 $k$</strong> + <strong>后验验证</strong>" 策略。</p>
+<hr>
+<h2>10.8 工作例子</h2>
+<h3>10.8.1 N=4, M=1,w=2(单一目标)</h3>
+<p><strong>设</strong>: $N = 4$ (2 qubit), $M = 1$ (目标 $|w\rangle = |10\rangle = |2\rangle$)。</p>
+<p><strong>起始</strong>: $$|s\rangle = \hat{H}^{\otimes 2}|00\rangle = \frac{1}{2}(|00\rangle + |01\rangle + |10\rangle + |11\rangle) = \frac{1}{\sqrt{4}}(|00\rangle + |01\rangle + |10\rangle + |11\rangle)$$</p>
+<p><strong>$\theta$</strong>: $\sin\theta = \sqrt{M/N} = \sqrt{1/4} = 1/2$, $\theta = \pi/6 = 30°$。</p>
+<p><strong>理论最优迭代次数</strong>: $k_{\text{opt}} = \pi/(4\theta) = \pi/(4 \cdot \pi/6) = 6/4 = 1.5 \to k = 1$。</p>
+<p><strong>单步 Grover 迭代</strong>:</p>
+<p><strong>Oracle $\hat{O}_w$</strong>: $|10\rangle \to -|10\rangle$,其他不变: $$\hat{O}_w |s\rangle = \frac{1}{2}(|00\rangle + |01\rangle - |10\rangle + |11\rangle)$$</p>
+<p><strong>Diffusion $\hat{R}_s$</strong>: 关于 $|s\rangle$ 反射。</p>
+<ul>
+<li>$\hat{R}_s = 2|s\rangle\langle s| - \hat{I}$</li>
+<li>$\hat{R}_s|s\rangle = |s\rangle$</li>
+<li>$\hat{R}_s|w^\perp\rangle = -|w^\perp\rangle$ 其中 $|w^\perp\rangle = \frac{1}{\sqrt{3}}(|00\rangle + |01\rangle + |11\rangle)$</li>
+</ul>
+<p>经过 $\hat{R}_s$: $$\hat{G}|s\rangle = \hat{R}_s \hat{O}_w|s\rangle = \frac{1}{2}(-|00\rangle - |01\rangle + 3|10\rangle - |11\rangle) \cdot \text{(归一化后)} \to \text{接近 } |10\rangle$$</p>
+<p><strong>测量</strong>: $P(|10\rangle) \approx \sin^2(3\theta) = \sin^2(90°) = 1$ ✓。</p>
+<p><strong>注</strong>: $N = 4$ 的特殊情形,单步 Grover 就能<strong>精确</strong>找到目标(因为 $\theta$ 是 $\pi$ 的有理分数倍)。</p>
+<h3>10.8.2 N=4, M=2,w=2,3(两个目标)</h3>
+<p><strong>设</strong>: $N = 4$, $M = 2$ (目标 $|w_1\rangle = |10\rangle, |w_2\rangle = |11\rangle$)。</p>
+<p><strong>$\theta$</strong>: $\sin\theta = \sqrt{M/N} = \sqrt{2/4} = 1/\sqrt{2}$, $\theta = \pi/4 = 45°$。</p>
+<p><strong>理论最优迭代次数</strong>: $k_{\text{opt}} = \pi/(4\theta) = \pi/(4 \cdot \pi/4) = 1$。</p>
+<p><strong>单步 Grover 迭代后</strong>: $$|\psi_1\rangle = \hat{G}|s\rangle = \sin(3\theta)|w\rangle + \cos(3\theta)|w^\perp\rangle = \sin(3\pi/4)|w\rangle + \cos(3\pi/4)|w^\perp\rangle$$ $$= \frac{1}{\sqrt{2}}|w\rangle - \frac{1}{\sqrt{2}}|w^\perp\rangle$$</p>
+<p><strong>测量</strong>: $P(\text{目标}) = \sin^2(3\pi/4) = 1/2$ —— <strong>50% 找到目标</strong>(剩 50% 找到非目标,但因为 $M = N/2$,区分意义不大)。</p>
+<hr>
+<h2>10.9 Grover 算法的最优性</h2>
+<p><strong>定理</strong>(Bennett-Bernstein-Brassard-Vazirani 1997, [BBBV97]):<strong>任何量子算法</strong>搜索 $N$ 项无序数据库(单一目标),<strong>至少</strong>需要 $\Omega(\sqrt{N})$ 次 oracle 查询。</p>
+<p><strong>证明思路</strong>(sketch):</p>
+<ul>
+<li>假设算法在 $T$ 次 oracle 查询后能以 $\geq 2/3$ 概率找到目标</li>
+<li>用 "<strong>多项式方法</strong>"(polynomial method):把查询复杂度转化为<strong>多项式近似</strong>问题</li>
+<li>证明:<strong>任何区分初始态和目标的算法,初态和目标态的振幅差异</strong> $\leq O(T/\sqrt{N})$</li>
+<li>当 $T = o(\sqrt{N})$ 时,差异 $\to 0$,所以<strong>无法</strong>区分</li>
+<li>因此 $T = \Omega(\sqrt{N})$</li>
+</ul>
+<p><strong>直观</strong>: <strong>振幅差</strong> $\sin((2T+1)\theta) - \sin(\theta) \approx 2T \cos(\theta) \theta$ 对小 $\theta$。<strong>要达到接近 1 的振幅</strong>,需要 $T \theta = O(1)$,即 $T = O(1/\theta) = O(\sqrt{N/M})$。</p>
+<p><strong>Grover 是最优的</strong> —— 没有量子算法能做到比 $\Omega(\sqrt{N})$ 更好。</p>
+<hr>
+<h2>10.10 Grover 算法的应用</h2>
+<h3>10.10.1 数据库搜索</h3>
+<p><strong>应用</strong>: 在 $N$ 项无序数据库中找目标。</p>
+<p><strong>优势</strong>: 经典 $O(N)$ vs Grover $O(\sqrt{N})$。</p>
+<p><strong>实际限制</strong>: 大多数数据库<strong>有结构</strong>(B 树、哈希等),经典搜索 $O(\log N)$ 比 Grover $O(\sqrt{N})$ <strong>更快</strong>。Grover 的优势在<strong>真正无结构</strong>的场景。</p>
+<h3>10.10.2 NP 问题的"加速"</h3>
+<p><strong>应用</strong>: SAT(Satisfiability)、图着色、哈密顿回路等 NP 问题。</p>
+<p><strong>关键</strong>: Grover 可以"猜测"一个 $N$ 位的证书(certificate),然后<strong>验证</strong>(经典验证 $O(1)$)。</p>
+<ul>
+<li><strong>经典</strong>: 遍历 $2^N$ 个证书, $O(2^N)$</li>
+<li><strong>Grover</strong>: $O(2^{N/2})$ —— <strong>二次加速</strong></li>
+</ul>
+<p><strong>注</strong>: Grover <strong>不能</strong>把 NP 变成 P(仍然是指数),但把 $2^N$ 缩到 $2^{N/2}$ —— <strong>降低一半指数</strong>。</p>
+<h3>10.10.3 密码学</h3>
+<p><strong>应用</strong>: 暴力破解对称加密、碰撞攻击等。</p>
+<ul>
+<li>AES-128 经典 $O(2^{128})$, Grover $O(2^{64})$ —— <strong>减半密钥有效长度</strong>!</li>
+<li>SHA-256 碰撞攻击经典 $O(2^{128})$, Grover $O(2^{85})$ —— <strong>削弱哈希安全性</strong></li>
+</ul>
+<p><strong>后果</strong>: NIST 在 2016 决定把<strong>后量子</strong>安全级别提高一倍(AES-128 → AES-256,SHA-256 → SHA-384)以抵御 Grover 加速。</p>
+<h3>10.10.4 振幅估计(Amplitude Estimation)</h3>
+<p><strong>应用</strong>: 蒙特卡洛估计的量子加速。</p>
+<ul>
+<li>经典蒙特卡洛: $O(1/\epsilon^2)$ 样本</li>
+<li>量子振幅估计: $O(1/\epsilon)$ 样本 —— <strong>二次加速</strong></li>
+</ul>
+<p><strong>应用场景</strong>: 金融衍生品定价、风险分析、贝叶斯推断等。</p>
+<h3>10.10.5 平均情况下的其他应用</h3>
+<ul>
+<li>元素区分(element distinctness) - Ambainis 2004</li>
+<li>三角形查找(triangle finding) - Magniez-Saney-Raz 2003</li>
+<li>矩阵乘积验证 - 多个工作</li>
+</ul>
+<hr>
+<h2>10.11 Grover 算法的局限性</h2>
+<p><strong>虽然 Grover 是"通用"搜索加速器,但有重要限制</strong>:</p>
+<h3>10.11.1 需要"Oracle 访问"</h3>
+<p><strong>限制</strong>: Grover 假设 $f$ 可以实现为量子 oracle $\hat{O}_w$。</p>
+<p><strong>实际</strong>: 现实问题中,$f$ 通常是<strong>已知的</strong>(比如"SAT 公式")。把经典 $f$ 转成量子 oracle 需要 $O(\text{poly}(n))$ 个门 —— <strong>这个代价可能抵消 Grover 的加速</strong>。</p>
+<h3>10.11.2 需要 $M \ll N$</h3>
+<p><strong>限制</strong>: 加速比 $\sqrt{N/M}$ 假设 $M$ 很小(通常 $M = 1$)。</p>
+<p><strong>如果 $M = N/2$</strong>: 加速比只有 $\sqrt{2} \approx 1.41$ —— <strong>几乎没有加速</strong>。</p>
+<p><strong>如果 $M = N$</strong>: 加速比 = 1(没加速)。</p>
+<h3>10.11.3 不适用于"有结构"数据</h3>
+<p><strong>限制</strong>: 经典算法对<strong>有结构</strong>数据(排序、哈希)能达到 $O(\log N)$ 或 $O(1)$,Grover 的 $\sqrt{N}$ 反而<strong>更慢</strong>。</p>
+<p><strong>例子</strong>: 在排序数组中查找,经典二分 $O(\log N)$ 比 Grover $O(\sqrt{N})$ 快。</p>
+<h3>10.11.4 实现挑战</h3>
+<p><strong>挑战</strong>:</p>
+<ul>
+<li>需要<strong>长量子电路</strong>($O(\sqrt{N})$ 步, $N = 2^{64}$ 时是 $2^{32}$ 步!)</li>
+<li><strong>NISQ 时代</strong>实现困难(需要大量容错)</li>
+<li>Oracle 的"具体化"通常需要大量辅助 qubit</li>
+</ul>
+<p><strong>估算</strong>: Grover 破解 AES-128 需要 $O(2^{64})$ 个门 —— <strong>远</strong>超 NISQ 能力,需要<strong>大规模容错量子计算</strong>。</p>
+<h3>10.11.5 测量后无法"重复利用"</h3>
+<p><strong>限制</strong>: Grover 测量后<strong>破坏</strong>量子态,<strong>无法重复</strong>用同一个算法查相同 oracle(必须重新初始化)。</p>
+<p><strong>实际</strong>: 经典算法可以<strong>多次</strong>查询, Grover 不行(除非重新初始化)。</p>
+<hr>
+<h2>10.12 总结与后续章节铺路</h2>
+<p><strong>本章核心</strong>:</p>
+<ul>
+<li>Grover 算法是<strong>无结构搜索</strong>的<strong>二次加速</strong>算法</li>
+<li>核心思想:<strong>振幅放大</strong> + <strong>两次反射</strong> = <strong>2D 平面上的旋转</strong></li>
+<li>最优迭代次数 $O(\sqrt{N/M})$</li>
+<li>Bennett-Bernstein-Brassard-Vazirani 1997 证明这是<strong>最优</strong></li>
+<li>应用:数据库搜索 / NP 问题 / 密码学 / 振幅估计</li>
+<li>限制:Oracle 访问 / $M \ll N$ / 无结构数据 / 实现困难</li>
+</ul>
+<h3>10.12.1 概念速查表</h3>
+<table class="concept-table">
+<thead><tr><th>概念</th><th>定义</th><th>关键点</th></tr></thead>
+<tbody><tr><td>**Oracle** $\hat{O}_w$</td><td>$\hat{O}_w\</td><td>x\rangle = (-1)^{f(x)}\</td><td>x\rangle$</td><td>条件相位翻转,酉算符</td></tr><tr><td>**均匀叠加** $\</td><td>s\rangle$</td><td>$\hat{H}^{\otimes n}\</td><td>0\rangle^{\otimes n}$</td><td>起始态</td></tr><tr><td>**Grover 迭代** $\hat{G}$</td><td>$\hat{R}_s \cdot \hat{O}_w$</td><td>两个反射的乘积 = 旋转 $2\theta$</td></tr><tr><td>**角度** $\theta$</td><td>$\sin\theta = \sqrt{M/N}$</td><td>$M$ = 目标数, $N$ = 总数</td></tr><tr><td>**最优迭代** $k_{\text{opt}}$</td><td>$\lfloor \pi/(4\theta) \rfloor$</td><td>接近 $0.785\sqrt{N/M}$</td></tr><tr><td>**振幅放大**</td><td>测量概率 $\sin^2((2k+1)\theta)$</td><td>周期性变化, 不要"过度"</td></tr><tr><td>**Diffusion** $\hat{R}_s$</td><td>$2\</td><td>s\rangle\langle s\</td><td>- \hat{I}$</td><td>关于 $\</td><td>s\rangle$ 反射</td></tr><tr><td>**二次加速**</td><td>$O(\sqrt{N})$ vs $O(N)$</td><td>来自 $k = \pi/(4\theta)$ 旋转</td></tr><tr><td>**BBBV 下界**</td><td>$\Omega(\sqrt{N})$</td><td>任何量子算法都不能更好</td></tr><tr><td>**应用**</td><td>数据库 / NP / 密码学</td><td>减半密钥有效长度</td></tr></tbody>
+</table>
+<h3>10.12.2 与其他加速的对比</h3>
+<table class="concept-table">
+<thead><tr><th>算法</th><th>加速</th><th>适用条件</th><th>与 Grover 对比</th></tr></thead>
+<tbody><tr><td>**Grover**</td><td>$\sqrt{N}$</td><td>无结构 + Oracle</td><td>—</td></tr><tr><td>**Shor / QFT**</td><td>$N$ (指数)</td><td>数论 / 代数结构</td><td>比 Grover 快得多</td></tr><tr><td>**量子模拟**</td><td>指数</td><td>量子系统</td><td>完全不同领域</td></tr><tr><td>**VQE / QAOA**</td><td>多项式 / 启发式</td><td>化学 / 优化</td><td>NISQ 时代实用</td></tr><tr><td>**HHL**</td><td>条件性指数</td><td>稀疏线性方程</td><td>假设严格,争议大</td></tr></tbody>
+</table>
+<h3>10.12.3 第二部分完结总结 🎉</h3>
+<p><strong>第二部分 5 章 100% 完成</strong>:</p>
+<table class="concept-table">
+<thead><tr><th>章</th><th>主题</th><th>核心</th><th>加速</th></tr></thead>
+<tbody><tr><td>ch06</td><td>量子比特</td><td>qubit + Bloch 球</td><td>—</td></tr><tr><td>ch07</td><td>量子门</td><td>$\hat{H}, \hat{T}, \text{CNOT}$</td><td>—</td></tr><tr><td>ch08</td><td>量子电路</td><td>张量积 + 通用集</td><td>—</td></tr><tr><td>ch09</td><td>QFT</td><td>指数加速</td><td>指数</td></tr><tr><td>**ch10**</td><td>**Grover**</td><td>**振幅放大**</td><td>**二次**</td></tr></tbody>
+</table>
+<p><strong>读者已掌握的工具箱</strong>:</p>
+<ul>
+<li><strong>基础对象</strong>: qubit(2D Hilbert 空间) + n-qubit 张量积($2^n$ 维)</li>
+<li><strong>基础门</strong>: Pauli, Hadamard, T, CNOT, Toffoli, SWAP, R_k</li>
+<li><strong>基础电路</strong>: 张量积 + 矩阵乘法 + 等价变换 + KAK/QSD 分解</li>
+<li><strong>基础算法</strong>: QFT(指数) + Grover(二次)</li>
+<li><strong>物理基础</strong>: 5 大量子硬件平台 + NISQ 时代限制</li>
+</ul>
+<h3>10.12.4 第三部分铺路(量子算法与复杂性)</h3>
+<p><strong>第二部分给了"工具",第三部分给"应用"</strong>:</p>
+<table class="concept-table">
+<thead><tr><th>章</th><th>算法</th><th>加速</th><th>类别</th></tr></thead>
+<tbody><tr><td>**ch11**</td><td>**Shor 因式分解**</td><td>指数</td><td>数论问题</td></tr><tr><td>**ch12**</td><td>**量子相位估计 QPE**</td><td>指数</td><td>算法基础</td></tr><tr><td>**ch13**</td><td>**VQE / QAOA**</td><td>多项式</td><td>NISQ 时代</td></tr><tr><td>**ch14**</td><td>**量子机器学习**</td><td>条件性</td><td>启发式</td></tr><tr><td>**ch15**</td><td>**量子复杂性**</td><td>—</td><td>理论</td></tr></tbody>
+</table>
+<p><strong>QFT / Grover 跟这些章节的关系</strong>:</p>
+<ul>
+<li><strong>ch11 Shor</strong>: 用 QFT 找周期(9.10 铺垫)</li>
+<li><strong>ch12 QPE</strong>: QFT 的核心应用(9.9 详细数学)</li>
+<li><strong>ch13 VQE/QAOA</strong>: Grover 的变体 + 量子-经典混合</li>
+<li><strong>ch14 QML</strong>: HHL(9.V 简述)+ Grover 振幅估计</li>
+<li><strong>ch15 复杂性</strong>: Grover 下界 + 复杂性类 BQP</li>
+</ul>
+<h3>10.12.5 推荐阅读</h3>
+<ul>
+<li><strong>Grover 原始论文</strong> [G96]: L. K. Grover, <em>"A fast quantum mechanical algorithm for database search"</em>, STOC 1996</li>
+<li><strong>Grover 算法完整教程</strong> [NC10] Ch 6: Nielsen & Chuang《Quantum Computation and Quantum Information》10 周年版</li>
+<li><strong>振幅放大</strong> [BHMT02]: Brassard, Høyer, Mosca, Tapp, <em>"Quantum amplitude amplification and estimation"</em>, 2002</li>
+<li><strong>BBBV 下界</strong> [BBBV97]: Bennett, Bernstein, Brassard, Vazirani, <em>"Strengths and weaknesses of quantum computing"</em>, SIAM J. Comput. 1997</li>
+<li><strong>NIST 后量子标准</strong> [NIST-PQC]: NIST Post-Quantum Cryptography Standardization (2016-2024)</li>
+<li><strong>元素区分</strong> [A04]: Ambainis, <em>"Quantum walk algorithm for element distinctness"</em>, FOCS 2004</li>
+<li><strong>振幅估计应用</strong> [Mon16]: Montanaro, <em>"Quantum speedups in Monte Carlo estimation"</em>, 2016</li>
+</ul>
+<h3>10.12.6 思考题</h3>
+<ol>
+<li><strong>N=8, M=1</strong>: 计算 Grover 最优迭代次数,验证 $k_{\text{opt}} = 2$。</li>
+<li><strong>振幅放大 vs 振幅抑制</strong>: 如果 $\theta > \pi/4$(即 $M > N/2$),会发生什么? 提示:旋转方向可能<strong>反向</strong>。</li>
+<li><strong>Grover + Shor</strong>: 用 Grover 找周期(替代 Shor 中的 QFT)会怎样? 加速比是 $\sqrt{N}$ 还是指数? 提示:经典找周期是 $O(N)$,QFT 是 $O(1)$,Grover 是 $O(\sqrt{N})$ —— <strong>QFT 已经最优,Grover 反而慢</strong>。</li>
+<li><strong>多目标情形</strong>: 如果 $M = N/4$,Grover 加速比是多少? 跟 $M=1$ 比,为什么更慢?</li>
+<li><strong>测量失败</strong>: Grover 测量得到非目标的概率是多少? 如果发生,你能做什么?</li>
+</ol>
+<h3>10.12.7 三个核心问题回顾</h3>
+<ol>
+<li><strong>怎么用</strong> Grover? (10.6 电路 + 10.7 迭代 + 10.10 应用)</li>
+<li><strong>怎么描述</strong> Grover 的核心思想? (10.3 振幅放大 + 10.5 几何)</li>
+<li><strong>需要多少</strong>资源? (10.7 迭代次数 + 10.11 限制)</li>
+</ol>
+<h3>10.12.8 全景图:第二部分 5 章概念地图</h3>
+<pre><code>[ch06 qubit]               [ch07 门]                 [ch08 电路]
+    |                          |                          |
+    v                          v                          v
+[2^n Hilbert 空间]   [Pauli / H / T / CNOT]    [张量网络 + KAK + QSD]
+    |                          |                          |
+    +--------------------------+--------------------------+
+                               |
+                               v
+                    [ch09 QFT]              [ch10 Grover]
+                    指数加速                 二次加速
+                    (Shor 核心)              (通用搜索)
+                               |
+                               v
+                    量子算法"工具箱"完整
+                               |
+                               v
+              ch11 Shor / ch12 QPE / ch13 VQE / ch14 QML / ch15 复杂性</code></pre>
+<h3>10.12.9 第二部分 → 第三部分过渡</h3>
+<p><strong>第二部分</strong>:给了<strong>基础工具</strong>(qubit, 门, 电路, QFT, Grover) <strong>第三部分</strong>:用这些工具<strong>解决具体问题</strong>(Shor, QPE, VQE, QML)</p>
+<p><strong>第二部分</strong>问:"<strong>怎么建造一台量子计算机并实现基本算法?</strong>" <strong>第三部分</strong>问:"<strong>用量子计算机能解决哪些问题?比经典快多少?</strong>"</p>
+<p><strong>第 11 章 Shor</strong>:用 QFT 解决"分解大整数"问题 —— <strong>指数加速 + 量子计算机的"杀手级应用"</strong>。</p>
+<hr>
+<h2>10.X 附录:Grover 算法的物理解释</h2>
+<h3>10.X.1 为什么"反射"等价于"概率幅翻转"?</h3>
+<p><strong>关键观察</strong>: 在量子力学中,<strong>条件相位翻转</strong> $\hat{O}_w$ 实际上等价于<strong>概率幅翻转</strong>。</p>
+<p><strong>解释</strong>:</p>
+<ul>
+<li>$|x\rangle$ 的概率幅 $\alpha_x$,概率 $|\alpha_x|^2$</li>
+<li>应用 $\hat{O}_w$ 后,目标 $|w\rangle$ 的概率幅从 $\alpha_w$ 变为 $-\alpha_w$</li>
+<li>概率 $|\alpha_w|^2$ <strong>不变</strong> —— 单次 oracle 不改变概率分布</li>
+<li>但<strong>振幅</strong>被翻转了,影响后续<strong>干涉</strong></li>
+</ul>
+<p><strong>直观</strong>: 想象一个池塘,水波从中心向四周传播。Oracle 在 $|w\rangle$ 位置引入"反相波",导致<strong>干涉相消</strong>或<strong>相长</strong>。<strong>Diffusion</strong> 让非目标态<strong>相消相长</strong>反相,目标态<strong>相长相消</strong>反相 —— 净效果是<strong>目标态被放大</strong>。</p>
+<h3>10.X.2 Grover 跟经典"分治"的对比</h3>
+<p><strong>经典分治</strong>:</p>
+<ul>
+<li>每次把问题"分两半",递归</li>
+<li>时间 $O(N \log N)$(快速排序、FFT 等)</li>
+</ul>
+<p><strong>Grover 振幅放大</strong>:</p>
+<ul>
+<li>每次"放大目标态振幅",<strong>不减小搜索空间</strong></li>
+<li>时间 $O(\sqrt{N})$</li>
+<li><strong>经典分治对"有序数据"有效,Grover 对"无序数据"有效</strong> —— 不冲突</li>
+</ul>
+<h3>10.X.3 跟"遗传算法"的类比</h3>
+<p><strong>遗传算法</strong>(GA):</p>
+<ul>
+<li>维护"种群"(多个候选解)</li>
+<li>选择 + 交叉 + 变异,迭代</li>
+<li>期望时间复杂 ~ 经验公式</li>
+</ul>
+<p><strong>Grover</strong>:</p>
+<ul>
+<li>维护"概率幅分布"(连续类比"种群")</li>
+<li>反射 + 反射,迭代</li>
+<li><strong>严格的 $O(\sqrt{N})$</strong> 收敛保证</li>
+</ul>
+<p><strong>关键区别</strong>: GA 是<strong>启发式</strong>,无严格保证;<strong>Grover 是严格算法</strong>,有最优性证明。</p>
+<h3>10.X.4 Grover 算法的"实现关键"</h3>
+<p><strong>实现 Grover 需要解决</strong>:</p>
+<ol>
+<li><strong>Oracle 具体化</strong>: 把经典 $f(x)$ 转成量子电路 $O(n)$ 门</li>
+<li><strong>Diffusion 分解</strong>: $\hat{R}_s = \hat{H}^{\otimes n} \cdot \hat{O}_0 \cdot \hat{H}^{\otimes n}$, 需要 2 个 Hadamard 层 + 一个 $C^n Z$ 门</li>
+<li><strong>迭代控制</strong>: 精确重复 $k = \pi/(4\theta)$ 步(误差 $\leq 1$)</li>
+<li><strong>测量</strong>: 计算基测量,得到 $n$ 比特结果</li>
+</ol>
+<p><strong>挑战</strong>:</p>
+<ul>
+<li>$k$ 步需要<strong>长电路深度</strong></li>
+<li>每个门有<strong>错误率</strong> ~ $10^{-3}$(NISQ)或 $10^{-6}$(容错)</li>
+<li><strong>累积错误</strong> = $k \cdot n \cdot \epsilon$ 必须 $\ll 1$</li>
+<li>当 $N = 2^{64}$ 时, $k = 2^{32}$, 累积错误<strong>巨大</strong> —— 需要<strong>大规模容错</strong></li>
+</ul>
+<hr>
+<h2>10.Y 补充:Grover 算法的"完整推导"</h2>
+<h3>10.Y.1 振幅递推公式</h3>
+<p>设第 $k$ 步 Grover 迭代后,态向量为 $|\psi_k\rangle = a_k |w\rangle + b_k |w^\perp\rangle$。</p>
+<p><strong>起始</strong>: $|\psi_0\rangle = |s\rangle = \sin\theta |w\rangle + \cos\theta |w^\perp\rangle$,即 $a_0 = \sin\theta$, $b_0 = \cos\theta$。</p>
+<p><strong>单步 $\hat{G} = \hat{R}_s \hat{O}_w$ 作用</strong>:</p>
+<ul>
+<li>$\hat{O}_w|\psi_k\rangle = -a_k |w\rangle + b_k |w^\perp\rangle$(翻转 $a_k$)</li>
+<li>$\hat{R}_s$ 关于 $|s\rangle$ 反射:$|\phi\rangle \to 2|s\rangle\langle s|\phi\rangle - |\phi\rangle$</li>
+</ul>
+<p><strong>直接计算</strong> (在 $\{|w\rangle, |w^\perp\rangle\}$ 基底中): $$|\psi_{k+1}\rangle = \hat{R}_s \hat{O}_w |\psi_k\rangle = \begin{pmatrix} \cos 2\theta & \sin 2\theta \\ \sin 2\theta & -\cos 2\theta \end{pmatrix} \begin{pmatrix} a_k \\ b_k \end{pmatrix}$$</p>
+<p><strong>这是一个旋转矩阵</strong>! 验证: 矩阵 $\begin{pmatrix} \cos\alpha & \sin\alpha \\ \sin\alpha & -\cos\alpha \end{pmatrix}$ 在 $\{|w\rangle, |w^\perp\rangle\}$ 基底中,等价于 $2\theta$ 旋转。</p>
+<p><strong>递推解</strong>: $$\begin{pmatrix} a_k \\ b_k \end{pmatrix} = \begin{pmatrix} \cos 2\theta & \sin 2\theta \\ \sin 2\theta & -\cos 2\theta \end{pmatrix}^k \begin{pmatrix} \sin\theta \\ \cos\theta \end{pmatrix} = \begin{pmatrix} \sin((2k+1)\theta) \\ \cos((2k+1)\theta) \end{pmatrix}$$</p>
+<p><strong>测量得到目标的概率</strong>: $$P_k = a_k^2 = \sin^2((2k+1)\theta)$$</p>
+<p><strong>最优 $k$</strong>: 当 $(2k+1)\theta = \pi/2$,即 $k = \pi/(4\theta) - 1/2$。此时 $P_k = 1$。</p>
+<h3>10.Y.2 旋转矩阵的"几何证明"</h3>
+<p><strong>为什么 $\hat{R}_s \hat{O}_w$ 是旋转 $2\theta$?</strong></p>
+<p>设 2D 平面以 $\{|w^\perp\rangle, |w\rangle\}$ 为基。</p>
+<ul>
+<li>$\hat{O}_w$ 关于 $|w^\perp\rangle$ 轴反射(翻转 $|w\rangle$ 方向)</li>
+<li>$\hat{R}_s$ 关于 $|s\rangle = \sin\theta |w\rangle + \cos\theta |w^\perp\rangle$ 反射</li>
+</ul>
+<p><strong>两反射合成 = 旋转,角度 = 两反射轴夹角的两倍</strong>。</p>
+<p>两反射轴的夹角 = $\theta$ ($|w^\perp\rangle$ 到 $|s\rangle$)。</p>
+<p>所以 $\hat{R}_s \hat{O}_w$ = 旋转 $2\theta$。✓</p>
+<h3>10.Y.3 BBBV 下界的"多项式方法"</h3>
+<p><strong>问题</strong>: 证明任何 $T$ 次 oracle 查询算法对 $N$ 项无序搜索,成功概率 $\leq O(T^2/N)$。</p>
+<p><strong>证明</strong>(sketch):</p>
+<ul>
+<li>算法对每个 $x$ 询问 oracle $T$ 次。定义查询算符 $\hat{O}_x$(对 $x$ 标记)。</li>
+<li>算法对未知 $x$ 成功 = 测量结果 = $x$。</li>
+<li><strong>多项式方法</strong>: 算法的成功概率可以表示为一个<strong>关于 $N$ 的多项式</strong> $p(T, N)$,其中 $T$ 是查询次数。</li>
+<li>关键定理:<strong>任何查询 $T$ 次的算法,成功概率的多项式 $p(T, N)$ 的次数 = $2T$</strong>(每次 oracle 是"线性",组合后是"$2T$ 次多项式")。</li>
+<li>已知 $p(0, N) = 1/N$(零查询 = 随机猜测),$p(N, N) = 1$(遍历 = 必然成功)。</li>
+<li>拉格朗日插值: $p(T, N)$ 必须在 $T = O(\sqrt{N})$ 时达到 $p = 1$。</li>
+<li>因此 $T = \Omega(\sqrt{N})$。 ✓</li>
+</ul>
+<p><strong>直观</strong>: <strong>零查询 = 完全无知</strong>, <strong>$N$ 查询 = 完全确定</strong>。中间值的"信息增长"受<strong>多项式次数</strong>限制,不可能比 $\sqrt{N}$ 快。</p>
+<hr>
+<h2>10.Z 补充:振幅放大框架</h2>
+<p><strong>Grover 是更一般的"振幅放大"(Amplitude Amplification) 框架的特例</strong> [BHMT02]。</p>
+<p><strong>振幅放大框架</strong>:</p>
+<ul>
+<li>给定 oracle $\hat{O}_w$ 和<strong>任意</strong>起始态 $|\psi\rangle = a|w\rangle + b|w^\perp\rangle$</li>
+<li>通用振幅放大算符: $\hat{Q} = \hat{A}\hat{S}_0\hat{A}^{-1}\hat{O}_w$</li>
+<li>$\hat{A}$: 任意"状态准备"算符</li>
+<li>$\hat{S}_0 = \hat{I} - 2|0\rangle\langle 0|$: 关于 $|0\rangle$ 反射</li>
+<li>$\hat{O}_w$: oracle</li>
+<li>重复 $\hat{Q}$ 多次,把 $a$ 放大到接近 1</li>
+</ul>
+<p><strong>Grover 情形</strong>:</p>
+<ul>
+<li>$\hat{A} = \hat{H}^{\otimes n}$(Hadamard 层)</li>
+<li>$|0\rangle = |0\rangle^{\otimes n}$</li>
+<li>简化后: $\hat{Q} = \hat{H}^{\otimes n} \hat{S}_0 \hat{H}^{\otimes n} \hat{O}_w = \hat{R}_s \hat{O}_w$ ✓</li>
+</ul>
+<p><strong>应用</strong>: 振幅放大框架<strong>推广</strong>到更复杂的场景,包括:</p>
+<ul>
+<li><strong>振幅估计</strong>(quantum amplitude estimation)</li>
+<li><strong>量子蒙特卡洛</strong>(quantum Monte Carlo)</li>
+<li><strong>Gibbs 采样</strong>(Gibbs sampling)</li>
+<li><strong>量子奇异值变换</strong>(QSVT)</li>
+</ul>
+<p><strong>BHMT 论文</strong>(2002)给出<strong>通用</strong>的振幅放大 + 振幅估计, 是后续<strong>量子机器学习</strong>(ch14) 和<strong>量子优化</strong>(ch13) 的理论基础。</p>
+<hr>
+<h2>10.W 补充:Grover 跟"无结构搜索"哲学</h2>
+<p><strong>"无结构搜索"在算法理论中的地位</strong>:</p>
+<p><strong>最坏情况 vs 平均情况</strong>:</p>
+<ul>
+<li><strong>最坏情况</strong>:目标在最坏位置 → $\Omega(N)$ 经典</li>
+<li><strong>平均情况</strong>:目标在平均位置 → $N/2$ 经典</li>
+<li>Grover 两者都 $\Omega(\sqrt{N})$(加速比都 $\sqrt{N}$)</li>
+</ul>
+<p><strong>有序 vs 无序</strong>:</p>
+<ul>
+<li><strong>有序数据</strong>:经典二分 $O(\log N)$,<strong>比 Grover 更快</strong>!</li>
+<li><strong>无序数据</strong>:经典 $O(N)$,Grover $O(\sqrt{N})$,<strong>加速有效</strong></li>
+</ul>
+<p><strong>结论</strong>: <strong>Grover 加速</strong>只在"<strong>无结构数据</strong>"下有效。<strong>结构化数据</strong>(排序、索引)用经典算法更快。</p>
+<p><strong>为什么 Grover 不应用于"数据库搜索"?</strong></p>
+<ul>
+<li>现实数据库大多有索引(B 树、哈希),经典查询 $O(\log N)$ 更快</li>
+<li>Grover 的优势在"<strong>真正无结构</strong>"的场景:密码学暴力破解、NP 问题证书搜索等</li>
+<li>这也是为什么<strong>"Grover 不破 RSA"</strong>(但能减半 AES 有效密钥)</li>
+</ul>
+<hr>
+<h2>10.V 补充:Grover 跟其他量子算法的"层次"</h2>
+<pre><code>[ch06-08 基础]  →  [ch09-10 量子算法]  →  [ch11-15 量子算法应用]
+qubit, 门, 电路     QFT, Grover            Shor, QPE, VQE, QML, 复杂性
+                   ↓                       ↓
+                   "量子算法工具箱"        "具体应用"
+                   ↓                       ↓
+                   ch11 Shor 用 QFT 找周期
+                   ch12 QPE 是 QFT 的应用
+                   ch13 VQE 用 Grover 思想(振幅放大)
+                   ch14 QML 用振幅估计(Grover 推广)</code></pre>
+<p><strong>QFT 跟 Grover 的"互补"</strong>:</p>
+<ul>
+<li><strong>QFT</strong>:<strong>指数</strong>加速,<strong>需要代数结构</strong>(周期性、对称性)</li>
+<li><strong>Grover</strong>:<strong>二次</strong>加速,<strong>只需 oracle 访问</strong>(更通用)</li>
+<li>两者<strong>不可替代</strong>,互相补充</li>
+</ul>
+<p><strong>实际应用</strong>:</p>
+<ul>
+<li>Shor 算法 = QFT + 模幂 + GCD</li>
+<li>Grover 算法 = Oracle + Diffusion</li>
+<li>VQE / QAOA = 量子-经典混合 + Grover 思想</li>
+<li>量子机器学习 = HHL(QFT) + 振幅估计(Grover 推广)</li>
+</ul>
+<hr>
+<h2>10.U 补充:Grover 算法的实验进展</h2>
+<h3>10.U.1 超导量子比特</h3>
+<p><strong>IBM 2017</strong> [IBM-Q17]: 在 5 qubit 设备上实现 4 qubit Grover 搜索。</p>
+<ul>
+<li><strong>结果</strong>: 找到目标概率 ~70%(理论最优 100%,因噪声损失)</li>
+<li><strong>意义</strong>: 第一次"小规模"Grover 演示</li>
+</ul>
+<p><strong>Google 2019</strong> [G-Sycamore]: 在 53 qubit Sycamore 上做"随机电路采样",Grover 作为子程序之一。</p>
+<h3>10.U.2 离子阱</h3>
+<p><strong>IonQ 2020</strong> [IonQ-G]: 在 11 qubit 离子阱设备上实现 Grover 搜索。</p>
+<ul>
+<li><strong>结果</strong>: 4 qubit 搜索,~95% 找到目标</li>
+<li><strong>意义</strong>: 离子阱高保真度使 Grover 演示更接近理论最优</li>
+</ul>
+<p><strong>Quantinuum H1-1 2021</strong>: 12 qubit 离子阱,Grover 找到目标概率 >90%。</p>
+<h3>10.U.3 光量子</h3>
+<p><strong>Xanadu 2022</strong> [X-G]: 在光量子处理器上实现 4 qubit Grover,展示了"连续变量 Grover"。</p>
+<p><strong>PsiQuantum 2023</strong> (预告): 融合光量子的高速时钟 + 容错架构,目标实现大规模 Grover 搜索。</p>
+<h3>10.U.4 中性原子</h3>
+<p><strong>QuEra 2023</strong> [Q-G]: 在中性原子设备上实现 3 qubit Grover,展示了"原子重排"对 Grover 性能的影响。</p>
+<h3>10.U.5 容错实现</h3>
+<p><strong>容错 Grover 估算</strong>:</p>
+<ul>
+<li>破解 AES-128 需要 $O(2^{64})$ 个 T 门(假设 T 门错误率 $10^{-6}$)</li>
+<li>总门数 ~$2^{64} / 10^{-3} = 2^{64} \cdot 10^3$ 个物理门(用表面码)</li>
+<li><strong>物理 qubit 数</strong> ~$2^{64} \cdot 10^3 / 1000 \approx 10^{16}$ —— <strong>远</strong>超当前能力</li>
+<li><strong>预期时间</strong>:10-20 年(乐观估计)</li>
+</ul>
+<p><strong>结论</strong>: <strong>Grover 算法在"小规模 + 高保真度"硬件上已能演示</strong>,<strong>大规模应用需要容错量子计算</strong>。</p>
+<hr>
+<h2>10.T 补充:Grover 算法的变体</h2>
+<h3>10.T.1 部分 Grover(Partial Grover)</h3>
+<p><strong>场景</strong>: 只需要把目标振幅<strong>部分</strong>放大(不一定要 1)。</p>
+<p><strong>做法</strong>: 跑 $k < k_{\text{opt}}$ 步,然后测量。</p>
+<ul>
+<li>测量概率 $\sin^2((2k+1)\theta)$</li>
+<li><strong>多样性</strong>(diversity) 增强</li>
+</ul>
+<p><strong>应用</strong>: <strong>量子游走</strong>(quantum walk)、<strong>量子机器学习</strong>中的"采样"。</p>
+<h3>10.T.2 计数(Quantum Counting)</h3>
+<p><strong>问题</strong>: 未知 $M$ 的情况下,先估计 $M$,再选 Grover 迭代次数。</p>
+<p><strong>做法</strong>: <strong>量子相位估计</strong> (QPE) 应用于 Grover 算符 $\hat{G}$。</p>
+<ul>
+<li>$\hat{G}$ 的本征值: $e^{\pm 2i\theta}$(因为是 $2\theta$ 旋转)</li>
+<li>$\hat{G}^r |w\rangle = e^{2ir\theta}|w\rangle$(本征值相关于 $\theta$)</li>
+<li>QPE 估计 $\theta$ → 估计 $M = N \sin^2\theta$</li>
+</ul>
+<p><strong>复杂度</strong>: $O(\sqrt{N})$ 步 Grover 迭代 + $O(n)$ QPE。</p>
+<p><strong>应用</strong>: 已知 $N$ 未知 $M$ 的"半盲"搜索。</p>
+<h3>10.T.3 近似计数(Approximate Counting)</h3>
+<p><strong>简化</strong>: 不需要精确 $M$,只需要"$\sqrt{M}$ 量级"的估计。</p>
+<p><strong>做法</strong>: 跑 $O(\sqrt{N}/\sqrt{M})$ 步 Grover,根据<strong>测量成功率</strong>反推 $M$。</p>
+<p><strong>优势</strong>: 比 QPE 简单,适合 NISQ。</p>
+<h3>10.T.4 振幅估计(Amplitude Estimation)</h3>
+<p><strong>问题</strong>: 估计概率 $p = |\alpha_w|^2$。</p>
+<p><strong>经典</strong>: 蒙特卡洛 $O(1/p)$ 样本(对 $p$ 小)或 $O(1/\epsilon^2)$(对精度 $\epsilon$) <strong>量子</strong>: 振幅估计 $O(1/\epsilon)$ 样本 —— <strong>二次加速</strong></p>
+<p><strong>做法</strong>: 跟 Grover 类似,但<strong>控制迭代次数</strong>做 QPE,直接估计 $\sin\theta = \sqrt{p}$。</p>
+<p><strong>应用</strong>: 金融蒙特卡洛、风险分析。</p>
+<h3>10.T.5 多目标 + 多阶段</h3>
+<p><strong>场景</strong>: $M$ 大,需要多次 Grover。</p>
+<p><strong>做法</strong>: 找到 1 个目标 → 移除 → 再找下一个 → ...</p>
+<ul>
+<li><strong>复杂度</strong>: $M \cdot O(\sqrt{N/M}) = O(\sqrt{MN})$</li>
+<li><strong>比直接遍历 $O(N)$ 加速 $\sqrt{N/M}$</strong></li>
+</ul>
+<p><strong>应用</strong>: SAT 求解(每个解单独找)。</p>
+<h3>10.T.6 自适应 Grover(Adaptive Grover)</h3>
+<p><strong>场景</strong>: $M$ 未知,且不能先做 QPE 估计。</p>
+<p><strong>做法</strong>: <strong>逐步增加迭代次数</strong>,每次测量后用<strong>经典后验</strong>调整下一步。</p>
+<ul>
+<li><strong>例</strong>: 跑 $k=1$ 步,看测量结果 → 贝叶斯更新 → 跑 $k=2$ 步 → ...</li>
+<li><strong>理论</strong>: 总步数 = $O(\sqrt{N/M})$(跟上界一致)</li>
+</ul>
+<p><strong>应用</strong>: NISQ 时代,不能依赖 QPE 的场景。</p>
+<h3>10.T.7 混合 Grover + Shor</h3>
+<p><strong>问题</strong>: Shor 算法中"找周期" 能不能用 Grover 替代 QFT?</p>
+<p><strong>回答</strong>:<strong>不能直接替代</strong>。</p>
+<ul>
+<li>经典找周期: $O(N)$</li>
+<li>QFT 找周期: $O(1)$(指数加速)</li>
+<li>Grover 找周期: $O(\sqrt{N})$(二次加速)</li>
+<li><strong>QFT 已经是最优,Grover 反而慢</strong></li>
+</ul>
+<p><strong>但</strong>: Grover 可以<strong>加速</strong> Shor 内部的"验证"步骤(经典 GCD 已经是 $O(n^2)$,GCD 本身不能加速)。</p>
+<hr>
+<h2>10.S 补充:Grover 的"哲学启示"</h2>
+<h3>10.S.1 "无结构" 跟 "有结构" 的二元论</h3>
+<p><strong>经典计算理论</strong>:</p>
+<ul>
+<li><strong>P 类</strong>:多项式时间可解(高效)</li>
+<li><strong>NP 类</strong>:多项式时间可验证(可能难)</li>
+<li>经典猜想: P ≠ NP</li>
+</ul>
+<p><strong>量子计算</strong>:</p>
+<ul>
+<li><strong>BQP 类</strong>:量子多项式时间(可能比 P 大)</li>
+<li>Grover:把 NP-complete 问题的<strong>暴力搜索</strong>从 $2^N$ 降到 $2^{N/2}$ —— <strong>降低一半指数</strong>,但<strong>不能</strong>变 P</li>
+<li>Shor:把 NP 之外的<strong>某些数论问题</strong>变 P</li>
+</ul>
+<p><strong>哲学</strong>: <strong>结构化问题</strong>(数论、群论)用<strong>代数量子算法</strong>指数加速;<strong>非结构化问题</strong>(搜索)用 <strong>Grover</strong> 二次加速。</p>
+<h3>10.S.2 振幅的"双面性"</h3>
+<p><strong>经典概率</strong>:</p>
+<ul>
+<li>概率 $\in [0, 1]$,<strong>标量</strong>,无符号</li>
+<li>$p \cdot 1 = p$,没有"翻转"操作</li>
+</ul>
+<p><strong>量子振幅</strong>:</p>
+<ul>
+<li>振幅 $\in \mathbb{C}$,<strong>复数</strong>,有相位</li>
+<li>$-a$ 和 $+a$ 是<strong>不同的</strong>振幅(虽然概率相同)</li>
+<li>振幅的<strong>符号</strong>和<strong>相位</strong>用于干涉</li>
+</ul>
+<p><strong>Grover 的关键创新</strong>: 利用振幅的"符号"信息做条件反射,把"概率相同的状态"区分出来 —— <strong>经典概率做不到</strong>。</p>
+<h3>10.S.3 "算法 vs 物理"</h3>
+<p><strong>Grover 算法</strong>揭示了一个<strong>深刻的物理-算法联系</strong>:</p>
+<ul>
+<li>算法步骤(反射) = 物理操作(条件相位翻转)</li>
+<li>算法收敛($O(\sqrt{N})$) = 物理系统的"自然演化"</li>
+<li>算法最优性 = 物理基本限制(信息增长受限于查询数)</li>
+</ul>
+<p><strong>类比</strong>:</p>
+<ul>
+<li>第二定律(熵增):物理演化不可逆</li>
+<li>Grover 收敛:概率分布趋向目标</li>
+<li><strong>两者都是"单向"过程</strong></li>
+</ul>
+<p><strong>结论</strong>: <strong>算法 = 物理</strong> —— 算法步骤可以用物理过程实现,反之亦然。</p>
+<h3>10.S.4 Grover 的"工程含义"</h3>
+<p><strong>Grover 加速</strong>在工程上:</p>
+<ul>
+<li><strong>乐观</strong>: 任何搜索问题都能"免费"获得 $\sqrt{N}$ 加速</li>
+<li><strong>现实</strong>: 实际工程中,oracle 实现成本可能<strong>抵消</strong>加速</li>
+<li><strong>结论</strong>: Grover 加速在"<strong>纯搜索</strong>" 任务中有效,对"<strong>结构化数据</strong>"无效</li>
+</ul>
+<p><strong>后量子密码学</strong>:</p>
+<ul>
+<li>Grover 把 AES-128 有效密钥从 $2^{128}$ 降到 $2^{64}$ —— <strong>可破解</strong>! 但需要 $2^{64}$ 个门,远超 NISQ 能力</li>
+<li>NIST 应对:AES-128 → AES-256, SHA-256 → SHA-384</li>
+<li><strong>Grover 加速</strong>改变了<strong>后量子安全标准</strong></li>
+</ul>
+<hr>
+<h2>10.R 补充:Grover 算法的"学习路径建议"</h2>
+<p><strong>学习 Grover 算法的</strong>推荐路径**:</p>
+<ol>
+<li><strong>入门</strong> (1-2 小时):</li>
+</ol>
+<ul>
+<li>读 [G96] 原始论文</li>
+<li>跑 Qiskit 教程:4 qubit Grover 演示</li>
+<li>理解:oracle + diffusion + 测量</li>
+</ul>
+<ol>
+<li><strong>中级</strong> (3-5 小时):</li>
+</ol>
+<ul>
+<li>读 Nielsen-Chuang [NC10] Ch 6</li>
+<li>推 $N=4$ 的完整 Grover</li>
+<li>实现 $\hat{R}_s$ 分解</li>
+</ul>
+<ol>
+<li><strong>高级</strong> (10+ 小时):</li>
+</ol>
+<ul>
+<li>读 BBBV 论文 [BBBV97] 完整证明</li>
+<li>读 BHMT 论文 [BHMT02] 振幅放大</li>
+<li>研究 Grover 跟量子游走、SAT 求解的联系</li>
+</ul>
+<ol>
+<li><strong>研究级</strong> (1+ 周):</li>
+</ol>
+<ul>
+<li>读后续论文:element distinctness [A04]、triangle finding [MSR03]、collision finding [BHT97]</li>
+<li>实现完整 Grover 仿真</li>
+<li>研究后量子密码学中的 Grover 加速</li>
+</ul>
+<p><strong>实操工具</strong>:</p>
+<ul>
+<li><strong>Qiskit</strong>: <code>qiskit.algorithms.Grover</code></li>
+<li><strong>Cirq</strong>: <code>cirq.optimize Grover</code></li>
+<li><strong>t|ket⟩</strong>: 多种 Grover 变体</li>
+<li><strong>PennyLane</strong>: 量子机器学习 + Grover</li>
+</ul>
+<hr>
+<h2>10.Q 补充:经典类比 vs 量子类比</h2>
+<p><strong>Grover 算法跟"经典算法的量子类比"</strong> 对比:</p>
+<table class="concept-table">
+<thead><tr><th>经典算法</th><th>量子类比</th><th>加速</th></tr></thead>
+<tbody><tr><td>**线性搜索** (无序)</td><td>**Grover**</td><td>$\sqrt{N}$</td></tr><tr><td>**二分搜索** (有序)</td><td>**无明显量子加速** (有序)</td><td>1×</td></tr><tr><td>**DFS / BFS** (图)</td><td>**量子游走**</td><td>$\sqrt{N}$ (在某些图)</td></tr><tr><td>**碰撞查找**</td><td>**BHT 量子算法**</td><td>$N^{1/3}$</td></tr><tr><td>**元素区分**</td><td>**Ambainis 算法**</td><td>$N^{k/(k+1)}$ (k 次查询)</td></tr><tr><td>**三角查找**</td><td>**Magniez-Santha**</td><td>$N^{1.5}$ → $N^{1.3}$</td></tr><tr><td>**最短路径**</td><td>**Dürr-Høyer 算法** (Grover + 经典)</td><td>$\sqrt{N}$</td></tr></tbody>
+</table>
+<p><strong>注</strong>: "量子类比" 通常比"经典类比"快 $\sqrt{N}$(二次加速), 跟 Grover 的本质有关。</p>
+<hr>
+<h2>10.P 补充:Grover 在组合优化中的应用</h2>
+<h3>10.P.1 SAT 问题</h3>
+<p><strong>问题</strong>: 给定布尔公式,找<strong>满足赋值</strong>。</p>
+<p><strong>经典</strong>: 最坏情况 $O(2^N)$(暴力枚举所有赋值) <strong>Grover</strong>: $O(2^{N/2})$(搜索 $2^N$ 个赋值)</p>
+<p><strong>优势</strong>: 跟 SAT 求解器的"启发式"不同,Grover <strong>严格保证</strong> $O(2^{N/2})$。 <strong>劣势</strong>: SAT 求解器在<strong>实际</strong>问题上比 Grover 快得多(因为有结构)。</p>
+<h3>10.P.2 图着色</h3>
+<p><strong>问题</strong>: 给定图,找<strong>合法 $k$ 着色</strong>。</p>
+<p><strong>经典</strong>: 暴力 $O(k^N)$(N 个节点,每个 k 种颜色) <strong>Grover</strong>: $O(k^{N/2})$(搜索 $k^N$ 个候选)</p>
+<p><strong>应用</strong>: 调度问题、寄存器分配。</p>
+<h3>10.P.3 子集和问题</h3>
+<p><strong>问题</strong>: 给定集合 $S = \{s_1, \ldots, s_n\}$ 和目标 $T$,找子集 $S' \subseteq S$ 使得 $\sum_{s \in S'} s = T$。</p>
+<p><strong>经典</strong>: 暴力 $O(2^n)$ <strong>Grover</strong>: $O(2^{n/2})$ —— <strong>二次加速</strong></p>
+<p><strong>注</strong>: 经典动态规划 $O(nT)$, 比 Grover 更优;但 Grover 对 $n$ 大 $T$ 大的情况有优势。</p>
+<h3>10.P.4 哈密顿回路</h3>
+<p><strong>问题</strong>: 给定图,找<strong>哈密顿回路</strong>(每个顶点恰好访问一次的回路)。</p>
+<p><strong>经典</strong>: 暴力 $O(N!)$ <strong>Grover</strong>: $O(\sqrt{N!}) = O((N/e)^{N/2})$ —— <strong>大加速</strong></p>
+<p><strong>注</strong>: 这是一个 NP-complete 问题,Grover <strong>不能</strong>多项式求解,只是降低一半指数。</p>
+<hr>
+<h2>10.O 补充:Grover 跟"黑盒问题"的一般框架</h2>
+<p><strong>黑盒问题</strong>(black-box problem) 算法设计:</p>
+<ol>
+<li><strong>定义 oracle</strong> $\hat{O}_w$</li>
+<li><strong>定义起始态</strong> $|\psi_0\rangle$ (通常是 $\hat{A}|0\rangle$)</li>
+<li><strong>设计迭代算符</strong> $\hat{G} = \hat{U}_{\text{refl}} \cdot \hat{O}_w$</li>
+<li><strong>重复</strong> $\hat{G}$ 多次</li>
+<li><strong>测量</strong> 得到结果</li>
+</ol>
+<p><strong>Grover 是这个框架的最简实例</strong>:</p>
+<ul>
+<li>Oracle: 标记目标</li>
+<li>起始态: $\hat{H}^{\otimes n}|0\rangle$</li>
+<li>反射: $\hat{R}_s = 2|s\rangle\langle s| - I$</li>
+<li>重复: $O(\sqrt{N})$ 次</li>
+<li>测量: 计算基</li>
+</ul>
+<p><strong>更复杂的实例</strong>:</p>
+<ul>
+<li><strong>振幅放大</strong>: 任意 oracle + 任意起始态</li>
+<li><strong>量子游走</strong>: 图结构 + walk 算符</li>
+<li><strong>HHL</strong>: 矩阵 oracle + 状态准备</li>
+</ul>
+<p><strong>统一视角</strong>: 大多数量子算法的"骨架"都是这个框架。</p>
+<hr>
+<h2>10.N 补充:Grover 算法的"反直觉"性质</h2>
+<h3>10.N.1 "振幅翻转" 不改变测量概率</h3>
+<p><strong>关键</strong>: oracle $\hat{O}_w$ 翻转 $|w\rangle$ 的振幅,但<strong>测量</strong> $|w\rangle$ 的概率 $|\alpha_w|^2$ <strong>不变</strong>。</p>
+<p><strong>原因</strong>: oracle 单独作用后,系统<strong>不测量</strong>;只有<strong>整个算法完成后</strong>才测量。</p>
+<p><strong>类比</strong>: 把一个人推一下(瞬时速度改变),但<strong>测量</strong>是看最终位置,不是中间速度。</p>
+<h3>10.N.2 "反射" 是全局的</h3>
+<p><strong>直觉</strong>: 反射 $\hat{R}_s$ 只"翻转" $|s^\perp\rangle$ 的振幅。</p>
+<p><strong>但</strong>: $|s^\perp\rangle$ 是<strong>正交于 $|s\rangle$ 的整个空间</strong>,包括<strong>所有</strong>非均匀分量。</p>
+<p><strong>结果</strong>: 每次反射<strong>重新分配</strong>所有振幅,<strong>不仅</strong>是 $|s^\perp\rangle$ 本身。</p>
+<p><strong>类比</strong>: 湖面波浪的"反射墙"—— 任何入射波都被反向,<strong>整个波场</strong>重构。</p>
+<h3>10.N.3 Grover 失败情形: 振幅"过冲"</h3>
+<p><strong>问题</strong>: 跑 $k$ 步 Grover, $k > k_{\text{opt}}$ 会怎样?</p>
+<p><strong>答案</strong>: <strong>振幅减少</strong>! 测量概率 $\sin^2((2k+1)\theta)$ 周期性变化,过了 $\pi/2$ 后<strong>下降</strong>。</p>
+<p><strong>直观</strong>: 旋转"过冲"了目标方向 —— 类比"钟摆过顶"。</p>
+<p><strong>实际</strong>: 必须<strong>精确</strong>控制 $k$,误差 $\leq 1$ 步。</p>
+<p><strong>缓解</strong>:</p>
+<ul>
+<li>量子计数(QPE-based)先估计 $\theta$</li>
+<li>多阶段 Grover:逐步增加步数 + 测量</li>
+<li>自适应 Grover:经典后验调整</li>
+</ul>
+<h3>10.N.4 "全局" vs "局部" oracle</h3>
+<p><strong>全局 oracle</strong>: $\hat{O}_w$ <strong>对所有</strong> $x$ 都标记($f(x) = 1$ iff $x = w$)。</p>
+<p><strong>局部 oracle</strong>: $\hat{O}_w$ <strong>只对部分</strong> $x$ 标记(预先筛选)。</p>
+<p><strong>Grover 加速</strong>对全局 oracle 显著,对局部 oracle <strong>可能失效</strong>。</p>
+<p><strong>例子</strong>: 在排序数组中找目标,经典二分 $O(\log N)$ 比 Grover $O(\sqrt{N})$ 更快。</p>
+<hr>
+<h2>10.M 补充:Grover 跟复杂性理论</h2>
+<p><strong>Grover 在复杂性理论中的位置</strong>:</p>
+<ul>
+<li><strong>BQP</strong>: 量子多项式时间(可能是 P 之外)</li>
+<li><strong>NP</strong>: 经典多项式验证</li>
+<li><strong>Grover</strong>: 把 <strong>NP 搜索</strong>从指数降到 $2^{N/2}$(二次加速)</li>
+</ul>
+<p><strong>关键</strong>: Grover <strong>不解决</strong> P vs NP 问题 —— 它<strong>降低</strong> NP-hard 问题的<strong>指数</strong>,但不<strong>消除</strong>。</p>
+<p><strong>更精确</strong>:</p>
+<ul>
+<li>NP-complete: 经典最坏 $2^N$, Grover $2^{N/2}$</li>
+<li>BQP: 量子多项式</li>
+<li>P ⊆ BQP, NP ⊆ BQP(?)</li>
+<li><strong>Grover 在 BQP 内</strong>,但<strong>不证明</strong> NP ⊆ BQP(因为 Grover 是<strong>搜索</strong>,不是<strong>决策</strong>)</li>
+</ul>
+<p><strong>Longpré 1996</strong> 和 <strong>Bennett-Bernstein-Brassard-Vazirani 1997</strong> 进一步证明了 Grover 的<strong>下界</strong>和<strong>鲁棒性</strong>。</p>
+<hr>
+<h2>10.L 补充:Grover 算法的"加速极限"</h2>
+<p><strong>理论上,有没有比 $\sqrt{N}$ 更快的量子搜索?</strong></p>
+<p><strong>回答</strong>:<strong>没有</strong>(BBBV 下界)。</p>
+<p><strong>但</strong>: 在<strong>特定结构</strong>问题中,可能<strong>比 $\sqrt{N}$ 更快</strong>(不是"无结构搜索")。</p>
+<p><strong>例子</strong>:</p>
+<ul>
+<li><strong>有序数据</strong>: 二分 $O(\log N)$(经典) 或 Grover $O(\sqrt{N})$(量子)</li>
+<li><strong>哈希表</strong>: 经典 $O(1)$,量子<strong>没有显著优势</strong></li>
+<li><strong>图搜索</strong>: 量子游走<strong>某些图</strong>上比 $\sqrt{N}$ 更快</li>
+</ul>
+<p><strong>结论</strong>: $\sqrt{N}$ 是"<strong>无结构搜索</strong>"的<strong>量子极限</strong>。有结构的数据,<strong>经典算法可能更快</strong>。</p>
+<hr>
+<h2>10.K 补充:Grover 算法的"历史"补充</h2>
+<p><strong>关键时间线</strong>:</p>
+<table class="concept-table">
+<thead><tr><th>年份</th><th>事件</th></tr></thead>
+<tbody><tr><td>**1994**</td><td>Shor 算法(指数加速分解)震撼密码学界</td></tr><tr><td>**1996**</td><td>**Grover 算法**(二次加速搜索) [G96]</td></tr><tr><td>**1997**</td><td>**BBBV 下界** 证明 [BBBV97]</td></tr><tr><td>**1998**</td><td>Grover 算法的"**振幅放大**" 推广(Brassard-Høyer-Tapp)</td></tr><tr><td>**2000**</td><td>量子计数(quantum counting) - Brassard-Høyer-Mosca-Tapp</td></tr><tr><td>**2002**</td><td>**BHMT 振幅放大 + 估计** [BHMT02]</td></tr><tr><td>**2003**</td><td>三角查找量子算法 $O(N^{1.3})$ [MSR03]</td></tr><tr><td>**2004**</td><td>**元素区分** $O(N^{2/3})$ [A04]</td></tr><tr><td>**2017**</td><td>IBM 第一次实验演示 Grover 5 qubit</td></tr><tr><td>**2020**</td><td>IonQ 11 qubit Grover,~95% 成功</td></tr><tr><td>**2024+**</td><td>NISQ 时代 Grover 实用性研究</td></tr></tbody>
+</table>
+<p><strong>Grover 是"二次加速"算法的</strong>奠基性工作<strong>,后续大量量子算法都基于"振幅放大"思想</strong>。</p>
+<hr>
+<h2>10.J 补充:Grover 算法的"非技术性"总结</h2>
+<p><strong>如果用一句话描述 Grover 算法</strong>:</p>
+<blockquote class="chapter-quote"><strong>"在 N 个无序项中找一个目标,经典需要 N 次,量子只需要 √N 次。"</strong></blockquote>
+<p><strong>物理直觉</strong>:</p>
+<ul>
+<li>一群人在大房间里找一个"红球"</li>
+<li>经典: 每人看一个球,<strong>同时</strong>比较,<strong>总用 N 人</strong></li>
+<li>量子(振幅放大): 每人"叠加态"地看,<strong>互相影响</strong>,让红球的"可能性"增长</li>
+</ul>
+<p><strong>哲学意义</strong>:</p>
+<ul>
+<li>量子算法不是"并行"(parallelism),而是"干涉"(interference)</li>
+<li><strong>干涉</strong>让正确答案<strong>自然放大</strong>,错误答案<strong>自然抵消</strong></li>
+<li>这是 20 世纪算法理论最深刻的洞察之一</li>
+</ul>
+<p><strong>未来展望</strong>:</p>
+<ul>
+<li>Grover 在<strong>小规模</strong>(n=10-20 qubit)上<strong>已经实用</strong></li>
+<li><strong>大规模</strong>应用需要<strong>容错量子计算</strong>(可能 10-20 年)</li>
+<li><strong>后量子密码学</strong>已经把 Grover 加速考虑在内</li>
+<li><strong>量子机器学习</strong>大量使用振幅放大(推广版 Grover)</li>
+</ul>
+<p><strong>Grover 改变了"算法 = 步骤"的传统观念</strong> —— 算法可以是"概率幅演化",<strong>连续的、几何的、干涉的</strong>。这是 21 世纪算法理论的<strong>新范式</strong>。</p>
+
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch09.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 9 章 量子傅里叶变换</span>
+          </a>
+          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 11 章 Shor 因式分解(即将推出)</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
