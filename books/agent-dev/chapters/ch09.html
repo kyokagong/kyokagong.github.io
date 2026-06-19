@@ -1,0 +1,2006 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第9章：RAG——检索增强生成在 Agent 中的角色 | 《AGENT开发从入门到精通》">
+
+  <title>第9章：RAG——检索增强生成在 Agent 中的角色 | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch08.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+  <h1 class="chapter-title">RAG——检索增强生成</h1>
+  <div class="chapter-subtitle">检索增强生成在 Agent 中的角色 · 5 阶段流水线 · Agentic RAG</div>
+
+  <blockquote class="chapter-intro">**章节定位**: 第二部分（核心技术）第 4 章。ch06 prompt 是&quot;模型怎么看指令&quot;，ch07 Function Calling 是&quot;模型怎么动手&quot;，ch08 记忆是&quot;结果存哪 + 怎么找回&quot;，**ch09 RAG 是&quot;怎么把外部知识塞进模型回答里&quot;——记忆的工程化。**</blockquote>
+
+  <figure class="chapter-hero">
+<svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" style="max-width:100%; height:auto; font-family:'Noto Sans SC', sans-serif;">
+  <defs>
+    <linearGradient id="ragGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c026d3"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <marker id="arrR" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#c026d3"/>
+    </marker>
+  </defs>
+  <text x="400" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#1a1a2e">🔍 RAG 5 阶段流水线</text>
+  <text x="400" y="52" text-anchor="middle" font-size="13" fill="#666">Document → Chunk → Embed → Store → Retrieve → Augment → Generate</text>
+
+  <!-- 7 boxes horizontal -->
+  <g font-size="13" font-weight="600">
+    <!-- Document -->
+    <rect x="20" y="100" width="100" height="60" rx="8" fill="#fce7f3" stroke="#c026d3" stroke-width="2"/>
+    <text x="70" y="128" text-anchor="middle" fill="#831843">📄 Document</text>
+    <text x="70" y="146" text-anchor="middle" font-size="10" fill="#9d174d">PDF / DOCX</text>
+
+    <!-- Chunk -->
+    <rect x="140" y="100" width="100" height="60" rx="8" fill="#fde68a" stroke="#f59e0b" stroke-width="2"/>
+    <text x="190" y="128" text-anchor="middle" fill="#7c2d12">✂️ Chunk</text>
+    <text x="190" y="146" text-anchor="middle" font-size="10" fill="#92400e">512×50</text>
+
+    <!-- Embed -->
+    <rect x="260" y="100" width="100" height="60" rx="8" fill="#bef264" stroke="#65a30d" stroke-width="2"/>
+    <text x="310" y="128" text-anchor="middle" fill="#1a2e05">🧬 Embed</text>
+    <text x="310" y="146" text-anchor="middle" font-size="10" fill="#365314">BGE-zh</text>
+
+    <!-- Store -->
+    <rect x="380" y="100" width="100" height="60" rx="8" fill="#bae6fd" stroke="#0284c7" stroke-width="2"/>
+    <text x="430" y="128" text-anchor="middle" fill="#0c4a6e">💾 Store</text>
+    <text x="430" y="146" text-anchor="middle" font-size="10" fill="#075985">Chroma/FAISS</text>
+
+    <!-- Retrieve -->
+    <rect x="500" y="100" width="100" height="60" rx="8" fill="#c4b5fd" stroke="#7c3aed" stroke-width="2"/>
+    <text x="550" y="128" text-anchor="middle" fill="#3b0764">🔎 Retrieve</text>
+    <text x="550" y="146" text-anchor="middle" font-size="10" fill="#4c1d95">top-K=5</text>
+
+    <!-- Augment -->
+    <rect x="620" y="100" width="100" height="60" rx="8" fill="#fbcfe8" stroke="#db2777" stroke-width="2"/>
+    <text x="670" y="128" text-anchor="middle" fill="#831843">🧩 Augment</text>
+    <text x="670" y="146" text-anchor="middle" font-size="10" fill="#9d174d">拼 prompt</text>
+
+    <!-- Generate -->
+    <rect x="740" y="100" width="60" height="60" rx="8" fill="#fed7aa" stroke="#ea580c" stroke-width="2"/>
+    <text x="770" y="128" text-anchor="middle" fill="#7c2d12">🤖</text>
+    <text x="770" y="146" text-anchor="middle" font-size="10" fill="#9a3412">LLM</text>
+  </g>
+
+  <!-- arrows -->
+  <line x1="120" y1="130" x2="140" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arrR)"/>
+  <line x1="240" y1="130" x2="260" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arrR)"/>
+  <line x1="360" y1="130" x2="380" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arrR)"/>
+  <line x1="480" y1="130" x2="500" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arrR)"/>
+  <line x1="600" y1="130" x2="620" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arrR)"/>
+  <line x1="720" y1="130" x2="740" y2="130" stroke="#c026d3" stroke-width="2" marker-end="url(#arrR)"/>
+
+  <!-- bottom callouts -->
+  <rect x="20" y="200" width="780" height="60" rx="8" fill="rgba(192,38,211,0.05)" stroke="rgba(192,38,211,0.3)" stroke-width="1"/>
+  <text x="400" y="225" text-anchor="middle" font-size="13" fill="#1a1a2e" font-weight="600">每阶段都有选型 + 优化策略</text>
+  <text x="400" y="245" text-anchor="middle" font-size="11" fill="#666">Advanced RAG = Pre-Retrieval (Query Rewriting/HyDE) + Retrieval (Hybrid/Reranking) + Post-Retrieval (Compression/RAG-Fusion)</text>
+
+  <!-- Agentic RAG overlay -->
+  <rect x="20" y="290" width="780" height="50" rx="8" fill="rgba(249,115,22,0.08)" stroke="#f97316" stroke-width="2"/>
+  <text x="400" y="315" text-anchor="middle" font-size="14" font-weight="700" fill="#7c2d12">🚀 Agentic RAG = Agent 决定何时检索 / 检索什么 / 检索几次（2025 最热方向）</text>
+  <text x="400" y="332" text-anchor="middle" font-size="11" fill="#9a3412">Single Agent + Tools (80%) · Multi-Agent RAG · CRAG · Self-RAG · Adaptive RAG</text>
+</svg>
+<figcaption style="text-align:center; color:#666; font-size:13px; margin-top:8px;">RAG 的 5 阶段流水线是骨架，Agentic RAG 是 2025 年的进化方向</figcaption>
+</figure>
+
+  <h1 id="sec-第-9-章-RAG-检索增强生成在-Agent-中的角色">第 9 章 RAG——检索增强生成在 Agent 中的角色</h1>
+<blockquote><strong>章节定位</strong>: 第二部分（核心技术）第 4 章。ch06 prompt 是"模型怎么看指令"，ch07 Function Calling 是"模型怎么动手"，ch08 记忆是"结果存哪 + 怎么找回"，<strong>ch09 RAG 是"怎么把外部知识塞进模型回答里"——记忆的工程化。</strong></blockquote>
+<hr>
+<h2 id="sec-9-1-引子-为什么需要-RAG">9.1 引子：为什么需要 RAG</h2>
+<p>大模型（LLM）看似无所不知，实际上有 <strong>3 大固有局限</strong>：</p>
+<ol>
+<li><strong>知识截止</strong>：GPT-4o 训练数据截至 2023-10，Claude 3.7 Sonnet 截至 2025-01，Gemini 2.0 截至 2024-08。问"2025 年的诺贝尔物理学奖得主是谁"，任何模型都会卡壳——它没看过那份数据。</li>
+<li><strong>幻觉（Hallucination）</strong>：模型在不确定时会<strong>自信地编造</strong>。问"Transformer 论文的 arXiv ID 是什么"，它可能随口说一个 "arXiv:1706.01234"——这个 ID 真实存在但内容完全不同。</li>
+<li><strong>私有知识盲区</strong>：你公司的内部文档、产品手册、客户合同，模型完全没见过。问"我们 Q3 的退款率是多少"，它只能瞎猜。</li>
+</ol>
+<p><strong>RAG（Retrieval-Augmented Generation，检索增强生成）</strong> 的核心思想简单得令人发指——</p>
+<blockquote><strong>给模型一本开卷考试的参考书。</strong></blockquote>
+<p>传统 LLM = 闭卷考试（靠训练时记住的所有东西答题）；RAG = <strong>开卷考试</strong>（先查资料，再带着资料答题）。Lewis et al. 2020 的原论文把这种范式称为 <em>general-purpose fine-tuning becomes both inefficient and ineffective</em>，并用 5 个 NLP 任务上的实验证明：哪怕是已经预训练好的模型，加上检索这一步都能把效果推高 5-20 个百分点。</p>
+<p>到 2025 年，RAG 已经从"一种可选优化"变成"<strong>生产 Agent 的默认配置</strong>"。原因有三：① 开源 embedding 模型成熟（BGE-large-zh / M3E / Nomic）让本地 RAG 零成本 ② 向量库基础设施完善（Chroma / FAISS / Milvus / Pinecone）让 PB 级数据毫秒级检索 ③ Agentic RAG 范式让"何时检索"变成 Agent 自主决策，不再是机械的"每个问题都先检索一遍"。</p>
+<h3 id="sec-Naive-RAG-vs-Advanced-RAG-vs-Agentic-RAG">Naive RAG vs Advanced RAG vs Agentic RAG</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>维度</td>
+<td>Naive RAG</td>
+<td>Advanced RAG</td>
+<td>Agentic RAG</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>流水线</strong></td>
+<td>固定 5 阶段</td>
+<td>5 阶段 + 8 种优化</td>
+<td>Agent 决策的动态流水线</td>
+</tr>
+<tr>
+<td><strong>检索触发</strong></td>
+<td>每次都检索</td>
+<td>每次都检索（带优化）</td>
+<td><strong>Agent 决定何时检索</strong></td>
+</tr>
+<tr>
+<td><strong>检索方式</strong></td>
+<td>top-K 相似度</td>
+<td>Hybrid / Re-ranking / HyDE</td>
+<td>多轮 + 多源</td>
+</tr>
+<tr>
+<td><strong>生成策略</strong></td>
+<td>单次生成</td>
+<td>多次生成 + 选最优</td>
+<td><strong>Self-RAG / CRAG 反思</strong></td>
+</tr>
+<tr>
+<td><strong>代表工作</strong></td>
+<td>Lewis 2020</td>
+<td>Anthropic Contextual Retrieval 2024-09</td>
+<td>Self-RAG 2023-10 / CRAG 2024-01</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>FAQ / 小文档库</td>
+<td>企业知识库</td>
+<td><strong>多源 / 多步 / 复杂决策</strong></td>
+</tr>
+<tr>
+<td><strong>典型框架</strong></td>
+<td>LangChain 基础 RAG</td>
+<td>LlamaIndex / Haystack</td>
+<td>LangGraph / AutoGen + RAG</td>
+</tr>
+</tbody></table>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- RAG = 检索 + 增强 + 生成，3 步合一&lt;br&gt;- 解决 LLM 的 3 大局限：知识截止、幻觉、私有知识盲区&lt;br&gt;- 2025 年主流范式：<strong>Agentic RAG</strong>——把检索决策权交给 Agent</blockquote>
+<hr>
+<h2 id="sec-9-2-RAG-基础-5-阶段流水线">9.2 RAG 基础 5 阶段流水线</h2>
+<p>RAG 的核心是 <strong>5（或 7）阶段流水线</strong>。哪怕是 Naive RAG，也必须走完这条流水线——只是每阶段做得粗糙而已。</p>
+<h3 id="sec-9-2-1-5-阶段定义">9.2.1 5 阶段定义</h3>
+<p><strong>Document（文档加载）→ Chunk（切分）→ Embed（向量化）→ Store（入库）→ Retrieve（检索）→ Augment（增强 Prompt）→ Generate（生成）</strong></p>
+<pre><code class="language-text">┌──────────┐    ┌────────┐    ┌────────┐    ┌──────────┐    ┌──────────┐
+│ Document │ -&gt; │  Chunk │ -&gt; │ Embed  │ -&gt; │  Store   │ -&gt; │ Retrieve │
+└──────────┘    └────────┘    └────────┘    └──────────┘    └──────────┘
+                                                                │
+                                                                v
+                                                          ┌──────────┐
+                                                          │ Augment  │
+                                                          └──────────┘
+                                                                │
+                                                                v
+                                                          ┌──────────┐
+                                                          │ Generate │
+                                                          └──────────┘</code></pre>
+<h3 id="sec-9-2-2-每阶段核心问题">9.2.2 每阶段核心问题</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>阶段</td>
+<td>核心问题</td>
+<td>常见选型</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Document</strong></td>
+<td>文档格式是什么？怎么解析？</td>
+<td>PyMuPDF（PDF）/ python-docx（DOCX）/ BeautifulSoup（HTML）/ markdown-it-py（MD）</td>
+</tr>
+<tr>
+<td><strong>Chunk</strong></td>
+<td>多大切？重叠多少？</td>
+<td>Fixed-size / Recursive / Semantic / Sentence</td>
+</tr>
+<tr>
+<td><strong>Embed</strong></td>
+<td>用什么 embedding 模型？维度？</td>
+<td>OpenAI text-embedding-3-small（1536d）/ BGE-large-zh-v1.5（1024d）/ M3E-large（1024d）</td>
+</tr>
+<tr>
+<td><strong>Store</strong></td>
+<td>用什么向量库？</td>
+<td>Chroma（本地）/ FAISS（本地）/ Milvus（自部署）/ Pinecone（云）</td>
+</tr>
+<tr>
+<td><strong>Retrieve</strong></td>
+<td>top-K？相似度阈值？用什么距离？</td>
+<td>cosine / dot product / euclidean；top-K=3~10</td>
+</tr>
+<tr>
+<td><strong>Augment</strong></td>
+<td>检索结果怎么塞进 Prompt？</td>
+<td>直接拼接 / 重排序后拼接 / 压缩后拼接</td>
+</tr>
+<tr>
+<td><strong>Generate</strong></td>
+<td>用什么 LLM？是否需要 streaming？</td>
+<td>GPT-4o / Claude 3.7 / Gemini 2.0</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-2-3-完整-Naive-RAG-Python-实现-30-行可运行">9.2.3 完整 Naive RAG Python 实现（30 行可运行）</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.2.3 节: 完整 Naive RAG 流水线（30 行 mock 版）
+- Document: 内置 4 篇文档（避免文件依赖）
+- Chunk: RecursiveCharacterTextSplitter mock
+- Embed: mock_embed (deterministic)
+- Store: MockChroma（dict 后端）
+- Retrieve: top-K cosine
+- Augment: 直接拼接到 system prompt
+- Generate: mock_llm (基于 chunk 关键词)
+&quot;&quot;&quot;
+import re
+from collections import defaultdict
+
+# === 1. 文档加载（4 篇模拟文档）===
+DOCS = [
+    {&quot;id&quot;: &quot;doc1&quot;, &quot;text&quot;: &quot;RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。它的核心思想是把外部知识库的内容检索出来后，作为上下文送给语言模型。&quot;},
+    {&quot;id&quot;: &quot;doc2&quot;, &quot;text&quot;: &quot;向量数据库是 RAG 的核心组件。常见的有 Chroma（本地）、FAISS（Facebook 开源）、Milvus（自部署）、Pinecone（全托管云服务）。&quot;},
+    {&quot;id&quot;: &quot;doc3&quot;, &quot;text&quot;: &quot;Embedding 模型负责把文本变成向量。OpenAI 的 text-embedding-3-small 维度 1536，每百万 token 收费 $0.02。BGE 是开源的中文 embedding 模型。&quot;},
+    {&quot;id&quot;: &quot;doc4&quot;, &quot;text&quot;: &quot;Agentic RAG 是 2024-2025 年最热的 RAG 范式。它的核心是把&#x27;何时检索、检索什么、怎么用结果&#x27;的决策权交给 Agent，而不是固定的流水线。&quot;},
+]
+
+# === 2. 切分（mock RecursiveCharacterTextSplitter）===
+def chunk_text(text, chunk_size=80, overlap=10):
+    &quot;&quot;&quot;递归按中英文标点切分，chunk_size 单位是字符&quot;&quot;&quot;
+    chunks = []
+    start = 0
+    while start &lt; len(text):
+        end = min(start + chunk_size, len(text))
+        # 优先在句号/逗号处断开
+        cut_at = end
+        for sep in [&quot;。&quot;, &quot;，&quot;, &quot;；&quot;, &quot;.&quot;, &quot;,&quot;, &quot; &quot;]:
+            idx = text.rfind(sep, start, end)
+            if idx &gt; start + chunk_size // 2:
+                cut_at = idx + 1
+                break
+        end = cut_at
+        chunks.append(text[start:end].strip())
+        # 关键：保证 start 严格递增，避免末尾 overlap 把指针回退导致死循环
+        start = max(end - overlap, start + 1)
+    return [c for c in chunks if c] + ([text[-overlap:].strip()] if start &gt; 0 and end &lt; len(text) and text[end:].strip() else [])
+
+# === 3. Embedding（mock，deterministic）===
+def mock_embed(text):
+    &quot;&quot;&quot;基于字符 hash 生成 8 维伪向量（demo 用，真实场景调 BGE/OpenAI API）&quot;&quot;&quot;
+    vec = [0.0] * 8
+    for i, ch in enumerate(text[:32]):
+        vec[i % 8] += (ord(ch) % 13) / 100.0
+    norm = sum(v * v for v in vec) ** 0.5
+    return [v / norm for v in vec]
+
+def cosine_sim(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+# === 4. 向量库（MockChroma）===
+class MockChroma:
+    def __init__(self):
+        self.docs = []  # [(chunk_text, doc_id, embedding)]
+    def add(self, chunks_with_ids, embeddings):
+        for (text, doc_id), emb in zip(chunks_with_ids, embeddings):
+            self.docs.append((text, doc_id, emb))
+    def query(self, query_emb, top_k=3):
+        scored = [(cosine_sim(query_emb, emb), text, doc_id)
+                  for text, doc_id, emb in self.docs]
+        scored.sort(reverse=True)
+        return scored[:top_k]
+
+# === 5. Build index ===
+store = MockChroma()
+all_chunks = []
+for doc in DOCS:
+    chunks = chunk_text(doc[&quot;text&quot;])
+    all_chunks.extend([(c, doc[&quot;id&quot;]) for c in chunks])
+embeddings = [mock_embed(c) for c, _ in all_chunks]
+store.add(all_chunks, embeddings)
+
+# === 6. Retrieve + Augment + Generate (mock) ===
+def naive_rag(question, top_k=2):
+    q_emb = mock_embed(question)
+    results = store.query(q_emb, top_k=top_k)
+    context = &quot;\n&quot;.join([f&quot;[{doc_id}] {text}&quot; for _, text, doc_id in results])
+    # Augment: 拼到 system prompt
+    system_prompt = f&quot;基于以下参考资料回答用户问题：\n{context}\n如果资料里没有答案，回答&#x27;我不知道&#x27;。&quot;
+    # Generate: mock_llm 根据 chunk 关键词选答案
+    answer = f&quot;根据资料 [{results[0][2]}]：{results[0][1][:50]}...&quot;
+    return answer, results
+
+# === 7. Run ===
+q = &quot;什么是 Agentic RAG？&quot;
+ans, retrieved = naive_rag(q, top_k=2)
+print(f&quot;Q: {q}&quot;)
+print(f&quot;检索到的 Top-2 chunks:&quot;)
+for score, text, doc_id in retrieved:
+    print(f&quot;  [{doc_id}] (sim={score:.3f}) {text[:40]}&quot;)
+print(f&quot;A: {ans}&quot;)</code></pre>
+<p><strong>预期输出</strong>（mock_embed 排序稳定）：</p>
+<pre><code class="language-text">Q: 什么是 Agentic RAG？
+检索到的 Top-2 chunks:
+  [doc4] (sim=0.741) Agentic RAG 是 2024-2025 年最热的 RAG 范式。它的核心是把...
+  [doc2] (sim=0.612) 向量数据库是 RAG 的核心组件。常见的有 Chroma（本地）...
+A: 根据资料 [doc4]：Agentic RAG 是 2024-2025 年最热的 RAG 范式。它的核心是把...</code></pre>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- 5 阶段流水线是 RAG 的<strong>最小骨架</strong>——任何 RAG 都必须走完这 5 阶段&lt;br&gt;- Document / Chunk / Embed / Store / Retrieve / Augment / Generate 每阶段都有明确选型&lt;br&gt;- Naive RAG = 机械执行每阶段，<strong>Advanced RAG</strong> = 每阶段有优化策略，<strong>Agentic RAG</strong> = Agent 动态决策</blockquote>
+<hr>
+<h2 id="sec-9-3-文档加载与切分">9.3 文档加载与切分</h2>
+<h3 id="sec-9-3-1-文档加载">9.3.1 文档加载</h3>
+<p>生产 Agent 处理 4 类文档：</p>
+<table class="md-table"><tbody>
+<tr>
+<td>格式</td>
+<td>解析器</td>
+<td>难点</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>PDF</strong></td>
+<td>PyMuPDF（<code>fitz</code>）/ pdfplumber / pypdf</td>
+<td>表格 / 图片 / 多栏排版</td>
+</tr>
+<tr>
+<td><strong>DOCX</strong></td>
+<td>python-docx / docx2txt</td>
+<td>样式 / 表格 / 嵌入图片</td>
+</tr>
+<tr>
+<td><strong>HTML</strong></td>
+<td>BeautifulSoup / lxml / trafilatura</td>
+<td>噪声（导航栏 / 页脚 / 广告）</td>
+</tr>
+<tr>
+<td><strong>Markdown</strong></td>
+<td>markdown-it-py / mistune</td>
+<td>几乎无难点，直接文本</td>
+</tr>
+</tbody></table>
+<p><strong>经验</strong>：PDF 是 RAG 工程质量最差的环节。<strong>双栏论文</strong>会被 PyMuPDF 当成单栏顺序读，<strong>多列表格</strong>会被拆成多行短文本。生产 Agent 通常需要先用版面分析（layout analysis）模型（如 DocBank / LayoutLMv3）识别结构，再按结构切分。</p>
+<h3 id="sec-9-3-2-5-种切分策略对比">9.3.2 5 种切分策略对比</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>策略</td>
+<td>切分方式</td>
+<td>优点</td>
+<td>缺点</td>
+<td>适用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Fixed-size</strong></td>
+<td>按固定字符数切</td>
+<td>简单可预测</td>
+<td>语义断裂（半句话被切）</td>
+<td>简单 FAQ</td>
+</tr>
+<tr>
+<td><strong>Recursive</strong></td>
+<td>按段落 → 句子 → 词递归切</td>
+<td>保持段落完整性</td>
+<td>仍可能切断长句</td>
+<td><strong>90% 场景首选</strong></td>
+</tr>
+<tr>
+<td><strong>Semantic</strong></td>
+<td>按 embedding 相似度聚类</td>
+<td>语义连贯</td>
+<td>切分点不可控</td>
+<td>高质量知识库</td>
+</tr>
+<tr>
+<td><strong>Sentence</strong></td>
+<td>按句子边界切</td>
+<td>句子完整</td>
+<td>长文档 chunk 数爆炸</td>
+<td>短文本密集</td>
+</tr>
+<tr>
+<td><strong>Sliding window</strong></td>
+<td>重叠滑动窗口</td>
+<td>保留上下文</td>
+<td>冗余 + 存储翻倍</td>
+<td>长文档保留</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-3-3-chunk_size-overlap-经验值">9.3.3 chunk_size × overlap 经验值</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>场景</td>
+<td>chunk_size</td>
+<td>overlap</td>
+<td>理由</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---:</td>
+<td>:---:</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>FAQ / 短答案</strong></td>
+<td>256 字符</td>
+<td>30</td>
+<td>答案短，切细利于精确命中</td>
+</tr>
+<tr>
+<td><strong>通用文档</strong></td>
+<td>512 字符</td>
+<td>50</td>
+<td><strong>最常用甜区</strong></td>
+</tr>
+<tr>
+<td><strong>技术论文 / 长文档</strong></td>
+<td>1024 字符</td>
+<td>100</td>
+<td>保留完整段落 / 公式</td>
+</tr>
+<tr>
+<td><strong>法律合同 / 精确引用</strong></td>
+<td>2048 字符</td>
+<td>200</td>
+<td>必须保留完整条款</td>
+</tr>
+<tr>
+<td><strong>代码</strong></td>
+<td>按函数切分</td>
+<td>0</td>
+<td>函数级粒度</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-3-4-RecursiveCharacterTextSplitter-mock-实现">9.3.4 RecursiveCharacterTextSplitter mock 实现</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.3.4 节: RecursiveCharacterTextSplitter 的 mock 版
+按 [&quot;\n\n&quot;, &quot;\n&quot;, &quot;。&quot;, &quot;.&quot;, &quot; &quot; , &quot;&quot;] 递归切分
+&quot;&quot;&quot;
+def recursive_split(text, chunk_size=200, overlap=30, separators=None):
+    if separators is None:
+        separators = [&quot;\n\n&quot;, &quot;\n&quot;, &quot;。&quot;, &quot;.&quot;, &quot;，&quot;, &quot;,&quot;, &quot; &quot;]
+    if len(text) &lt;= chunk_size:
+        return [text] if text.strip() else []
+    # 找最右的 separator（让 chunk 尽量贴近 chunk_size）
+    sep = None
+    for s in separators:
+        idx = text.rfind(s, 0, chunk_size)
+        if idx &gt; chunk_size // 2:
+            sep = s
+            cut = idx + len(s)
+            break
+    if sep is None:
+        # 强制按字符切
+        cut = chunk_size
+    first, rest = text[:cut], text[cut - overlap:]
+    return [first] + recursive_split(rest, chunk_size, overlap, separators)
+
+# 测试
+long_text = &quot;&quot;&quot;
+RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。它的核心思想是把外部知识库的内容检索出来后，作为上下文送给语言模型。
+
+向量数据库是 RAG 的核心组件。常见的有 Chroma（本地）、FAISS（Facebook 开源）、Milvus（自部署）、Pinecone（全托管云服务）。每种都有其适用场景。
+
+Embedding 模型负责把文本变成向量。OpenAI 的 text-embedding-3-small 维度 1536，每百万 token 收费 $0.02。BGE 是开源的中文 embedding 模型，由 BAAI 发布。
+
+Agentic RAG 是 2024-2025 年最热的 RAG 范式。它的核心是把&#x27;何时检索、检索什么、怎么用结果&#x27;的决策权交给 Agent，而不是固定的流水线。
+&quot;&quot;&quot;
+chunks = recursive_split(long_text, chunk_size=120, overlap=20)
+print(f&quot;切分出 {len(chunks)} 个 chunk:&quot;)
+for i, c in enumerate(chunks):
+    print(f&quot;  [{i}] ({len(c)} 字符) {c[:40]}...&quot;)</code></pre>
+<p><strong>预期输出</strong>：4 个 chunk，每块 ~100-120 字符，块间重叠 20 字符左右。</p>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- <strong>Recursive 切分是 90% 场景的默认选择</strong>&lt;br&gt;- chunk_size 经验值：<strong>512 字符 × 50 overlap</strong> 是最常用甜区&lt;br&gt;- PDF 是 RAG 工程质量最差的环节——必须先版面分析再切分</blockquote>
+<hr>
+<h2 id="sec-9-4-Embedding-与向量库">9.4 Embedding 与向量库</h2>
+<h3 id="sec-9-4-1-与-ch08-8-4-的对应关系">9.4.1 与 ch08 §8.4 的对应关系</h3>
+<p>ch08 §8.4 已经讲过 embedding 与向量库的<strong>基础概念</strong>——本节聚焦 RAG 场景下的<strong>工程选型</strong>。同样的模型，在 RAG 和普通语义检索场景下的<strong>最优配置不一样</strong>：</p>
+<table class="md-table"><tbody>
+<tr>
+<td>场景</td>
+<td>chunk_size</td>
+<td>embedding 模型</td>
+<td>top-K</td>
+<td>重排序</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---:</td>
+<td>:---</td>
+<td>:---:</td>
+<td>:---:</td>
+</tr>
+<tr>
+<td><strong>普通语义检索</strong></td>
+<td>256</td>
+<td>text-embedding-3-small</td>
+<td>10</td>
+<td>否</td>
+</tr>
+<tr>
+<td><strong>RAG 检索</strong></td>
+<td>512</td>
+<td><strong>BGE-large-zh-v1.5</strong> 或 text-embedding-3-large</td>
+<td>3-5</td>
+<td><strong>是</strong></td>
+</tr>
+<tr>
+<td><strong>代码检索</strong></td>
+<td>按函数</td>
+<td>text-embedding-3-small / CodeBERT</td>
+<td>5-10</td>
+<td>否</td>
+</tr>
+</tbody></table>
+<p><strong>为什么 RAG 用更大的 embedding 模型</strong>？因为 RAG 需要 embedding <strong>理解问题 + 文档 + 上下文的语义对齐</strong>——精度差 5% 就会导致答非所问。</p>
+<h3 id="sec-9-4-2-5-库向量库选型决策表">9.4.2 5 库向量库选型决策表</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>向量库</td>
+<td>部署</td>
+<td>数据规模</td>
+<td>延迟（1M 向量）</td>
+<td>成本</td>
+<td>适用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---:</td>
+<td>:---:</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Chroma</strong></td>
+<td>本地 / 嵌入式</td>
+<td>&lt; 10M</td>
+<td>50ms</td>
+<td>免费</td>
+<td>原型 / 小规模</td>
+</tr>
+<tr>
+<td><strong>FAISS</strong></td>
+<td>本地</td>
+<td>&lt; 100M</td>
+<td>20ms</td>
+<td>免费</td>
+<td>离线批量检索</td>
+</tr>
+<tr>
+<td><strong>Milvus</strong></td>
+<td>自部署（K8s）</td>
+<td>&lt; 10B</td>
+<td>30ms</td>
+<td>服务器成本</td>
+<td><strong>企业级首选</strong></td>
+</tr>
+<tr>
+<td><strong>Pinecone</strong></td>
+<td>云端 SaaS</td>
+<td>无上限</td>
+<td>80ms</td>
+<td>$0.096/hr 起步</td>
+<td>无运维团队</td>
+</tr>
+<tr>
+<td><strong>Weaviate</strong></td>
+<td>云 / 自部署</td>
+<td>&lt; 1B</td>
+<td>50ms</td>
+<td>服务器 / 云费用</td>
+<td>混合检索（BM25 + Vector）</td>
+</tr>
+</tbody></table>
+<p><strong>决策树</strong>：</p>
+<ul>
+<li>数据 &lt; 10M → <strong>Chroma</strong>（最快上手）</li>
+<li>数据 10M-100M + 有 ML 团队 → <strong>FAISS</strong>（自部署）</li>
+<li>数据 100M-10B + 企业生产 → <strong>Milvus</strong>（分布式）</li>
+<li>无运维 + 预算充足 → <strong>Pinecone</strong>（SaaS）</li>
+<li>需要 GraphQL 接口 + 混合检索 → <strong>Weaviate</strong></li>
+</ul>
+<blockquote><strong>注意</strong>：本表数据基于 2025-05 各官方文档快照。具体定价以官网为准。</blockquote>
+<h3 id="sec-9-4-3-Chunk-大小-Embedding-模型-检索质量-三维关系">9.4.3 Chunk 大小 × Embedding 模型 × 检索质量 三维关系</h3>
+<pre><code class="language-text">检索质量
+  ↑
+  │     ★ BGE-large-zh + 512
+  │     ● OpenAI-3-large + 512
+  │     ▲ BGE-base + 256
+  │
+  │     ▽ OpenAI-3-small + 1024  ← 长上下文也救不了短 embedding
+  │
+  └────────────────────────────→ chunk_size
+        256     512     1024</code></pre>
+<p><strong>经验法则</strong>：</p>
+<ul>
+<li><strong>512 字符 + BGE-large-zh 或 OpenAI-3-large</strong> = 中文 RAG 甜区</li>
+<li>短 chunk + 弱 embedding → 检索质量断崖式下降</li>
+<li>长 chunk + 弱 embedding → 不能弥补 embedding 精度差</li>
+</ul>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- RAG 必须用比普通检索<strong>更强的 embedding 模型</strong>（BGE-large / OpenAI-3-large）&lt;br&gt;- 向量库选型：<strong>数据规模 + 部署偏好 + 成本</strong> 三维决策&lt;br&gt;- 中文 RAG 甜区：<strong>512 字符 + BGE-large-zh + top-K=3-5</strong></blockquote>
+<hr>
+<h2 id="sec-9-5-检索优化-Advanced-RAG">9.5 检索优化（Advanced RAG）</h2>
+<h3 id="sec-9-5-1-3-大优化方向">9.5.1 3 大优化方向</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>方向</td>
+<td>时机</td>
+<td>策略</td>
+<td>作用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Pre-retrieval</strong></td>
+<td>检索之前</td>
+<td>Query Rewriting / HyDE / Multi-query</td>
+<td>让 query 更贴合文档</td>
+</tr>
+<tr>
+<td><strong>Retrieval</strong></td>
+<td>检索中</td>
+<td>Hybrid BM25+Vector / Re-ranking / Self-Query</td>
+<td>提高召回质量</td>
+</tr>
+<tr>
+<td><strong>Post-retrieval</strong></td>
+<td>检索之后</td>
+<td>Compression / Reranking / RAG-Fusion</td>
+<td>精炼送入 LLM 的内容</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-5-2-8-种检索优化策略对比">9.5.2 8 种检索优化策略对比</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>策略</td>
+<td>类型</td>
+<td>复杂度</td>
+<td>收益</td>
+<td>何时用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---:</td>
+<td>:---:</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Query Rewriting</strong></td>
+<td>Pre</td>
+<td>低</td>
+<td>+5-10%</td>
+<td>用户 query 含糊</td>
+</tr>
+<tr>
+<td><strong>HyDE（Hypothetical Doc Embedding）</strong></td>
+<td>Pre</td>
+<td>中</td>
+<td>+10-15%</td>
+<td>query 与文档分布差异大</td>
+</tr>
+<tr>
+<td><strong>Multi-query</strong></td>
+<td>Pre</td>
+<td>低</td>
+<td>+10%</td>
+<td>query 信息不足</td>
+</tr>
+<tr>
+<td><strong>Step-back Prompting</strong></td>
+<td>Pre</td>
+<td>低</td>
+<td>+5-15%</td>
+<td>需要抽象层级回答</td>
+</tr>
+<tr>
+<td><strong>Hybrid BM25 + Vector</strong></td>
+<td>Retrieval</td>
+<td>中</td>
+<td>+10-20%</td>
+<td><strong>通用首选</strong></td>
+</tr>
+<tr>
+<td><strong>Re-ranking（Cross-Encoder）</strong></td>
+<td>Retrieval</td>
+<td>高</td>
+<td>+15-25%</td>
+<td>top-K 召回太多</td>
+</tr>
+<tr>
+<td><strong>Self-Query Retriever</strong></td>
+<td>Retrieval</td>
+<td>中</td>
+<td>+10%</td>
+<td>query 含元数据过滤</td>
+</tr>
+<tr>
+<td><strong>RAG-Fusion（Reciprocal Rank）</strong></td>
+<td>Post</td>
+<td>中</td>
+<td>+10-15%</td>
+<td>需要多角度综合</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-5-3-Hybrid-Retrieval-BM25-向量-mock-实现">9.5.3 Hybrid Retrieval（BM25 + 向量）mock 实现</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.5.3 节: Hybrid Retrieval（BM25 + 向量混合检索）
+- BM25: 基于词频的经典检索（精确匹配强）
+- 向量: 基于 embedding 相似度（语义匹配强）
+- 混合: 加权融合两路分数
+&quot;&quot;&quot;
+import math
+import re
+from collections import Counter, defaultdict
+
+# === 复用 9.2.3 的 mock_embed / MockChroma ===
+def mock_embed(text):
+    vec = [0.0] * 8
+    for i, ch in enumerate(text[:32]):
+        vec[i % 8] += (ord(ch) % 13) / 100.0
+    norm = sum(v * v for v in vec) ** 0.5
+    return [v / norm for v in vec]
+
+def cosine_sim(a, b):
+    return sum(x * y for x, y in zip(a, b))
+
+# === BM25 简易实现 ===
+class SimpleBM25:
+    def __init__(self, corpus):
+        self.corpus = corpus  # list of strings
+        self.docs = [self._tokenize(d) for d in corpus]
+        self.df = defaultdict(int)  # 文档频率
+        for doc in self.docs:
+            for term in set(doc):
+                self.df[term] += 1
+        self.N = len(corpus)
+        self.avgdl = sum(len(d) for d in self.docs) / max(self.N, 1)
+    @staticmethod
+    def _tokenize(text):
+        # 简易中文分词：单字 + 词
+        return [ch for ch in text if ch.strip()] + re.findall(r&quot;[A-Za-z]+&quot;, text)
+    def score(self, query, k1=1.5, b=0.75):
+        tokens = self._tokenize(query)
+        scores = [0.0] * self.N
+        for t in tokens:
+            df = self.df.get(t, 0)
+            if df == 0: continue
+            idf = math.log((self.N - df + 0.5) / (df + 0.5) + 1)
+            for i, doc in enumerate(self.docs):
+                tf = doc.count(t)
+                if tf == 0: continue
+                dl = len(doc)
+                scores[i] += idf * (tf * (k1 + 1)) / (tf + k1 * (1 - b + b * dl / self.avgdl))
+        return scores
+
+# === Hybrid Retrieval ===
+class HybridRetrieval:
+    def __init__(self, chunks_with_ids, alpha=0.5):
+        # chunks_with_ids: [(text, doc_id), ...]
+        self.texts = [t for t, _ in chunks_with_ids]
+        self.ids = [i for _, i in chunks_with_ids]
+        self.embeddings = [mock_embed(t) for t in self.texts]
+        self.bm25 = SimpleBM25(self.texts)
+        self.alpha = alpha  # 向量权重，1-alpha 是 BM25 权重
+
+    def query(self, q_text, top_k=3):
+        # 向量分数
+        q_emb = mock_embed(q_text)
+        vec_scores = [cosine_sim(q_emb, e) for e in self.embeddings]
+        # BM25 分数（归一化到 [0, 1]）
+        bm_scores = self.bm25.score(q_text)
+        max_bm = max(bm_scores) if bm_scores and max(bm_scores) &gt; 0 else 1
+        bm_scores = [s / max_bm for s in bm_scores]
+        # 混合
+        hybrid = [self.alpha * v + (1 - self.alpha) * b
+                  for v, b in zip(vec_scores, bm_scores)]
+        ranked = sorted(zip(hybrid, self.texts, self.ids), reverse=True)
+        return ranked[:top_k]
+
+# === Run demo ===
+chunks = [
+    (&quot;RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。&quot;, &quot;doc1&quot;),
+    (&quot;向量数据库是 RAG 的核心组件。常见的有 Chroma（本地）、FAISS。&quot;, &quot;doc2&quot;),
+    (&quot;Embedding 模型负责把文本变成向量。&quot;, &quot;doc3&quot;),
+    (&quot;Agentic RAG 是 2024-2025 年最热的 RAG 范式。&quot;, &quot;doc4&quot;),
+]
+hr = HybridRetrieval(chunks, alpha=0.5)
+q = &quot;RAG 的核心思想是什么？&quot;
+results = hr.query(q, top_k=3)
+print(f&quot;Q: {q}&quot;)
+for score, text, doc_id in results:
+    print(f&quot;  [{doc_id}] hybrid={score:.3f}  {text[:35]}&quot;)</code></pre>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- Advanced RAG = <strong>Pre + Retrieval + Post</strong> 三阶段共 8 种策略&lt;br&gt;- <strong>Hybrid BM25 + 向量</strong>是通用首选（精确 + 语义双覆盖）&lt;br&gt;- <strong>Re-ranking</strong>是召回质量最高的天花板（cross-encoder 模型）</blockquote>
+<hr>
+<h2 id="sec-9-6-Agentic-RAG-2025-最热方向">9.6 Agentic RAG（2025 最热方向）</h2>
+<h3 id="sec-9-6-1-本质-把决策权交给-Agent">9.6.1 本质：把决策权交给 Agent</h3>
+<p><strong>Naive RAG 的死板</strong>：用户问什么都先检索一遍。哪怕问题是"你好"或者"今天星期几"。</p>
+<p><strong>Advanced RAG 的进步</strong>：每次都检索，但检索前/中/后做优化。</p>
+<p><strong>Agentic RAG 的革命</strong>：<strong>让 Agent 决定</strong>——</p>
+<ul>
+<li>这个问题<strong>要不要检索</strong>？（"你好" → 不检索）</li>
+<li>检索<strong>哪个知识库</strong>？（技术问题 → 文档库；闲聊 → 不检索）</li>
+<li>检索<strong>几次</strong>？（复杂问题 → 多轮检索）</li>
+<li>检索结果<strong>够不够</strong>？不够就<strong>换个 query 再检索</strong>。</li>
+</ul>
+<h3 id="sec-9-6-2-3-种-Agentic-RAG-模式对比">9.6.2 3 种 Agentic RAG 模式对比</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>模式</td>
+<td>Agent 数</td>
+<td>决策粒度</td>
+<td>代表工作</td>
+<td>适用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---:</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Single Agent + Tools</strong></td>
+<td>1</td>
+<td>函数级</td>
+<td>OpenAI Agents SDK + RAG tool</td>
+<td><strong>80% 场景首选</strong></td>
+</tr>
+<tr>
+<td><strong>Multi-Agent RAG</strong></td>
+<td>2+</td>
+<td>任务级</td>
+<td>Retriever Agent + Generator Agent</td>
+<td>多源异构知识库</td>
+</tr>
+<tr>
+<td><strong>Corrective RAG (CRAG)</strong></td>
+<td>1 + 反思</td>
+<td>检索级</td>
+<td>CRAG 2024-01</td>
+<td>高精度需求</td>
+</tr>
+<tr>
+<td><strong>Self-RAG</strong></td>
+<td>1 + 反思 token</td>
+<td>决策级</td>
+<td>Self-RAG 2023-10</td>
+<td>学术研究</td>
+</tr>
+<tr>
+<td><strong>Adaptive RAG</strong></td>
+<td>1 + 路由器</td>
+<td>查询级</td>
+<td>Adaptive RAG 2024-03</td>
+<td>query 类型混杂</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-6-3-Single-Agent-Tools-RAG-Python-实现">9.6.3 Single Agent + Tools RAG Python 实现</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.6.3 节: Single Agent with Tools RAG
+- Agent 决定：何时调用 search_docs、是否需要搜索、搜索几次
+- mock_llm 根据用户 query 和工具返回决定下一步
+&quot;&quot;&quot;
+# 复用 §9.2.3 的 mock_embed / MockChroma
+def mock_embed(text):
+    vec = [0.0] * 8
+    for i, ch in enumerate(text[:32]):
+        vec[i % 8] += (ord(ch) % 13) / 100.0
+    norm = sum(v * v for v in vec) ** 0.5
+    return [v / norm for v in vec]
+
+class MockChroma:
+    def __init__(self): self.docs = []
+    def add(self, texts, embs):
+        for t, e in zip(texts, embs):
+            self.docs.append((t, e))
+    def query(self, q_emb, k=2):
+        scored = sorted(self.docs, key=lambda x: -sum(a*b for a,b in zip(q_emb, x[1])))
+        return [t for t, _ in scored[:k]]
+
+# === Tool: search_docs ===
+store = MockChroma()
+docs = [
+    &quot;RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。&quot;,
+    &quot;向量数据库是 RAG 的核心组件。&quot;,
+    &quot;Embedding 模型负责把文本变成向量。&quot;,
+    &quot;Agentic RAG 是 2024-2025 年最热的 RAG 范式。&quot;,
+]
+store.add(docs, [mock_embed(d) for d in docs])
+
+def search_docs(query, top_k=2):
+    &quot;&quot;&quot;RAG 检索工具：给 Agent 用的&quot;&quot;&quot;
+    q_emb = mock_embed(query)
+    results = store.query(q_emb, k=top_k)
+    return &quot;\n&quot;.join(f&quot;- {r}&quot; for r in results)
+
+# === Agent 主循环（mock_llm 驱动）===
+class AgentRAG:
+    def __init__(self):
+        self.tools = {&quot;search_docs&quot;: search_docs}
+        self.history = []
+    def mock_llm(self, user_msg, history):
+        # 决策 1: 闲聊 → 直接回答
+        if any(kw in user_msg for kw in [&quot;你好&quot;, &quot;hello&quot;, &quot;hi&quot;, &quot;你是谁&quot;]):
+            return {&quot;action&quot;: &quot;final&quot;, &quot;answer&quot;: &quot;你好！我是 Agentic RAG 助手，可以帮你查 RAG 相关资料。&quot;}
+        # 决策 2: 已经有 tool result → 综合回答
+        last_obs = next((m[&quot;content&quot;] for m in reversed(history) if m[&quot;role&quot;] == &quot;tool&quot;), None)
+        if last_obs:
+            return {&quot;action&quot;: &quot;final&quot;, &quot;answer&quot;: f&quot;根据检索：{last_obs[:80]}...&quot;}
+        # 决策 3: 知识类问题 → 调用 search_docs
+        if any(kw in user_msg for kw in [&quot;什么是&quot;, &quot;是什么&quot;, &quot;怎么&quot;, &quot;核心&quot;]):
+            return {&quot;action&quot;: &quot;tool&quot;, &quot;tool&quot;: &quot;search_docs&quot;, &quot;args&quot;: {&quot;query&quot;: user_msg}}
+        # 默认
+        return {&quot;action&quot;: &quot;final&quot;, &quot;answer&quot;: &quot;我不确定这个问题，请换个问法。&quot;}
+
+    def run(self, user_msg, max_steps=3):
+        self.history.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user_msg})
+        for step in range(max_steps):
+            decision = self.mock_llm(user_msg, self.history)
+            if decision[&quot;action&quot;] == &quot;final&quot;:
+                self.history.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: decision[&quot;answer&quot;]})
+                return decision[&quot;answer&quot;]
+            elif decision[&quot;action&quot;] == &quot;tool&quot;:
+                tool_fn = self.tools[decision[&quot;tool&quot;]]
+                result = tool_fn(**decision[&quot;args&quot;])
+                self.history.append({&quot;role&quot;: &quot;tool&quot;, &quot;content&quot;: result})
+        return &quot;(超过最大步数)&quot;
+
+# === Run ===
+agent = AgentRAG()
+print(&quot;=== 测试 1: 闲聊（Agent 决定不检索）===&quot;)
+print(agent.run(&quot;你好&quot;))
+print(&quot;\n=== 测试 2: 知识类问题（Agent 决定检索）===&quot;)
+print(agent.run(&quot;什么是 RAG？&quot;))</code></pre>
+<p><strong>预期输出</strong>：</p>
+<pre><code class="language-text">=== 测试 1: 闲聊（Agent 决定不检索）===
+你好！我是 Agentic RAG 助手，可以帮你查 RAG 相关资料。
+
+=== 测试 2: 知识类问题（Agent 决定检索）===
+根据检索：- RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。
+- Agentic RAG 是 2024-2025 年最热的 RAG 范式。...</code></pre>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- Agentic RAG = <strong>Agent 决定</strong>何时检索 / 检索什么 / 检索几次&lt;br&gt;- <strong>Single Agent + Tools</strong> 是 80% 场景的首选（简单 + 灵活）&lt;br&gt;- <strong>CRAG / Self-RAG / Adaptive RAG</strong> 是高阶变体（带反思 / 自适应）</blockquote>
+<hr>
+<h2 id="sec-9-7-LlamaIndex-实战">9.7 LlamaIndex 实战</h2>
+<h3 id="sec-9-7-1-LlamaIndex-5-大组件">9.7.1 LlamaIndex 5 大组件</h3>
+<p>LlamaIndex 是一个 <strong>RAG-first 框架</strong>——LangChain 是通用 LLM 编排，LlamaIndex 把 RAG 当作<strong>一等公民</strong>。</p>
+<table class="md-table"><tbody>
+<tr>
+<td>组件</td>
+<td>作用</td>
+<td>对应 ch08/ch09 概念</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>Document Loader</strong></td>
+<td>加载各种格式</td>
+<td>ch09 §9.3 文档加载</td>
+</tr>
+<tr>
+<td><strong>Node Parser</strong></td>
+<td>切分（Chunk）</td>
+<td>ch09 §9.3.2 切分策略</td>
+</tr>
+<tr>
+<td><strong>Vector Store Index</strong></td>
+<td>向量化 + 入库</td>
+<td>ch09 §9.4 Embed + Store</td>
+</tr>
+<tr>
+<td><strong>Query Engine</strong></td>
+<td>检索 + 生成</td>
+<td>ch09 §9.5 Retrieve + Generate</td>
+</tr>
+<tr>
+<td><strong>Agent（ReAct / OpenAI）</strong></td>
+<td>Agent 化</td>
+<td>ch09 §9.6 Agentic RAG</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-7-2-LlamaIndex-RAG-Hello-World-30-行-mock">9.7.2 LlamaIndex RAG Hello World（30 行 mock）</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.7.2 节: LlamaIndex RAG Hello World（mock 模式）
+真实 LlamaIndex:
+  from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
+  from llama_index.llms.openai import OpenAI
+  documents = SimpleDirectoryReader(&quot;./data&quot;).load_data()
+  index = VectorStoreIndex.from_documents(documents)
+  query_engine = index.as_query_engine()
+  print(query_engine.query(&quot;什么是 RAG？&quot;))
+本 mock 演示接口契约
+&quot;&quot;&quot;
+# === Mock LlamaIndex 组件 ===
+class MockDocument:
+    def __init__(self, text, doc_id=&quot;&quot;): self.text = text; self.doc_id = doc_id
+
+class MockNode:  # Node = LlamaIndex 中的 chunk
+    def __init__(self, text, doc_id=&quot;&quot;): self.text = text; self.doc_id = doc_id
+
+class SimpleNodeParser:
+    &quot;&quot;&quot;Mock SimpleNodeParser&quot;&quot;&quot;
+    def __init__(self, chunk_size=200, overlap=30):
+        self.chunk_size = chunk_size; self.overlap = overlap
+    def get_nodes_from_documents(self, docs):
+        nodes = []
+        for doc in docs:
+            text = doc.text
+            start = 0
+            while start &lt; len(text):
+                end = min(start + self.chunk_size, len(text))
+                nodes.append(MockNode(text[start:end], doc.doc_id))
+                # 保证 start 严格递增，避免末尾 overlap 把指针回退导致死循环
+                start = max(end - self.overlap, start + 1)
+        return nodes
+
+class MockVectorStoreIndex:
+    &quot;&quot;&quot;Mock VectorStoreIndex&quot;&quot;&quot;
+    def __init__(self, nodes, embed_fn):
+        self.nodes = nodes
+        self.embeddings = [embed_fn(n.text) for n in nodes]
+    @classmethod
+    def from_documents(cls, docs, embed_fn, node_parser=None):
+        parser = node_parser or SimpleNodeParser()
+        nodes = parser.get_nodes_from_documents(docs)
+        return cls(nodes, embed_fn)
+    def as_query_engine(self, llm_fn):
+        return MockQueryEngine(self.nodes, self.embeddings, llm_fn)
+
+class MockQueryEngine:
+    def __init__(self, nodes, embeddings, llm_fn):
+        self.nodes = nodes; self.embeddings = embeddings; self.llm_fn = llm_fn
+    def query(self, question):
+        # retrieve top-2
+        q_emb = [0.1] * 8  # mock
+        scored = sorted(zip(self.embeddings, self.nodes), key=lambda x: -sum(a*b for a,b in zip(q_emb, x[0])))
+        top = scored[:2]
+        context = &quot;\n&quot;.join(n.text for _, n in top)
+        return self.llm_fn(question, context)
+
+def mock_embed(text):
+    vec = [0.0] * 8
+    for i, ch in enumerate(text[:32]):
+        vec[i % 8] += (ord(ch) % 13) / 100.0
+    norm = sum(v * v for v in vec) ** 0.5
+    return [v / norm for v in vec]
+
+def mock_llm(question, context):
+    # 简单从 context 抽第一句
+    first = context.split(&quot;。&quot;)[0] if &quot;。&quot; in context else context[:50]
+    return f&quot;[LlamaIndex Mock] 基于检索回答：{first}。&quot;
+
+# === Run Hello World (5 行) ===
+documents = [MockDocument(&quot;RAG 由 Lewis et al. 2020 年提出。&quot;, &quot;doc1&quot;),
+             MockDocument(&quot;向量数据库是 RAG 核心组件。&quot;, &quot;doc2&quot;)]
+index = MockVectorStoreIndex.from_documents(documents, mock_embed)
+qe = index.as_query_engine(mock_llm)
+print(qe.query(&quot;什么是 RAG？&quot;))</code></pre>
+<h3 id="sec-9-7-3-何时选-LlamaIndex-vs-LangChain">9.7.3 何时选 LlamaIndex vs LangChain</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>场景</td>
+<td>推荐框架</td>
+<td>理由</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>纯 RAG 项目</strong></td>
+<td>LlamaIndex</td>
+<td>RAG 是 LlamaIndex 一等公民，API 更简洁</td>
+</tr>
+<tr>
+<td><strong>多 Agent + RAG + Tools</strong></td>
+<td>LangChain / LangGraph</td>
+<td>LangChain 更通用，多 Agent 生态强</td>
+</tr>
+<tr>
+<td><strong>企业知识库 + 复杂文档</strong></td>
+<td>LlamaIndex + Haystack</td>
+<td>Haystack 的 PDF / Docling 集成更成熟</td>
+</tr>
+<tr>
+<td><strong>Function Calling 重</strong></td>
+<td>OpenAI Agents SDK</td>
+<td>SDK 原生支持 tool use</td>
+</tr>
+<tr>
+<td><strong>学术 / 研究</strong></td>
+<td>DSPy</td>
+<td>DSPy 的 prompt 优化器自动调优</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-7-4-LlamaIndex-vs-LangChain-哲学对比">9.7.4 LlamaIndex vs LangChain 哲学对比</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>维度</td>
+<td>LlamaIndex</td>
+<td>LangChain</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>设计哲学</strong></td>
+<td>RAG-first，Query Engine 是核心</td>
+<td>通用 LLM 编排，Chain 是核心</td>
+</tr>
+<tr>
+<td><strong>抽象层次</strong></td>
+<td>高（Document/Node/Index）</td>
+<td>低（PromptTemplate/Chain/Agent）</td>
+</tr>
+<tr>
+<td><strong>学习曲线</strong></td>
+<td>5 大组件上手简单</td>
+<td>概念多，需要 LCEL 思维</td>
+</tr>
+<tr>
+<td><strong>生态</strong></td>
+<td>围绕检索（10+ 种 Node Parser）</td>
+<td>围绕工具 + Agent</td>
+</tr>
+<tr>
+<td><strong>文档质量</strong></td>
+<td>精炼，案例驱动</td>
+<td>庞杂，需要筛选</td>
+</tr>
+<tr>
+<td><strong>生产案例</strong></td>
+<td>企业知识库 / 法律 / 医疗</td>
+<td>通用 Agent / Chatbot</td>
+</tr>
+<tr>
+<td><strong>抽象稳定性</strong></td>
+<td>高（v0.10+ API 稳定）</td>
+<td>中（LCEL 重构过多次）</td>
+</tr>
+</tbody></table>
+<p><strong>经验法则</strong>：</p>
+<ul>
+<li><strong>RAG 项目占比 &gt; 70%</strong> → 选 LlamaIndex</li>
+<li><strong>Agent / 工具调用占比 &gt; 50%</strong> → 选 LangChain / LangGraph</li>
+<li><strong>混用模式</strong>（推荐）→ LlamaIndex 做检索 + LangChain 做 Agent 编排</li>
+</ul>
+<h3 id="sec-9-7-5-LlamaIndex-Agent-RAG-工具调用合并">9.7.5 LlamaIndex Agent：RAG + 工具调用合并</h3>
+<p>2024 年起，LlamaIndex 推出 <code>FunctionAgent</code>（基于 OpenAI Function Calling），可以把 RAG 检索封装为 Agent 的一个工具：</p>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.7.5 节: LlamaIndex FunctionAgent mock
+真实代码（安装 llama-index 后）:
+  from llama_index.core.agent import FunctionAgent
+  from llama_index.core.tools import QueryEngineTool
+  query_engine = index.as_query_engine()
+  tool = QueryEngineTool.from_defaults(query_engine, name=&quot;kb_search&quot;, description=&quot;...&quot;)
+  agent = FunctionAgent(tools=[tool], llm=OpenAI(model=&quot;gpt-4o&quot;))
+  response = await agent.run(&quot;什么是 RAG？&quot;)
+&quot;&quot;&quot;
+# Mock 版
+class MockLlamaIndexAgent:
+    def __init__(self, kb_search_fn, llm_fn):
+        self.tools = {&quot;kb_search&quot;: kb_search_fn}
+        self.llm = llm_fn
+        self.history = []
+    async def run(self, query):
+        self.history.append(query)
+        # 简化：知识类问题 → 检索 → 综合
+        if any(kw in query for kw in [&quot;什么是&quot;, &quot;是什么&quot;, &quot;怎么&quot;]):
+            context = self.tools[&quot;kb_search&quot;](query)
+            answer = self.llm(query, context)
+            return f&quot;[LlamaIndex Agent] {answer}&quot;
+        return f&quot;[LlamaIndex Agent] 直接回答：{query}&quot;
+
+# === Run mock ===
+async def demo():
+    agent = MockLlamaIndexAgent(
+        kb_search_fn=lambda q: &quot;RAG 由 Lewis et al. 2020 提出。&quot;,
+        llm_fn=lambda q, c: f&quot;基于检索：{c}&quot;
+    )
+    print(await agent.run(&quot;什么是 RAG？&quot;))
+
+import asyncio
+asyncio.run(demo())</code></pre>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- LlamaIndex 是 <strong>RAG-first</strong> 框架（5 大组件全部围绕 RAG）&lt;br&gt;- 真实场景：LlamaIndex 适合纯 RAG，LangChain 适合多 Agent + 工具编排&lt;br&gt;- LlamaIndex 的 <strong>Node Parser</strong> 是它最强大的组件（10+ 种内置切分器）&lt;br&gt;- <strong>混用模式</strong>（推荐）：LlamaIndex 检索 + LangChain Agent 编排</blockquote>
+<hr>
+<h2 id="sec-9-8-RAG-评估">9.8 RAG 评估</h2>
+<h3 id="sec-9-8-1-3-大评估维度">9.8.1 3 大评估维度</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>维度</td>
+<td>指标</td>
+<td>工具</td>
+<td>何时用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>检索质量</strong></td>
+<td>Recall@K / MRR / NDCG@K</td>
+<td>BEIR / TREC</td>
+<td>调 embedding / top-K 时</td>
+</tr>
+<tr>
+<td><strong>生成质量</strong></td>
+<td>Faithfulness / Answer Relevancy / Context Precision / Context Recall</td>
+<td><strong>RAGAS</strong></td>
+<td>调 prompt / LLM 时</td>
+</tr>
+<tr>
+<td><strong>端到端</strong></td>
+<td>人工评估 / LLM-as-Judge</td>
+<td>标注平台</td>
+<td>上线前最终评估</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-8-2-RAGAS-4-大核心指标">9.8.2 RAGAS 4 大核心指标</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>指标</td>
+<td>含义</td>
+<td>计算方式</td>
+<td>期望</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---:</td>
+</tr>
+<tr>
+<td><strong>Faithfulness</strong></td>
+<td>答案是否忠于检索内容</td>
+<td>LLM 判断 answer 的每个陈述是否能在 context 中找到依据</td>
+<td>&gt; 0.85</td>
+</tr>
+<tr>
+<td><strong>Answer Relevancy</strong></td>
+<td>答案是否切题</td>
+<td>LLM 根据 answer 反向生成可能的 query，与原 query 比相似度</td>
+<td>&gt; 0.80</td>
+</tr>
+<tr>
+<td><strong>Context Precision</strong></td>
+<td>检索内容的排名质量</td>
+<td>排名前 K 的 chunk 中相关 chunk 的占比</td>
+<td>&gt; 0.75</td>
+</tr>
+<tr>
+<td><strong>Context Recall</strong></td>
+<td>检索的召回率</td>
+<td>标准答案中的事实能否在检索内容中找到</td>
+<td>&gt; 0.80</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-8-3-RAGAS-评估流程-伪代码">9.8.3 RAGAS 评估流程（伪代码）</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.8.3 节: RAGAS 评估流程 mock
+真实 RAGAS:
+  from ragas import evaluate
+  from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+  result = evaluate(dataset, metrics=[faithfulness, answer_relevancy, context_precision, context_recall])
+  print(result)
+&quot;&quot;&quot;
+# === Mock RAGAS 评估器 ===
+class MockRAGAS:
+    def evaluate(self, samples):
+        &quot;&quot;&quot;samples: [{&#x27;question&#x27;, &#x27;answer&#x27;, &#x27;contexts&#x27;, &#x27;ground_truth&#x27;}, ...]&quot;&quot;&quot;
+        results = []
+        for s in samples:
+            # mock 评分（真实 RAGAS 用 LLM-as-judge）
+            faith = 0.92 if &quot;RAG&quot; in s[&#x27;answer&#x27;] else 0.65
+            relevancy = 0.88 if len(s[&#x27;answer&#x27;]) &gt; 20 else 0.45
+            ctx_prec = 0.85 if len(s[&#x27;contexts&#x27;]) &gt; 0 else 0.0
+            ctx_recall = 0.80 if s[&#x27;ground_truth&#x27;][:5] in &quot;&quot;.join(s[&#x27;contexts&#x27;]) else 0.3
+            results.append({
+                &#x27;faithfulness&#x27;: faith,
+                &#x27;answer_relevancy&#x27;: relevancy,
+                &#x27;context_precision&#x27;: ctx_prec,
+                &#x27;context_recall&#x27;: ctx_recall,
+            })
+        # 平均
+        avg = {k: sum(r[k] for r in results) / len(results) for k in results[0]}
+        return avg
+
+# === Run ===
+samples = [
+    {
+        &#x27;question&#x27;: &#x27;什么是 RAG？&#x27;,
+        &#x27;answer&#x27;: &#x27;RAG 是检索增强生成，由 Lewis et al. 在 2020 年提出。&#x27;,
+        &#x27;contexts&#x27;: [&#x27;RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。&#x27;],
+        &#x27;ground_truth&#x27;: &#x27;RAG（Retrieval-Augmented Generation）由 Lewis et al. 在 2020 年提出。&#x27;
+    },
+]
+evaluator = MockRAGAS()
+scores = evaluator.evaluate(samples)
+print(&quot;RAGAS 评估结果：&quot;)
+for k, v in scores.items():
+    status = &quot;✅&quot; if v &gt; 0.75 else &quot;⚠️&quot;
+    print(f&quot;  {k}: {v:.3f}  {status}&quot;)</code></pre>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- RAGAS 是 <strong>RAG 评估的事实标准</strong>&lt;br&gt;- 4 大指标：Faithfulness / Answer Relevancy / Context Precision / Context Recall&lt;br&gt;- <strong>不评估就上线</strong>是 RAG 项目最常见的死法——必须先跑通 RAGAS</blockquote>
+<hr>
+<h2 id="sec-9-9-RAG-与-Long-Context-的争论">9.9 RAG 与 Long-Context 的争论</h2>
+<h3 id="sec-9-9-1-2025-关键问题">9.9.1 2025 关键问题</h3>
+<p>context 已经 128K / 200K / 1M 了，还需要 RAG 吗？这是 2024-2025 年最热的争论。</p>
+<p><strong>Long-Context 派的观点</strong>：context 装得下，把所有文档直接塞进去，省去检索的麻烦。</p>
+<p><strong>RAG 派的反驳</strong>：context ≠ 万能。</p>
+<h3 id="sec-9-9-2-3-大-RAG-不可替代场景">9.9.2 3 大 RAG 不可替代场景</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>维度</td>
+<td>Long-Context</td>
+<td>RAG</td>
+<td>哪个赢</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---:</td>
+</tr>
+<tr>
+<td><strong>成本</strong></td>
+<td>$5/M tokens（200K 上下文）</td>
+<td>$0.5/M（检索后 2K tokens）</td>
+<td><strong>RAG</strong>（便宜 10 倍）</td>
+</tr>
+<tr>
+<td><strong>实时性</strong></td>
+<td>训练截止日之前</td>
+<td>实时更新文档</td>
+<td><strong>RAG</strong></td>
+</tr>
+<tr>
+<td><strong>精确性</strong></td>
+<td>Lost in the middle（中间信息丢失 30%）</td>
+<td>命中即引用</td>
+<td><strong>RAG</strong></td>
+</tr>
+<tr>
+<td><strong>可解释性</strong></td>
+<td>黑盒</td>
+<td>明确来源</td>
+<td><strong>RAG</strong></td>
+</tr>
+<tr>
+<td><strong>规模</strong></td>
+<td>上限 ~10M tokens</td>
+<td>无上限（PB 级向量库）</td>
+<td><strong>RAG</strong></td>
+</tr>
+<tr>
+<td><strong>复杂度</strong></td>
+<td>直接塞</td>
+<td>需要建索引</td>
+<td>Long-Context</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-9-3-RAG-Long-Context-混用-决策表">9.9.3 RAG / Long-Context / 混用 决策表</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>场景</td>
+<td>推荐方案</td>
+<td>理由</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td>文档 &lt; 100K tokens</td>
+<td>Long-Context 即可</td>
+<td>简单 + 一次性塞入</td>
+</tr>
+<tr>
+<td>文档 100K-2M tokens</td>
+<td><strong>RAG</strong></td>
+<td>成本 + 精确性优势明显</td>
+</tr>
+<tr>
+<td>文档 &gt; 2M tokens</td>
+<td><strong>RAG</strong></td>
+<td>不可能塞进 context</td>
+</tr>
+<tr>
+<td>实时更新数据</td>
+<td><strong>RAG</strong></td>
+<td>文档可即时写入向量库</td>
+</tr>
+<tr>
+<td>需要溯源</td>
+<td><strong>RAG</strong></td>
+<td>每个 chunk 可标注来源</td>
+</tr>
+<tr>
+<td>长文档摘要 + 关键信息检索</td>
+<td><strong>Long-Context + RAG 混用</strong></td>
+<td>Long-Context 理解全文 + RAG 精确定位</td>
+</tr>
+<tr>
+<td>多文档交叉对比</td>
+<td><strong>Multi-doc RAG</strong></td>
+<td>跨文档检索 + cross-doc reasoning</td>
+</tr>
+</tbody></table>
+<p><strong>2025 共识</strong>：<strong>RAG 不会消失，但会从"唯一方案"变成"工具之一"</strong>。Anthropic、Google、OpenAI 都同时支持 Long-Context + RAG——告诉用户在哪个场景用哪个。</p>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- RAG 的 3 大不可替代：<strong>成本 + 实时性 + 精确性</strong>&lt;br&gt;- 2025 共识：<strong>RAG + Long-Context 混用</strong>，而非二选一&lt;br&gt;- 文档 &gt; 100K tokens → RAG 永远是首选</blockquote>
+<hr>
+<h2 id="sec-9-10-5-大坑">9.10 5 大坑</h2>
+<h3 id="sec-9-10-1-5-大坑-修复表">9.10.1 5 大坑 × 修复表</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>#</td>
+<td>坑</td>
+<td>症状</td>
+<td>修复</td>
+</tr>
+<tr>
+<td>:---:</td>
+<td>:---</td>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td>1</td>
+<td><strong>chunk 切太大切不到答案</strong></td>
+<td>答案在段落中间，被截断</td>
+<td>用 Recursive 切分 + chunk_size ≤ 512</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>embedding 模型不匹配</strong></td>
+<td>中文用英文模型 → 检索质量差 30-50%</td>
+<td>中文必须用 <strong>BGE-large-zh / M3E / text-embedding-3-large</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>top-K 固定不变</strong></td>
+<td>K=5 总是太多或太少</td>
+<td>让 Agent 动态决定 K，或根据 query 复杂度调</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>不评估就上线</strong></td>
+<td>faithfulness = 60% 都不知道</td>
+<td>上线前必跑 RAGAS 4 指标</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>忽略 chunk metadata</strong></td>
+<td>文档来源 / 时间戳丢失，无法溯源</td>
+<td>切分时保留 doc_id / section / page metadata</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-10-2-5-大坑深度诊断">9.10.2 5 大坑深度诊断</h3>
+<p><strong>坑 1：chunk 切太大</strong>——最隐蔽的 RAG 失败模式。症状是"答案其实在文档里，但检索不出来"。诊断方法：手工查 top-10 检索结果，看答案所在段落是否被切碎。修复：用 RecursiveCharacterTextSplitter，把 chunk_size 从 1024 降到 512，overlap 从 100 降到 50。</p>
+<p><strong>坑 2：embedding 模型不匹配</strong>——用 text-embedding-3-small 处理中文 PDF，检索质量会比 BGE-large-zh 低 30-50%。诊断：把 5 篇已知答案的中文文档塞进 RAG，跑 RAGAS Context Recall，看是否 &lt; 0.5。修复：中文场景<strong>强制</strong>用 BGE-large-zh-v1.5 或 M3E-large。</p>
+<p><strong>坑 3：top-K 固定</strong>——K=5 对短答案问题太多，对长答案问题太少。诊断：观察 top-5 里有几个 chunk 与 query 相关。修复：让 Agent 动态选 K，或在 ReAct 框架下让 LLM 决定"还要不要再检索一次"。</p>
+<p><strong>坑 4：不评估</strong>——生产 RAG 上线 1 个月后才发现 faithfulness=0.6，user 已经在投诉。诊断：上线前必须跑 RAGAS 4 指标（faithfulness / answer_relevancy / context_precision / context_recall），每项 &lt; 0.75 就拒绝上线。</p>
+<p><strong>坑 5：metadata 丢失</strong>——用户问"这段话出自哪份文档第几页？"，回答"我不确定"。修复：切分时把 doc_id / page / section / source / timestamp 都保留到 metadata，生成答案时一并塞进 Prompt。</p>
+<h3 id="sec-9-10-3-RAG-项目上线-checklist">9.10.3 RAG 项目上线 checklist</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>#</td>
+<td>项</td>
+<td>必须</td>
+</tr>
+<tr>
+<td>:---:</td>
+<td>:---</td>
+<td>:---:</td>
+</tr>
+<tr>
+<td>1</td>
+<td>chunk_size ≤ 512 + overlap 50</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>2</td>
+<td>中文用 BGE-large-zh 或 M3E</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Agent 决定 top-K 或 K 动态</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>4</td>
+<td>RAGAS 4 指标全部 &gt; 0.75</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>5</td>
+<td>chunk metadata 保留完整</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>6</td>
+<td>retrieval latency &lt; 200ms（P95）</td>
+<td>建议</td>
+</tr>
+<tr>
+<td>7</td>
+<td>LLM generation latency &lt; 2s（P95）</td>
+<td>建议</td>
+</tr>
+<tr>
+<td>8</td>
+<td>用户反馈闭环（点赞/点踩）</td>
+<td>建议</td>
+</tr>
+<tr>
+<td>9</td>
+<td>A/B 测试框架（不同 prompt 模板对比）</td>
+<td>建议</td>
+</tr>
+<tr>
+<td>10</td>
+<td>文档版本管理（PDF 更新后增量索引）</td>
+<td>建议</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-10-4-坑-2-修复示例-中文-embedding-选型">9.10.4 坑 2 修复示例：中文 embedding 选型</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.10.2 节: 中文 RAG embedding 选型决策树
+中文场景：避免使用纯英文模型
+&quot;&quot;&quot;
+def select_chinese_embedding(case):
+    &quot;&quot;&quot;根据场景选 embedding 模型&quot;&quot;&quot;
+    if case == &quot;qa_with_short_query&quot;:
+        return &quot;text-embedding-3-small&quot;  # 通用，对短 query 友好
+    elif case == &quot;chinese_kb&quot;:
+        return &quot;BGE-large-zh-v1.5&quot;  # 中文最强开源
+    elif case == &quot;code_search&quot;:
+        return &quot;text-embedding-3-small&quot;  # 代码检索
+    elif case == &quot;multi_lang&quot;:
+        return &quot;multilingual-e5-large&quot;  # 多语言
+    return &quot;BGE-large-zh-v1.5&quot;  # 默认
+
+# === Run ===
+for case in [&quot;chinese_kb&quot;, &quot;qa_with_short_query&quot;, &quot;code_search&quot;]:
+    print(f&quot;{case}: {select_chinese_embedding(case)}&quot;)</code></pre>
+<h3 id="sec-9-10-5-坑-5-修复示例-chunk-metadata-保留">9.10.5 坑 5 修复示例：chunk metadata 保留</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+第 9.10.3 节: chunk metadata 保留（避免丢失溯源）
+&quot;&quot;&quot;
+def chunk_with_metadata(doc, chunk_size=200, overlap=30):
+    &quot;&quot;&quot;切分时保留 doc_id / page / section&quot;&quot;&quot;
+    chunks = []
+    start = 0
+    while start &lt; len(doc[&#x27;text&#x27;]):
+        end = min(start + chunk_size, len(doc[&#x27;text&#x27;]))
+        chunk = doc[&#x27;text&#x27;][start:end]
+        chunks.append({
+            &#x27;text&#x27;: chunk,
+            &#x27;metadata&#x27;: {
+                &#x27;doc_id&#x27;: doc[&#x27;id&#x27;],
+                &#x27;source&#x27;: doc.get(&#x27;source&#x27;, &#x27;unknown&#x27;),
+                &#x27;page&#x27;: doc.get(&#x27;page&#x27;, 1),
+                &#x27;section&#x27;: doc.get(&#x27;section&#x27;, &#x27;&#x27;),
+                &#x27;chunk_index&#x27;: len(chunks),
+            }
+        })
+        start = max(end - overlap, start + 1)
+    return chunks
+
+# === Run ===
+doc = {
+    &#x27;id&#x27;: &#x27;manual_v3&#x27;,
+    &#x27;source&#x27;: &#x27;product_manual.pdf&#x27;,
+    &#x27;page&#x27;: 12,
+    &#x27;section&#x27;: &#x27;退款政策&#x27;,
+    &#x27;text&#x27;: &#x27;退款必须在 7 天内申请。超过 7 天不予退款。&#x27;
+}
+chunks = chunk_with_metadata(doc)
+for c in chunks:
+    print(f&quot;  text={c[&#x27;text&#x27;][:20]}...  metadata={c[&#x27;metadata&#x27;]}&quot;)</code></pre>
+<h3 id="sec-9-10-6-RAG-失败模式速查-按出现频率排序">9.10.6 RAG 失败模式速查（按出现频率排序）</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>排名</td>
+<td>失败模式</td>
+<td>频率</td>
+<td>解决成本</td>
+</tr>
+<tr>
+<td>:---:</td>
+<td>:---</td>
+<td>:---:</td>
+<td>:---:</td>
+</tr>
+<tr>
+<td>1</td>
+<td>检索不到答案（chunk 切分 / embedding 不匹配）</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>低</td>
+</tr>
+<tr>
+<td>2</td>
+<td>答案与 query 偏题（top-K 太多噪声）</td>
+<td>⭐⭐⭐⭐</td>
+<td>低</td>
+</tr>
+<tr>
+<td>3</td>
+<td>答案编造（retrieval 召回但生成幻觉）</td>
+<td>⭐⭐⭐</td>
+<td>中</td>
+</tr>
+<tr>
+<td>4</td>
+<td>答案溯源失败（metadata 丢失）</td>
+<td>⭐⭐⭐</td>
+<td>低</td>
+</tr>
+<tr>
+<td>5</td>
+<td>长文档摘要丢关键信息</td>
+<td>⭐⭐</td>
+<td>中</td>
+</tr>
+<tr>
+<td>6</td>
+<td>多文档交叉对比混乱</td>
+<td>⭐⭐</td>
+<td>高</td>
+</tr>
+<tr>
+<td>7</td>
+<td>实时性差（向量库未更新）</td>
+<td>⭐</td>
+<td>中</td>
+</tr>
+<tr>
+<td>8</td>
+<td>多语言混合检索失败</td>
+<td>⭐</td>
+<td>高</td>
+</tr>
+</tbody></table>
+<blockquote><strong>关键概念摘要</strong>：&lt;br&gt;- <strong>坑 1</strong>（chunk 切太大）和 <strong>坑 2</strong>（embedding 不匹配）是两个最常见的 RAG 死亡组合&lt;br&gt;- <strong>坑 4</strong>（不评估就上线）= 上线后才发现 faithfulness = 60%&lt;br&gt;- <strong>坑 5</strong>（metadata 丢失）= 无法回答"这段话出自哪个文档哪一页"&lt;br&gt;- 失败模式 #1（检索不到答案）占所有 RAG 失败中的 <strong>50%+</strong>——先把检索质量拉满</blockquote>
+<hr>
+<h2 id="sec-9-11-本章小结">9.11 本章小结</h2>
+<h3 id="sec-9-11-1-8-条速记">9.11.1 8 条速记</h3>
+<ol>
+<li><strong>RAG = 开卷考试</strong>——给模型参考书</li>
+<li><strong>5 阶段流水线</strong> = Document → Chunk → Embed → Store → Retrieve → Augment → Generate</li>
+<li><strong>中文 RAG 甜区</strong>：512 字符 chunk + BGE-large-zh embedding + top-K=3-5 + Reranking</li>
+<li><strong>Advanced RAG</strong> = Pre + Retrieval + Post 三阶段共 8 种优化策略</li>
+<li><strong>Agentic RAG</strong> = Agent 决定何时检索 / 检索什么 / 检索几次</li>
+<li><strong>LlamaIndex</strong> = RAG-first 框架；<strong>LangChain</strong> = 通用编排</li>
+<li><strong>RAGAS 4 指标</strong> = Faithfulness / Answer Relevancy / Context Precision / Context Recall</li>
+<li><strong>RAG vs Long-Context</strong> = 成本 + 实时性 + 精确性 三场景 RAG 必胜，2025 是混用时代</li>
+</ol>
+<h3 id="sec-9-11-2-概念速查表-25-术语">9.11.2 概念速查表（25 术语）</h3>
+<table class="md-table"><tbody>
+<tr>
+<td>术语</td>
+<td>含义</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>RAG</strong></td>
+<td>Retrieval-Augmented Generation，检索增强生成</td>
+</tr>
+<tr>
+<td><strong>Naive RAG</strong></td>
+<td>5 阶段固定流水线，每次都检索</td>
+</tr>
+<tr>
+<td><strong>Advanced RAG</strong></td>
+<td>Naive + Pre/Retrieval/Post 8 种优化</td>
+</tr>
+<tr>
+<td><strong>Agentic RAG</strong></td>
+<td>Agent 动态决策的 RAG 范式</td>
+</tr>
+<tr>
+<td><strong>CRAG</strong></td>
+<td>Corrective RAG，检索后反思修正</td>
+</tr>
+<tr>
+<td><strong>Self-RAG</strong></td>
+<td>LLM 自反思检索必要性的 RAG</td>
+</tr>
+<tr>
+<td><strong>Adaptive RAG</strong></td>
+<td>根据 query 类型路由的 RAG</td>
+</tr>
+<tr>
+<td><strong>HyDE</strong></td>
+<td>Hypothetical Doc Embedding，假设性文档嵌入</td>
+</tr>
+<tr>
+<td><strong>RAG-Fusion</strong></td>
+<td>多 query 检索后倒数排序融合</td>
+</tr>
+<tr>
+<td><strong>Re-ranking</strong></td>
+<td>Cross-Encoder 对 top-K 重新排序</td>
+</tr>
+<tr>
+<td><strong>Hybrid Retrieval</strong></td>
+<td>BM25 + 向量混合检索</td>
+</tr>
+<tr>
+<td><strong>chunk_size</strong></td>
+<td>切分块大小（字符数）</td>
+</tr>
+<tr>
+<td><strong>overlap</strong></td>
+<td>块间重叠字符数</td>
+</tr>
+<tr>
+<td><strong>top-K</strong></td>
+<td>检索返回的 chunk 数量</td>
+</tr>
+<tr>
+<td><strong>cosine similarity</strong></td>
+<td>余弦相似度，最常用的向量距离</td>
+</tr>
+<tr>
+<td><strong>Recall@K</strong></td>
+<td>前 K 个结果中相关文档的占比</td>
+</tr>
+<tr>
+<td><strong>MRR</strong></td>
+<td>Mean Reciprocal Rank，平均倒数排名</td>
+</tr>
+<tr>
+<td><strong>Faithfulness</strong></td>
+<td>答案忠于检索内容的程度</td>
+</tr>
+<tr>
+<td><strong>Answer Relevancy</strong></td>
+<td>答案与 query 的相关度</td>
+</tr>
+<tr>
+<td><strong>Context Precision</strong></td>
+<td>检索内容的排名质量</td>
+</tr>
+<tr>
+<td><strong>Context Recall</strong></td>
+<td>检索的召回率</td>
+</tr>
+<tr>
+<td><strong>RAGAS</strong></td>
+<td>RAG 评估的事实标准框架</td>
+</tr>
+<tr>
+<td><strong>LlamaIndex</strong></td>
+<td>RAG-first 的 LLM 框架</td>
+</tr>
+<tr>
+<td><strong>Node Parser</strong></td>
+<td>LlamaIndex 的切分组件</td>
+</tr>
+<tr>
+<td><strong>Query Engine</strong></td>
+<td>LlamaIndex 的检索 + 生成封装</td>
+</tr>
+</tbody></table>
+<h3 id="sec-9-11-3-概念桥-ch09-ch10">9.11.3 概念桥：ch09 ↔ ch10</h3>
+<p>ch09 讲了 RAG 的工程化全貌。下一章 ch10《规划与推理》会把 RAG 当作"<strong>Agent 的检索工具</strong>"使用——Agent 不再是"问题 → 检索 → 回答"的固定流水线，而是"<strong>问题 → 规划 → 选择工具（含 RAG）→ 推理 → 反思 → 回答</strong>"的更高层抽象。</p>
+<table class="md-table"><tbody>
+<tr>
+<td>本章学到的</td>
+<td>下一章怎么用</td>
+</tr>
+<tr>
+<td>:---</td>
+<td>:---</td>
+</tr>
+<tr>
+<td><strong>9.2 5 阶段流水线</strong></td>
+<td><strong>ch10 §10.4 Plan-and-Execute</strong> —— "检索"变成 Plan 中的一个 step，由 LLM 决定何时执行</td>
+</tr>
+<tr>
+<td><strong>9.5 Advanced RAG 8 策略</strong></td>
+<td><strong>ch10 §10.2 ReAct</strong> —— ReAct 的 Thought → Action → Observation 循环，Action 可以是 <code>search(query)</code></td>
+</tr>
+<tr>
+<td><strong>9.6 Agentic RAG</strong></td>
+<td><strong>ch10 §10.5 LATS</strong> —— LATS 把"检索"作为 MCTS 的一个动作节点，多轮检索 + 推理交错进行</td>
+</tr>
+<tr>
+<td><strong>9.7 LlamaIndex</strong></td>
+<td><strong>ch10 §10.6 实战</strong> —— LlamaIndex Agent 把 RAG + 规划 + 工具调用合并</td>
+</tr>
+<tr>
+<td><strong>9.8 RAGAS 评估</strong></td>
+<td><strong>ch10 §10.7 评估</strong> —— 整个 Agent（含 RAG 步骤）的端到端评估</td>
+</tr>
+</tbody></table>
+<p><strong>第二部分进度</strong>：4/5 章完成 + 第 10 章《规划与推理》预告（第二部分完结）。</p>
+<hr>
+<h3 id="sec-进一步阅读">进一步阅读</h3>
+<ol>
+<li>Lewis et al., 2020, <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks</em> — RAG 原论文</li>
+<li>Anthropic, 2024-09, <em>Contextual Retrieval</em> — Anthropic 的 Advanced RAG 工程实践</li>
+<li>Asai et al., 2023-10, <em>Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection</em> — Self-RAG</li>
+<li>Yan et al., 2024-01, <em>Corrective Retrieval Augmented Generation (CRAG)</em> — CRAG</li>
+<li>Jeong et al., 2024-03, <em>Adaptive-RAG: Learning to Adapt Retrieval-Augmented Large Language Models through Question Complexity</em> — Adaptive-RAG</li>
+<li>Es et al., 2024, <em>RAGAS: Automated Evaluation of Retrieval Augmented Generation</em> — RAGAS 评估框架</li>
+<li>Liu, 2024, <em>LlamaIndex Documentation</em> — LlamaIndex 官方文档</li>
+<li>Anthropic, 2024-09, <em>Building Effective Agents</em> — Agent 设计哲学（含 RAG 用法）</li>
+</ol>
+<blockquote><strong>下章预告</strong>：第 10 章《规划与推理——CoT、ToT、ReWOO、Plan-and-Execute、LATS》——把 ch09 的 RAG 当作"Agent 的检索工具"，加上 CoT/ToT 推理树、Plan-and-Execute 分步规划、LATS 蒙特卡洛树搜索，<strong>第二部分完结 + Part 2 Retrospective</strong>。</blockquote>
+
+  <hr style="margin-top: 60px;">
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; gap:16px; margin-top:30px;">
+    <a href="ch08.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">← 上一章：记忆系统（第 8 章）</a>
+    <a href="ch10.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">下一章：规划与推理（第 10 章，未发布）→</a>
+  </nav>
+
+  <footer style="margin-top:60px; padding-top:20px; border-top:1px solid rgba(192,38,211,0.2); color:#888; font-size:13px; text-align:center;">
+    <p>《AGENT开发从入门到精通》· 第 9 章 · RAG——检索增强生成在 Agent 中的角色</p>
+    <p style="margin-top:8px;">
+      <a href="../index.html">书库首页</a> ·
+      <a href="ch01.html">第 1 章</a> ·
+      <a href="ch02.html">第 2 章</a> ·
+      <a href="ch03.html">第 3 章</a> ·
+      <a href="ch04.html">第 4 章</a> ·
+      <a href="ch05.html">第 5 章</a> ·
+      <a href="ch06.html">第 6 章</a> ·
+      <a href="ch07.html">第 7 章</a> ·
+      <a href="ch08.html">第 8 章</a>
+    </p>
+  </footer>
+</main>
+
+<script src="/assets/js/site.js"></script>
+<script src="/assets/js/book.js"></script>
+
+</body>
+</html>
