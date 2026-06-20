@@ -184,6 +184,7 @@
 </ul>
 <p><strong>Grover 迭代算符</strong>:</p>
 <p>$$\hat{G} = \hat{R}_s \cdot \hat{O}_w = (2|s\rangle\langle s| - \hat{I})(\hat{I} - 2|w\rangle\langle w|)$$</p>
+<blockquote class="chapter-quote"><strong>注(Day 13 修订 S1)</strong>: $\hat{G} = \hat{R}_s \hat{O}_w$ 中算符作用顺序:<strong>先</strong> $\hat{O}_w$ (条件相位翻转),<strong>再</strong> $\hat{R}_s$ (均匀反射)。这是 Grover 电路的<strong>时间顺序</strong>: 对态 $|\psi\rangle$ 作用 Grover 迭代, 等价于 $\hat{R}_s(\hat{O}_w |\psi\rangle)$ —— <strong>先算右边的算符</strong>(oracle),<strong>再算左边</strong>(diffusion)。两个算符<strong>不能交换</strong> —— 交换后意义完全不同。</blockquote>
 <p><strong>关键定理</strong>:<strong>在 span$(|w\rangle, |w^\perp\rangle)$ 这个 2D 子空间中,$\hat{G}$ 是角度为 $2\theta$ 的旋转</strong>。</p>
 <p><strong>证明思路</strong>:</p>
 <ol>
@@ -212,6 +213,14 @@
 <li>$|w\rangle$ 方向: $\sin((2k+1)\theta)$</li>
 <li>$|w^\perp\rangle$ 方向: $\cos((2k+1)\theta)$</li>
 </ul>
+<blockquote class="chapter-quote"><strong>注(Day 13 修订 S2)</strong>: <strong>几何直觉</strong>:
+<ul>
+<li><strong>反射</strong> = "翻转" —— 像照镜子,把向量翻到镜像位置</li>
+<li><strong>旋转</strong> = "转动" —— 像旋转门,把向量转过一定角度</li>
+<li><strong>基础几何事实</strong>: 在 2D 平面中,关于两条<strong>相交</strong>直线的<strong>两次反射 = 绕交点的旋转</strong>,<strong>角度 = 两直线夹角的两倍</strong>。</li>
+<li>这里 $\hat{O}_w$ 关于 $|w^\perp\rangle$ 轴反射, $\hat{R}_s$ 关于 $|s\rangle$ 轴反射,两轴夹角 = $\theta$,所以两步合起来 = 旋转 $2\theta$。 ✓</li>
+</ul>
+</blockquote>
 <p><strong>测量得到目标的概率</strong>: $\sin^2((2k+1)\theta)$。</p>
 <p><strong>最优迭代次数</strong>: 当 $(2k+1)\theta = \pi/2$,即 $k = \pi/(4\theta) - 1/2$。此时 $\sin^2 = 1$,<strong>测量必然</strong>得到目标。</p>
 <p><strong>近似最优</strong>: 取 $k = \lfloor \pi/(4\theta) \rfloor$,此时 $\sin^2((2k+1)\theta) \geq 1 - \epsilon$ 对小 $\epsilon$。</p>
@@ -412,6 +421,13 @@ q2: ──H─────────────────H───X──�
 <h2>10.7 迭代次数与加速比</h2>
 <p><strong>精确公式</strong>: 设 $M$ 是目标数,$N$ 是总数。最优迭代次数 $k_{\text{opt}}$ 满足:</p>
 <p>$$k_{\text{opt}} = \left\lfloor \frac{\pi}{4\theta} \right\rfloor, \quad \sin\theta = \sqrt{M/N}$$</p>
+<blockquote class="chapter-quote"><strong>注(Day 13 修订 S3)</strong>: <strong>精确 vs 近似</strong>:
+<ul>
+<li><strong>精确公式</strong>: $k_{\text{opt}} = \lfloor \pi/(4\theta) \rfloor$,其中 $\theta = \arcsin(\sqrt{M/N})$ —— <strong>始终成立</strong>(无近似)</li>
+<li><strong>小角度近似</strong> ($M \ll N$): $\theta \approx \sqrt{M/N}$,所以 $k_{\text{opt}} \approx \frac{\pi}{4} \sqrt{N/M}$ —— <strong>仅当 $M \ll N$ 时有效</strong></li>
+<li><strong>大 $M$ 的情形</strong>: 当 $M$ 接近 $N$ 时(如 $M = N/4$), $\theta$ 不再是小角,小角度近似<strong>高估</strong>加速比 —— 必须用<strong>精确公式</strong> $\lfloor \pi/(4\theta) \rfloor$,其中 $\theta = \arcsin(\sqrt{M/N})$</li>
+</ul>
+</blockquote>
 <p><strong>典型情形</strong>(假设 $M \ll N$,所以 $\theta \approx \sqrt{M/N}$):</p>
 <p>$$k_{\text{opt}} \approx \frac{\pi}{4} \sqrt{\frac{N}{M}}$$</p>
 <p><strong>$M = 1$ 情形</strong>: $k_{\text{opt}} \approx \frac{\pi}{4} \sqrt{N} \approx 0.785 \sqrt{N}$。</p>
@@ -479,6 +495,21 @@ q2: ──H─────────────────H───X──�
 <li>SHA-256 碰撞攻击经典 $O(2^{128})$, Grover $O(2^{85})$ —— <strong>削弱哈希安全性</strong></li>
 </ul>
 <p><strong>后果</strong>: NIST 在 2016 决定把<strong>后量子</strong>安全级别提高一倍(AES-128 → AES-256,SHA-256 → SHA-384)以抵御 Grover 加速。</p>
+<blockquote class="chapter-quote"><strong>注(Day 13 修订 S5)</strong>: <strong>NIST 应对 —— 区分 Grover 跟 PQC 标准化</strong>:
+<p><strong>Grover 加速</strong>主要影响<strong>对称加密和哈希</strong>,NIST 应对是<strong>对现有标准的强化</strong>:</p>
+<ul>
+<li><strong>对称加密</strong>: Grover 把 AES-128 有效密钥从 $2^{128}$ 降到 $2^{64}$。NIST 2016 建议<strong>长期安全</strong>用 <strong>AES-256</strong>(2 倍密钥长度)</li>
+<li><strong>哈希</strong>: 抗碰撞 Grover $O(2^{85})$(从 $2^{128}$),NIST 建议用 <strong>SHA-384</strong> 替代 SHA-256</li>
+<li><strong>后量子密码学</strong>(2022 标准化): 主要是抗 Shor 算法(数论问题),<strong>不直接</strong>针对 Grover</li>
+</ul>
+<p><strong>NIST PQC 标准化历程</strong>:</p>
+<ul>
+<li><strong>2016</strong>: NIST 公开征集 PQC 算法(69 个初始候选)</li>
+<li><strong>2022</strong>: NIST 公布首批 4 个 PQC 标准 —— <strong>Kyber</strong> (ML-KEM, 格密码 LWE) + <strong>Dilithium</strong> (ML-DSA, 格密码) + <strong>SPHINCS+</strong> (SLH-DSA, 哈希签名) + <strong>FALCON</strong> (FN-DSA, 格密码)</li>
+<li><strong>2024-2025</strong>: NIST 进一步标准化进程(HQC、McEliece 等)</li>
+<li><strong>关键</strong>: 这些是抗<strong>Shor</strong>算法(破解 RSA / 椭圆曲线),<strong>不直接</strong>对 Grover 加速。Grover 应对见上一段(AES-256 等)</li>
+</ul>
+</blockquote>
 <h3>10.10.4 振幅估计(Amplitude Estimation)</h3>
 <p><strong>应用</strong>: 蒙特卡洛估计的量子加速。</p>
 <ul>
@@ -698,9 +729,19 @@ q2: ──H─────────────────H───X──�
 <li><strong>多项式方法</strong>: 算法的成功概率可以表示为一个<strong>关于 $N$ 的多项式</strong> $p(T, N)$,其中 $T$ 是查询次数。</li>
 <li>关键定理:<strong>任何查询 $T$ 次的算法,成功概率的多项式 $p(T, N)$ 的次数 = $2T$</strong>(每次 oracle 是"线性",组合后是"$2T$ 次多项式")。</li>
 <li>已知 $p(0, N) = 1/N$(零查询 = 随机猜测),$p(N, N) = 1$(遍历 = 必然成功)。</li>
-<li>拉格朗日插值: $p(T, N)$ 必须在 $T = O(\sqrt{N})$ 时达到 $p = 1$。</li>
-<li>因此 $T = \Omega(\sqrt{N})$。 ✓</li>
+<p>- 拉格朗日插值: $p(T, N)$ 必须在 $T = O(\sqrt{N})$ 时达到 $p = 1$。</p>
+<p>- 因此 $T = \Omega(\sqrt{N})$。 ✓</p>
+<blockquote class="chapter-quote"><strong>注(Day 13 修订 S4)</strong>: <strong>为什么次数 = $2T$</strong>?
+<ul>
+<li>每次 oracle 查询 $\hat{O}_x$ 是<strong>线性</strong>算符(对态线性作用)</li>
+<li>$T$ 次查询 = <strong>查询算符的 $T$ 阶线性组合</strong>(对态的最终形式 = $\sum_{i_1, \ldots, i_T} c_{i_1, \ldots, i_T} \hat{O}_{i_1} \cdots \hat{O}_{i_T} |0\rangle$)</li>
+<li>测量概率 = $|\langle x|\psi\rangle|^2$ = <strong>查询算符的二次</strong>(quadratic) —— 因为 $|\cdot|^2$ 是二次</li>
+<li>$T$ 次查询 → 测量概率是查询算符的 $2T$ 次多项式</li>
+<li><strong>关键</strong>: $p(T, N)$ 是 $2T$ 次多项式, $p(0, N) = 1/N$ (零查询 = 完全无知的均匀分布), $p(N, N) = 1$ (遍历 = 完全确定)</li>
+<li>拉格朗日插值要求多项式"穿过"这些边界点。一个 $2T$ 次多项式<strong>最多</strong>"接近" $\sqrt{N}$ 范围内的点(根据 Markov 不等式或更精细的分析)</li>
+<li>因此 $T = \Omega(\sqrt{N})$: 任何量子算法都不可能用 $o(\sqrt{N})$ 次查询解决无结构搜索</li>
 </ul>
+</blockquote>
 <p><strong>直观</strong>: <strong>零查询 = 完全无知</strong>, <strong>$N$ 查询 = 完全确定</strong>。中间值的"信息增长"受<strong>多项式次数</strong>限制,不可能比 $\sqrt{N}$ 快。</p>
 <hr>
 <h2>10.Z 补充:振幅放大框架</h2>
@@ -1102,9 +1143,9 @@ qubit, 门, 电路     QFT, Grover            Shor, QPE, VQE, QML, 复杂性
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 9 章 量子傅里叶变换</span>
           </a>
-          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch11.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
-            <span class="pager-title">第 11 章 Shor 因式分解(即将推出)</span>
+            <span class="pager-title">第 11 章 Shor 因式分解算法</span>
           </a>
         </nav>
 

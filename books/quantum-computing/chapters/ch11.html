@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第11章：Shor 因式分解算法 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第11章：Shor 因式分解算法 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第三部分 · 量子算法与复杂性 · 开篇 🚀</span>
+        <span class="chapter-day-tag">Day 13 · 2026-06-20</span>
+      </div>
+      <h1 class="chapter-title">第 11 章 Shor 因式分解算法</h1>
+      <p class="chapter-subtitle">指数加速的"王冠"——周期发现 + QFT + 经典后处理,RSA 安全性崩塌</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,575 字</span>
+        <span class="stat">🔢 12 节 · 53 子节</span>
+        <span class="stat">📑 完整电路 + 工作例子 + 后量子密码学</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+<p># 第 11 章 Shor 因式分解算法</p>
+<blockquote class="chapter-quote"><p><strong>本章定位</strong>: 第三部分 · 量子算法与复杂性 · 第一章(开篇)</p>
+<p></p>
+<p><strong>承接</strong>: 第 9 章 QFT 给了<strong>指数加速</strong>的核心子程序,第 10 章 Grover 给了<strong>二次加速</strong>的通用搜索 —— 现在问:"<strong>QFT 能用来解决经典难题吗?</strong>"</p>
+<p></p>
+<p><strong>目标</strong>: 让读者<strong>完整理解 Shor 算法的"周期发现 + QFT + 经典后处理"思想</strong>,掌握<strong>指数加速</strong>的数学来源,看到<strong>RSA 安全性崩塌 + 后量子密码学兴起</strong>的现实意义,并<strong>总结第二部分 5 章 + 引入第三部分 5 章</strong>为后续具体的量子算法应用铺平道路</p></blockquote>
+<hr>
+<h2>11.0 引言:从经典密码学到 Shor 算法 —— 指数加速的"王冠"</h2>
+<p><strong>RSA 加密</strong>是当今互联网的基石。从你的银行转账、SSL 证书,到比特币、以太坊的签名,几乎所有公钥密码系统的安全性都建立在一个数学难题上:<strong>大整数因式分解</strong>。</p>
+<p>经典计算机分解一个 $n$ 位的整数,目前<strong>最好的算法</strong>(general number field sieve, GNFS)需要 $O(\exp(n^{1/3} \log^{2/3} n))$ 步 —— 经典意义上的"<strong>亚指数</strong>"(sub-exponential),但<strong>不是</strong>多项式。当 $n = 2048$ 时,这相当于 $2^{112}$ 步 —— <strong>实际不可行</strong>。这就是 RSA-2048 在 2026 年仍然被认为安全的原因。</p>
+<p><strong>1994 年,Peter Shor</strong> 在他的开创性论文 <em>"Algorithms for quantum computation: discrete logarithms and factoring"</em> [S94] 中提出了一种<strong>量子算法</strong>,只需 $O(n^3)$ 步就能分解 $n$ 位整数 —— <strong>多项式时间</strong>!这意味着 RSA 在理论上<strong>被攻破</strong>。</p>
+<table class="concept-table"><thead><tr><th>算法</th><th>时间复杂度</th><th>加速类型</th><th>实际破 RSA-2048</th></tr></thead><tbody><tr><td><strong>经典 GNFS</strong></td><td>$O(\exp(n^{1/3} \log^{2/3} n))$</td><td>亚指数</td><td>$\sim 2^{112}$ 步,<strong>不可行</strong></td></tr><tr><td><strong>Shor 量子</strong></td><td>$O(n^3 \log n)$</td><td><strong>多项式</strong></td><td>$\sim 10^{10}$ 步,<strong>可行</strong>(在大型量子计算机上)</td></tr><tr><td><strong>加速比</strong></td><td>—</td><td><strong>指数加速</strong></td><td><strong>巨大的实用意义</strong></td></tr></tbody></table>
+<p><strong>Shor 算法的核心洞察</strong>: 因式分解问题<strong>可以归约</strong>为"<strong>周期发现问题</strong>"(order-finding),而周期发现<strong>又可以</strong>用 QFT <strong>指数加速</strong>地解决。</p>
+<p><strong>Shor 算法的"三个核心思想"</strong>:</p>
+<ol>
+<li><strong>经典归约</strong>: 因式分解 → 找 $a^x \mod N$ 的周期 $r$ → gcd 给出因子</li>
+<li><strong>量子周期发现</strong>: QFT 把 $f(x) = a^x \mod N$ 的求值转化为 $r$ 的提取</li>
+<li><strong>经典后处理</strong>: 测量后,经典计算机从 $r$ 算出 $p, q$</li>
+</ol>
+<p><strong>本章的"5 个关键问题"</strong>:</p>
+<ol>
+<li><strong>RSA 跟因式分解</strong>有什么关系? (11.1 RSA 与因式分解)</li>
+<li>Shor 怎么把因式分解<strong>归约</strong>到周期发现? (11.2-11.3 核心思想 + 周期发现)</li>
+<li><strong>量子怎么找周期</strong>? (11.4 量子周期发现 + QFT)</li>
+<li>Shor 算法的<strong>完整电路</strong>长什么样? (11.5 完整电路 + 11.6 工作例子)</li>
+<li>Shor <strong>多快</strong>? 跟经典比快多少? (11.7 复杂度 + 11.8 后量子密码学 + 11.9 物理挑战)</li>
+</ol>
+<p><strong>本章的"5 个关键概念"</strong>:</p>
+<ul>
+<li><strong>RSA 安全性</strong> = 因式分解难度 = $O(\exp(n^{1/3} \log^{2/3} n))$</li>
+<li><strong>归约</strong>(reduction) = 把未知问题<strong>转化</strong>为已知问题</li>
+<li><strong>周期</strong>(order) = 满足 $a^r \equiv 1 \pmod{N}$ 的最小正整数 $r$</li>
+<li><strong>QFT 应用</strong> = 把周期函数 $f(x) = a^x \mod N$ 的求值转化为 $r$ 的提取</li>
+<li><strong>多项式时间</strong> = $O(n^3)$ 在量子计算机上<strong>可行</strong></li>
+</ul>
+<p><strong>本章的"5 个关键转折"</strong>:</p>
+<ol>
+<li>因式分解<strong>不是</strong>直接可解的,但<strong>归约</strong>到周期发现</li>
+<li>周期发现<strong>不是</strong>经典可解的,但<strong>归约</strong>到 QFT</li>
+<li>QFT <strong>是</strong>指数加速的(第 9 章已证明)</li>
+<li>所以<strong>因式分解是指数加速的</strong></li>
+<li><strong>RSA 安全性崩塌</strong> → <strong>后量子密码学</strong>兴起(NIST 2022 标准化)</li>
+</ol>
+<h3>11.0.1 三个"指数加速"对比</h3>
+<p><strong>Shor 跟 Grover、量子模拟一起,构成量子计算的"三大应用"</strong>:</p>
+<table class="concept-table"><thead><tr><th>算法</th><th>加速</th><th>经典复杂度</th><th>量子复杂度</th><th>应用</th></tr></thead><tbody><tr><td><strong>Grover</strong></td><td>二次</td><td>$O(N)$</td><td>$O(\sqrt{N})$</td><td>无结构搜索</td></tr><tr><td><strong>Shor</strong></td><td>指数(多项式 vs 亚指数)</td><td>$O(\exp(n^{1/3} \log^{2/3} n))$</td><td>$O(n^3)$</td><td>因式分解</td></tr><tr><td><strong>量子模拟</strong></td><td>指数</td><td>$O(\exp(n))$</td><td>$O(\text{poly}(n))$</td><td>量子系统模拟</td></tr></tbody></table>
+<p><strong>Shor 跟 Grover 的关系</strong>:</p>
+<ul>
+<li>Grover 对<strong>任何</strong> oracle 访问的问题<strong>都</strong>有效(只要"无结构")</li>
+<li>Shor <strong>只</strong>对有代数结构的问题(数论、群论)有效</li>
+<li><strong>Shor 比 Grover 强得多</strong>: Grover 加速比 $\sqrt{N}$,Shor 加速比 $N$(指数)</li>
+<li><strong>但 Grover 适用范围更广</strong></li>
+</ul>
+<p><strong>Shor 跟量子模拟的关系</strong>:</p>
+<ul>
+<li>都是<strong>指数加速</strong></li>
+<li>量子模拟的应用是物理/化学(分子、材料的量子性质)</li>
+<li>Shor 的应用是数论/密码学</li>
+</ul>
+<h3>11.0.2 为什么 RSA 是"最有名"的量子算法案例</h3>
+<p><strong>Shor 算法是量子计算的"招牌"</strong> —— 几乎所有量子计算的公众讨论都会提到它。原因:</p>
+<ol>
+<li><strong>实际影响巨大</strong>: RSA 是<strong>互联网的基础设施</strong>。Shor 直接威胁它的安全性。</li>
+<li><strong>戏剧性</strong>: 经典算法需要<strong>宇宙年龄</strong>的时间,Shor 只需<strong>几小时</strong>。加速比令人震撼。</li>
+<li><strong>可解释性</strong>: 算法的核心思想(归约、QFT、周期发现)可以用<strong>简单的数学</strong>解释,不需要深奥的物理。</li>
+<li><strong>激励作用</strong>: 推动了<strong>数十年</strong>的量子计算研究(NIST PQC 标准化、各国量子计划)。</li>
+<li><strong>历史地位</strong>: 跟"图灵机"、"P vs NP" 一样, Shor 算法是<strong>计算理论</strong>的里程碑。</li>
+</ol>
+<blockquote class="chapter-quote"><p><strong>历史类比</strong>: Shor 算法之于量子计算,就像 <strong>PageRank</strong> 之于搜索引擎 —— 不是"第一个"算法,但是<strong>最有影响力</strong>的算法,让整个领域进入主流视野。</p></blockquote>
+<h3>11.0.3 读者的"先验知识"清单</h3>
+<p>为顺利理解本章,读者应当熟悉:</p>
+<ul>
+<li><strong>第 9 章 QFT</strong>: 核心子程序(11.4 大量使用)</li>
+<li><strong>第 7 章 量子门</strong>: 受控模幂 $U_a$ 用基本门实现(11.5)</li>
+<li><strong>第 8 章 量子电路</strong>: 张量网络 + 通用门(11.5 完整电路)</li>
+<li><strong>第 10 章 Grover</strong>: 振幅放大的思想(11.4 对比)</li>
+<li><strong>第 2 章 bra-ket</strong>: 态矢量、内积(11.4 周期叠加态)</li>
+<li><strong>第 5 章 测量</strong>: 量子测量给出<strong>统计</strong>结果(11.4.4 测量)</li>
+<li><strong>基础数论</strong>: 模运算、gcd、阶(order)</li>
+<li><strong>基础 RSA</strong>: 加密/解密基础(11.1)</li>
+</ul>
+<hr>
+<h2>11.1 RSA 与因式分解问题</h2>
+<h3>11.1.1 RSA 加密速览</h3>
+<p><strong>RSA</strong>(Rivest-Shamir-Adleman, 1977) 是<strong>第一个</strong>实用的公钥密码系统,也是<strong>最广泛</strong>使用的一个。</p>
+<p><strong>密钥生成</strong>:</p>
+<ol>
+<li>随机选两个<strong>大素数</strong> $p, q$(每个 $\sim n/2$ 位)</li>
+<li>计算 $N = p \cdot q$($n$ 位)</li>
+<li>选 $e$ 与 $(p-1)(q-1)$ <strong>互素</strong>(常用 $e = 65537$)</li>
+<li>算 $d = e^{-1} \mod (p-1)(q-1)$</li>
+<li><strong>公钥</strong> = $(N, e)$,<strong>私钥</strong> = $(N, d)$ 或 $(p, q)$</li>
+</ol>
+<p><strong>加密</strong>: $c = m^e \mod N$</p>
+<p><strong>解密</strong>: $m = c^d \mod N$</p>
+<p><strong>安全性</strong>: 给定 $c = m^e \mod N$ 和公钥 $(N, e)$,恢复 $m$ <strong>等价于</strong>分解 $N$。这是因为<strong>只有知道 $p, q$ 才能算 $d = e^{-1} \mod (p-1)(q-1)$</strong>。</p>
+<h3>11.1.2 因式分解的经典难度</h3>
+<p><strong>问题</strong>: 给定 $N = p \cdot q$($p, q$ 是大素数),求 $p, q$。</p>
+<p><strong>经典算法的演进</strong>:</p>
+<table class="concept-table"><thead><tr><th>年份</th><th>算法</th><th>复杂度</th><th>备注</th></tr></thead><tbody><tr><td>~公元前</td><td>试除法</td><td>$O(\sqrt{N}) = O(2^{n/2})$</td><td>朴素</td></tr><tr><td>1643</td><td>Fermat</td><td>$O(\sqrt{N})$</td><td>接近 $\sqrt{N}$</td></tr><tr><td>1770s</td><td>二次筛法(QS)</td><td>$O(\exp(n^{1/2} \log^{1/2} n))$</td><td>比试除快</td></tr><tr><td>1980s-1990s</td><td>数论筛法(NFS)</td><td>$O(\exp(c \cdot n^{1/3} \log^{2/3} n))$</td><td>目前<strong>最佳</strong></td></tr><tr><td>2024</td><td>经典最好</td><td>$O(\exp(1.923 \cdot n^{1/3} \log^{1/3} n))$</td><td>仍是亚指数</td></tr></tbody></table>
+<p><strong>$N = 2^{2048}$(RSA-2048)的实际分解</strong>:</p>
+<ul>
+<li>用 GNFS 需要 $\sim 2^{112}$ 步</li>
+<li>假设 $10^{10}$ 步/秒 的经典计算机(已经很乐观): 需要 $\sim 10^{17}$ 年 = <strong>宇宙年龄的 10 亿倍</strong></li>
+<li><strong>实际不可行</strong> —— 这就是 RSA-2048 在 2026 年安全的原因</li>
+</ul>
+<h3>11.1.3 Shor 算法的"破坏性"</h3>
+<p><strong>Shor 1994</strong> [S94]: <strong>量子计算机</strong>可以用 $O(n^3 \log n)$ 步分解 $N$ —— <strong>多项式时间</strong>!</p>
+<table class="concept-table"><thead><tr><th>$N$ 的位数 $n$</th><th>经典(GNFS)</th><th>Shor 量子</th><th>加速比</th></tr></thead><tbody><tr><td>100</td><td>$\sim 2^{20}$</td><td>$\sim 10^{6}$</td><td>$10^{9}$</td></tr><tr><td>1000</td><td>$\sim 2^{60}$</td><td>$\sim 10^{9}$</td><td>$10^{18}$</td></tr><tr><td>2048</td><td>$\sim 2^{112}$</td><td>$\sim 10^{10}$</td><td>$10^{33}$</td></tr><tr><td>10000</td><td>$\sim 2^{400}$</td><td>$\sim 10^{11}$</td><td>$10^{120}$</td></tr></tbody></table>
+<p><strong>加速比 = 指数级别</strong>!</p>
+<blockquote class="chapter-quote"><p><strong>直觉</strong>: Shor 找到了因式分解的"<strong>结构</strong>" —— 它能归约到周期发现,而周期发现<strong>正好</strong>是 QFT 能指数加速解决的问题。这是"用量子算法解决经典难题"的<strong>教科书案例</strong>。</p></blockquote>
+<hr>
+<h2>11.2 Shor 算法的核心思想:经典 + 量子分工</h2>
+<p><strong>Shor 算法的精髓</strong>: <strong>经典部分 + 量子部分</strong>的精妙分工。</p>
+<table class="concept-table"><thead><tr><th>部分</th><th>任务</th><th>算法</th><th>难度</th></tr></thead><tbody><tr><td><strong>经典</strong></td><td>选 $a$, 算 $\gcd$, 处理失败</td><td>简单算术</td><td>$O(n^3)$</td></tr><tr><td><strong>量子</strong></td><td>找 $a^x \mod N$ 的周期 $r$</td><td>Shor(QFT)</td><td>$O(n^3)$</td></tr><tr><td><strong>后处理</strong></td><td>从 $r$ 提取因子</td><td>经典数学</td><td>$O(n^3)$</td></tr></tbody></table>
+<p><strong>整体结构</strong>:</p>
+<pre><code>1. 【经典】随机选 a, 2 ≤ a ≤ N-1
+2. 【经典】gcd(a, N) 是否 > 1?
+   - 是 → 找到了因子,完成!
+   - 否 → 继续
+3. 【量子】用量子电路找 a^x mod N 的周期 r
+4. 【经典】根据 r 的奇偶性处理:
+   - r 是奇数 → 重新选 a
+   - r 是偶数 → 计算 gcd(a^(r/2) - 1, N) 和 gcd(a^(r/2) + 1, N)
+5. 检查是否得到非平凡因子</code></pre>
+<p><strong>Shor 算法的"概率性"</strong>:</p>
+<p>注意:Shor 算法是<strong>概率性</strong>算法 —— 它的成功依赖于:</p>
+<ol>
+<li>选的 $a$ 满足<strong>特定条件</strong>($r$ 是偶数 + $a^{r/2} \not\equiv -1$)</li>
+<li>量子测量的"幸运"性</li>
+</ol>
+<p><strong>成功的概率</strong>: 给定随机 $a$, 满足条件 1 的概率 = $1 - 1/2^{k-1}$(其中 $k$ 是 $N$ 的不同素因子数,对 $N = p \cdot q$ 是 $k = 2$)。给定 $r$ 是偶数, $a^{r/2} \equiv -1$ 的概率 = $1/2$。所以<strong>单次成功</strong>的概率 $\geq 1/2$。</p>
+<p><strong>期望重试次数</strong>: $O(1)$(常数),总运行时间仍 = $O(n^3)$。</p>
+<p><strong>关键观察</strong>:</p>
+<ul>
+<li><strong>量子部分</strong>(第 3 步)是用 QFT 找周期 —— <strong>指数加速的核心</strong></li>
+<li><strong>经典部分</strong>(第 1, 2, 4, 5 步)是简单的算术 —— <strong>多项式时间</strong></li>
+</ul>
+<p><strong>Shor 算法的"5 个步骤"</strong> 的完整流程:</p>
+<pre><code>                ┌─────────────┐
+                │  经典前置    │
+                │  1. 选 a     │
+                │  2. gcd 检查 │
+                └──────┬──────┘
+                       │
+                       v
+                ┌─────────────┐
+                │  量子部分    │  <-- 指数加速!
+                │  3. 找周期 r │  <-- 用 QFT
+                │  (Shor 电路) │
+                └──────┬──────┘
+                       │
+                       v
+                ┌─────────────┐
+                │  经典后处理  │
+                │  4. 算 gcd   │
+                │  5. 验证因子 │
+                └─────────────┘
+```
+
+<blockquote class="chapter-quote"><p><strong>注</strong>: 整个算法的<strong>期望运行时间</strong> = 经典部分 $O(n^3)$ + 量子部分 $O(n^3)$ + 经典后处理 $O(n^3)$ = $O(n^3)$ 多项式时间。</p></blockquote>
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg" style="max-width:700px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <defs>
+      <marker id="arr-flow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#10b981"/>
+      </marker>
+      <marker id="arr-flow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#ef4444"/>
+      </marker>
+      <marker id="arr-flow-yellow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#fbbf24"/>
+      </marker>
+    </defs>
+    <!-- Title -->
+    <text x="350" y="30" fill="#e5e7eb" font-size="18" font-weight="bold" text-anchor="middle">图 11.1: Shor 算法流程图 — 经典 + 量子分工</text>
+    <text x="350" y="50" fill="#9ca3af" font-size="11" text-anchor="middle">经典前置 → 量子周期发现(QFT) → 经典后处理 → RSA 破解</text>
+
+    <!-- Stage 1: 经典前置 (Blue) -->
+    <rect x="40" y="80" width="170" height="100" rx="8" fill="#1e3a8a" stroke="#3b82f6" stroke-width="2"/>
+    <text x="125" y="105" fill="#3b82f6" font-size="14" font-weight="bold" text-anchor="middle">📘 经典前置</text>
+    <text x="125" y="125" fill="#e5e7eb" font-size="11" text-anchor="middle">1. 选 a (2 ≤ a ≤ N-1)</text>
+    <text x="125" y="143" fill="#e5e7eb" font-size="11" text-anchor="middle">2. gcd(a, N) 检查</text>
+    <text x="125" y="161" fill="#9ca3af" font-size="10" text-anchor="middle">经典 O(n²) 步</text>
+
+    <!-- Stage 2: 量子部分 (Yellow/Red) -->
+    <rect x="265" y="80" width="170" height="100" rx="8" fill="#7c2d12" stroke="#fbbf24" stroke-width="2.5"/>
+    <text x="350" y="105" fill="#fbbf24" font-size="14" font-weight="bold" text-anchor="middle">⚛ 量子部分</text>
+    <text x="350" y="125" fill="#e5e7eb" font-size="11" text-anchor="middle">3. 找周期 r</text>
+    <text x="350" y="143" fill="#e5e7eb" font-size="11" text-anchor="middle">(用 QFT 指数加速!)</text>
+    <text x="350" y="161" fill="#ef4444" font-size="10" font-weight="bold" text-anchor="middle">O(n³) 门 ★核心★</text>
+
+    <!-- Stage 3: 经典后处理 (Blue) -->
+    <rect x="490" y="80" width="170" height="100" rx="8" fill="#1e3a8a" stroke="#3b82f6" stroke-width="2"/>
+    <text x="575" y="105" fill="#3b82f6" font-size="14" font-weight="bold" text-anchor="middle">📘 经典后处理</text>
+    <text x="575" y="125" fill="#e5e7eb" font-size="11" text-anchor="middle">4. 连分数 → r</text>
+    <text x="575" y="143" fill="#e5e7eb" font-size="11" text-anchor="middle">5. gcd → 因子</text>
+    <text x="575" y="161" fill="#9ca3af" font-size="10" text-anchor="middle">经典 O(n²) 步</text>
+
+    <!-- Arrows between stages -->
+    <line x1="210" y1="130" x2="263" y2="130" stroke="#10b981" stroke-width="2.5" marker-end="url(#arr-flow)"/>
+    <line x1="435" y1="130" x2="488" y2="130" stroke="#10b981" stroke-width="2.5" marker-end="url(#arr-flow)"/>
+
+    <!-- Bottom: Result -->
+    <rect x="240" y="230" width="220" height="60" rx="8" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+    <text x="350" y="255" fill="#10b981" font-size="14" font-weight="bold" text-anchor="middle">✓ RSA-2048 分解成功</text>
+    <text x="350" y="275" fill="#e5e7eb" font-size="11" text-anchor="middle">总时间 O(n³) 多项式</text>
+
+    <line x1="575" y1="180" x2="350" y2="228" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-flow-yellow)" stroke-dasharray="3 3"/>
+    <line x1="125" y1="180" x2="280" y2="228" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-flow-yellow)" stroke-dasharray="3 3"/>
+
+    <!-- 加速比标注 -->
+    <rect x="240" y="310" width="220" height="35" rx="4" fill="#0a0e27" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="350" y="332" fill="#7c3aed" font-size="12" font-weight="bold" text-anchor="middle">加速比: 经典 2^112 步 → Shor 10^10 步</text>
+  </svg>
+  <figcaption>图 11.1: Shor 算法流程图。蓝色 = 经典计算(简单),黄色 = 量子计算(指数加速核心),绿色 = 成功结果。中间的"量子部分"是 Shor 算法的灵魂——QFT 应用到周期发现。整体架构:经典前置(a 选取 + gcd 检查)→ 量子周期发现 → 经典后处理(连分数 + gcd 提取因子)。</figcaption>
+</figure>
+
+<h2>11.3 周期发现问题</h2>
+<h3>11.3.1 周期(阶)的定义</h3>
+<p><strong>定义</strong>: 给定整数 $a$ 和 $N = p \cdot q$, <strong>$a$ 模 $N$ 的阶</strong>(order)是满足</p>
+<p>$$a^r \equiv 1 \pmod{N}$$</p>
+<p>的<strong>最小正整数</strong> $r$。</p>
+<p><strong>例子</strong>:</p>
+<ul>
+<li>$N = 15, a = 2$: $2^1 = 2, 2^2 = 4, 2^3 = 8, 2^4 = 16 \equiv 1 \pmod{15}$。所以 $r = 4$。</li>
+<li>$N = 15, a = 7$: $7^1 = 7, 7^2 = 49 \equiv 4, 7^3 = 28 \equiv 13, 7^4 = 91 \equiv 1 \pmod{15}$。所以 $r = 4$。</li>
+<li>$N = 15, a = 11$: $11^1 = 11, 11^2 = 121 \equiv 1 \pmod{15}$。所以 $r = 2$。</li>
+<li>$N = 15, a = 13$: $13 \equiv -2$, $13^2 \equiv 4, 13^4 \equiv 16 \equiv 1 \pmod{15}$。所以 $r = 4$。</li>
+</ul>
+<h3>11.3.2 周期 → 因子的数学推导</h3>
+<p><strong>关键定理</strong>: 如果 $a$ 模 $N$ 的阶 $r$ 是<strong>偶数</strong>,且 $a^{r/2} \not\equiv -1 \pmod{N}$,那么</p>
+<p>$$\gcd(a^{r/2} - 1, N) \quad \text{和} \quad \gcd(a^{r/2} + 1, N)$$</p>
+<p>之一是 $N$ 的<strong>非平凡因子</strong>(非 1 也非 $N$)。</p>
+<p><strong>证明</strong>:</p>
+<ul>
+<li>$a^r \equiv 1 \pmod{N}$,所以 $a^r - 1 \equiv 0 \pmod{N}$</li>
+<li>因式分解: $a^r - 1 = (a^{r/2} - 1)(a^{r/2} + 1)$</li>
+<li>所以 $N$ 整除 $(a^{r/2} - 1)(a^{r/2} + 1)$</li>
+<li>但 $N = p \cdot q$ 是 $p, q$ 的乘积,所以<strong>至少一个</strong> $p, q$ 整除 $(a^{r/2} - 1)$ 或 $(a^{r/2} + 1)$</li>
+<li>假设 $a^{r/2} \not\equiv -1 \pmod{N}$(即 $a^{r/2} + 1$ <strong>不</strong>是 $N$ 的倍数)</li>
+<li>那么 $p, q$ 不可能<strong>都</strong>整除 $a^{r/2} + 1$</li>
+<li>所以<strong>至少一个</strong> $p, q$ 整除 $a^{r/2} - 1$</li>
+<li>$\gcd(a^{r/2} - 1, N)$ 给出这个因子 ✓</li>
+</ul>
+<p><strong>失败条件</strong>:</p>
+<ol>
+<li>$r$ 是<strong>奇数</strong> —— 没法算 $a^{r/2}$ (mod $N$ 需要整数指数)</li>
+<li>$r$ 是偶数但 $a^{r/2} \equiv -1 \pmod{N}$ —— 此时 $(a^{r/2} + 1) \equiv 0$, $\gcd$ 给出 $N$ 本身</li>
+</ol>
+<p><strong>两种失败都</strong>有办法处理: <strong>重新选 $a$</strong>。<strong>期望</strong>几次尝试就能成功。</p>
+<h3>11.3.3 例子:$N = 15, a = 7$</h3>
+<p><strong>$a = 7$ 的阶</strong>: $7^4 \equiv 1 \pmod{15}$,所以 $r = 4$。</p>
+<p><strong>$r = 4$ 是偶数</strong> ✓</p>
+<p><strong>计算 $a^{r/2} = 7^2 = 49$</strong>:</p>
+<ul>
+<li>$7^2 - 1 = 48$</li>
+<li>$7^2 + 1 = 50$</li>
+<li>$\gcd(48, 15) = 3$ ✓ (这是 $N$ 的非平凡因子)</li>
+<li>$\gcd(50, 15) = 5$ ✓ (这是另一个因子)</li>
+</ul>
+<p><strong>得到</strong>: $N = 15 = 3 \times 5$ ✓</p>
+<blockquote class="chapter-quote"><p><strong>注</strong>: 11.3 跟 11.2 的关系 —— 11.2 说"经典+量子分工",11.3 是"<strong>经典</strong>部分的关键数学"。<strong>量子部分</strong>(11.4)就是用 QFT 找 $r$。</p></blockquote>
+<hr>
+<h2>11.4 量子周期发现:QFT + 叠加 + 干涉</h2>
+<h3>11.4.1 周期发现为什么"难"</h3>
+<p><strong>经典</strong>: 计算 $a^x \mod N$ 对 $x = 0, 1, 2, \ldots$,直到 $a^r \equiv 1$,需要 $O(r)$ 步, $r$ 可以大到 $N$(最坏情况)。</p>
+<p><strong>量子</strong>: 我们<strong>不</strong>直接测量 $a^x \mod N$ 的值。我们<strong>间接</strong>地让 QFT 提取 $r$。</p>
+<h3>11.4.2 量子电路的核心思想</h3>
+<p><strong>输入</strong>: 两个寄存器</p>
+<ul>
+<li><strong>输入寄存器</strong> $|0\rangle^{\otimes n}$(2n 个 qubit,足够大到表示 $0$ 到 $N^2 - 1$)</li>
+<li><strong>输出寄存器</strong> $|0\rangle^{\otimes n}$(n 个 qubit,足够大到表示 $a^x \mod N$)</li>
+</ul>
+<p><strong>算法</strong>:</p>
+<p><strong>步骤 1</strong>: 在输入寄存器上<strong>叠加</strong>所有可能的 $x$:</p>
+<p>$$|0\rangle^{\otimes n} \to \frac{1}{\sqrt{N^2}} \sum_{x=0}^{N^2 - 1} |x\rangle$$</p>
+<p>(用 $\hat{H}^{\otimes 2n}$)</p>
+<p><strong>步骤 2</strong>: 应用<strong>受控模幂</strong> $U_a$:</p>
+<p>$$U_a |x\rangle|0\rangle = |x\rangle|a^x \mod N\rangle$$</p>
+<p><strong>步骤 3</strong>: 测量<strong>输出寄存器</strong>,得到某个 $y = a^x \mod N$。此时输入寄存器<strong>塌缩</strong>到<strong>所有满足 $a^x \equiv y \pmod{N}$ 的 $x$ 的均匀叠加</strong>。</p>
+<p>如果 $r$ 是 $a$ 模 $N$ 的阶,那么满足 $a^x \equiv y \pmod{N}$ 的 $x$ 形如 $x_0, x_0 + r, x_0 + 2r, \ldots$(其中 $x_0$ 是某个最小正解)。</p>
+<p>输入寄存器的态变为:</p>
+<p>$$|\psi\rangle = \frac{1}{\sqrt{N^2/r}} \sum_{k=0}^{N^2/r - 1} |x_0 + kr\rangle$$</p>
+<p><strong>步骤 4</strong>: 对输入寄存器应用<strong>逆 QFT</strong>(QFT$^{-1}$):</p>
+<p><strong>QFT 的魔法</strong>: 周期 $r$ 在频率域表现为<strong>峰值</strong>!测量后,峰值位置给出 $r$。</p>
+<h3>11.4.3 周期 → QFT 的数学细节</h3>
+<p><strong>关键公式</strong>: 量子态 $|\psi\rangle = \frac{1}{\sqrt{M}} \sum_{k=0}^{M-1} |x_0 + kr\rangle$(其中 $M \approx N^2/r$)</p>
+<p>应用 QFT 后:</p>
+<p>$$\text{QFT}|\psi\rangle = \frac{1}{\sqrt{M}} \sum_{k=0}^{M-1} \frac{1}{\sqrt{N^2}} \sum_{j=0}^{N^2-1} e^{2\pi i (x_0 + kr) j / N^2} |j\rangle$$</p>
+<p>$$= \frac{1}{N\sqrt{M}} \sum_{j=0}^{N^2-1} e^{2\pi i x_0 j / N^2} \left( \sum_{k=0}^{M-1} e^{2\pi i k r j / N^2} \right) |j\rangle$$</p>
+<p><strong>几何级数求和</strong>:</p>
+<p>$$\sum_{k=0}^{M-1} e^{2\pi i k r j / N^2} = \begin{cases} M & \text{if } r j / N^2 \in \mathbb{Z} \\ \frac{1 - e^{2\pi i M r j / N^2}}{1 - e^{2\pi i r j / N^2}} & \text{otherwise} \end{cases}$$</p>
+<p><strong>关键</strong>: 当 $j$ 是 $N^2/r$ 的整数倍时, $r j / N^2 \in \mathbb{Z}$,振幅 = $M$(<strong>峰值</strong>)。</p>
+<p>测量得到 $j \approx c \cdot N^2 / r$(其中 $c$ 是某个整数),<strong>用连分数</strong>算法(continued fraction) 从 $j/N^2$ 恢复 $r$。</p>
+<h3>11.4.4 测量结果的"提取 $r$"算法</h3>
+<p><strong>经典后处理</strong>(连分数算法):</p>
+<ol>
+<li>测量得到 $j \in \{0, 1, \ldots, N^2 - 1\}$</li>
+<li>计算 $\phi = j / N^2$ (这是一个 $0 \leq \phi < 1$ 的有理数)</li>
+<li>用<strong>连分数展开</strong> $\phi = [a_0; a_1, a_2, \ldots]$ 找 $\phi$ 的<strong>最佳有理近似</strong> $c / r'$(其中 $r' \leq N$)</li>
+<li><strong>候选 $r = r'$</strong> —— 这就是 $a$ 模 $N$ 的阶(可能需要验证)</li>
+</ol>
+<p><strong>连分数算法的"魔法"</strong>: 用 $O(n^2)$ 步(多项式时间) 就能从 $j/N^2$ 提取 $r$。</p>
+<h3>11.4.5 失败概率</h3>
+<p><strong>问题</strong>: 测量可能给出 $j$ 接近 $0$ 或 接近 $N^2$ 的值,这些不直接给出 $r$。</p>
+<p><strong>解决</strong>:</p>
+<ol>
+<li><strong>重复</strong>几次量子测量,取大多数</li>
+<li><strong>连分数</strong>算法会过滤掉不正确的 $j$</li>
+<li><strong>经典验证</strong>: 用 $a^r \equiv 1 \pmod{N}$ 验证;如果<strong>不是</strong>,重新运行</li>
+</ol>
+<p><strong>期望运行次数</strong>: $O(1)$ 次(常数) 就能以<strong>常数概率</strong>得到正确的 $r$。</p>
+<p><strong>失败概率的来源</strong>:</p>
+<p>测量得到 $j$ 接近<strong>非峰值</strong>位置的概率不为零。详细分析给出<strong>测量得到"好" $j$(允许连分数恢复 $r$)的概率 $\geq 4/\pi^2 \approx 0.4$</strong>。所以<strong>期望</strong>几次测量就能成功。</p>
+<p><strong>完整的 Shor 算法的成功概率</strong>:</p>
+<ul>
+<li>单次量子测量: $\geq 4/\pi^2$</li>
+<li>选好的 $a$: $\geq 1/2$</li>
+<li>整体: $\geq 2/\pi^2 \approx 0.2$</li>
+<li><strong>期望运行次数</strong>: $O(1)$ —— 几次就够</li>
+</ul>
+<h3>11.4.6 量子部分 vs 经典部分:加速比来源</h3>
+<p><strong>关键对比</strong>:</p>
+<table class="concept-table"><thead><tr><th>步骤</th><th>经典算法</th><th>Shor 量子</th><th>加速比</th></tr></thead><tbody><tr><td>找 $r = \text{ord}_N(a)$</td><td>$O(r)$ 步,最坏 $O(N)$</td><td>$O(n^3)$ 步</td><td><strong>指数</strong></td></tr><tr><td>经典 gcd</td><td>$O(n^2)$ 步</td><td>$O(n^2)$ 步</td><td>1×</td></tr><tr><td>整体</td><td>$O(N)$ 步</td><td>$O(n^3)$ 步</td><td><strong>指数</strong></td></tr></tbody></table>
+<p><strong>加速来源</strong>:</p>
+<ul>
+<li><strong>不是</strong> gcd 算法(经典就够快)</li>
+<li><strong>不是</strong> 模幂(经典 $O(n^3)$ 也够)</li>
+<li><strong>是</strong> 周期发现 —— QFT <strong>唯一</strong>带来的<strong>指数加速</strong></li>
+</ul>
+<hr>
+<h2>11.5 Shor 算法的完整电路</h2>
+<h3>11.5.1 电路总览</h3>
+<p>Shor 算法的<strong>完整电路</strong>包含以下部分:</p>
+<pre><code>┌──────────────────────────────────────────────────────────┐
+│  输入寄存器 (2n qubit)         输出寄存器 (n qubit)        │
+│  |0〉^⊗2n                       |0〉^⊗n                    │
+│       │                            │                      │
+│       v                            │                      │
+│  [H^⊗2n]  (叠加)                   │                      │
+│       │                            │                      │
+│       │    (受控 U_a 门)            │                      │
+│       │───────────────────────────>│                      │
+│       │  (x, 0) -> (x, a^x mod N)  │                      │
+│       │                            │                      │
+│       v                            v                      │
+│  [QFT^(-1)]                    [测量]  ---> 得到 y = a^x mod N│
+│       │                                                   │
+│       v                                                   │
+│  [测量]  ---> 得到 j                                      │
+└──────────────────────────────────────────────────────────┘
+                        │
+                        v
+                [经典后处理]
+                连分数算法从 j 提取 r
+                gcd 算法从 r 提取因子</code></pre>
+<h3>11.5.2 4 个核心模块</h3>
+<p><strong>模块 1: 初始化 + 叠加</strong></p>
+<ul>
+<li>输入: $|0\rangle^{\otimes 2n}|0\rangle^{\otimes n}$</li>
+<li>应用 $H^{\otimes 2n}$ 在输入寄存器</li>
+<li>态变为: $\frac{1}{N} \sum_{x=0}^{N^2-1} |x\rangle|0\rangle^{\otimes n}$</li>
+</ul>
+<p><strong>模块 2: 受控模幂 $U_a$</strong></p>
+<ul>
+<li>$U_a |x\rangle|y\rangle = |x\rangle|y \oplus (a^x \mod N)\rangle$</li>
+<li>其中 $\oplus$ 表示模 $2^n$ 加法</li>
+<li><strong>关键</strong>: $U_a$ 是<strong>酉</strong>的(可逆的),这意味着量子电路可以做"模幂"</li>
+</ul>
+<p><strong>模块 3: 测量输出寄存器</strong></p>
+<ul>
+<li>测量输出寄存器,得到 $y = a^x \mod N$ 对某个 $x$</li>
+<li>输入寄存器塌缩到所有满足 $a^x \equiv y \pmod{N}$ 的 $x$ 的均匀叠加</li>
+<li>周期 $r$ 编码在态的"周期性"中</li>
+</ul>
+<p><strong>模块 4: QFT$^{-1}$ + 测量输入寄存器</strong></p>
+<ul>
+<li>对输入寄存器应用逆 QFT($\approx O(n^2)$ 个门)</li>
+<li>测量,得到 $j$</li>
+<li>用连分数算法从 $j$ 提取 $r$</li>
+</ul>
+<h3>11.5.3 关键操作:受控模幂 $U_a$ 的实现</h3>
+<p><strong>$U_a$ 不是原子操作</strong>,需要分解为<strong>基本量子门</strong>:</p>
+<ul>
+<li><strong>模乘</strong> $U_M: |x\rangle \to |x \cdot M \mod N\rangle$</li>
+<li><strong>模平方</strong> $U_{a^2}, U_{a^4}, \ldots, U_{a^{2^k}}$(对每个 $k$)</li>
+<li>用二进制表示 $x = \sum_k 2^k b_k$,得 $a^x = \prod_k a^{2^k b_k}$</li>
+</ul>
+<p><strong>标准实现</strong>: 通过<strong>重复平方</strong>(modular exponentiation by repeated squaring):</p>
+<ul>
+<li>先算 $a^1, a^2, a^4, \ldots, a^{2^{2n}}$ mod $N$(经典预计算)</li>
+<li>对每个 $k$, 应用受控模乘 $|x\rangle|0\rangle \to |x\rangle|x \cdot a^{2^k b_k} \mod N\rangle$</li>
+<li><strong>总共</strong> $O(n^3)$ 个量子门</li>
+</ul>
+<p><strong>资源估算</strong>:</p>
+<ul>
+<li><strong>qubit 数</strong>: $\sim 3n$(输入 + 输出 + 辅助)</li>
+<li><strong>门数</strong>: $O(n^3)$</li>
+<li><strong>电路深度</strong>: $O(n^3)$</li>
+</ul>
+<h3>11.5.4 完整电路的"经典-量子边界"</h3>
+<table class="concept-table"><thead><tr><th>步骤</th><th>经典 / 量子</th><th>时间</th></tr></thead><tbody><tr><td>1. 选 $a$</td><td>经典</td><td>$O(n)$</td></tr><tr><td>2. $\gcd(a, N)$</td><td>经典</td><td>$O(n^2)$</td></tr><tr><td>3. 量子电路(找周期)</td><td><strong>量子</strong></td><td>$O(n^3)$</td></tr><tr><td>4. 连分数提取 $r$</td><td>经典</td><td>$O(n^2)$</td></tr><tr><td>5. $\gcd(a^{r/2} \pm 1, N)$</td><td>经典</td><td>$O(n^2)$</td></tr><tr><td>6. 验证</td><td>经典</td><td>$O(n^2)$</td></tr></tbody></table>
+<p><strong>整体</strong>: 多项式时间 $O(n^3)$,其中<strong>量子部分</strong>只占一部分。</p>
+<blockquote class="chapter-quote"><p><strong>注</strong>: Shor 算法的<strong>关键洞察</strong> —— 量子部分只需要<strong>几小时</strong>(在大型容错量子计算机上),就能完成经典部分需要<strong>数十亿年</strong>的工作。</p></blockquote>
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg" style="max-width:800px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <defs>
+      <marker id="arr-shor" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#e5e7eb"/>
+      </marker>
+    </defs>
+    <!-- Title -->
+    <text x="400" y="28" fill="#e5e7eb" font-size="16" font-weight="bold" text-anchor="middle">图 11.2: Shor 算法的完整量子电路 (N=15, n=8 例子)</text>
+    <text x="400" y="48" fill="#9ca3af" font-size="11" text-anchor="middle">H^⊗8 叠加 → U_a 受控模幂 → QFT^-1 提取 r → 测量</text>
+
+    <!-- Time line separators -->
+    <line x1="40" y1="65" x2="760" y2="65" stroke="#374151" stroke-width="1"/>
+    <text x="50" y="60" fill="#9ca3af" font-size="11">初始</text>
+    <text x="160" y="60" fill="#9ca3af" font-size="11">叠加</text>
+    <text x="350" y="60" fill="#9ca3af" font-size="11">U_a (受控模幂)</text>
+    <text x="550" y="60" fill="#9ca3af" font-size="11">QFT⁻¹</text>
+    <text x="700" y="60" fill="#9ca3af" font-size="11">测量</text>
+
+    <!-- 输入寄存器 (2n = 8 qubits, but show 3 representative) -->
+    <text x="20" y="105" fill="#3b82f6" font-size="12" font-weight="bold">输入</text>
+    <text x="20" y="120" fill="#3b82f6" font-size="10">(2n=8 qubit)</text>
+    <line x1="100" y1="100" x2="730" y2="100" stroke="#3b82f6" stroke-width="1.5"/>
+    <!-- q0 -->
+    <line x1="100" y1="100" x2="120" y2="100" stroke="#3b82f6" stroke-width="2"/>
+    <text x="105" y="95" fill="#3b82f6" font-size="11">q0</text>
+    <rect x="120" y="90" width="20" height="20" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1"/>
+    <text x="130" y="105" fill="#3b82f6" font-size="13" font-weight="bold" text-anchor="middle">H</text>
+    <line x1="140" y1="100" x2="730" y2="100" stroke="#3b82f6" stroke-width="1.5"/>
+    <!-- q1 -->
+    <line x1="100" y1="135" x2="120" y2="135" stroke="#3b82f6" stroke-width="2"/>
+    <text x="105" y="130" fill="#3b82f6" font-size="11">q1</text>
+    <rect x="120" y="125" width="20" height="20" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1"/>
+    <text x="130" y="140" fill="#3b82f6" font-size="13" font-weight="bold" text-anchor="middle">H</text>
+    <line x1="140" y1="135" x2="730" y2="135" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="160" y="135" fill="#3b82f6" font-size="9">...</text>
+    <!-- q7 -->
+    <line x1="100" y1="170" x2="120" y2="170" stroke="#3b82f6" stroke-width="2"/>
+    <text x="105" y="165" fill="#3b82f6" font-size="11">q7</text>
+    <rect x="120" y="160" width="20" height="20" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1"/>
+    <text x="130" y="175" fill="#3b82f6" font-size="13" font-weight="bold" text-anchor="middle">H</text>
+    <line x1="140" y1="170" x2="730" y2="170" stroke="#3b82f6" stroke-width="1.5"/>
+
+    <!-- U_a block on input -->
+    <rect x="220" y="85" width="220" height="100" rx="6" fill="#7c2d12" stroke="#fbbf24" stroke-width="2"/>
+    <text x="330" y="105" fill="#fbbf24" font-size="13" font-weight="bold" text-anchor="middle">U_a (受控模幂)</text>
+    <text x="330" y="125" fill="#e5e7eb" font-size="10" text-anchor="middle">|x⟩|0⟩ → |x⟩|aˣ mod N⟩</text>
+    <text x="330" y="143" fill="#9ca3af" font-size="9" text-anchor="middle">重复平方分解</text>
+    <text x="330" y="160" fill="#9ca3af" font-size="9" text-anchor="middle">O(n³) 个基本门</text>
+    <text x="330" y="177" fill="#ef4444" font-size="10" font-weight="bold" text-anchor="middle">★ 量子核心 ★</text>
+
+    <!-- QFT^-1 block on input -->
+    <rect x="490" y="85" width="180" height="100" rx="6" fill="#1e3a8a" stroke="#3b82f6" stroke-width="2"/>
+    <text x="580" y="105" fill="#3b82f6" font-size="13" font-weight="bold" text-anchor="middle">QFT⁻¹</text>
+    <text x="580" y="125" fill="#e5e7eb" font-size="10" text-anchor="middle">提取周期 r</text>
+    <text x="580" y="143" fill="#9ca3af" font-size="9" text-anchor="middle">H + 受控相位 + SWAP</text>
+    <text x="580" y="161" fill="#9ca3af" font-size="9" text-anchor="middle">O(n²) 个门</text>
+    <text x="580" y="178" fill="#9ca3af" font-size="9" text-anchor="middle">频域 → r</text>
+
+    <!-- Measurement on input -->
+    <rect x="710" y="85" width="40" height="100" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+    <text x="730" y="140" fill="#10b981" font-size="22" font-weight="bold" text-anchor="middle">M</text>
+    <text x="730" y="158" fill="#9ca3af" font-size="8" text-anchor="middle">测量</text>
+
+    <!-- 输出寄存器 (n = 4 qubits) -->
+    <text x="20" y="220" fill="#ec4899" font-size="12" font-weight="bold">输出</text>
+    <text x="20" y="235" fill="#ec4899" font-size="10">(n=4 qubit)</text>
+    <line x1="100" y1="215" x2="700" y2="215" stroke="#ec4899" stroke-width="1.5"/>
+    <line x1="220" y1="215" x2="440" y2="215" stroke="#ec4899" stroke-width="1.5"/>
+    <!-- q0 output -->
+    <line x1="100" y1="250" x2="120" y2="250" stroke="#ec4899" stroke-width="2"/>
+    <text x="105" y="245" fill="#ec4899" font-size="11">q0'</text>
+    <text x="160" y="245" fill="#9ca3af" font-size="9" text-anchor="middle">|0⟩</text>
+    <line x1="220" y1="250" x2="440" y2="250" stroke="#ec4899" stroke-width="2"/>
+    <text x="330" y="245" fill="#ec4899" font-size="10" text-anchor="middle">→ aˣ mod N</text>
+    <text x="500" y="245" fill="#ec4899" font-size="9" text-anchor="middle">y = aˣ mod N</text>
+    <!-- Measurement on output -->
+    <rect x="440" y="225" width="40" height="50" rx="4" fill="#064e3b" stroke="#10b981" stroke-width="2"/>
+    <text x="460" y="255" fill="#10b981" font-size="20" font-weight="bold" text-anchor="middle">M</text>
+
+    <!-- Bottom: result -->
+    <line x1="100" y1="290" x2="730" y2="290" stroke="#374151" stroke-width="1" stroke-dasharray="3 3"/>
+    <text x="400" y="320" fill="#e5e7eb" font-size="12" font-weight="bold" text-anchor="middle">经典后处理:连分数 j/N² → r, 然后 gcd(a^(r/2) ± 1, N) → 因子 p, q</text>
+    <text x="400" y="345" fill="#7c3aed" font-size="11" text-anchor="middle">总复杂度:经典 O(n²) + 量子 O(n³) = O(n³) 多项式时间(经典 GNFS: 2^112 步)</text>
+  </svg>
+  <figcaption>图 11.2: Shor 算法的完整量子电路。蓝色 = 输入寄存器(2n qubit),粉色 = 输出寄存器(n qubit),黄色 = U_a 受控模幂(核心,O(n³) 门),蓝色 = 逆 QFT(O(n²) 门),绿色 = 测量。算法流程:H 叠加所有 x → U_a 计算 a^x mod N → 测量输出寄存器 → QFT⁻¹ 提取周期 r → 测量输入寄存器 → 经典后处理(连分数 + gcd 提取因子)。</figcaption>
+</figure>
+
+<hr>
+<h2>11.6 工作例子:$N = 15, a = 7$ 完整 7 步演示</h2>
+<h3>11.6.1 第 1 步:经典前置</h3>
+<p><strong>输入</strong>: $N = 15$。</p>
+<p><strong>选 $a = 7$</strong>(随机, $2 \leq a \leq 14$)。</p>
+<p><strong>$\gcd(7, 15) = 1$</strong> ✓ —— 没找到因子,继续。</p>
+<h3>11.6.2 第 2-4 步:计算 $7^x \mod 15$</h3>
+<p><strong>经典预计算</strong>:</p>
+<ul>
+<li>$7^1 \mod 15 = 7$</li>
+<li>$7^2 \mod 15 = 49 \mod 15 = 4$</li>
+<li>$7^4 \mod 15 = 4^2 \mod 15 = 16 \mod 15 = 1$ ← 周期!</li>
+<li>所以 $7^4 \equiv 1 \pmod{15}$,<strong>阶 $r = 4$</strong></li>
+</ul>
+<h3>11.6.3 第 5 步:验证 $r = 4$ 是偶数</h3>
+<p>$r = 4$ 是偶数 ✓</p>
+<p><strong>$7^2 \mod 15 = 4$, 而 $-1 \mod 15 = 14$</strong>。 $4 \neq 14$,所以 $7^2 \not\equiv -1 \pmod{15}$ ✓</p>
+<h3>11.6.4 第 6 步:计算 $\gcd$</h3>
+<ul>
+<li>$7^2 - 1 = 48$, $\gcd(48, 15) = 3$ ✓</li>
+<li>$7^2 + 1 = 50$, $\gcd(50, 15) = 5$ ✓</li>
+</ul>
+<h3>11.6.5 第 7 步:验证</h3>
+<p>$N = 15 = 3 \times 5$ ✓ —— <strong>分解成功!</strong></p>
+<h3>11.6.6 量子电路的对应步骤(高级)</h3>
+<p><strong>初始化</strong>(输入寄存器 4 qubit, $N^2 = 225$, 用 $2^8 = 256$):</p>
+<p>$$|\psi_0\rangle = |0000\rangle|0000\rangle$$</p>
+<p><strong>应用 $H^{\otimes 4}$</strong>(输入寄存器):</p>
+<p>$$|\psi_1\rangle = \frac{1}{4} \sum_{x=0}^{15} |x\rangle|0\rangle^{\otimes 4}$$</p>
+<p><strong>应用 $U_7$</strong>(受控模幂 $7^x \mod 15$):</p>
+<p>$$|\psi_2\rangle = \frac{1}{4} \sum_{x=0}^{15} |x\rangle|7^x \mod 15\rangle$$</p>
+<p><strong>测量输出寄存器</strong>(假设得到 $y = 4$,即 $7^x \equiv 4 \pmod{15}$ ):</p>
+<p>满足 $7^x \equiv 4$ 的 $x$ 是 $\{2, 6, 10, 14\}$(模 $r = 4$ 等价)</p>
+<p>输入寄存器塌缩到:</p>
+<p>$$|\psi_3\rangle = \frac{1}{2}(|0010\rangle + |0110\rangle + |1010\rangle + |1110\rangle) = \frac{1}{2} \sum_{k=0}^{3} |2 + 4k\rangle$$</p>
+<p><strong>应用 QFT$^{-1}$</strong>:</p>
+<p>测量得到 $j$,<strong>用连分数</strong>提取 $r$。</p>
+<p><strong>对 $N^2 = 256$ 的情形</strong>: 期望的 $j$ 值在 $\sim N^2/r = 64$ 附近(即 $j = 0, 64, 128, 192$)。</p>
+<p>测得 $j = 64$,则 $\phi = 64/256 = 1/4$,连分数 = $[0; 4]$,所以 $r = 4$ ✓</p>
+<hr>
+<h2>11.7 复杂度分析</h2>
+<h3>11.7.1 量子部分时间复杂度</h3>
+<p><strong>核心</strong>: 量子电路做 $n$ 位模幂 $a^x \mod N$ 一次,需要 $O(n^3)$ 个量子门。</p>
+<p><strong>详细分解</strong>:</p>
+<ul>
+<li><strong>输入寄存器</strong>: $2n$ qubit(为了足够的精度,QFT 给出 $1/N^2$ 的精度)</li>
+<li><strong>输出寄存器</strong>: $n$ qubit</li>
+<li><strong>辅助 qubit</strong>: $O(n)$</li>
+<li><strong>总 qubit</strong>: $O(n)$</li>
+<li><strong>$U_a$ 分解</strong>: $O(n)$ 个模乘</li>
+<li><strong>每个模乘</strong>: $O(n^2)$ 个基本门</li>
+<li><strong>总 $U_a$ 门数</strong>: $O(n^3)$</li>
+<li><strong>QFT</strong>: $O(n^2)$ 个门(用第 9 章的高效实现)</li>
+<li><strong>$H^{\otimes 2n}$</strong>: $O(n)$ 个门</li>
+<li><strong>总门数</strong>: $O(n^3)$</li>
+</ul>
+<p><strong>QFT 部分的细节</strong>:第 9 章的 QFT 电路需要 $O(n^2)$ 个门(每个 qubit 最多 $n$ 个受控相位门)。</p>
+<h3>11.7.2 整体时间复杂度</h3>
+<table class="concept-table"><thead><tr><th>部分</th><th>时间</th></tr></thead><tbody><tr><td>经典前置(选 $a$ + gcd)</td><td>$O(n^2)$</td></tr><tr><td>量子电路(找周期)</td><td>$O(n^3)$</td></tr><tr><td>经典后处理(连分数 + gcd)</td><td>$O(n^2)$</td></tr><tr><td><strong>整体</strong></td><td><strong>$O(n^3)$</strong></td></tr></tbody></table>
+<p><strong>$O(n^3 \log n)$</strong> (考虑更精确的常数)。</p>
+<h3>11.7.3 经典 vs Shor 量子:加速比</h3>
+<table class="concept-table"><thead><tr><th>$N$ 的位数 $n$</th><th>经典 GNFS(步)</th><th>Shor 量子(步)</th><th>加速比</th></tr></thead><tbody><tr><td>100</td><td>$\sim 2^{20}$</td><td>$\sim 10^{6}$</td><td>$10^{9}$×</td></tr><tr><td>1000</td><td>$\sim 2^{60}$</td><td>$\sim 10^{9}$</td><td>$10^{18}$×</td></tr><tr><td>2048</td><td>$\sim 2^{112}$</td><td>$\sim 10^{10}$</td><td>$10^{33}$×</td></tr><tr><td>10000</td><td>$\sim 2^{400}$</td><td>$\sim 10^{11}$</td><td>$10^{120}$×</td></tr></tbody></table>
+<p><strong>加速比 = 指数级别</strong>(经典是亚指数,Shor 是多项式)。</p>
+<p><strong>实际影响</strong>:</p>
+<ul>
+<li>RSA-2048(标准): 经典需要 $2^{112}$ 步(宇宙年龄的几亿倍);Shor 需要 $\sim 10^{10}$ 步(几小时, <strong>在大型容错量子计算机上</strong>)</li>
+<li>RSA-4096: 经典需要 $2^{150}$ 步(完全不可行);Shor 需要 $\sim 2 \cdot 10^{10}$ 步</li>
+<li><strong>结论</strong>: RSA 在量子计算机面前<strong>不安全</strong></li>
+</ul>
+<h3>11.7.4 算法的"工作原理"总结</h3>
+<p><strong>为什么 Shor 比经典快这么多</strong>? <strong>三个层次的洞察</strong>:</p>
+<p><strong>层次 1: 因式分解不是"原子"问题</strong></p>
+<p>经典看法: 因式分解是一个"硬"问题。Shor 的洞察: 它可以<strong>归约</strong>到周期发现,这是<strong>已知结构</strong>的问题。</p>
+<p><strong>层次 2: 周期发现不是"原子"问题</strong></p>
+<p>经典看法: 找周期需要 $O(r)$ 步"扫描"。Shor 的洞察: 它可以<strong>用 QFT 一次性</strong>得到(经典 DFT 就能"看到"周期;QFT 在量子计算机上<strong>指数加速</strong>这个操作)。</p>
+<p><strong>层次 3: 量子并行 + 干涉 = "免费"周期发现</strong></p>
+<p>经典扫描: 算 $a^0, a^1, \ldots, a^r$ 然后找周期,需要 $O(r)$ 步。 量子方法: <strong>叠加</strong>所有 $x$ → 算 $a^x \mod N$(对所有 $x$ 同时) → <strong>QFT</strong> 把 $x$ 域变换到 $r$ 域 → 测量。</p>
+<p>QFT 的"魔法": 对叠加态 $\frac{1}{\sqrt{N}} \sum_x |x\rangle$ 应用 QFT,得到频域的叠加态;如果是<strong>周期</strong>叠加,频域会<strong>自动聚类</strong>到 $r$ 的整数倍处。</p>
+<blockquote class="chapter-quote"><p><strong>关键洞察</strong>: Shor 的天才不是发明 QFT(第 9 章)也不是发明 gcd(经典算法),而是发现<strong>因式分解可以归约到周期发现</strong>这一步。这是<strong>算法设计</strong>的胜利,不是物理的胜利。</p></blockquote>
+<hr>
+<h2>11.8 后量子密码学</h2>
+<h3>11.8.1 "Harvest Now, Decrypt Later" 攻击</h3>
+<p><strong>现实威胁</strong>: 即使今天没有大型量子计算机,敌手可以<strong>现在</strong>就收集加密数据,等<strong>未来</strong>有量子计算机时<strong>再解密</strong>。</p>
+<p><strong>例子</strong>:</p>
+<ul>
+<li>政府情报机构可能存储所有加密通信 20-30 年</li>
+<li>20 年后,大型量子计算机可能破解 RSA-2048</li>
+<li><strong>任何</strong>长期保密数据(医疗记录、军事机密)都面临风险</li>
+</ul>
+<p><strong>应对</strong>: <strong>后量子密码学</strong>(post-quantum cryptography, PQC) —— 设计<strong>抗量子</strong>的密码系统,<strong>今天</strong>就开始用。</p>
+<h3>11.8.2 抗量子的数学问题</h3>
+<p><strong>需要</strong>: <strong>不被 Shor 或 Grover 加速</strong>的数学问题。</p>
+<table class="concept-table"><thead><tr><th>问题</th><th>Shor 加速?</th><th>Grover 加速?</th><th>抗量子?</th></tr></thead><tbody><tr><td><strong>整数分解</strong></td><td>✓(指数)</td><td>—</td><td>✗</td></tr><tr><td><strong>离散对数</strong></td><td>✓(指数)</td><td>—</td><td>✗</td></tr><tr><td><strong>RSA 模幂</strong></td><td>✓(指数)</td><td>—</td><td>✗</td></tr><tr><td><strong>椭圆曲线</strong></td><td>✓(指数)</td><td>—</td><td>✗</td></tr><tr><td><strong>格问题</strong> (LWE/SVP)</td><td>✗</td><td>二次(可接受)</td><td>✓</td></tr><tr><td><strong>哈希签名</strong></td><td>✗</td><td>二次(可加大)</td><td>✓</td></tr><tr><td><strong>多变量多项式</strong></td><td>✗</td><td>二次(可接受)</td><td>✓</td></tr><tr><td><strong>编码问题</strong> (McEliece)</td><td>✗</td><td>二次</td><td>✓</td></tr></tbody></table>
+<p><strong>格密码</strong>(lattice-based)是<strong>首选</strong> —— 性能好、安全性高、NIST 2022 标准。</p>
+<h3>11.8.3 格密码简介(LWE)</h3>
+<p><strong>LWE</strong>(Learning With Errors) 问题:</p>
+<ul>
+<li>给定 $A \in \mathbb{Z}_q^{n \times m}$, $b = As + e \mod q$(其中 $s$ 是秘密, $e$ 是小噪声)</li>
+<li><strong>求 $s$</strong></li>
+</ul>
+<p><strong>量子算法</strong>: 目前<strong>没有已知的量子多项式时间算法</strong>能解 LWE。Grover 加速<strong>只是</strong>二次,可接受(对应密钥长度加倍)。</p>
+<p><strong>格密码的代表</strong>:</p>
+<ul>
+<li><strong>Kyber</strong>(ML-KEM) - NIST 2022 标准,基于 Module-LWE</li>
+<li><strong>Dilithium</strong>(ML-DSA) - NIST 2022 标准,基于 Module-LWE + Module-SIS</li>
+<li><strong>Falcon</strong>(FN-DSA) - NIST 2022 标准,基于 NTRU 格</li>
+</ul>
+<h3>11.8.4 NIST PQC 标准化历程</h3>
+<table class="concept-table"><thead><tr><th>年份</th><th>事件</th></tr></thead><tbody><tr><td><strong>2016</strong></td><td>NIST 公开征集 PQC 算法(69 个初始候选)</td></tr><tr><td><strong>2019</strong></td><td>第二轮: 26 个候选</td></tr><tr><td><strong>2020</strong></td><td>第三轮: 15 个最终候选(7 个决赛 + 8 个候补)</td></tr><tr><td><strong>2022</strong></td><td>NIST 公布首批 <strong>4 个 PQC 标准</strong>: Kyber, Dilithium, SPHINCS+, FALCON</td></tr><tr><td><strong>2023-2024</strong></td><td>NIST 继续评估 HQC, McEliece 等</td></tr><tr><td><strong>2024-2025</strong></td><td>进一步标准化 + 备选方案</td></tr></tbody></table>
+<p><strong>具体标准</strong>:</p>
+<ul>
+<li><strong>FIPS 203</strong> (ML-KEM): 基于 Kyber(模-LWE),用于<strong>密钥封装</strong></li>
+<li><strong>FIPS 204</strong> (ML-DSA): 基于 Dilithium(模-LWE + 模-SIS),用于<strong>数字签名</strong></li>
+<li><strong>FIPS 205</strong> (SLH-DSA): 基于 SPHINCS+(哈希),用于<strong>数字签名</strong>(最保守,纯哈希)</li>
+<li><strong>FIPS 206</strong> (FN-DSA): 基于 FALCON(NTRU 格),用于<strong>数字签名</strong>(最紧凑)</li>
+</ul>
+<h3>11.8.5 迁移挑战</h3>
+<p><strong>问题</strong>: 现有 RSA 系统(数十亿设备)需要<strong>迁移</strong>到 PQC。</p>
+<p><strong>挑战</strong>:</p>
+<ul>
+<li><strong>密钥/签名大小</strong>: PQC 签名比 RSA 大(几 KB vs 256 字节)</li>
+<li><strong>性能</strong>: PQC 比 RSA 慢</li>
+<li><strong>向后兼容</strong>: 需要混合方案(PQC + 传统)</li>
+<li><strong>标准化</strong>: NIST 标准刚出,生态系统还在发展</li>
+</ul>
+<p><strong>状态(2026)</strong>:</p>
+<ul>
+<li>主流浏览器、操作系统开始支持 PQC(Chrome 124+, OpenSSL 3.4+)</li>
+<li><strong>混合模式</strong>: TLS 1.3 + X25519 + Kyber-768(ML-KEM-768)</li>
+<li>大公司(Apple, Google, Cloudflare)开始部署</li>
+<li><strong>完全迁移</strong>预计 2030s</li>
+</ul>
+<hr>
+<h2>11.9 Shor 算法的物理挑战</h2>
+<h3>11.9.1 为什么 Shor 还<strong>没有</strong>破解 RSA?</h3>
+<p><strong>问题</strong>: 破解 RSA-2048 需要多少物理资源?</p>
+<table class="concept-table"><thead><tr><th>资源</th><th>估算(2024 文献)</th><th>当前最大(2026)</th><th>差距</th></tr></thead><tbody><tr><td><strong>qubit 数</strong></td><td>$\sim 20$ 百万 (表面码容错)</td><td>$\sim 1100$ (IBM Condor)</td><td>20000×</td></tr><tr><td><strong>T 门数</strong></td><td>$\sim 10^{10}$</td><td>$\sim 10^6$ (单电路)</td><td>$10^4$×</td></tr><tr><td><strong>运行时间</strong></td><td>几小时</td><td>分钟级(无容错)</td><td>$\infty$</td></tr><tr><td><strong>错误率</strong></td><td>$10^{-6}$ (容错阈值)</td><td>$10^{-3}$ (NISQ)</td><td>$10^3$×</td></tr></tbody></table>
+<p><strong>关键瓶颈</strong>:</p>
+<ol>
+<li><strong>qubit 数</strong> —— 需要<strong>数百万</strong>个物理 qubit 才能容错</li>
+<li><strong>T 门错误率</strong> —— 需要 $< 10^{-4}$ 才能容错阈值下</li>
+<li><strong>电路深度</strong> —— $10^{10}$ 步 T 门,即使每步 1 微秒,也要 $\sim 3$ 小时</li>
+<li><strong>退相干时间</strong> —— 需要 $> 1$ 秒(目前最好 $\sim 100$ 毫秒)</li>
+</ol>
+<h3>11.9.2 实现 Shor 的 3 个层次</h3>
+<p><strong>层次 1: 小规模演示</strong>(已实现, NISQ)</p>
+<ul>
+<li>分解 $N = 15$(用 Shor 算法)</li>
+<li>2001: IBM 用 NMR 演示 $N = 15$</li>
+<li>2012-2016: 多平台(超导、离子阱、光)演示 $N = 15$</li>
+<li>2019-2024: 演示 $N = 21$(离子阱), $N = 35$(光量子)</li>
+</ul>
+<p><strong>层次 2: 中等规模容错</strong>(进行中)</p>
+<ul>
+<li>分解 $N = 100$ 级别</li>
+<li>需要 $\sim 1000$ 物理 qubit(高保真度)</li>
+<li>预计 2027-2030</li>
+</ul>
+<p><strong>层次 3: 大规模容错</strong>(未来)</p>
+<ul>
+<li>分解 RSA-2048</li>
+<li>需要 $\sim 10^6$ 物理 qubit</li>
+<li>预计 2030-2040</li>
+</ul>
+<h3>11.9.3 资源估算: $N = 2048$</h3>
+<p><strong>Gidney-Ekerå 2019</strong> [GE19] 详细估算:</p>
+<ul>
+<li><strong>物理 qubit 数</strong>: $\sim 20$ 百万</li>
+<li><strong>T 门数</strong>: $\sim 7$ 亿</li>
+<li><strong>运行时间</strong>: <strong>8 小时</strong>(假设物理门 1 微秒)</li>
+<li><strong>表面码距离</strong>: $d = 27$</li>
+<li><strong>错误率</strong>: $10^{-3}$ 物理, $10^{-6}$ 逻辑</li>
+</ul>
+<p><strong>注</strong>: 这是<strong>一个</strong>估算;不同方案(不同表面码距离、不同错误率、不同算法优化)可能差 10×。</p>
+<h3>11.9.4 加速实现的路径</h3>
+<table class="concept-table"><thead><tr><th>路径</th><th>时间</th><th>关键技术</th></tr></thead><tbody><tr><td><strong>超导</strong> (IBM, Google)</td><td>2030s</td><td>表面码 + 大量 qubit + 高保真 T 门</td></tr><tr><td><strong>离子阱</strong> (IonQ, Quantinuum)</td><td>2030s</td><td>高保真 + 中等规模</td></tr><tr><td><strong>光量子</strong> (PsiQuantum)</td><td>2030s-2040s</td><td>大规模 + 室温</td></tr><tr><td><strong>拓扑</strong> (Microsoft)</td><td>2030s-2040s</td><td>天然抗噪(若 Majorana 实现)</td></tr><tr><td><strong>中性原子</strong> (QuEra)</td><td>2030s</td><td>可扩展 + 灵活</td></tr></tbody></table>
+<p><strong>"第一个破解 RSA-2048"</strong> 的竞赛已经悄悄开始。<strong>预计 2030-2035</strong>。</p>
+<hr>
+<h2>11.10 总结与后续章节铺路</h2>
+<h3>11.10.1 概念速查表</h3>
+<table class="concept-table"><thead><tr><th>概念</th><th>定义</th><th>关键点</th></tr></thead><tbody><tr><td><strong>RSA 安全性</strong></td><td>因式分解难度</td><td>$O(\exp(n^{1/3} \log^{2/3} n))$ 经典</td></tr><tr><td><strong>阶 (order)</strong></td><td>$a^r \equiv 1 \pmod N$ 的最小 $r$</td><td>关键中间量</td></tr><tr><td><strong>Shor 归约</strong></td><td>因式分解 → 阶发现</td><td>gcd 算法 + 模幂</td></tr><tr><td><strong>量子周期发现</strong></td><td>QFT 提取 $r$</td><td>指数加速</td></tr><tr><td><strong>受控模幂 $U_a$</strong></td><td>$U_a\</td><td>x\rangle\</td><td>0\rangle = \</td><td>x\rangle\</td><td>a^x \mod N\rangle$</td><td>$O(n^3)$ 门</td></tr><tr><td><strong>连分数</strong></td><td>从 $j/N^2$ 提取 $r$</td><td>经典 $O(n^2)$ 步</td></tr><tr><td><strong>失败处理</strong></td><td>$r$ 奇数 / $a^{r/2} \equiv -1$</td><td>重新选 $a$</td></tr><tr><td><strong>RSA-2048</strong></td><td>经典 $2^{112}$ 步 vs Shor $10^{10}$ 步</td><td>加速比 $10^{33}$</td></tr><tr><td><strong>PQC</strong></td><td>后量子密码学</td><td>格密码 (LWE)</td></tr><tr><td><strong>NIST PQC 2022</strong></td><td>Kyber + Dilithium + SPHINCS+ + FALCON</td><td>标准化</td></tr></tbody></table>
+<h3>11.10.2 Shor 算法的"5 个关键点"</h3>
+<ol>
+<li><strong>归约的力量</strong> —— 把未知问题(因式分解)转化为已知问题(阶发现)</li>
+<li><strong>QFT 的应用</strong> —— 周期函数 + QFT = 指数加速</li>
+<li><strong>经典-量子分工</strong> —— 经典做简单算术,量子做"困难"步骤</li>
+<li><strong>多项式时间</strong> —— $O(n^3 \log n)$,RSA 安全性崩塌</li>
+<li><strong>现实意义</strong> —— 后量子密码学兴起, NIST 2022 标准化</li>
+</ol>
+<h3>11.10.3 第二部分 5 章回顾</h3>
+<p><strong>第二部分 5 章 100% 完成</strong>:</p>
+<table class="concept-table"><thead><tr><th>章</th><th>主题</th><th>核心</th><th>加速</th></tr></thead><tbody><tr><td>ch06</td><td>量子比特</td><td>qubit + Bloch 球</td><td>—</td></tr><tr><td>ch07</td><td>量子门</td><td>$\hat{H}, \hat{T}, \text{CNOT}$</td><td>—</td></tr><tr><td>ch08</td><td>量子电路</td><td>张量积 + 通用集</td><td>—</td></tr><tr><td>ch09</td><td>QFT</td><td>指数加速</td><td>指数</td></tr><tr><td>ch10</td><td>Grover</td><td>振幅放大</td><td>二次</td></tr></tbody></table>
+<p><strong>读者已掌握的工具箱</strong> —— 准备进入<strong>第三部分</strong>(量子算法与复杂性)。</p>
+<h3>11.10.4 第三部分开篇 🚀</h3>
+<p><strong>第三部分 5 章</strong>(量子算法与复杂性):</p>
+<table class="concept-table"><thead><tr><th>章</th><th>算法</th><th>加速</th><th>类别</th></tr></thead><tbody><tr><td><strong>ch11</strong></td><td><strong>Shor 因式分解</strong></td><td>指数</td><td>数论问题 ✅</td></tr><tr><td><strong>ch12</strong></td><td><strong>量子相位估计 QPE</strong></td><td>指数</td><td>算法基础</td></tr><tr><td><strong>ch13</strong></td><td><strong>VQE / QAOA</strong></td><td>多项式 / 启发式</td><td>NISQ 时代</td></tr><tr><td><strong>ch14</strong></td><td><strong>量子机器学习</strong></td><td>条件性</td><td>启发式</td></tr><tr><td><strong>ch15</strong></td><td><strong>量子复杂性</strong></td><td>—</td><td>理论</td></tr></tbody></table>
+<p><strong>QFT / Grover / Shor 跟这些章节的关系</strong>:</p>
+<ul>
+<li><strong>ch12 QPE</strong>: QFT 的核心应用(9.9 详细数学 + 11.4 周期发现是 QPE 的一种)</li>
+<li><strong>ch13 VQE/QAOA</strong>: Grover 思想 + 量子-经典混合</li>
+<li><strong>ch14 QML</strong>: HHL(线性方程) + Grover 振幅估计</li>
+<li><strong>ch15 复杂性</strong>: Shor 跟 BQP + NP 问题 + 后量子复杂性</li>
+</ul>
+<h3>11.10.5 推荐阅读</h3>
+<ul>
+<li><strong>Shor 原始论文</strong> [S94]: P. W. Shor, <em>"Algorithms for quantum computation: discrete logarithms and factoring"</em>, FOCS 1994</li>
+<li><strong>Shor 算法完整教程</strong> [NC10] Ch 5: Nielsen & Chuang《Quantum Computation and Quantum Information》10 周年版</li>
+<li><strong>连分数算法</strong> [K97]: A. Y. Kitaev, <em>"Quantum computations: algorithms and error correction"</em>, 1997</li>
+<li><strong>资源估算</strong> [GE19]: C. Gidney, M. Ekerå, <em>"How to factor 2048 bit RSA integers in 8 hours using 20 million noisy qubits"</em>, Quantum 2020</li>
+<li><strong>后量子密码学</strong> [NIST-PQC]: NIST Post-Quantum Cryptography Standardization (2016-2024)</li>
+<li><strong>格密码综述</strong> [Pe16]: C. Peikert, <em>"A decade of lattice cryptography"</em>, Foundations and Trends in Theoretical Computer Science 2016</li>
+<li><strong>Harvest Now Decrypt Later</strong> [Mos15]: M. Mosca, <em>"Cybersecurity in an era with quantum computers: will we be ready?"</em>, IEEE Security & Privacy 2015</li>
+</ul>
+<h3>11.10.6 思考题</h3>
+<ol>
+<li><strong>$N = 15, a = 11$</strong>: 重复 Shor 算法,验证得到 $r = 2$,算出因子。</li>
+<li><strong>失败分析</strong>: 选 $a = 14$, 验证 $r = 2$ 但 $a^{r/2} \equiv -1 \pmod{15}$, 解释为什么 Shor 在这情况下失败, 然后选另一个 $a$ 重试。</li>
+<li><strong>QFT 的输出精度</strong>: 如果 $N = 15$, 我们用 $n = 4$ qubit 的 QFT(精度 $1/16$), 测量能得到准确的 $r$ 吗?为什么需要 $2n$ qubit?</li>
+<li><strong>RSA vs PQC</strong>: 假设 2030 年有 1000 万 qubit 的量子计算机,RSA-2048 大约需要多少时间破解? 对比 PQC (Kyber-768) 同样硬件需要多少时间?</li>
+<li><strong>扩展</strong>: 解释为什么 Shor 算法对<strong>椭圆曲线密码</strong>(ECC) 也有效? 提示: 离散对数问题跟因式分解问题有相同的"周期"结构。</li>
+</ol>
+<h3>11.10.7 三个核心问题回顾</h3>
+<ol>
+<li><strong>Shor 怎么</strong> 把因式分解转化为周期发现? (11.2-11.3 归约 + 数学)</li>
+<li><strong>量子怎么</strong> 找周期? (11.4 QFT + 11.5 完整电路)</li>
+<li><strong>Shor 多快</strong>? 现实意义? (11.7 复杂度 + 11.8 后量子 + 11.9 物理挑战)</li>
+</ol>
+<h3>11.10.8 全景图:第 11 章在量子算法版图中的位置</h3>
+<pre><code>                            ┌──────────────────┐
+                            │  RSA-2048 密码系统 │
+                            │  (当今互联网)     │
+                            └────────┬─────────┘
+                                     │
+                                     v
+                            ┌──────────────────┐
+                            │  经典因式分解     │
+                            │  GNFS: 2^112 步  │
+                            │  (不可行)        │
+                            └────────┬─────────┘
+                                     │
+                            Shor 归约(经典)
+                                     │
+                                     v
+                            ┌──────────────────┐
+                            │  周期发现问题     │
+                            │  找 a^r ≡ 1 (mod N)│
+                            └────────┬─────────┘
+                                     │
+                            Shor 量子电路
+                                     │
+                                     v
+                            ┌──────────────────┐
+                            │  QFT 提取 r       │
+                            │  (指数加速)       │
+                            │  O(n^3) 门        │
+                            └────────┬─────────┘
+                                     │
+                                     v
+                            ┌──────────────────┐
+                            │  因子 p, q        │
+                            │  RSA 破解         │
+                            └──────────────────┘
+                                     │
+                                     v
+                            ┌──────────────────┐
+                            │  后量子密码学     │
+                            │  NIST 2022 PQC    │
+                            │  (Kyber 等)      │
+                            └──────────────────┘</code></pre>
+<h3>11.10.9 第二部分 → 第三部分过渡</h3>
+<p><strong>第二部分</strong>:给了<strong>基础工具</strong>(qubit, 门, 电路, QFT, Grover) <strong>第三部分</strong>:用这些工具<strong>解决具体问题</strong>(Shor, QPE, VQE, QML)</p>
+<p><strong>第二部分</strong> 问: "<strong>怎么建造一台量子计算机并实现基本算法?</strong>" <strong>第三部分</strong> 问: "<strong>用量子计算机能解决哪些问题?比经典快多少?</strong>"</p>
+<p><strong>第 11 章 Shor</strong>: 用 QFT 解决"<strong>分解大整数</strong>"问题 —— <strong>指数加速 + 量子计算机的"杀手级应用"</strong>。</p>
+<p><strong>展望 ch12 QPE</strong>: 第 11 章用了 QFT,但 QFT 的<strong>真正威力</strong>是在<strong>量子相位估计</strong>(QPE) 中 —— 很多量子算法的"中央处理器"。</p>
+<hr>
+<h2>11.X 附录:Shor 算法的历史与影响</h2>
+<h3>11.X.1 1994 年的"震撼"</h3>
+<p>1994 年 4 月, Peter Shor 在 AT&T Bell Labs 提出了这个算法。当时量子计算还<strong>远未</strong>是主流研究方向。</p>
+<p><strong>震撼的原因</strong>:</p>
+<ul>
+<li><strong>数学上</strong>: 第一次展示了量子计算机能解决"<strong>有用</strong>"的经典难题</li>
+<li><strong>实际</strong>: 直接攻击 RSA,这是当时<strong>最重要</strong>的公钥密码</li>
+<li><strong>理论上</strong>: 第一次用 QFT 解决"非 QFT 直接可解"的问题</li>
+</ul>
+<p><strong>后续影响</strong>:</p>
+<ul>
+<li><strong>1994-2000</strong>: 多个实验演示(简化版)</li>
+<li><strong>2000s</strong>: 量子计算成为主流研究方向</li>
+<li><strong>2010s</strong>: 多个物理平台(超导、离子阱)展示 Shor 算法</li>
+<li><strong>2020s</strong>: 进入"后量子密码学"时代</li>
+</ul>
+<h3>11.X.2 跟 QFT 的关系</h3>
+<p><strong>Shor 算法的核心</strong> = QFT 应用于<strong>周期函数</strong>。</p>
+<p><strong>为什么 QFT 能找周期</strong>?</p>
+<ul>
+<li><strong>经典 DFT</strong>: 把信号从时域变到频域,<strong>周期</strong>变成<strong>频谱中的峰值</strong></li>
+<li><strong>QFT</strong>: 经典 DFT 的<strong>量子版本</strong> —— <strong>指数加速</strong></li>
+</ul>
+<p><strong>Shor 用了 QFT 的什么性质</strong>:</p>
+<ul>
+<li>周期 $r$ 在频域表现为<strong>整数倍频率峰值</strong>($j = c \cdot N^2/r$)</li>
+<li>QFT 后,测量<strong>几乎必然</strong>落在峰值上</li>
+</ul>
+<blockquote class="chapter-quote"><p><strong>注</strong>: Shor 算法的"量子部分"实际上<strong>只是</strong> QFT 应用于一个<strong>特殊</strong>的"量子态"(周期叠加态)。Shor 的天才在于: <strong>如何构造</strong>这个周期叠加态(用模幂 $U_a$)。</p></blockquote>
+<h3>11.X.3 跟 Grover 的关系</h3>
+<table class="concept-table"><thead><tr><th></th><th>Shor</th><th>Grover</th></tr></thead><tbody><tr><td><strong>问题类型</strong></td><td>有结构(数论)</td><td>无结构(搜索)</td></tr><tr><td><strong>加速</strong></td><td>指数(多项式 vs 亚指数)</td><td>二次($\sqrt{N}$ vs $N$)</td></tr><tr><td><strong>核心子程序</strong></td><td>QFT</td><td>振幅放大</td></tr><tr><td><strong>需要的 qubit</strong></td><td>$O(n)$</td><td>$O(n)$</td></tr><tr><td><strong>需要的门</strong></td><td>$O(n^3)$</td><td>$O(n \cdot 2^{n/2})$</td></tr><tr><td><strong>应用</strong></td><td>密码学 + 数论</td><td>搜索 + 优化</td></tr></tbody></table>
+<p><strong>结论</strong>: Shor 比 Grover <strong>强得多</strong> —— 指数加速 vs 二次加速。但 Shor 只对<strong>有结构</strong>的问题有效(数论/代数);Grover 适用范围更广(任何 oracle 访问的问题)。</p>
+<h3>11.X.4 Shor 算法的局限</h3>
+<p>虽然 Shor 是<strong>理论突破</strong>,但<strong>实际</strong>破解 RSA 还需要:</p>
+<ol>
+<li><strong>数百万 qubit</strong> 的容错量子计算机</li>
+<li><strong>数小时</strong>的运行时间</li>
+<li><strong>数百万美元</strong> 的硬件成本</li>
+</ol>
+<p><strong>当前状态(2026)</strong>:</p>
+<ul>
+<li>最大的量子计算机: ~1000 qubit(IBM Condor, Atom Computing)</li>
+<li>还<strong>远未</strong>达到破解 RSA-2048 所需</li>
+<li><strong>预计</strong>: 2030-2035 达到临界规模</li>
+<li><strong>风险</strong>: "Harvest Now, Decrypt Later"</li>
+</ul>
+<p><strong>应对</strong>:</p>
+<ul>
+<li><strong>现在</strong>就开始部署 PQC(长期保密数据)</li>
+<li><strong>2024-2030</strong>: 完成主流系统迁移</li>
+<li><strong>2030s</strong>: RSA 逐步退役</li>
+</ul>
+<h3>11.X.5 量子计算 vs 后量子密码学</h3>
+<table class="concept-table"><thead><tr><th>维度</th><th>量子计算</th><th>后量子密码学</th></tr></thead><tbody><tr><td><strong>目标</strong></td><td>解决问题</td><td>保护数据</td></tr><tr><td><strong>加速</strong></td><td>Shor 等</td><td>—</td></tr><tr><td><strong>抗量子</strong></td><td>—</td><td>LWE / 哈希签名等</td></tr><tr><td><strong>现状(2026)</strong></td><td>1000 qubit</td><td>NIST 标准已出</td></tr><tr><td><strong>未来(2030s)</strong></td><td>数百万 qubit</td><td>主流部署</td></tr><tr><td><strong>时间线</strong></td><td>2030+ 实用</td><td>2024+ 部署</td></tr></tbody></table>
+<p><strong>结论</strong>: 量子计算和后量子密码学<strong>同时</strong>发展 —— 攻击(Shor)和防御(PQC)在赛跑。</p>
+<h3>11.X.6 Shor 算法的"哲学意义"</h3>
+<p>Shor 算法的发现<strong>改变了</strong>计算理论:</p>
+<p><strong>1. "量子优势"的具体化</strong></p>
+<p>1994 年之前,量子计算主要是"理论好奇"。Shor 第一次展示了<strong>实际的、经济的、有影响的</strong>量子优势。这激励了<strong>数十年</strong>的量子计算研究。</p>
+<p><strong>2. "归约"的力量</strong></p>
+<p>Shor 的核心洞察是<strong>归约</strong> —— 把未知问题(因式分解)转化为已知问题(周期发现)。这是<strong>算法设计</strong>的经典方法 —— 很多算法(经典 + 量子)都是归约的结果。</p>
+<p>**3. "密码学的脆弱性"</p>
+<p>RSA 的安全性建立在一个<strong>未证明的假设</strong>上(因式分解是难的)。Shor 表明这个假设<strong>不成立</strong>(在量子计算模型下)。这告诉我们:<strong>安全性的证明需要严格的复杂性理论</strong>;<strong>经验假设</strong>是不够的。</p>
+<p>**4. "QFT 是量子计算的核心"</p>
+<p>Shor 之后,QFT 成为了<strong>量子算法的核心子程序</strong>。后续的量子算法(Simon, QPE, 量子模拟) 都用 QFT 或其变体。QFT 是<strong>"量子计算的工具箱"</strong>里最重要的工具。</p>
+<p>**5. "硬件 + 算法的共进化"</p>
+<p>Shor 算法对硬件的要求(数百万 qubit)推动了<strong>容错量子计算</strong>的发展。这反过来<strong>促进</strong>了量子算法研究(VQE/QAOA 等 NISQ 算法),因为 NISQ 时代需要更"硬件友好"的算法。<strong>算法 + 硬件的共进化</strong>是量子计算的核心特征。</p>
+<hr>
+<p><strong>第 11 章结束。第三部分 1/5 章完成 (20%)。下一章: 第 12 章 量子相位估计(QPE)—— Shor 算法的"灵魂"。</strong></p>
+
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch10.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 10 章 量子搜索算法 — Grover</span>
+          </a>
+          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 12 章 量子相位估计(即将推出)</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
