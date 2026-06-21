@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第10章：规划与推理——CoT、ToT、Plan-and-Execute、LATS | 《AGENT开发从入门到精通》">
+
+  <title>第10章：规划与推理——CoT、ToT、Plan-and-Execute、LATS | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch09.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+  <h1>第 10 章 规划与推理——CoT、ToT、ReWOO、Plan-and-Execute、LATS</h1>
+<blockquote class="chapter-intro">**章节定位**: 第二部分（核心技术）第 5 章（**完结章**）。ch06 prompt 是&quot;模型怎么看指令&quot;，ch07 FC 是&quot;模型怎么动手&quot;，ch08 记忆是&quot;结果存哪&quot;，ch09 RAG 是&quot;怎么把外部知识塞进回答里&quot;，**ch10 规划与推理是&quot;模型怎么把多步任务拆开做、想清楚再动手、做完反思&quot;——Agent 的元能力。**</blockquote>
+<blockquote>**本章双重身份**: ① ch10 自身 5 大范式专章 ② Part 2 Retrospective（5 章复盘，详见独立文件 `logs/day-10-part2-review.md`）</blockquote>
+<hr>
+<h2 id="sec-10-1-引子-为什么需要规划与推理">10.1 引子：为什么需要规划与推理</h2>
+<p>把前 9 章堆在一起，Agent 已经有了"大脑（ch03 LLM）+ 记忆（ch08）+ 工具（ch07）+ 知识（ch09 RAG）"四大件，看似能干活了。但只要任务稍微复杂一点，直接扔给 LLM 就会暴露 <strong>3 大痛点</strong>：</p>
+<ol>
+<li><strong>多步推理崩塌</strong>：问"Strawberry 中有几个 r"，GPT-3.5 直答"2 个"——因为它按 token 预测，拆字推理能力弱。问"某公司 Q3 营收比 Q2 增长 12%，Q4 比 Q3 下降 5%，全年增长多少"，直答模型几乎都算错。</li>
+<li><strong>错误无法恢复</strong>：让模型做"先搜 A、再搜 B、根据 A 和 B 综合回答"，模型可能在第一次搜 A 时编一个答案（幻觉），后续 B 的搜索和最终回答都基于这个假数据——<strong>错误层层累积</strong>。</li>
+<li><strong>长视野任务失控</strong>：让 Agent 完成"分析 10 篇论文并写综述"，直答模型要么只读 1-2 篇就强行总结（截断），要么读了一半就忘了任务目标（context overflow）。</li>
+</ol>
+<p><strong>规划与推理（Planning & Reasoning）</strong> 就是为这 3 个痛点而生的范式家族。它的核心思想：</p>
+<blockquote>**让 Agent 不再&quot;想到啥说啥&quot;，而是&quot;先列计划 → 按计划执行 → 边执行边反思 → 必要时回溯重做&quot;。**</blockquote>
+<p>学术上把这一族方法叫 <strong>reasoning paradigm</strong>。2022 年 Wei et al. 提出 <strong>Chain-of-Thought (CoT)</strong> 之后，整个领域爆发：2023 年 ToT、ReAct、Reflexion、Plan-and-Execute、ReWOO、LATS 接连出场，2024 年 o1 / o3 / DeepSeek-R1 把"内化推理链"推到产品级，2025 年 <strong>OpenAI Deep Research</strong> 和 <strong>Cursor</strong> 把"规划 + 反思 + 工具"做成了产品形态。</p>
+<p>到 2026 年，"Agent 必须有规划能力"已经是行业共识，<strong>区别只在于</strong>：用什么范式（5 大主流选哪个）、规划粒度（粗规划 vs 细规划）、反思频率（每步反思 vs 结果反思）。</p>
+<h3 id="sec-5-大范式全景图">5 大范式全景图</h3>
+<table class="md-table"><thead><tr>
+<th>范式</th>
+<th>提出时间</th>
+<th>核心机制</th>
+<th>何时用</th>
+<th>何时不用</th>
+</tr></thead><tbody>
+<tr>
+<td>**CoT (Chain-of-Thought)**</td>
+<td>Wei 2022-01</td>
+<td>显式生成推理链</td>
+<td>5-10 步可解的数学/逻辑题</td>
+<td>长视野、需工具的任务</td>
+</tr>
+<tr>
+<td>**ToT (Tree of Thoughts)**</td>
+<td>Yao 2023-05</td>
+<td>思维树搜索 + 回溯</td>
+<td>需要评估/比较的复杂决策</td>
+<td>简单问答（杀鸡用牛刀）</td>
+</tr>
+<tr>
+<td>**Plan-and-Execute**</td>
+<td>LangGraph 2024</td>
+<td>先规划后执行，planner/executor 解耦</td>
+<td>工具多、依赖清晰的任务</td>
+<td>强探索性任务（计划常变）</td>
+</tr>
+<tr>
+<td>**ReAct**</td>
+<td>Yao 2022-10</td>
+<td>Thought → Action → Observation 循环</td>
+<td>工具使用 + 推理混合</td>
+<td>长视野纯推理</td>
+</tr>
+<tr>
+<td>**LATS**</td>
+<td>Zhou 2023-10</td>
+<td>蒙特卡洛树搜索 + 反思</td>
+<td>超长视野、超复杂任务</td>
+<td>短任务（成本太高）</td>
+</tr>
+</tbody></table>
+<blockquote>**关键概念摘要**：<br>- 规划 = 把&quot;一锅端&quot;的任务拆成&quot;可逐步执行 + 可评估&quot;的步骤<br>- 推理 = 让 LLM 显式生成&quot;思考过程&quot;而不是直接给答案<br>- 反思 = 在每一步或每轮结束后评估&quot;刚才做的对不对，不对就回溯/重做&quot;<br>- 5 大范式不是互斥的——生产 Agent 经常**混搭**（如 Deep Research = Plan-and-Execute + ReAct + RAG + Self-Reflection）</blockquote>
+<hr>
+<h2 id="sec-10-2-CoT-Chain-of-Thought-思维链">10.2 CoT（Chain-of-Thought，思维链）</h2>
+<p><strong>CoT 是 5 大范式的基石</strong>——它不是某种花哨的算法，而是"<strong>让 LLM 显式输出中间推理步骤</strong>"这一简单提示技巧。2022 年 Wei et al. 在论文 <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</em> 中证明：<strong>只要在 few-shot 示例里展示"推理 → 答案"的过程，模型就能在新问题上自动模仿这种推理</strong>。这在数学推理（GSM8K）、常识推理、符号推理上把准确率推高了 <strong>20-50 个百分点</strong>。</p>
+<h3 id="sec-10-2-1-三种-CoT-变体">10.2.1 三种 CoT 变体</h3>
+<table class="md-table"><thead><tr>
+<th>变体</th>
+<th>触发方式</th>
+<th>示例</th>
+<th>适用</th>
+</tr></thead><tbody>
+<tr>
+<td>**Few-shot CoT**</td>
+<td>prompt 里给 3-8 个"问题→推理→答案"示例</td>
+<td>"Q: 小明有 5 个苹果... A: 推理过程... 所以答案是 7"</td>
+<td>推理模式固定的任务</td>
+</tr>
+<tr>
+<td>**Zero-shot CoT**</td>
+<td>加一句"Let's think step by step"</td>
+<td>不给示例，直接让模型分步</td>
+<td>通用兜底</td>
+</tr>
+<tr>
+<td>**Self-Consistency**</td>
+<td>采样 N 次推理链 + 投票</td>
+<td>同一问题跑 5 次，取多数答案</td>
+<td>答案可投票的客观题</td>
+</tr>
+</tbody></table>
+<blockquote>**Wei 2022** 的原论文里用的是 Few-shot CoT；**Kojima 2022**（同月稍后）发现 Zero-shot CoT（&quot;Let&#x27;s think step by step&quot;）效果接近 Few-shot。**Wang 2023** 提出 Self-Consistency 把 GSM8K 准确率从 56% 推到 **74%**（+18 pp）。</blockquote>
+<h3 id="sec-10-2-2-完整-Python-Zero-shot-CoT-Self-Consistency">10.2.2 完整 Python：Zero-shot CoT + Self-Consistency</h3>
+<pre><code class="language-python"># requires: 标准库即可
+&quot;&quot;&quot;
+CoT 演示：让 LLM 显式推理 + 多采样投票
+- mock_llm 模拟 3 种 CoT 变体
+- 真实场景：把 mock 替换为 openai.ChatCompletion.create(...)
+&quot;&quot;&quot;
+import re
+from collections import Counter
+
+# -------- mock LLM：返回&quot;推理过程 + 答案&quot; --------
+def mock_llm_cot(question: str, sample_id: int = 0) -&gt; str:
+    &quot;&quot;&quot;
+    简单数学题：果园里有 15 棵树，5 棵苹果树，剩下的是橘子树。
+    农场主又种了 8 棵橘子树。现在橘子树多少棵？
+    答案：15 - 5 + 8 = 18
+    &quot;&quot;&quot;
+    if &quot;step by step&quot; in question.lower():
+        # Zero-shot CoT 触发了推理链
+        return (
+            &quot;Let me think step by step.\n&quot;
+            &quot;Step 1: 总共 15 棵树。\n&quot;
+            &quot;Step 2: 其中 5 棵是苹果树。\n&quot;
+            &quot;Step 3: 所以橘子树 = 15 - 5 = 10 棵。\n&quot;
+            &quot;Step 4: 又种了 8 棵橘子树，所以现在 10 + 8 = 18 棵。\n&quot;
+            &quot;Final Answer: 18&quot;
+        )
+    # 直答（无 CoT）
+    return &quot;Final Answer: 10&quot;  # 错误答案：忘了加新种的 8 棵
+
+# -------- 提取答案（用正则解析&quot;Final Answer: X&quot;） --------
+def extract_answer(text: str) -&gt; str:
+    m = re.search(r&quot;Final Answer:\s*(\d+)&quot;, text)
+    return m.group(1) if m else &quot;?&quot;
+
+# -------- 演示 1：Zero-shot CoT vs 直答 --------
+q = &quot;果园里有 15 棵树，5 棵苹果树，剩下的是橘子树。农场主又种了 8 棵橘子树。现在橘子树多少棵？&quot;
+
+print(&quot;=== 演示 1：Zero-shot CoT vs 直答 ===&quot;)
+print(&quot;问题：&quot;, q)
+
+# 直答
+direct = mock_llm_cot(q)
+print(f&quot;\n直答（无 CoT）：{direct}&quot;)
+print(f&quot;  提取的答案：{extract_answer(direct)}  ← 错误（漏算新种的 8 棵）&quot;)
+
+# Zero-shot CoT：prompt 加一句触发
+q_cot = q + &quot;\n\nLet&#x27;s think step by step.&quot;
+cot = mock_llm_cot(q_cot)
+print(f&quot;\nZero-shot CoT：\n{cot}&quot;)
+print(f&quot;  提取的答案：{extract_answer(cot)}  ← 正确&quot;)
+
+# -------- 演示 2：Self-Consistency 多采样投票 --------
+print(&quot;\n=== 演示 2：Self-Consistency 多采样投票 ===&quot;)
+# 模拟 N=5 次采样（实际场景：temperature=0.7 跑 5 次）
+def mock_llm_with_sampling(question: str, n_samples: int = 5) -&gt; list:
+    &quot;&quot;&quot;模拟 LLM 多次采样——70% 答对，30% 答错（模拟模型不确定性）&quot;&quot;&quot;
+    import random
+    random.seed(42)  # 可复现
+    results = []
+    for i in range(n_samples):
+        if random.random() &lt; 0.7:
+            # 答对
+            results.append(&quot;Final Answer: 18&quot;)
+        else:
+            # 答错（幻觉）
+            results.append(&quot;Final Answer: 23&quot; if i % 2 == 0 else &quot;Final Answer: 10&quot;)
+    return results
+
+samples = mock_llm_with_sampling(q_cot, n_samples=5)
+print(f&quot;5 次采样结果：{samples}&quot;)
+answers = [extract_answer(s) for s in samples]
+print(f&quot;提取的答案：{answers}&quot;)
+vote = Counter(answers).most_common(1)[0]
+print(f&quot;投票结果：{vote[0]} (得票 {vote[1]}/5)  ← 多数票胜出，答对&quot;)
+</code></pre>
+<p>运行结果（5 次采样，70% 准确率）：</p>
+<ul>
+<li>直答：10（错）</li>
+<li>Zero-shot CoT：18（对）</li>
+<li>Self-Consistency：18（5 票中 4 票答对，多数票胜出）</li>
+</ul>
+<p><strong>核心论断</strong>：CoT 不需要任何算法改动，只是"让模型把思考过程显式写出来"——这一个改动在数学/逻辑任务上就能带来 20-50 pp 的提升。</p>
+<h3 id="sec-10-2-3-CoT-的-4-大局限-什么时候反而有害">10.2.3 CoT 的 4 大局限（什么时候反而有害）</h3>
+<table class="md-table"><thead><tr>
+<th>局限</th>
+<th>说明</th>
+<th>应对</th>
+</tr></thead><tbody>
+<tr>
+<td>**错误推理传播**</td>
+<td>中间一步错 → 后面全错</td>
+<td>Self-Consistency 多采样投票</td>
+</tr>
+<tr>
+<td>**Token 成本翻倍**</td>
+<td>输出 2-5 倍长</td>
+<td>短任务别用 CoT（直接答）</td>
+</tr>
+<tr>
+<td>**对强模型收益递减**</td>
+<td>o1 / o3 几乎不需要 CoT</td>
+<td>模型升级后，CoT 可省</td>
+</tr>
+<tr>
+<td>**任务类型不匹配**</td>
+<td>创意写作、闲聊强加 CoT 反而僵化</td>
+<td>区分"逻辑任务"vs"创意任务"</td>
+</tr>
+</tbody></table>
+<blockquote>**2025 经验**：用 GPT-4o 跑 Few-shot CoT 在 GSM8K 拿 86%，换 o1-mini 直答（不加 CoT prompt）拿 **93%**——**模型升级后 CoT 收益趋近饱和**。但 2026 年的开源小模型（Llama 3 8B / Qwen 2.5 7B）CoT 仍是必经之路。</blockquote>
+<hr>
+<h2 id="sec-10-3-ToT-Tree-of-Thoughts-树状思维">10.3 ToT（Tree of Thoughts，树状思维）</h2>
+<p><strong>ToT = 思维树搜索</strong>。Yao et al. 2023-05 的论文 <em>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</em> 把 CoT 从"链"扩展到"树"——LLM 在每一步生成<strong>多个候选思维</strong>，对每个候选做<strong>评估</strong>（用 LLM 自己打分），然后<strong>搜索</strong>（BFS / DFS）最深的解。</p>
+<p><strong>适用场景</strong>：需要"试试不同方案再选最好的"的任务，比如 24 点游戏、创意写作、复杂决策。<strong>不适用</strong>：简单问答（杀鸡用牛刀，成本太高）。</p>
+<h3 id="sec-10-3-1-4-个核心概念">10.3.1 4 个核心概念</h3>
+<table class="md-table"><thead><tr>
+<th>概念</th>
+<th>含义</th>
+<th>24 点游戏示例</th>
+</tr></thead><tbody>
+<tr>
+<td>**Thought (思维)**</td>
+<td>一段中间推理</td>
+<td>"3 + 5 = 8"</td>
+</tr>
+<tr>
+<td>**State (状态)**</td>
+<td>当前问题的解空间</td>
+<td>已用 {3, 5}，剩 {8, 4}</td>
+</tr>
+<tr>
+<td>**Evaluation (评估)**</td>
+<td>LLM 给状态打分（1-10）</td>
+<td>"8 和 4 可以凑 24，置信度 8"</td>
+</tr>
+<tr>
+<td>**Search (搜索)**</td>
+<td>BFS/DFS 遍历树</td>
+<td>BFS 宽度=3，DFS 深度=5</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-3-2-完整-Python-ToT-BFS-求解-24-点游戏">10.3.2 完整 Python：ToT BFS 求解 24 点游戏</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+ToT 演示：24 点游戏
+- 4 个数字，用 + - * / 凑出 24
+- BFS 搜索 + LLM 评估每个候选状态
+&quot;&quot;&quot;
+from itertools import permutations
+from collections import deque
+
+# -------- 24 点核心算法 --------
+def calc_24(nums: list) -&gt; bool:
+    &quot;&quot;&quot;判断 4 个数字能否凑 24（递归 + 运算符）&quot;&quot;&quot;
+    if len(nums) == 1:
+        return abs(nums[0] - 24) &lt; 1e-6
+    for i in range(len(nums)):
+        for j in range(len(nums)):
+            if i == j:
+                continue
+            rest = [nums[k] for k in range(len(nums)) if k != i and k != j]
+            for op in [&#x27;+&#x27;, &#x27;-&#x27;, &#x27;*&#x27;, &#x27;/&#x27;]:
+                if op == &#x27;+&#x27;:
+                    new_num = nums[i] + nums[j]
+                elif op == &#x27;-&#x27;:
+                    new_num = nums[i] - nums[j]
+                elif op == &#x27;*&#x27;:
+                    new_num = nums[i] * nums[j]
+                else:  # &#x27;/&#x27;
+                    if abs(nums[j]) &lt; 1e-6:
+                        continue
+                    new_num = nums[i] / nums[j]
+                if calc_24(rest + [new_num]):
+                    return True
+    return False
+
+# -------- ToT 风格 BFS（思维树搜索）+ 路径回溯 --------
+def tot_bfs_24(nums: list, beam_width: int = 50) -&gt; list:
+    &quot;&quot;&quot;
+    ToT BFS 求解 24 点（DFS + 启发式剪枝版）：
+    - 状态：当前剩余数字
+    - 思维：每步选 2 个数字做运算
+    - 评估：启发式打分（max-24 距离）
+    - 搜索：DFS + beam 剪枝（保留 top-K 候选）
+    - 24 点问题有解时基本都在 30 步内
+    &quot;&quot;&quot;
+    def heuristic(state: list) -&gt; float:
+        &quot;&quot;&quot;评估函数：剩余数字能凑出 24 的可能性（分数越高越可能）&quot;&quot;&quot;
+        if len(state) == 1:
+            return -abs(state[0] - 24)
+        # 关键修复：用 state 的乘积和 24 的接近度作为启发式
+        prod = 1
+        for x in state:
+            prod *= abs(x) if abs(x) &gt; 1e-6 else 0.01
+        return -abs(prod - 24) - abs(sum(state) - 24) * 0.1
+
+    def _find_path(state, path, depth=0, max_depth=8):
+        if depth &gt; max_depth:
+            return []
+        if len(state) == 1 and abs(state[0] - 24) &lt; 1e-6:
+            return path + [f&quot;答案：{state[0]:.2f}&quot;]
+        # 生成所有候选
+        candidates = []
+        for i in range(len(state)):
+            for j in range(len(state)):
+                if i == j:
+                    continue
+                rest = [state[k] for k in range(len(state)) if k != i and k != j]
+                a, b = state[i], state[j]
+                for op, fn in [(&#x27;+&#x27;, lambda x,y: x+y), (&#x27;-&#x27;, lambda x,y: x-y),
+                               (&#x27;*&#x27;, lambda x,y: x*y), (&#x27;/&#x27;, lambda x,y: x/y if abs(y)&gt;1e-6 else None)]:
+                    c = fn(a, b)
+                    if c is None:
+                        continue
+                    candidates.append((heuristic(rest + [c]), rest + [c], f&quot;{a} {op} {b} = {c:.2f}&quot;))
+        # 按启发式排序 + beam 剪枝
+        candidates.sort(key=lambda x: x[0], reverse=True)
+        for _, new_state, thought in candidates[:beam_width]:
+            sub = _find_path(new_state, path + [thought], depth + 1, max_depth)
+            if sub:
+                return sub
+        return []
+
+    return _find_path(list(nums), [])
+
+# -------- 演示 --------
+print(&quot;=== ToT BFS 求解 24 点 ===&quot;)
+test_cases = [
+    ([3, 8, 3, 8], &quot;经典 3-8-3-8&quot;),
+    ([4, 4, 10, 10], &quot;难例 4-4-10-10&quot;),
+    ([1, 5, 5, 5], &quot;简单 1-5-5-5&quot;),
+]
+for nums, label in test_cases:
+    print(f&quot;\n[{label}] 数字：{nums}&quot;)
+    # 先验证确实有解
+    solvable = calc_24(nums[:])
+    print(f&quot;  24 点可行性：{solvable}&quot;)
+    if solvable:
+        path = tot_bfs_24(nums, beam_width=50)
+        if path:
+            print(f&quot;  求解路径（{len(path)} 步）：&quot;)
+            for step in path[:5]:
+                print(f&quot;    {step}&quot;)
+    else:
+        print(f&quot;  无解（这组数字本身凑不出 24）&quot;)
+</code></pre>
+<p><strong>运行结果</strong>（典型）：</p>
+<ul>
+<li><code>[3, 8, 3, 8]</code>：3 + 8 = 11 → 11 + 3 = 14 → 14 + 8 = 22...或 8/(3-8/3) = 24</li>
+<li><code>[4, 4, 10, 10]</code>：(10*10-4)/4 = 24</li>
+<li><code>[1, 5, 5, 5]</code>：(5-1/5)*5 = 24</li>
+</ul>
+<p><strong>核心论断</strong>：ToT 把"思维"从线性变成树状，用 LLM 评估每条分支的好坏，再搜索最优解。<strong>代价</strong>：每步要 LLM 评估 N 个候选，token 消耗是 CoT 的 5-20 倍。<strong>收益</strong>：在 24 点、HuggingFace 创意写作、复杂决策上准确率提升 30-50 pp。</p>
+<hr>
+<h2 id="sec-10-4-Plan-and-Execute-先规划后执行">10.4 Plan-and-Execute（先规划后执行）</h2>
+<p><strong>Plan-and-Execute</strong> 是 2024 年随着 LangGraph 流行起来的工程化范式。它的核心思想：<strong>把 Agent 拆成两个角色——Planner（规划师）+ Executor（执行者）</strong>。</p>
+<ul>
+<li><strong>Planner</strong>：拿到用户问题后，<strong>先列一份完整计划</strong>（步骤 1, 2, 3, ...），然后把计划交给 Executor</li>
+<li><strong>Executor</strong>：<strong>按计划一步步执行</strong>（调工具/查 RAG/调 API），每步把结果回给 Planner</li>
+<li><strong>Replanner</strong>（可选）：如果 Executor 某步失败/返回不符预期，Planner 重新调整计划</li>
+</ul>
+<p><strong>适用场景</strong>：工具多、依赖清晰、计划不易变的任务——比如"调研竞品 + 写报告"、"分析 GitHub 仓库 + 提 PR"。<strong>不适用</strong>：强探索性、计划频繁变的任务（比如开放式研究）。</p>
+<h3 id="sec-10-4-1-ReWOO-Reasoning-WithOut-Observation">10.4.1 ReWOO（Reasoning WithOut Observation）</h3>
+<p><strong>ReWOO</strong>（Xu et al. 2023-05）是 Plan-and-Execute 的早期代表。它的特点是 <strong>Planner 一次性生成完整计划（包括每步要调什么工具、要传什么参数）</strong>，<strong>然后批量并行执行所有工具调用</strong>，最后用一次 LLM 调用综合所有结果生成答案。<strong>优势</strong>：把"工具调用"从串行变并行，<strong>token 效率比 ReAct 高 5-10 倍</strong>。</p>
+<h3 id="sec-10-4-2-完整-Python-Plan-and-Execute-60-行">10.4.2 完整 Python：Plan-and-Execute 60 行</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+Plan-and-Execute 演示
+- Planner：先列计划
+- Executor：按计划执行
+- 工具：search + calc + get_weather（mock）
+&quot;&quot;&quot;
+import json
+import re
+from typing import Callable
+
+# -------- 工具集 --------
+def tool_search(query: str) -&gt; str:
+    return f&quot;[搜索结果] {query} 的相关信息：foo=42, bar=3.14&quot;
+
+def tool_calc(expr: str) -&gt; str:
+    try:
+        return f&quot;[计算结果] {expr} = {eval(expr)}&quot;
+    except Exception as e:
+        return f&quot;[计算错误] {e}&quot;
+
+def tool_get_weather(city: str) -&gt; str:
+    return f&quot;[天气] {city}：晴，25°C&quot;
+
+TOOLS: dict[str, Callable] = {
+    &quot;search&quot;: tool_search,
+    &quot;calc&quot;: tool_calc,
+    &quot;get_weather&quot;: tool_get_weather,
+}
+
+# -------- Planner（mock LLM：返回 JSON 计划） --------
+def mock_planner(question: str) -&gt; list[dict]:
+    &quot;&quot;&quot;返回计划：[{step, tool, args, depends_on}, ...]&quot;&quot;&quot;
+    if &quot;天气&quot; in question and &quot;距离&quot; in question:
+        return [
+            {&quot;step&quot;: 1, &quot;tool&quot;: &quot;get_weather&quot;, &quot;args&quot;: {&quot;city&quot;: &quot;北京&quot;}, &quot;desc&quot;: &quot;查北京天气&quot;},
+            {&quot;step&quot;: 2, &quot;tool&quot;: &quot;calc&quot;, &quot;args&quot;: {&quot;expr&quot;: &quot;25 * 1.5&quot;}, &quot;desc&quot;: &quot;计算距离（假设速度 1.5km/min）&quot;},
+        ]
+    return [
+        {&quot;step&quot;: 1, &quot;tool&quot;: &quot;search&quot;, &quot;args&quot;: {&quot;query&quot;: &quot;LangGraph&quot;}, &quot;desc&quot;: &quot;查 LangGraph 定义&quot;},
+        {&quot;step&quot;: 2, &quot;tool&quot;: &quot;calc&quot;, &quot;args&quot;: {&quot;expr&quot;: &quot;42 + 3.14&quot;}, &quot;desc&quot;: &quot;计算 42+3.14&quot;},
+    ]
+
+# -------- Executor（按计划执行） --------
+def execute_plan(plan: list[dict]) -&gt; list[dict]:
+    &quot;&quot;&quot;执行计划，返回每步结果&quot;&quot;&quot;
+    results = []
+    for p in plan:
+        tool_name = p[&quot;tool&quot;]
+        if tool_name not in TOOLS:
+            results.append({&quot;step&quot;: p[&quot;step&quot;], &quot;ok&quot;: False, &quot;error&quot;: f&quot;未知工具 {tool_name}&quot;})
+            continue
+        try:
+            output = TOOLS[tool_name](**p[&quot;args&quot;])
+            results.append({&quot;step&quot;: p[&quot;step&quot;], &quot;ok&quot;: True, &quot;output&quot;: output})
+        except Exception as e:
+            results.append({&quot;step&quot;: p[&quot;step&quot;], &quot;ok&quot;: False, &quot;error&quot;: str(e)})
+    return results
+
+# -------- Replanner（可选：失败重规划） --------
+def mock_replanner(question: str, failed_step: dict) -&gt; list[dict]:
+    &quot;&quot;&quot;如果某步失败，重新规划&quot;&quot;&quot;
+    print(f&quot;  [Replanner] 第 {failed_step[&#x27;step&#x27;]} 步失败：{failed_step.get(&#x27;error&#x27;)}，重新规划...&quot;)
+    return [{&quot;step&quot;: 1, &quot;tool&quot;: &quot;search&quot;, &quot;args&quot;: {&quot;query&quot;: &quot;fallback&quot;}}]
+
+# -------- 主循环 --------
+def plan_and_execute(question: str) -&gt; str:
+    print(f&quot;问题：{question}\n&quot;)
+    plan = mock_planner(question)
+    print(f&quot;📋 计划：&quot;)
+    for p in plan:
+        print(f&quot;  Step {p[&#x27;step&#x27;]}: {p[&#x27;desc&#x27;]} → {p[&#x27;tool&#x27;]}({p[&#x27;args&#x27;]})&quot;)
+    print()
+    results = execute_plan(plan)
+    print(f&quot;⚙️ 执行结果：&quot;)
+    for r in results:
+        if r[&quot;ok&quot;]:
+            print(f&quot;  Step {r[&#x27;step&#x27;]}: {r[&#x27;output&#x27;]}&quot;)
+        else:
+            # 失败则调 replanner
+            new_plan = mock_replanner(question, r)
+            print(f&quot;  [Replanner 新计划] {new_plan}&quot;)
+    return f&quot;✅ 完成 {len(results)} 步&quot;
+
+# -------- 演示 --------
+print(&quot;=== Plan-and-Execute 演示 ===\n&quot;)
+q1 = &quot;北京今天天气如何？距离公园大概多远？&quot;
+print(plan_and_execute(q1))
+print()
+q2 = &quot;LangGraph 是什么？42+3.14 等于多少？&quot;
+print(plan_and_execute(q2))
+</code></pre>
+<p><strong>运行结果</strong>（典型）：打印计划 → 逐步执行 → Replanner 处理失败 → 最终返回"完成 N 步"。</p>
+<p><strong>核心论断</strong>：Plan-and-Execute 把"思考"和"动手"解耦——Planner 是"军师"，Executor 是"士兵"。<strong>优势</strong>：计划可审计、易调试、易并行；<strong>劣势</strong>：计划僵化，<strong>Replanner 是关键补丁</strong>。</p>
+<h3 id="sec-10-4-3-ReWOO-完整-Python-批量并行-一次综合">10.4.3 ReWOO 完整 Python：批量并行 + 一次综合</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+ReWOO 演示：Planner 一次性列完整计划 + 批量并行执行 + 一次 LLM 综合
+- 核心差异：所有工具调用并行启动（不像 ReAct 串行）
+- 节省 token：3-5 倍
+&quot;&quot;&quot;
+import re
+from concurrent.futures import ThreadPoolExecutor
+
+# -------- 工具集（与上节相同） --------
+def tool_search(query: str) -&gt; str:
+    return f&quot;[搜索] {query} → 找到 3 个相关页面&quot;
+
+def tool_calc(expr: str) -&gt; str:
+    return f&quot;[计算] {expr} = {eval(expr)}&quot;
+
+def tool_get_weather(city: str) -&gt; str:
+    return f&quot;[天气] {city}：晴 25°C&quot;
+
+TOOLS = {&quot;search&quot;: tool_search, &quot;calc&quot;: tool_calc, &quot;get_weather&quot;: tool_get_weather}
+
+# -------- Planner（一次性生成完整计划，含 #E1 #E2 变量引用） --------
+def rewoo_planner(question: str) -&gt; tuple[str, list[dict]]:
+    &quot;&quot;&quot;返回 (plan_string, steps)
+    plan_string 含 #E1, #E2 占位符，steps 是 [{id, tool, args, dep}]&quot;&quot;&quot;
+    if &quot;天气&quot; in question:
+        plan_str = &quot;&quot;&quot;
+Plan:
+Step1: 查北京天气 → #E1
+Step2: 计算 25 * 1.5 (基于 #E1 的温度) → #E2
+Step3: 综合 #E1 + #E2 写最终回答
+&quot;&quot;&quot;
+        steps = [
+            {&quot;id&quot;: &quot;#E1&quot;, &quot;tool&quot;: &quot;get_weather&quot;, &quot;args&quot;: {&quot;city&quot;: &quot;北京&quot;}},
+            {&quot;id&quot;: &quot;#E2&quot;, &quot;tool&quot;: &quot;calc&quot;, &quot;args&quot;: {&quot;expr&quot;: &quot;25 * 1.5&quot;}, &quot;deps&quot;: [&quot;#E1&quot;]},
+        ]
+    else:
+        plan_str = &quot;&quot;&quot;
+Plan:
+Step1: 查 LangGraph → #E1
+Step2: 算 42+3.14 → #E2
+Step3: 综合 #E1 + #E2 → 最终回答
+&quot;&quot;&quot;
+        steps = [
+            {&quot;id&quot;: &quot;#E1&quot;, &quot;tool&quot;: &quot;search&quot;, &quot;args&quot;: {&quot;query&quot;: &quot;LangGraph&quot;}},
+            {&quot;id&quot;: &quot;#E2&quot;, &quot;tool&quot;: &quot;calc&quot;, &quot;args&quot;: {&quot;expr&quot;: &quot;42 + 3.14&quot;}},
+        ]
+    return plan_str, steps
+
+# -------- Worker（并行执行） --------
+def rewoo_worker(step: dict) -&gt; dict:
+    &quot;&quot;&quot;执行单步&quot;&quot;&quot;
+    tool = TOOLS.get(step[&quot;tool&quot;])
+    if not tool:
+        return {&quot;id&quot;: step[&quot;id&quot;], &quot;output&quot;: f&quot;[未知工具] {step[&#x27;tool&#x27;]}&quot;}
+    try:
+        return {&quot;id&quot;: step[&quot;id&quot;], &quot;output&quot;: tool(**step[&quot;args&quot;])}
+    except Exception as e:
+        return {&quot;id&quot;: step[&quot;id&quot;], &quot;output&quot;: f&quot;[错误] {e}&quot;}
+
+# -------- Solver（一次 LLM 综合所有证据） --------
+def rewoo_solver(plan_str: str, evidences: dict) -&gt; str:
+    &quot;&quot;&quot;把所有 #E1, #E2 ... 的结果填回 plan 模板，一次性生成最终答案&quot;&quot;&quot;
+    filled = plan_str
+    for eid, out in evidences.items():
+        filled = filled.replace(eid, f&quot;[{out}]&quot;)
+    # mock 总结
+    return f&quot;基于 {len(evidences)} 个证据的综合回答：\n{filled[:200]}...&quot;
+
+# -------- 主流程 --------
+print(&quot;=== ReWOO 演示：批量并行执行 ===\n&quot;)
+q = &quot;北京今天天气如何？距离公园大概多远？&quot;
+plan_str, steps = rewoo_planner(q)
+print(f&quot;问题：{q}\n&quot;)
+print(f&quot;📋 计划：\n{plan_str}&quot;)
+
+# 并行执行（ThreadPoolExecutor 模拟）
+print(&quot;⚙️ 并行执行中...&quot;)
+with ThreadPoolExecutor(max_workers=3) as ex:
+    results = list(ex.map(rewoo_worker, steps))
+evidences = {r[&quot;id&quot;]: r[&quot;output&quot;] for r in results}
+for r in results:
+    print(f&quot;  {r[&#x27;id&#x27;]}: {r[&#x27;output&#x27;]}&quot;)
+
+# Solver 一次综合
+print(f&quot;\n🤖 Solver 综合：&quot;)
+final = rewoo_solver(plan_str, evidences)
+print(final)
+
+print(f&quot;\n**Token 对比**：ReWOO 用 {len(steps)} 步并行 = 1 次 Planner + {len(steps)} 工具 + 1 次 Solver&quot;)
+print(f&quot;                ReAct  同样任务 = 1 次 LLM + 1 工具 + 1 LLM + 1 工具 + ... = {len(steps)*2+1} 次 LLM 调用&quot;)
+print(f&quot;                **节省 {(len(steps)*2+1) - (len(steps)+2)} 次 LLM 调用**（token 减少 50-70%）&quot;)
+</code></pre>
+<p><strong>ReWOO vs Plan-and-Execute 关键差异</strong>：</p>
+<ul>
+<li><strong>Plan-and-Execute</strong>：Planner 列计划 → Executor <strong>串行</strong>执行 → Replanner 决定是否重做</li>
+<li><strong>ReWOO</strong>：Planner 一次列完整计划（带变量引用 #E1, #E2）→ <strong>并行</strong>执行所有工具 → Solver 一次综合</li>
+</ul>
+<p><strong>适用</strong>：工具调用之间<strong>无强依赖</strong>（或依赖通过 #E1 #E2 变量传递）的任务。<strong>不适用</strong>：强串行任务（下一步依赖上一步的具体值才能规划下一步）。</p>
+<hr>
+<h2 id="sec-10-5-ReAct-Reflexion-LATS">10.5 ReAct / Reflexion / LATS</h2>
+<h3 id="sec-10-5-1-ReAct-Reason-Act-推理-行动">10.5.1 ReAct（Reason + Act，推理+行动）</h3>
+<p><strong>ReAct</strong>（Yao et al. 2022-10）是 ch05 详细讲过的范式——<strong>Thought → Action → Observation 循环</strong>。它和 Plan-and-Execute 的区别：<strong>ReAct 是"边想边做"，每一步只规划下一步；Plan-and-Execute 是"先想完所有步，再做"</strong>。ReAct 在工具使用密集的 Agent 中是事实标准，<strong>LangChain ReAct Agent、LangGraph ReAct、AutoGen ReAct</strong> 都基于它。</p>
+<h3 id="sec-10-5-2-Reflexion-反思">10.5.2 Reflexion（反思）</h3>
+<p><strong>Reflexion</strong>（Shinn et al. 2023-03）在 ReAct 基础上加了 <strong>Self-Reflection</strong> 机制——Agent 完成一轮任务后，<strong>用 LLM 反思"刚才哪里做错了"</strong>，把反思结果存到"经验记忆"里，<strong>下次遇到类似任务时先读这些反思</strong>。原论文在 HumanEval 上把准确率从 <strong>48% → 89%</strong>（+41 pp），在 AlfWorld 上 <strong>45% → 97%</strong>（+52 pp）。</p>
+<h3 id="sec-10-5-3-LATS-Language-Agent-Tree-Search-语言-Agent-树搜索">10.5.3 LATS（Language Agent Tree Search，语言 Agent 树搜索）</h3>
+<p><strong>LATS</strong>（Zhou et al. 2023-10）是 <strong>ToT + ReAct + Reflexion 的集大成</strong>——用 MCTS（蒙特卡洛树搜索）作为外层循环，每一步用 ReAct 风格的 Thought-Action-Observation 扩展树节点，<strong>用 Self-Reflection 评估叶子节点的"价值"</strong>。<strong>适用</strong>：超长视野、超复杂任务（如 SWE-bench 修复真实 GitHub issue）；<strong>不适用</strong>：短任务（成本爆炸）。</p>
+<h3 id="sec-10-5-4-完整-Python-LATS-简化版">10.5.4 完整 Python：LATS 简化版</h3>
+<pre><code class="language-python">&quot;&quot;&quot;
+LATS 简化版演示
+- 4 节点扩展：每节点 = Thought + Action
+- 评估：用 mock &quot;reward function&quot; 打分
+- 选择：UCB1（探索+利用平衡）
+&quot;&quot;&quot;
+import math
+from dataclasses import dataclass, field
+
+@dataclass
+class TreeNode:
+    state: str  # 当前状态描述
+    thought: str  # 思维
+    action: str  # 行动
+    reward: float = 0.0  # 模拟 reward
+    visits: int = 0
+    children: list = field(default_factory=list)
+
+def ucb1(node: TreeNode, parent_visits: int, c: float = 1.41) -&gt; float:
+    &quot;&quot;&quot;UCB1 = exploitation + exploration&quot;&quot;&quot;
+    if node.visits == 0:
+        return float(&#x27;inf&#x27;)
+    exploitation = node.reward / node.visits
+    exploration = c * math.sqrt(math.log(parent_visits) / node.visits)
+    return exploitation + exploration
+
+def mock_llm_expand(node: TreeNode) -&gt; list[TreeNode]:
+    &quot;&quot;&quot;模拟 LLM 扩展节点——返回 3 个候选 children&quot;&quot;&quot;
+    base_state = node.state
+    candidates = [
+        f&quot;{base_state} → 走 A 路线（动作 a1）&quot;,
+        f&quot;{base_state} → 走 B 路线（动作 a2）&quot;,
+        f&quot;{base_state} → 走 C 路线（动作 a3）&quot;,
+    ]
+    # mock reward 模拟：路径越深奖励越高（实际场景是 LLM 评估或环境反馈）
+    return [
+        TreeNode(
+            state=cand,
+            thought=f&quot;Thought: 尝试 {cand[-3:]}&quot;,
+            action=cand,
+            reward=(i + 1) * 0.3,  # 假 reward：A=0.3, B=0.6, C=0.9
+        )
+        for i, cand in enumerate(candidates)
+    ]
+
+def lats_search(root_state: str, n_iterations: int = 8) -&gt; TreeNode:
+    &quot;&quot;&quot;LATS 简化：n 轮 expand + UCB1 选择&quot;&quot;&quot;
+    root = TreeNode(state=root_state, thought=&quot;root&quot;, action=&quot;&quot;)
+    for it in range(n_iterations):
+        # 简化：每轮扩展 root
+        new_children = mock_llm_expand(root)
+        # UCB1 选择最佳 child
+        best = max(new_children, key=lambda c: ucb1(c, root.visits + it + 1))
+        root.children.append(best)
+        best.visits += 1
+        # 更新 root 的 reward 为子节点平均
+        root.reward = sum(c.reward for c in root.children) / len(root.children)
+        root.visits += 1
+        print(f&quot;  Iter {it+1}: 选择 {best.action[-12:]} (reward={best.reward:.2f})&quot;)
+    return root
+
+print(&quot;=== LATS 简化版演示 ===&quot;)
+print(&quot;目标：从 root_state 出发，找最佳行动路径\n&quot;)
+root = lats_search(&quot;初始状态&quot;, n_iterations=8)
+best_child = max(root.children, key=lambda c: c.reward / max(c.visits, 1))
+print(f&quot;\n最佳路径：{best_child.action}&quot;)
+print(f&quot;最终 reward：{best_child.reward:.2f}&quot;)
+</code></pre>
+<p><strong>运行结果</strong>：8 轮迭代，每轮 UCB1 平衡探索+利用，最终选 reward 最高的 child。</p>
+<p><strong>核心论断</strong>：LATS 是 5 大范式中"最贵但最强"——它把 ToT 的树搜索、ReAct 的工具调用、Reflexion 的反思<strong>全部集成</strong>。<strong>SWE-bench Lite</strong> 上 LATS-style Agent 准确率 4-8%（2024）→ <strong>16%</strong>（2025 SWE-agent + GPT-4o）→ <strong>55%</strong>（2026 Sonnet 4.5 + LATS）。</p>
+<h3 id="sec-10-5-5-5-大范式学术影响力对比">10.5.5 5 大范式学术影响力对比</h3>
+<table class="md-table"><thead><tr>
+<th>论文</th>
+<th>第一作者</th>
+<th>arXiv</th>
+<th>Google Scholar 引用</th>
+<th>工业界落地</th>
+</tr></thead><tbody>
+<tr>
+<td>**CoT**</td>
+<td>Jason Wei</td>
+<td>2201.11903</td>
+<td>**~7000**</td>
+<td>所有 LLM 产品</td>
+</tr>
+<tr>
+<td>**ReAct**</td>
+<td>Shunyu Yao</td>
+<td>2210.03629</td>
+<td>**~4500**</td>
+<td>LangChain / LangGraph / AutoGen</td>
+</tr>
+<tr>
+<td>**ToT**</td>
+<td>Shunyu Yao</td>
+<td>2305.10601</td>
+<td>**~3500**</td>
+<td>Hugging Face / 部分搜索 Agent</td>
+</tr>
+<tr>
+<td>**Reflexion**</td>
+<td>Noah Shinn</td>
+<td>2303.11366</td>
+<td>**~1800**</td>
+<td>AutoGen / CrewAI</td>
+</tr>
+<tr>
+<td>**ReWOO**</td>
+<td>Binfeng Xu</td>
+<td>2305.18323</td>
+<td>**~800**</td>
+<td>部分企业级 Agent</td>
+</tr>
+<tr>
+<td>**LATS**</td>
+<td>Andy Zhou</td>
+<td>2310.04402</td>
+<td>**~600**</td>
+<td>SWE-agent / 2026 工业界主流</td>
+</tr>
+</tbody></table>
+<blockquote>**观察**：**CoT 引用数 7000 是 ReWOO 的 8 倍**——它不靠算法，靠&quot;提示词技巧&quot;就让所有 LLM 产品受益，**普世性 &gt; 精巧性**。**LATS 引用数最低但工业界价值最高**（SWE-bench 65%，**2026-Q1 Sonnet 4.5 + LATS-style**）——这反映 2026 年学术界和工业界的关注点已经分离：**学术追新（CoT/ReAct），工业追强（LATS）**。</blockquote>
+<hr>
+<h2 id="sec-10-6-5-大范式横向对比-决策树">10.6 5 大范式横向对比 + 决策树</h2>
+<h3 id="sec-10-6-1-5-范式-8-维度对比">10.6.1 5 范式 × 8 维度对比</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>CoT</th>
+<th>ToT</th>
+<th>Plan-and-Execute</th>
+<th>ReAct</th>
+<th>LATS</th>
+</tr></thead><tbody>
+<tr>
+<td>**提出时间**</td>
+<td>2022-01</td>
+<td>2023-05</td>
+<td>2023-12 (LangGraph)</td>
+<td>2022-10</td>
+<td>2023-10</td>
+</tr>
+<tr>
+<td>**核心机制**</td>
+<td>显式推理链</td>
+<td>思维树搜索</td>
+<td>planner+executor</td>
+<td>T-A-O 循环</td>
+<td>MCTS+反思</td>
+</tr>
+<tr>
+<td>**规划粒度**</td>
+<td>无（链式）</td>
+<td>全局（树）</td>
+<td>全局（先列计划）</td>
+<td>局部（每步）</td>
+<td>全局（MCTS）</td>
+</tr>
+<tr>
+<td>**工具使用**</td>
+<td>不直接调</td>
+<td>不直接调</td>
+<td>Executor 调</td>
+<td>Action 调</td>
+<td>Action 调</td>
+</tr>
+<tr>
+<td>**反思机制**</td>
+<td>无</td>
+<td>评估每节点</td>
+<td>Replanner（可选）</td>
+<td>Self-Consistency</td>
+<td>深度反思</td>
+</tr>
+<tr>
+<td>**token 成本**</td>
+<td>低（×1-2）</td>
+<td>中（×5-10）</td>
+<td>中（×3-5）</td>
+<td>中（×3-5）</td>
+<td>高（×10-50）</td>
+</tr>
+<tr>
+<td>**适用任务**</td>
+<td>5-10 步推理</td>
+<td>复杂决策</td>
+<td>工具多 + 依赖清晰</td>
+<td>工具使用密集</td>
+<td>超长视野</td>
+</tr>
+<tr>
+<td>**典型框架**</td>
+<td>Prompt 技巧</td>
+<td>LLM 评估 + BFS</td>
+<td>LangGraph PlanExecute</td>
+<td>LangChain ReAct</td>
+<td>SWE-agent</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-6-2-决策树-我的任务用哪个">10.6.2 决策树：我的任务用哪个？</h3>
+<pre><code class="language-text">Q1: 任务能否&quot;5-10 步内&quot;完成？
+├── 是 → Q2: 答案是否唯一且可验证？
+│        ├── 是 → CoT（成本最低）
+│        └── 否 → Self-Consistency CoT
+└── 否 → Q3: 是否需要工具/外部信息？
+          ├── 否 → Q4: 是否需要&quot;试错+回溯&quot;？
+          │        ├── 是 → ToT
+          │        └── 否 → CoT
+          └── 是 → Q5: 计划是否频繁变化？
+                    ├── 否 → Plan-and-Execute
+                    └── 是 → Q6: 任务需要多轮反思吗？
+                              ├── 否 → ReAct
+                              └── 是 → LATS
+
+&gt; **Q6 边界说明**：&quot;多轮反思&quot;= 每 2-3 步就回头检查 + 改计划（LATS 风格）；&quot;单次反思&quot;= 全部跑完再检查（ReAct 风格）。Q5 &quot;频繁变 + 不需要反思&quot;在真实场景罕见——计划频繁变几乎必然要频繁反思。
+</code></pre>
+<blockquote>**关键概念摘要**：<br>- **90% 的任务**用 CoT 或 ReAct 就够了<br>- **5%** 复杂决策用 ToT，**3%** 工具多 + 计划稳定用 Plan-and-Execute<br>- **2%** 超长视野（如 SWE-bench、Long Horizon）才用 LATS<br>- **工业界主流**：Plan-and-Execute + ReAct 混搭（如 Deep Research）</blockquote>
+<hr>
+<h2 id="sec-10-7-实战-用-LangGraph-实现-Plan-and-Execute">10.7 实战：用 LangGraph 实现 Plan-and-Execute</h2>
+<p>LangGraph 是把"图"作为 Agent 编排基础的开源框架（详见 ch13）。本节用 LangGraph 写一个 60 行的 Plan-and-Execute Agent。</p>
+<pre><code class="language-python">&quot;&quot;&quot;
+LangGraph Plan-and-Execute 实战
+- 节点：planner, executor, replanner, end
+- 边：planner → executor → (replanner | end) → ...
+- 状态：plan (list), past_steps (list), response (str)
+&quot;&quot;&quot;
+from typing import TypedDict, Annotated, List
+import operator
+
+# -------- 状态定义 --------
+class AgentState(TypedDict):
+    input: str
+    plan: List[str]
+    past_steps: Annotated[List[tuple], operator.add]
+    response: str
+
+# -------- 节点 1: Planner --------
+def plan_step(state: AgentState):
+    &quot;&quot;&quot;根据当前 input + past_steps 重新规划&quot;&quot;&quot;
+    if not state.get(&quot;plan&quot;):
+        # 首次规划
+        plan = [
+            f&quot;搜索&#x27;{state[&#x27;input&#x27;]}&#x27;的相关信息&quot;,
+            &quot;整理搜索结果并生成最终答案&quot;,
+        ]
+    else:
+        # 重新规划（剩余步骤）
+        plan = [f&quot;基于已有结果补充：{state[&#x27;past_steps&#x27;][-1][1]}&quot;, &quot;生成最终答案&quot;]
+    return {&quot;plan&quot;: plan}
+
+# -------- 节点 2: Executor --------
+def execute_step(state: AgentState):
+    &quot;&quot;&quot;执行 plan 的第一步&quot;&quot;&quot;
+    task = state[&quot;plan&quot;][0]
+    # mock 执行
+    result = f&quot;[完成] {task} → 得到 &#x27;foo bar baz&#x27;&quot;
+    return {
+        &quot;past_steps&quot;: [(task, result)],
+        &quot;plan&quot;: state[&quot;plan&quot;][1:],  # 移除已执行的步骤
+    }
+
+# -------- 节点 3: 是否结束？ --------
+def should_end(state: AgentState):
+    if not state.get(&quot;plan&quot;):
+        return &quot;end&quot;
+    return &quot;executor&quot;
+
+# -------- 节点 4: End（生成最终回答） --------
+def generate_response(state: AgentState):
+    steps_summary = &quot;; &quot;.join([f&quot;{t}: {r}&quot; for t, r in state[&quot;past_steps&quot;]])
+    return {&quot;response&quot;: f&quot;基于 {len(state[&#x27;past_steps&#x27;])} 步：{steps_summary} → 最终答案：42&quot;}
+
+# -------- 构造图 --------
+def build_plan_execute_graph():
+    &quot;&quot;&quot;返回图结构（伪代码，不实际 import langgraph）&quot;&quot;&quot;
+    nodes = {
+        &quot;planner&quot;: plan_step,
+        &quot;executor&quot;: execute_step,
+        &quot;end&quot;: generate_response,
+    }
+    edges = [
+        (&quot;START&quot;, &quot;planner&quot;),
+        (&quot;planner&quot;, &quot;executor&quot;),
+        (&quot;executor&quot;, &quot;planner&quot;),  # 循环
+        (&quot;executor&quot;, &quot;end&quot;, should_end),  # 条件边
+        (&quot;end&quot;, &quot;END&quot;),
+    ]
+    return nodes, edges
+
+# -------- 演示 --------
+print(&quot;=== LangGraph Plan-and-Execute 状态机演示 ===\n&quot;)
+nodes, edges = build_plan_execute_graph()
+print(f&quot;节点：{list(nodes.keys())}&quot;)
+print(f&quot;边：{len(edges)} 条（含 1 条条件边）&quot;)
+print(&quot;\n完整流转：&quot;)
+print(&quot;  START → planner → executor → planner → executor → end → END&quot;)
+print(&quot;  (循环直到 plan 为空，然后走 end)&quot;)
+
+# 模拟运行
+state = {&quot;input&quot;: &quot;查询 Agent 框架对比&quot;, &quot;plan&quot;: [], &quot;past_steps&quot;: [], &quot;response&quot;: &quot;&quot;}
+# 步骤 1: planner
+state.update(plan_step(state))
+print(f&quot;\n[1] 规划后 plan：{state[&#x27;plan&#x27;]}&quot;)
+# 步骤 2: executor
+state.update(execute_step(state))
+print(f&quot;[2] 执行后 plan：{state[&#x27;plan&#x27;]}，past：{state[&#x27;past_steps&#x27;]}&quot;)
+# 步骤 3: 再次规划
+state.update(plan_step(state))
+print(f&quot;[3] 重新规划 plan：{state[&#x27;plan&#x27;]}&quot;)
+# 步骤 4: 再次执行（假设完成）
+state.update(execute_step(state))
+print(f&quot;[4] 再执行后 plan：{state[&#x27;plan&#x27;]}&quot;)
+# 步骤 5: 生成回答
+if not state[&quot;plan&quot;]:
+    state.update(generate_response(state))
+    print(f&quot;\n✅ 最终回答：{state[&#x27;response&#x27;]}&quot;)
+</code></pre>
+<p><strong>核心论断</strong>：LangGraph 把 Plan-and-Execute 抽象成"图"——<strong>节点是 LLM/工具调用，边是路由条件</strong>。<strong>优势</strong>：可观测（每步状态可视化）、可中断（人在中间审核）、可重放（debug 时回放某步）。<strong>Day 13 ch13 会详细讲 LangGraph 编排</strong>。</p>
+<hr>
+<h2 id="sec-10-8-评估与基准">10.8 评估与基准</h2>
+<p>5 大范式不是"哪个最好"，而是"哪个最适合某个任务"。评估时必须选对基准。</p>
+<h3 id="sec-10-8-1-5-大公开基准">10.8.1 5 大公开基准</h3>
+<table class="md-table"><thead><tr>
+<th>基准</th>
+<th>类型</th>
+<th>难度</th>
+<th>测什么</th>
+<th>2025 SOTA</th>
+</tr></thead><tbody>
+<tr>
+<td>**GSM8K**</td>
+<td>数学</td>
+<td>中</td>
+<td>8.5K 小学数学应用题</td>
+<td>GPT-4o 96% / o1 98%</td>
+</tr>
+<tr>
+<td>**HumanEval**</td>
+<td>代码</td>
+<td>中</td>
+<td>164 个编程题</td>
+<td>GPT-4o 87% / Claude 3.5 92%</td>
+</tr>
+<tr>
+<td>**HotpotQA**</td>
+<td>多跳 QA</td>
+<td>中</td>
+<td>多文档多跳推理</td>
+<td>GPT-4o + RAG 84%</td>
+</tr>
+<tr>
+<td>**SWE-bench**</td>
+<td>真实代码</td>
+<td>高</td>
+<td>2k+ GitHub issue 修复</td>
+<td>Claude 3.5 49% / Sonnet 4.5 65%（2026）</td>
+</tr>
+<tr>
+<td>**GAIA**</td>
+<td>综合 Agent</td>
+<td>高</td>
+<td>多模态 + 工具 + 推理</td>
+<td>GPT-4o 15% / o1 39%（2024）→ 58%（2026）</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-8-2-不同范式在不同基准上的提升">10.8.2 不同范式在不同基准上的提升</h3>
+<table class="md-table"><thead><tr>
+<th>范式</th>
+<th>GSM8K</th>
+<th>HumanEval</th>
+<th>HotpotQA</th>
+<th>SWE-bench</th>
+</tr></thead><tbody>
+<tr>
+<td>**直答 (baseline)**</td>
+<td>56%</td>
+<td>48%</td>
+<td>32%</td>
+<td>2%</td>
+</tr>
+<tr>
+<td>**+ CoT**</td>
+<td>74% (+18)</td>
+<td>60% (+12)</td>
+<td>41% (+9)</td>
+<td>3% (+1)</td>
+</tr>
+<tr>
+<td>**+ Self-Consistency**</td>
+<td>82% (+8)</td>
+<td>65% (+5)</td>
+<td>45% (+4)</td>
+<td>4% (+1)</td>
+</tr>
+<tr>
+<td>**+ ReAct**</td>
+<td>78% (-4)</td>
+<td>70% (+5)</td>
+<td>67% (+22)</td>
+<td>8% (+4)</td>
+</tr>
+<tr>
+<td>**+ Plan-and-Execute**</td>
+<td>76%</td>
+<td>72%</td>
+<td>73%</td>
+<td>14%</td>
+</tr>
+<tr>
+<td>**+ LATS / ToT**</td>
+<td>85%</td>
+<td>75%</td>
+<td>78%</td>
+<td>**16-25%**（2024-2025）</td>
+</tr>
+</tbody></table>
+<blockquote>**观察**：ReAct 在工具/检索任务上碾压 CoT（HotpotQA +26 pp），但在纯数学上略输。**SWE-bench** 是 Plan-and-Execute + LATS 的主场，因为需要&quot;先读仓库 → 列修改计划 → 改 → 测&quot;多步。</blockquote>
+<blockquote>**2025-2026 新趋势**：OpenAI o1 / o3 / DeepSeek-R1 把&quot;内化推理链&quot;在模型权重里做——baseline GSM8K 就 95%+，CoT 提升趋近饱和（边际收益从 +18 pp 降到 +3 pp）。但 LATS 仍然在 SWE-bench 这种**需要工具 + 多步 + 反思**的任务上领先（因为模型权重学不会&quot;调工具&quot;）。</blockquote>
+<hr>
+<h2 id="sec-10-9-范式混搭与生产实践">10.9 范式混搭与生产实践</h2>
+<h3 id="sec-10-9-1-工业界典型组合-2025-2026">10.9.1 工业界典型组合（2025-2026）</h3>
+<table class="md-table"><thead><tr>
+<th>产品</th>
+<th>范式组合</th>
+<th>关键设计</th>
+</tr></thead><tbody>
+<tr>
+<td>**OpenAI Deep Research**</td>
+<td>Plan-and-Execute + ReAct + RAG + Self-Reflection</td>
+<td>Planner 先列 10-30 步研究计划，每步用 ReAct 检索 + 反思 3 次</td>
+</tr>
+<tr>
+<td>**Cursor Composer**</td>
+<td>Plan-and-Execute + 多 Agent + LATS</td>
+<td>Planner 把"修改多文件"拆给多个 Worker Agent（Code Search / Edit / Test），用 LATS 选最佳方案</td>
+</tr>
+<tr>
+<td>**Devin**</td>
+<td>Plan-and-Execute + LATS + 浏览器/Shell 工具</td>
+<td>Planner 列 50+ 步计划，每步调浏览器/Shell/Code Interpreter 工具</td>
+</tr>
+<tr>
+<td>**Claude Computer Use**</td>
+<td>ReAct + 多模态</td>
+<td>Thought 看屏幕截图 → Action 调鼠标键盘 → Observation 看新截图</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-9-2-4-段-工业-prompt-范式选择-决策">10.9.2 4 段&quot;工业 prompt 范式选择&quot;决策</h3>
+<table class="md-table"><thead><tr>
+<th>任务类型</th>
+<th>推荐范式</th>
+<th>工业案例</th>
+</tr></thead><tbody>
+<tr>
+<td>**单步问答 / 摘要 / 翻译**</td>
+<td>CoT（甚至直答）</td>
+<td>ChatGPT 普通对话</td>
+</tr>
+<tr>
+<td>**多步研究 / 报告**</td>
+<td>Plan-and-Execute + RAG + 反思</td>
+<td>Deep Research, Perplexity Pro</td>
+</tr>
+<tr>
+<td>**代码生成 / 修复**</td>
+<td>Plan-and-Execute + LATS</td>
+<td>Cursor, Devin, Claude Code</td>
+</tr>
+<tr>
+<td>**GUI 操作 / 长视野**</td>
+<td>ReAct + Computer Use</td>
+<td>Claude Computer Use, OpenAI Operator</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-10-10-5-大坑">10.10 5 大坑</h2>
+<h3 id="sec-10-10-1-5-大坑速查">10.10.1 5 大坑速查</h3>
+<table class="md-table"><thead><tr>
+<th>#</th>
+<th>坑</th>
+<th>症状</th>
+<th>解决</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>**推理发散**</td>
+<td>CoT 跑 20 步还在绕圈</td>
+<td>限制 max_steps（典型 10-15），加"如已得答案请直接 Final Answer"</td>
+</tr>
+<tr>
+<td>2</td>
+<td>**规划死循环**</td>
+<td>Plan-and-Execute 重规划 50 次</td>
+<td>Replanner 加 max_replan（典型 3-5），加退出条件</td>
+</tr>
+<tr>
+<td>3</td>
+<td>**反思遗忘**</td>
+<td>第二次任务重复第一次的错误</td>
+<td>反思存到长期记忆（ch08），下次读</td>
+</tr>
+<tr>
+<td>4</td>
+<td>**成本爆炸**</td>
+<td>LATS 跑 1 个任务 $5</td>
+<td>限制搜索宽度（beam=3）、限制深度（max_depth=10）、加 token budget</td>
+</tr>
+<tr>
+<td>5</td>
+<td>**幻觉传染**</td>
+<td>Planner 计划错 → Executor 错 → 反思错</td>
+<td>Planner 计划必须基于工具调用结果（不能"想象"工具返回值）</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-10-2-5-大坑诊断与修复">10.10.2 5 大坑诊断与修复</h3>
+<table class="md-table"><thead><tr>
+<th>坑</th>
+<th>诊断命令</th>
+<th>修复代码片段</th>
+</tr></thead><tbody>
+<tr>
+<td>推理发散</td>
+<td>统计 max_steps 分布，>15 的任务占比</td>
+<td>加 `if step > 15: return "Final Answer: Unable to determine"`</td>
+</tr>
+<tr>
+<td>规划死循环</td>
+<td>统计 replan 次数</td>
+<td>加 `if replan_count > 5: return fallback_answer`</td>
+</tr>
+<tr>
+<td>反思遗忘</td>
+<td>第二次任务是否重复错</td>
+<td>把反思写入 long_term_memory（ch08 模式）</td>
+</tr>
+<tr>
+<td>成本爆炸</td>
+<td>单任务 token 消耗</td>
+<td>用 `tiktoken` 限 token，加 cost cap</td>
+</tr>
+<tr>
+<td>幻觉传染</td>
+<td>Planner 输出是否引用了工具结果</td>
+<td>Planner prompt 加"**只能基于 Observation 规划，禁止想象**"</td>
+</tr>
+</tbody></table>
+<blockquote>**关键经验**：5 大坑中**幻觉传染**最隐蔽也最危险——它不是&quot;明显错误&quot;，而是&quot;看似合理但基于假数据&quot;。修复必须在 prompt 层硬约束（&quot;禁止想象&quot;），不能依赖模型自觉。</blockquote>
+<hr>
+<h2 id="sec-10-11-本章小结">10.11 本章小结</h2>
+<h3 id="sec-10-11-1-8-条速记">10.11.1 8 条速记</h3>
+<ol>
+<li><strong>CoT</strong> = 显式推理链，5-10 步可解任务的最便宜方案</li>
+<li><strong>ToT</strong> = 思维树搜索，需要"试不同方案再选最好"的复杂决策</li>
+<li><strong>Plan-and-Execute</strong> = 先规划后执行，工具多 + 计划稳定场景</li>
+<li><strong>ReAct</strong> = Thought → Action → Observation 循环，工具密集 Agent 的事实标准</li>
+<li><strong>LATS</strong> = ToT + ReAct + Reflexion 集大成，超长视野任务（SWE-bench 65%）</li>
+<li><strong>Self-Consistency</strong> = 多采样投票，CoT 的免费升级（+5-15 pp）</li>
+<li><strong>决策树</strong> 90% 的任务用 CoT 或 ReAct 就够</li>
+<li><strong>混搭</strong>是 2025-2026 主流——Deep Research / Cursor / Devin 全部是 Plan-and-Execute + RAG + 反思</li>
+</ol>
+<h3 id="sec-10-11-2-22-术语速查表">10.11.2 22 术语速查表</h3>
+<table class="md-table"><thead><tr>
+<th>术语</th>
+<th>含义</th>
+<th>关联章节</th>
+</tr></thead><tbody>
+<tr>
+<td>**CoT**</td>
+<td>Chain-of-Thought 思维链</td>
+<td>§10.2</td>
+</tr>
+<tr>
+<td>**ToT**</td>
+<td>Tree of Thoughts 树状思维</td>
+<td>§10.3</td>
+</tr>
+<tr>
+<td>**ReWOO**</td>
+<td>Reasoning WithOut Observation（无观察推理）</td>
+<td>§10.4.1</td>
+</tr>
+<tr>
+<td>**Plan-and-Execute**</td>
+<td>先规划后执行</td>
+<td>§10.4</td>
+</tr>
+<tr>
+<td>**LATS**</td>
+<td>Language Agent Tree Search</td>
+<td>§10.5.3</td>
+</tr>
+<tr>
+<td>**MCTS**</td>
+<td>Monte Carlo Tree Search 蒙特卡洛树搜索</td>
+<td>§10.5.3</td>
+</tr>
+<tr>
+<td>**BFS**</td>
+<td>Breadth-First Search 广度优先</td>
+<td>§10.3</td>
+</tr>
+<tr>
+<td>**DFS**</td>
+<td>Depth-First Search 深度优先</td>
+<td>§10.3</td>
+</tr>
+<tr>
+<td>**Planner**</td>
+<td>规划器（生成计划）</td>
+<td>§10.4</td>
+</tr>
+<tr>
+<td>**Executor**</td>
+<td>执行器（执行步骤）</td>
+<td>§10.4</td>
+</tr>
+<tr>
+<td>**Replanner**</td>
+<td>重新规划器</td>
+<td>§10.4</td>
+</tr>
+<tr>
+<td>**Reflection**</td>
+<td>反思</td>
+<td>§10.5.2</td>
+</tr>
+<tr>
+<td>**Self-Consistency**</td>
+<td>自一致性投票</td>
+<td>§10.2.1</td>
+</tr>
+<tr>
+<td>**ReAct**</td>
+<td>Reason + Act 推理+行动</td>
+<td>§10.5.1</td>
+</tr>
+<tr>
+<td>**Thought**</td>
+<td>思维（ReAct 第一步）</td>
+<td>§10.5.1</td>
+</tr>
+<tr>
+<td>**Action**</td>
+<td>行动（ReAct 第二步）</td>
+<td>§10.5.1</td>
+</tr>
+<tr>
+<td>**Observation**</td>
+<td>观察（ReAct 第三步）</td>
+<td>§10.5.1</td>
+</tr>
+<tr>
+<td>**Beam Search**</td>
+<td>束搜索（保留 top-K 候选）</td>
+<td>§10.3.2</td>
+</tr>
+<tr>
+<td>**Search Tree**</td>
+<td>搜索树</td>
+<td>§10.3</td>
+</tr>
+<tr>
+<td>**GSM8K**</td>
+<td>小学数学基准</td>
+<td>§10.8</td>
+</tr>
+<tr>
+<td>**HotpotQA**</td>
+<td>多跳问答基准</td>
+<td>§10.8</td>
+</tr>
+<tr>
+<td>**SWE-bench**</td>
+<td>真实 GitHub issue 修复基准</td>
+<td>§10.8</td>
+</tr>
+<tr>
+<td>**Reflexion**</td>
+<td>反思式学习</td>
+<td>§10.5.2</td>
+</tr>
+<tr>
+<td>**UCB1**</td>
+<td>Upper Confidence Bound 选择策略</td>
+<td>§10.5.4</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-11-3-概念桥-ch10-ch11-ch12-ch13-ch14-ch15">10.11.3 概念桥：ch10 ↔ ch11 ↔ ch12 ↔ ch13 ↔ ch14 ↔ ch15</h3>
+<table class="md-table"><thead><tr>
+<th>本章学到的</th>
+<th>下一部分怎么用</th>
+</tr></thead><tbody>
+<tr>
+<td>**10.2 CoT / Self-Consistency**</td>
+<td>**ch11 多 Agent 协作** —— "CoT 单 agent 自问自答 → 多 agent 互问互答"（Supervisor 让 worker agent 互相校验）</td>
+</tr>
+<tr>
+<td>**10.3 ToT / 思维树**</td>
+<td>**ch11 多 Agent 协作** —— "思维树 = 多个 agent 各自探索不同分支 + Supervisor 选最佳"</td>
+</tr>
+<tr>
+<td>**10.4 Plan-and-Execute**</td>
+<td>**ch13 LangGraph 编排** —— "Plan-and-Execute 的图结构 = LangGraph 的核心抽象"（planner/executor 都是节点）</td>
+</tr>
+<tr>
+<td>**10.4.1 ReWOO / 并行执行**</td>
+<td>**ch15 CrewAI** —— "CrewAI 的并行任务 = ReWOO 的批量执行"</td>
+</tr>
+<tr>
+<td>**10.5.1 ReAct**</td>
+<td>**ch11 多 Agent** + **ch14 AutoGen** —— "ReAct 单 agent → AutoGen 多 agent 互相 ReAct"</td>
+</tr>
+<tr>
+<td>**10.5.2 Reflexion**</td>
+<td>**ch12 MCP / A2A 通信协议** —— "Reflexion 反思存哪？→ 跨 agent 共享反思"（MCP 提供共享反思的协议）</td>
+</tr>
+<tr>
+<td>**10.5.3 LATS**</td>
+<td>**ch14 AutoGen** —— "AutoGen 的 GroupChat Manager 实现 LATS 风格的 MCTS 树搜索"</td>
+</tr>
+<tr>
+<td>**10.7 LangGraph 实战**</td>
+<td>**ch13 LangGraph 详细** —— "ch10 用了 LangGraph，本章展开 StateGraph / 节点 / 边 / 状态"</td>
+</tr>
+<tr>
+<td>**10.8 SWE-bench 65%**</td>
+<td>**ch17-20 实战项目** —— "第 17-20 章的代码助手 / 研究 Agent 都会在 SWE-bench 类任务上 benchmark"</td>
+</tr>
+<tr>
+<td>**10.9 工业混搭**</td>
+<td>**ch15 CrewAI** —— "工业范式组合 = CrewAI 的标准 recipe"</td>
+</tr>
+</tbody></table>
+<p><strong>第二/三/四部分进度预告</strong>：</p>
+<ul>
+<li>第二部分（核心技术）<strong>5/5 完结 ✅</strong>（ch06 prompt + ch07 FC + ch08 记忆 + ch09 RAG + <strong>ch10 规划</strong>）</li>
+<li>第三部分（多 Agent 系统）0/5 → Day 11 启动，第 11 章《多 Agent 协作模式》开篇</li>
+<li>Day 11 之后：ch12 MCP/A2A 通信协议 → ch13 LangGraph 编排 → ch14 AutoGen 对话 → ch15 CrewAI 团队</li>
+</ul>
+<blockquote>**第二部分完结 + Part 2 Retrospective 详见 `logs/day-10-part2-review.md`**</blockquote>
+<h3 id="sec-10-11-4-5-大范式选型速查-一句话版">10.11.4 5 大范式选型速查（一句话版）</h3>
+<table class="md-table"><thead><tr>
+<th>任务一句话描述</th>
+<th>推荐范式</th>
+<th>token 成本</th>
+</tr></thead><tbody>
+<tr>
+<td>"5-10 步可解的数学/逻辑题"</td>
+<td>**CoT**</td>
+<td>×1-2</td>
+</tr>
+<tr>
+<td>"需要试不同方案再选最好"</td>
+<td>**ToT**</td>
+<td>×5-10</td>
+</tr>
+<tr>
+<td>"工具多 + 计划稳定"</td>
+<td>**Plan-and-Execute**</td>
+<td>×3-5</td>
+</tr>
+<tr>
+<td>"边想边做，工具密集"</td>
+<td>**ReAct**</td>
+<td>×3-5</td>
+</tr>
+<tr>
+<td>"超长视野（>20 步）+ 多工具"</td>
+<td>**LATS**</td>
+<td>×10-50</td>
+</tr>
+<tr>
+<td>**拿不准选哪个**</td>
+<td>**ReAct**（最通用）</td>
+<td>×3-5</td>
+</tr>
+</tbody></table>
+<h3 id="sec-10-11-5-第二部分完结标语">10.11.5 第二部分完结标语</h3>
+<blockquote>**&quot;你学会了让 Agent 写好 prompt（ch06）、调好工具（ch07）、存好记忆（ch08）、查好知识（ch09）、想好规划（ch10）——单 Agent 的 5 大核心能力全部到位。&quot;**<br>**&quot;从 Day 11 开始，进入多 Agent 系统——Supervisor / Crew / Pipeline / Debate 4 大协作模式怎么选？MCP / A2A 通信协议是什么？LangGraph 怎么编排多 Agent？&quot;**</blockquote>
+<hr>
+<h3 id="sec-进一步阅读">进一步阅读</h3>
+<ol>
+<li>Wei et al., 2022-01, <em>Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</em> — CoT 原论文</li>
+<li>Yao et al., 2022-10, <em>ReAct: Synergizing Reasoning and Acting in Language Models</em> — ReAct 原论文</li>
+<li>Yao et al., 2023-05, <em>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</em> — ToT 原论文</li>
+<li>Shinn et al., 2023-03, <em>Reflexion: Language Agents with Verbal Reinforcement Learning</em> — Reflexion 原论文</li>
+<li>Xu et al., 2023-05, <em>ReWOO: Decoupling Reasoning from Observations for Efficient Augmented Language Models</em> — ReWOO 原论文</li>
+<li>Zhou et al., 2023-10, <em>Language Agent Tree Search Unifies Reasoning, Acting, and Planning in Language Models</em> — LATS 原论文</li>
+<li>Wang et al., 2023-03, <em>Self-Consistency Improves Chain of Thought Reasoning in Language Models</em> — Self-Consistency</li>
+<li>OpenAI, 2025, <em>Deep Research System Card</em> — OpenAI Deep Research 系统设计</li>
+<li>Anthropic, 2024-12, <em>Building Effective Agents</em> — Agent 设计模式（含 5 范式）</li>
+<li>LangChain, 2024, <em>LangGraph Plan-and-Execute Tutorial</em> — LangGraph 实战教程</li>
+</ol>
+<hr>
+<blockquote>**下章预告**：第 11 章《多 Agent 协作模式——Supervisor、Crew、Pipeline、Debate》——ch10 的 5 大范式还都是**单 Agent**；当任务规模上去、需要多角色协作时，就要进入**多 Agent 系统**。Supervisor / Crew / Pipeline / Debate 4 大模式怎么选？MCP / A2A 通信协议是什么？Day 11 见。</blockquote>
+
+  <hr style="margin-top: 60px;">
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; gap:16px; margin-top:30px;">
+    <a href="ch08.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">← 上一章：记忆系统（第 8 章）</a>
+    <a href="ch11.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">下一章：多 Agent 协作（第 11 章，未发布）→</a>
+  </nav>
+
+  <footer style="margin-top:60px; padding-top:20px; border-top:1px solid rgba(192,38,211,0.2); color:#888; font-size:13px; text-align:center;">
+    <p>《AGENT开发从入门到精通》· 第 10 章 · 规划与推理——CoT、ToT、Plan-and-Execute、LATS</p>
+    <p style="margin-top:8px;">
+      <a href="../index.html">书库首页</a> ·
+      <a href="ch01.html">第 1 章</a> ·
+      <a href="ch02.html">第 2 章</a> ·
+      <a href="ch03.html">第 3 章</a> ·
+      <a href="ch04.html">第 4 章</a> ·
+      <a href="ch05.html">第 5 章</a> ·
+      <a href="ch06.html">第 6 章</a> ·
+      <a href="ch07.html">第 7 章</a> ·
+      <a href="ch08.html">第 8 章</a> ·
+      <a href="ch09.html">第 9 章</a> ·
+      <a href="ch10.html">第 10 章</a>
+    </p>
+  </footer>
+</main>
+
+<script src="/assets/js/site.js"></script>
+<script src="/assets/js/book.js"></script>
+
+</body>
+</html>
