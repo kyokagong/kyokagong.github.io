@@ -1007,7 +1007,7 @@ for score, text, doc_id in results:
 <td><strong>Adaptive RAG</strong></td>
 <td>1 + 路由器</td>
 <td>查询级</td>
-<td>Adaptive RAG 2024-03</td>
+<td>Adaptive RAG 2024-03 arXiv（NAACL 2024）</td>
 <td>query 类型混杂</td>
 </tr>
 </tbody></table>
@@ -1296,7 +1296,7 @@ print(qe.query(&quot;什么是 RAG？&quot;))</code></pre>
 </tr>
 <tr>
 <td><strong>抽象稳定性</strong></td>
-<td>高（v0.10+ API 稳定）</td>
+<td>高（v0.9.x → v0.10+ 重写后 API 稳定）</td>
 <td>中（LCEL 重构过多次）</td>
 </tr>
 </tbody></table>
@@ -1415,7 +1415,7 @@ asyncio.run(demo())</code></pre>
 <td><strong>Context Recall</strong></td>
 <td>检索的召回率</td>
 <td>标准答案中的事实能否在检索内容中找到</td>
-<td>&gt; 0.80</td>
+<td>&gt; 0.70</td>
 </tr>
 </tbody></table>
 <h3 id="sec-9-8-3-RAGAS-评估流程-伪代码">9.8.3 RAGAS 评估流程（伪代码）</h3>
@@ -1596,7 +1596,7 @@ for k, v in scores.items():
 <tr>
 <td>2</td>
 <td><strong>embedding 模型不匹配</strong></td>
-<td>中文用英文模型 → 检索质量差 30-50%</td>
+<td>中文用英文模型 → 检索质量差 30-50%（经验值，未公开基准）</td>
 <td>中文必须用 <strong>BGE-large-zh / M3E / text-embedding-3-large</strong></td>
 </tr>
 <tr>
@@ -1620,7 +1620,7 @@ for k, v in scores.items():
 </tbody></table>
 <h3 id="sec-9-10-2-5-大坑深度诊断">9.10.2 5 大坑深度诊断</h3>
 <p><strong>坑 1：chunk 切太大</strong>——最隐蔽的 RAG 失败模式。症状是"答案其实在文档里，但检索不出来"。诊断方法：手工查 top-10 检索结果，看答案所在段落是否被切碎。修复：用 RecursiveCharacterTextSplitter，把 chunk_size 从 1024 降到 512，overlap 从 100 降到 50。</p>
-<p><strong>坑 2：embedding 模型不匹配</strong>——用 text-embedding-3-small 处理中文 PDF，检索质量会比 BGE-large-zh 低 30-50%。诊断：把 5 篇已知答案的中文文档塞进 RAG，跑 RAGAS Context Recall，看是否 &lt; 0.5。修复：中文场景<strong>强制</strong>用 BGE-large-zh-v1.5 或 M3E-large。</p>
+<p><strong>坑 2：embedding 模型不匹配</strong>——用 text-embedding-3-small 处理中文 PDF，检索质量会比 BGE-large-zh 低 30-50%（<strong>经验值，未公开基准；通用生产结论</strong>）。诊断：把 5 篇已知答案的中文文档塞进 RAG，跑 RAGAS Context Recall，看是否 &lt; 0.5。修复：中文场景<strong>强制</strong>用 BGE-large-zh-v1.5 或 M3E-large。</p>
 <p><strong>坑 3：top-K 固定</strong>——K=5 对短答案问题太多，对长答案问题太少。诊断：观察 top-5 里有几个 chunk 与 query 相关。修复：让 Agent 动态选 K，或在 ReAct 框架下让 LLM 决定"还要不要再检索一次"。</p>
 <p><strong>坑 4：不评估</strong>——生产 RAG 上线 1 个月后才发现 faithfulness=0.6，user 已经在投诉。诊断：上线前必须跑 RAGAS 4 指标（faithfulness / answer_relevancy / context_precision / context_recall），每项 &lt; 0.75 就拒绝上线。</p>
 <p><strong>坑 5：metadata 丢失</strong>——用户问"这段话出自哪份文档第几页？"，回答"我不确定"。修复：切分时把 doc_id / page / section / source / timestamp 都保留到 metadata，生成答案时一并塞进 Prompt。</p>
@@ -1740,6 +1740,7 @@ doc = {
     &#x27;text&#x27;: &#x27;退款必须在 7 天内申请。超过 7 天不予退款。&#x27;
 }
 chunks = chunk_with_metadata(doc)
+# 6 个 chunks 是 sliding window + overlap 30 的预期结果；真实场景可调 chunk_size + overlap
 for c in chunks:
     print(f&quot;  text={c[&#x27;text&#x27;][:20]}...  metadata={c[&#x27;metadata&#x27;]}&quot;)</code></pre>
 <h3 id="sec-9-10-6-RAG-失败模式速查-按出现频率排序">9.10.6 RAG 失败模式速查（按出现频率排序）</h3>

@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第12章：量子相位估计 | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第12章：量子相位估计 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第三部分 · 量子算法与复杂性 · Day 2</span>
+        <span class="chapter-day-tag">Day 14 · 2026-06-21</span>
+      </div>
+      <h1 class="chapter-title">第 12 章 量子相位估计</h1>
+      <p class="chapter-subtitle">量子算法的"通用引擎"——相位踢动 + 逆 QFT,精度 O(1/2ⁿ),为 Shor/HHL/化学 服务</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,541 字</span>
+        <span class="stat">🔢 12 节 · 56 子节</span>
+        <span class="stat">📑 完整电路 + QFT⁻¹ + Robust QPE + 5 大应用</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+<p># 第 12 章 量子相位估计</p>
+<blockquote class="chapter-quote"><p><strong>章节定位</strong>: 第三部分「量子算法与复杂性」 — 第 2 章</p>
+<p><strong>核心问题</strong>: 给定一个酉算符 $U$ 和它的一个本征态 $|\psi\rangle$, 如何用量子计算机<strong>精确估计</strong> $U$ 的本征值 $e^{2\pi i \phi}$ 中的相位 $\phi$?</p>
+<p><strong>本章地位</strong>: <strong>量子算法的"通用引擎"</strong> —— Shor / HHL / 量子化学 / 量子模拟都依赖 QPE</p></blockquote>
+<hr>
+<h2>12.0 引言:从 Shor 到 QPE</h2>
+<h3>12.0.1 一个让人吃惊的事实</h3>
+<p>如果你问"<strong>量子算法能解决什么问题</strong>?", 答案不是一长串应用列表, 而是少数<strong>几个核心子程序</strong>。<strong>量子相位估计</strong>(Quantum Phase Estimation, QPE) 就是这些子程序中<strong>最重要的一个</strong>:</p>
+<blockquote class="chapter-quote"><p><strong>QPE = 几乎所有重要量子算法的"心脏"</strong></p></blockquote>
+<table class="concept-table"><thead><tr><th>量子算法</th><th>怎么用 QPE</th></tr></thead><tbody><tr><td><strong>Shor 因式分解</strong>(ch11)</td><td>估 $U_a$ 的相位 → 提取周期 $r$</td></tr><tr><td><strong>HHL 线性方程组</strong>(ch14)</td><td>估 $e^{iAt}$ 的相位 → 求 $A^{-1}b$</td></tr><tr><td><strong>量子模拟</strong>(ch14)</td><td>估 $e^{-iHt}$ 的相位 → 求 Hamilton 量本征值</td></tr><tr><td><strong>量子化学</strong>(ch13)</td><td>估分子 Hamilton 量的相位 → 求基态能量</td></tr><tr><td><strong>量子机器学习</strong>(ch14)</td><td>估核矩阵的本征值</td></tr></tbody></table>
+<p><strong>本章在第三部分的定位</strong>:</p>
+<ul>
+<li>ch11 <strong>Shor</strong> 是 QPE 的<strong>最有名应用</strong>(指数加速 + RSA 崩塌)</li>
+<li><strong>本章 QPE</strong> 是 Shor 的<strong>核心机制</strong>(为什么能估相位)</li>
+<li>ch13 VQE/QAOA 是 QPE 的<strong>近期变体</strong>(在 NISQ 设备上跑)</li>
+<li>ch14 QML 把 QPE 用于<strong>数据科学</strong></li>
+<li>ch15 复杂性理论 给 QPE 划<strong>理论边界</strong>(BQP)</li>
+</ul>
+<h3>12.0.2 QPE 的"魔法"三件套</h3>
+<p>QPE 之所以<strong>强大</strong>, 是因为它做了三件事:</p>
+<ol>
+<li><strong>本征相位提取</strong>: $U|\psi\rangle = e^{2\pi i \phi}|\psi\rangle$ 中的 $\phi$ 是<strong>隐藏</strong>的(经典要算 $U$ 的特征多项式, 指数步)</li>
+<li><strong>精度可控</strong>: $n$ 比特控制寄存器 → 精度 $O(1/2^n)$(指数精度)</li>
+<li><strong>多项式代价</strong>: 总门数 $O(n^2)$ 就能达到 $n$ 比特精度</li>
+</ol>
+<h3>12.0.3 读者的先验知识清单</h3>
+<p>本章假设读者已掌握:</p>
+<ul>
+<li>ch02: bra-ket 符号、内积、外积、张量积</li>
+<li>ch03: 叠加原理(求和态 $\sum_x |x\rangle$)</li>
+<li>ch05: 量子测量公理、期望值</li>
+<li>ch06: qubit、混合态</li>
+<li>ch07: 单 qubit 门 ($H$, $S$, $T$)、多 qubit 门 (CNOT)、受控门</li>
+<li>ch08: 量子电路、张量网络、QSD 分解</li>
+<li>ch09: <strong>QFT 和逆 QFT</strong>(本章直接使用)</li>
+<li>ch11: <strong>Shor 算法</strong>(本章是 Shor 核心机制的展开)</li>
+</ul>
+<hr>
+<h2>12.1 本征值与相位</h2>
+<h3>12.1.1 酉算符的本征值都在单位圆上</h3>
+<p><strong>定理</strong>: 任何酉算符 $U$ 的本征值 $\lambda$ 满足 $|\lambda| = 1$, 因此可以写成 $\lambda = e^{i\theta}$ 或 $\lambda = e^{2\pi i \phi}$(其中 $\theta \in [0, 2\pi)$ 或 $\phi \in [0, 1)$)。</p>
+<p><strong>证明</strong>(简短):</p>
+<p>$$U|\psi\rangle = \lambda|\psi\rangle$$</p>
+<p>取内积:</p>
+<p>$$\langle\psi|U^\dagger U|\psi\rangle = \langle\psi|\lambda^*\lambda|\psi\rangle = |\lambda|^2$$</p>
+<p>但 $U^\dagger U = I$ (酉性), 所以 $\langle\psi|\psi\rangle = |\lambda|^2$, 即 $|\lambda| = 1$。</p>
+<h3>12.1.2 量子相位估计问题</h3>
+<p><strong>输入</strong>:</p>
+<ul>
+<li>一个 $n$ qubit 的酉算符 $U$(作为黑盒 oracle, 复杂度 $T_U$ 表示实现 $U$ 需要的门数)</li>
+<li>$U$ 的一个本征态 $|\psi\rangle$</li>
+</ul>
+<p><strong>输出</strong>: 一个估计 $\tilde{\phi}$, 使得</p>
+<p>$$\tilde{\phi} \in [\phi - \epsilon, \phi + \epsilon] \pmod 1$$</p>
+<p>其中 $\phi \in [0, 1)$ 是 $U$ 对应本征值 $e^{2\pi i \phi}$ 的相位, $\epsilon$ 是用户选择的精度。</p>
+<p><strong>复杂度</strong>: 总门数 $O(T_U \cdot n + n^2 \log(1/\epsilon))$ 或更紧的 $O(T_U \cdot n \cdot \log(1/\epsilon))$。</p>
+<h3>12.1.3 一个具体例子:$U = R_z(\theta)$</h3>
+<p>最简单的酉算符例子:</p>
+<p>$$U = R_z(\theta) = \begin{pmatrix} e^{-i\theta/2} & 0 \\ 0 & e^{i\theta/2} \end{pmatrix}$$</p>
+<p>本征值是 $e^{\mp i\theta/2}$, 也就是 $\phi = \mp \theta/(4\pi)$(待估相位)。</p>
+<p><strong>关键</strong>: $|\psi\rangle$ 是本征态(比如 $|0\rangle$ 或 $|1\rangle$)。QPE 可以<strong>精确</strong>估 $\phi$, 这是其他算法的核心操作。</p>
+<hr>
+<h2>12.2 QPE 的核心思想:相位踢动</h2>
+<h3>12.2.1 受控 $U$ 的"副作用"</h3>
+<p><strong>关键观察</strong>: 当 $U$ 作用在它的本征态上时, $U|\psi\rangle = e^{2\pi i \phi}|\psi\rangle$ —— <strong>整体相位</strong> $e^{2\pi i \phi}$ 出现, 但 $|\psi\rangle$ 本身<strong>不变</strong>(本征态意义)。</p>
+<p><strong>问题</strong>: 如果我们<strong>直接测量</strong> $|\psi\rangle$, 永远得到相同的 $|\psi\rangle$, <strong>提取不到 $\phi$</strong>。怎么办?</p>
+<p><strong>QPE 的魔法</strong>: <strong>让另一个 qubit"接收"这个相位</strong>!</p>
+<h3>12.2.2 相位踢动(Phase Kickback)的机制</h3>
+<p><strong>设置</strong>:</p>
+<ul>
+<li>控制 qubit: $|+\rangle = \frac{1}{\sqrt{2}}(|0\rangle + |1\rangle)$(在 $X$ 基)</li>
+<li>目标 qubit: $|\psi\rangle$($U$ 的本征态)</li>
+<li>操作: 受控 $U$(控制 qubit 是 $|1\rangle$ 时作用 $U$)</li>
+</ul>
+<p><strong>计算</strong>:</p>
+<p>$$CU \cdot |+\rangle|\psi\rangle = \frac{1}{\sqrt{2}}(|0\rangle|\psi\rangle + |1\rangle \cdot U|\psi\rangle) = \frac{1}{\sqrt{2}}(|0\rangle|\psi\rangle + |1\rangle \cdot e^{2\pi i \phi}|\psi\rangle)$$</p>
+<p>$$= \frac{1}{\sqrt{2}}(|0\rangle + e^{2\pi i \phi}|1\rangle) \otimes |\psi\rangle$$</p>
+<p><strong>神奇之处</strong>: $|\psi\rangle$ 没变, 但<strong>控制 qubit 获得了相位 $e^{2\pi i \phi}$</strong>!</p>
+<p>这叫<strong>相位踢动</strong>(phase kickback): 目标 qubit 的相位被<strong>踢到</strong>控制 qubit 上。</p>
+<h3>12.2.3 推广: 受控 $U^{2^k}$</h3>
+<p>更一般地, 受控 $U^{2^k}$ 让控制 qubit 获得相位 $e^{2\pi i \cdot 2^k \phi}$:</p>
+<p>$$CU^{2^k} \cdot |+\rangle|\psi\rangle = \frac{1}{\sqrt{2}}(|0\rangle + e^{2\pi i \cdot 2^k \phi}|1\rangle) \otimes |\psi\rangle$$</p>
+<p><strong>为什么需要 $U^{2^k}$</strong>: 通过<strong>重复平方</strong>让 $\phi$ 的精度提高 1 比特。这跟 ch11 Shor 算法中 $U_a^{2^k}$ 的角色完全一致。</p>
+<h3>12.2.4 QPE 的"两次反转"</h3>
+<p>QPE 实际上做了<strong>两次反向操作</strong>:</p>
+<ol>
+<li><strong>QFT 把"相位域"→ "读出域"</strong>: 让相位变成<strong>经典比特</strong></li>
+<li><strong>逆 QFT 把"读出域"→ "相位域"</strong>: 把相位踢动从控制 qubit <strong>提取</strong>出来</li>
+</ol>
+<p><strong>对称性</strong>: QPE 是 QFT 的<strong>精确镜像</strong>(对应 ch09 学过的"QFT + 逆 QFT")。</p>
+<hr>
+<h2>12.3 QPE 的完整电路</h2>
+<h3>12.3.1 电路结构(4 个模块)</h3>
+
+<figure class="chapter-figure">
+<svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" style="background:#0f1535;border-radius:8px;max-width:100%;">
+  <style>
+    .wire { stroke: #6b7280; stroke-width: 1.5; }
+    .gate { fill: #2a3260; stroke: #818cf8; stroke-width: 1; }
+    .gate-text { fill: #e5e7eb; font-family: monospace; font-size: 12px; text-anchor: middle; }
+    .ctrl-dot { fill: #fbbf24; }
+    .label { fill: #94a3b8; font-family: monospace; font-size: 11px; }
+    .qft-block { fill: rgba(129, 140, 248, 0.15); stroke: #818cf8; stroke-width: 1; stroke-dasharray: 4 2; }
+    .qft-text { fill: #c4b5fd; font-family: monospace; font-size: 13px; text-anchor: middle; font-weight: bold; }
+    .measure { fill: #f59e0b; stroke: #fcd34d; stroke-width: 1.5; }
+  </style>
+
+  <!-- Wires -->
+  <line class="wire" x1="40" y1="60" x2="680" y2="60"/>
+  <line class="wire" x1="40" y1="120" x2="680" y2="120"/>
+  <line class="wire" x1="40" y1="180" x2="680" y2="180"/>
+  <line class="wire" x1="40" y1="240" x2="680" y2="240"/>
+
+  <!-- Qubit labels -->
+  <text class="label" x="10" y="64">|0⟩</text>
+  <text class="label" x="10" y="124">|0⟩</text>
+  <text class="label" x="10" y="184">|0⟩</text>
+  <text class="label" x="10" y="244">|ψ⟩</text>
+
+  <!-- H gates (preparation) -->
+  <rect class="gate" x="70" y="48" width="32" height="24" rx="3"/>
+  <text class="gate-text" x="86" y="65">H</text>
+  <rect class="gate" x="70" y="108" width="32" height="24" rx="3"/>
+  <text class="gate-text" x="86" y="125">H</text>
+  <rect class="gate" x="70" y="168" width="32" height="24" rx="3"/>
+  <text class="gate-text" x="86" y="185">H</text>
+
+  <!-- Controlled U^{2^k} chain -->
+  <!-- Wire 1: U^1 -->
+  <line x1="160" y1="60" x2="160" y2="240"/>
+  <circle class="ctrl-dot" cx="160" cy="60" r="5"/>
+  <rect class="gate" x="140" y="225" width="40" height="30" rx="3"/>
+  <text class="gate-text" x="160" y="245">U</text>
+
+  <!-- Wire 2: U^2 -->
+  <line x1="220" y1="120" x2="220" y2="240"/>
+  <circle class="ctrl-dot" cx="220" cy="120" r="5"/>
+  <rect class="gate" x="200" y="225" width="40" height="30" rx="3"/>
+  <text class="gate-text" x="220" y="245">U²</text>
+
+  <!-- Wire 3: U^4 -->
+  <line x1="280" y1="180" x2="280" y2="240"/>
+  <circle class="ctrl-dot" cx="280" cy="180" r="5"/>
+  <rect class="gate" x="258" y="225" width="44" height="30" rx="3"/>
+  <text class="gate-text" x="280" y="245">U⁴</text>
+
+  <!-- Phase kickback label -->
+  <text class="label" x="220" y="290" text-anchor="middle">相位踢动链</text>
+  <text class="label" x="220" y="304" text-anchor="middle">受控 U^{2^k} (重复平方)</text>
+
+  <!-- QFT⁻¹ block -->
+  <rect class="qft-block" x="340" y="30" width="180" height="160" rx="6"/>
+  <text class="qft-text" x="430" y="120">QFT⁻¹</text>
+  <text class="label" x="430" y="140" text-anchor="middle">逆量子傅里叶变换</text>
+  <text class="label" x="430" y="156" text-anchor="middle">$O(n^2)$ 门</text>
+
+  <!-- Measurement -->
+  <rect class="measure" x="550" y="48" width="40" height="24" rx="3"/>
+  <text class="gate-text" x="570" y="65" fill="#0f1535">M</text>
+  <rect class="measure" x="550" y="108" width="40" height="24" rx="3"/>
+  <text class="gate-text" x="570" y="125" fill="#0f1535">M</text>
+  <rect class="measure" x="550" y="168" width="40" height="24" rx="3"/>
+  <text class="gate-text" x="570" y="185" fill="#0f1535">M</text>
+
+  <!-- Output labels -->
+  <text class="label" x="610" y="64">j₀</text>
+  <text class="label" x="610" y="124">j₁</text>
+  <text class="label" x="610" y="184">j₂</text>
+
+  <!-- Phase / result label -->
+  <text class="label" x="640" y="245" text-anchor="end">$|\psiangle$ 保持</text>
+
+  <!-- Title -->
+  <text class="qft-text" x="360" y="20" font-size="15">QPE 完整电路图 (n = 3 控制 qubit)</text>
+
+  <!-- Bottom: equation -->
+  <text class="label" x="360" y="345" text-anchor="middle" style="font-size:12px;">$\phi pprox j/2^n$，精度 $O(1/2^n)$，成功率 $\geq 4/\pi^2$</text>
+  <text class="label" x="360" y="365" text-anchor="middle" style="font-size:11px;">4 个核心模块: 叠加制备 → 相位踢动 → 逆 QFT → 测量</text>
+</svg>
+<figcaption>图 12.1: QPE 完整电路图 — n=3 控制 qubit + 1 个目标本征态 |ψ⟩。受控 U^{2^k} 通过"重复平方"链实现,k = 0, 1, ..., n-1。</figcaption>
+</figure>
+
+<p>QPE 电路由 <strong>4 个模块</strong>组成:</p>
+<pre class="chapter-code"><code class="language-">|0⟩^n ──H⊗n──●──●──●──────●──QFT⁻¹──M
+              │  │  │
+|ψ⟩ ─────────U──U²─U⁴─────U^{2^{n-1}}</code></pre>
+<table class="concept-table"><thead><tr><th>模块</th><th>描述</th></tr></thead><tbody><tr><td><strong>M1: 初始化</strong></td><td>上方 $n$ qubit 初始化为 $</td><td>0\rangle^{\otimes n}$, 下方为目标态 $</td><td>\psi\rangle$</td></tr><tr><td><strong>M2: 制备叠加</strong></td><td>上方 $n$ qubit 应用 $H^{\otimes n}$, 变成 $</td><td>+\rangle^{\otimes n}$</td></tr><tr><td><strong>M3: 相位踢动</strong></td><td>对 $k = 0, 1, \ldots, n-1$, 在第 $k$ 个控制 qubit 上应用受控 $U^{2^k}$</td></tr><tr><td><strong>M4: 逆 QFT + 测量</strong></td><td>对上方 $n$ qubit 应用 QFT⁻¹, 然后测量, 得到 $\phi$ 的 $n$ 比特估计</td></tr></tbody></table>
+<h3>12.3.1.1 电路设计的关键考量</h3>
+<p><strong>为什么是 4 个模块, 不是更多也不是更少</strong>?</p>
+<ul>
+<li><strong>少了 M1</strong>: 没有初始化, 量子态混乱(垃圾态)</li>
+<li><strong>少了 M2</strong>: 没有叠加, 只能处理单个 $x$, 失去 QPE 的<strong>并行性</strong></li>
+<li><strong>少了 M3</strong>: 没有相位踢动, 控制 qubit 上没相位信息</li>
+<li><strong>少了 M4</strong>: 测量给出<strong>随机 $x$</strong>, 得不到 $\phi$</li>
+</ul>
+<p><strong>4 个模块是"最少必要"</strong> 的组合。</p>
+<p><strong>模块顺序很重要</strong>:</p>
+<ul>
+<li>必须先 $H^{\otimes n}$ 制备叠加(否则 $U^x$ 没意义, 只有 $U^0 = I$)</li>
+<li>必须先受控 $U^{2^k}$ 再逆 QFT(否则相位踢动无效)</li>
+<li>必须先逆 QFT 再测量(否则读出不了相位)</li>
+</ul>
+<h3>12.3.1.2 与 Shor 电路的对比</h3>
+<p>Shor 算法(ch11)的电路 = <strong>QPE + 经典后处理</strong>:</p>
+<pre class="chapter-code"><code class="language-">Shor = 制备 |0⟩|0⟩ ─→ 制备 |+⟩^n |0⟩ ─→ 受控 U_a^{2^k} ─→ 逆 QFT ─→ 测量 ─→ 经典 gcd</code></pre>
+<p>本章 QPE 电路 = Shor 算法的<strong>前 4 个模块</strong>:</p>
+<pre class="chapter-code"><code class="language-">QPE = 制备 |0⟩^n |ψ⟩ ─→ 制备 |+⟩^n |ψ⟩ ─→ 受控 U^{2^k} ─→ 逆 QFT ─→ 测量</code></pre>
+<p><strong>关键区别</strong>: Shor 用 $|\psi\rangle = \frac{1}{\sqrt{r}} \sum_k |a^k \mod N\rangle$ (周期叠加态, 多个本征态的叠加), QPE 用 $|\psi\rangle = |u_j\rangle$(单个本征态)。</p>
+<p><strong>Shor 是 Robust QPE</strong>: 因为 $|\psi\rangle$ 是多个本征态的叠加, QPE 给出的相位是其中一个本征值的近似, <strong>Robust QPE</strong> 保证有大概率 $\geq 1/\text{poly}$ 给出<strong>正确</strong> $r$。</p>
+<h3>12.3.2 完整数学推导</h3>
+<p><strong>步骤 1: 初始化</strong></p>
+<p>$$|\psi_0\rangle = |0\rangle^{\otimes n} \otimes |\psi\rangle$$</p>
+<p><strong>步骤 2: 制备叠加</strong></p>
+<p>$$|\psi_1\rangle = (H^{\otimes n} \otimes I)|\psi_0\rangle = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} |x\rangle \otimes |\psi\rangle$$</p>
+<p><strong>步骤 3: 相位踢动</strong>(受控 $U^{2^k}$ 链)</p>
+<p>注意受控 $U^{2^k}$ 在第 $k$ 个 qubit 上, 所以当控制 qubit 是 $|x\rangle = |x_{n-1} \cdots x_1 x_0\rangle$ 时, 总的 $U$ 操作是 $U^{x_0 \cdot 2^0 + x_1 \cdot 2^1 + \cdots + x_{n-1} \cdot 2^{n-1}} = U^x$:</p>
+<p>$$|\psi_2\rangle = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} |x\rangle \otimes U^x|\psi\rangle = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} e^{2\pi i x \phi} |x\rangle \otimes |\psi\rangle$$</p>
+<p><strong>步骤 4: 逆 QFT + 测量</strong></p>
+<p>$$|\psi_3\rangle = (\text{QFT}^{-1} \otimes I)|\psi_2\rangle$$</p>
+<p>回忆 ch09: $\text{QFT}^{-1}|j\rangle = \frac{1}{\sqrt{2^n}} \sum_{k=0}^{2^n-1} e^{-2\pi i j k/2^n} |k\rangle$。</p>
+<p>应用 QFT⁻¹ 后, 整个上方寄存器的态是:</p>
+<p>$$\frac{1}{2^n} \sum_{j=0}^{2^n-1} \sum_{x=0}^{2^n-1} e^{2\pi i x (\phi - j/2^n)} |j\rangle$$</p>
+<p><strong>当 $j$ 是 $2^n \phi$ 的最近整数时</strong>, 内层求和<strong>干涉增强</strong>(几何级数峰值), 振幅最大。</p>
+<p>测量得到 $j$, 然后<strong>估计</strong>:</p>
+<p>$$\tilde{\phi} = j / 2^n$$</p>
+<p>精度 $|\phi - \tilde{\phi}| \leq 1/2^{n+1}$(误差 $\leq 1/(2 \cdot 2^n)$)。</p>
+<h3>12.3.3 关键设计选择</h3>
+<table class="concept-table"><thead><tr><th>选择</th><th>理由</th></tr></thead><tbody><tr><td><strong>$H^{\otimes n}$</strong> 而非其他叠加</td><td>$H$ 让每个 qubit 各以 50/50 概率是 0/1, 总态是所有 $x$ 的均匀叠加</td></tr><tr><td><strong>受控 $U^{2^k}$ 链</strong></td><td>通过重复平方让 $\phi$ 的精度提升, 只需 $n$ 个受控操作</td></tr><tr><td><strong>逆 QFT</strong></td><td>把相位 $e^{2\pi i x \phi}$ 转换为可读的经典比特 $j$</td></tr><tr><td><strong>测量在 $Z$ 基</strong></td><td>直接读出二进制 $j$</td></tr></tbody></table>
+<hr>
+<h2>12.4 量子傅里叶逆变换 (QFT⁻¹) 的角色</h2>
+
+<figure class="chapter-figure">
+<svg viewBox="0 0 720 280" xmlns="http://www.w3.org/2000/svg" style="background:#0f1535;border-radius:8px;max-width:100%;">
+  <style>
+    .box { fill: rgba(99, 102, 241, 0.2); stroke: #818cf8; stroke-width: 1.5; }
+    .box-quantum { fill: rgba(251, 191, 36, 0.15); stroke: #fbbf24; stroke-width: 1.5; }
+    .box-classical { fill: rgba(52, 211, 153, 0.15); stroke: #34d399; stroke-width: 1.5; }
+    .box-output { fill: rgba(248, 113, 113, 0.15); stroke: #f87171; stroke-width: 1.5; }
+    .box-text { fill: #e5e7eb; font-family: sans-serif; font-size: 12px; text-anchor: middle; font-weight: bold; }
+    .arrow { stroke: #94a3b8; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    .label { fill: #94a3b8; font-family: monospace; font-size: 10px; text-anchor: middle; }
+    .title-text { fill: #c4b5fd; font-family: sans-serif; font-size: 14px; text-anchor: middle; font-weight: bold; }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text class="title-text" x="360" y="22">QPE 算法流程图</text>
+
+  <!-- Step 1: 制备输入 -->
+  <rect class="box" x="20" y="60" width="120" height="50" rx="6"/>
+  <text class="box-text" x="80" y="80">制备输入</text>
+  <text class="box-text" x="80" y="96">|0⟩⊗ⁿ ⊗ |ψ⟩</text>
+
+  <!-- Arrow 1 -->
+  <line class="arrow" x1="140" y1="85" x2="180" y2="85"/>
+
+  <!-- Step 2: 制备叠加 -->
+  <rect class="box-quantum" x="180" y="60" width="120" height="50" rx="6"/>
+  <text class="box-text" x="240" y="80">H⊗ⁿ (叠加)</text>
+  <text class="box-text" x="240" y="96">|+⟩⊗ⁿ ⊗ |ψ⟩</text>
+
+  <!-- Arrow 2 -->
+  <line class="arrow" x1="300" y1="85" x2="340" y2="85"/>
+
+  <!-- Step 3: 相位踢动 -->
+  <rect class="box-quantum" x="340" y="50" width="160" height="70" rx="6"/>
+  <text class="box-text" x="420" y="70">相位踢动</text>
+  <text class="box-text" x="420" y="86">受控 U^{2^k}</text>
+  <text class="box-text" x="420" y="102">k = 0, 1, ..., n-1</text>
+
+  <!-- Arrow 3 -->
+  <line class="arrow" x1="500" y1="85" x2="540" y2="85"/>
+
+  <!-- Step 4: 逆 QFT + 测量 -->
+  <rect class="box-quantum" x="540" y="60" width="120" height="50" rx="6"/>
+  <text class="box-text" x="600" y="80">QFT⁻¹ + 测量</text>
+  <text class="box-text" x="600" y="96">得到 j ∈ [0, 2ⁿ)</text>
+
+  <!-- Arrow 4 (down to classical) -->
+  <line class="arrow" x1="600" y1="110" x2="600" y2="155"/>
+
+  <!-- Step 5: 经典后处理 -->
+  <rect class="box-classical" x="500" y="160" width="200" height="50" rx="6"/>
+  <text class="box-text" x="600" y="180">经典后处理</text>
+  <text class="box-text" x="600" y="196">φ̃ = j / 2ⁿ, 多数表决</text>
+
+  <!-- Arrow 5 (back to start for majority vote) -->
+  <line class="arrow" x1="500" y1="185" x2="160" y2="185"/>
+  <line class="arrow" x1="160" y1="185" x2="160" y2="115"/>
+  <line class="arrow" x1="160" y1="115" x2="180" y2="85" stroke-dasharray="4 2"/>
+  <text class="label" x="330" y="180">多数表决 (k 次重复)</text>
+
+  <!-- Output -->
+  <rect class="box-output" x="180" y="225" width="320" height="40" rx="6"/>
+  <text class="box-text" x="340" y="245" fill="#fecaca">输出: 相位估计 φ̃, 精度 O(1/2ⁿ)</text>
+
+  <!-- Bottom legend -->
+  <text class="label" x="60" y="255" text-anchor="start">图例: </text>
+  <rect class="box-quantum" x="105" y="240" width="14" height="14" rx="2"/>
+  <text class="label" x="125" y="252" text-anchor="start">量子</text>
+  <rect class="box-classical" x="170" y="240" width="14" height="14" rx="2"/>
+  <text class="label" x="190" y="252" text-anchor="start">经典</text>
+  <rect class="box-output" x="240" y="240" width="14" height="14" rx="2"/>
+  <text class="label" x="260" y="252" text-anchor="start">输出</text>
+</svg>
+<figcaption>图 12.2: QPE 算法流程图 — 4 个步骤 (输入 → 叠加 → 相位踢动 → 逆 QFT+测量) + 经典后处理 + 多数表决循环。</figcaption>
+</figure>
+
+<h3>12.4.1 为什么需要 QFT⁻¹?</h3>
+<p><strong>问题</strong>: 步骤 3 后, 上方寄存器的态是 $\frac{1}{\sqrt{2^n}} \sum_x e^{2\pi i x \phi} |x\rangle$。<strong>直接测量</strong>会<strong>均匀随机</strong>地给出某个 $x$, 得不到 $\phi$。</p>
+<p><strong>QFT⁻¹ 的作用</strong>: 把"<strong>相位域</strong>"转换为"<strong>读出域</strong>", 让测量直接给出 $\phi$ 的近似。</p>
+<h3>12.4.2 QFT⁻¹ 的"读出"原理</h3>
+<p><strong>直觉</strong>: $\frac{1}{\sqrt{N}} \sum_x e^{2\pi i x \phi} |x\rangle$ 是 QFT 的输出(QFT 输入 $|j\rangle$ 经过 $\phi$ 旋转)。QFT⁻¹ 把这个<strong>反变换</strong>回去, 给出峰值在 $\lfloor N\phi \rceil$ 的态:</p>
+<p>$$\text{QFT}^{-1} \cdot \frac{1}{\sqrt{N}} \sum_x e^{2\pi i x \phi} |x\rangle \approx |\lfloor N\phi \rceil\rangle$$</p>
+<p>(在精确 $N = 2^n$ 时, 概率为 1; 在有限 $N$ 时, 概率 $\geq 4/\pi^2 \approx 0.405$)</p>
+<h3>12.4.3 QFT⁻¹ 的实现</h3>
+<p><strong>资源</strong>: $O(n^2)$ 个基本门($H$ + 受控 $R_k$ + SWAP)。</p>
+<p><strong>具体构造</strong>: 回忆 ch09, QFT⁻¹ 跟 QFT 的电路<strong>几乎一样</strong>, 只是<strong>反向应用</strong>门, 而且 $R_k$ 取<strong>逆</strong>(本来是 $R_k$, 改成 $R_k^\dagger$)。</p>
+<pre class="chapter-code"><code class="language-">|0⟩ ──H──●─────●─────●───SWAP──M
+         │     │     │
+|0⟩ ──────R₂──●─────●─────●────M
+               │     │     │
+|0⟩ ───────────R₃──●─────●────M
+                     │     │
+|0⟩ ─────────────────R₄──●──M
+                           </code></pre>
+<p>(注意: 受控 $R_k$ 在 QFT⁻¹ 中是<strong>反向</strong>且<strong>取共轭</strong>)</p>
+<h3>12.4.4 QFT⁻¹ 的"读出"机制详解</h3>
+<p><strong>机制</strong>: QFT⁻¹ 把"频域"(相位域) 转换为"时域"(读出域)。</p>
+<p><strong>形式化</strong>: 输入态 $\frac{1}{\sqrt{N}} \sum_x e^{2\pi i x \phi} |x\rangle$ 看起来像 QFT 的输出 $\text{QFT}|j\rangle$(在 $j = N\phi$ 附近峰值)。</p>
+<p>应用 QFT⁻¹ <strong>反变换</strong>:</p>
+<p>$$\text{QFT}^{-1} \cdot \frac{1}{\sqrt{N}} \sum_x e^{2\pi i x \phi} |x\rangle = \frac{1}{N} \sum_{j} \sum_x e^{2\pi i x (\phi - j/N)} |j\rangle$$</p>
+<p>内层求和 $\sum_x e^{2\pi i x (\phi - j/N)}$ 在 $\phi - j/N$ 是整数时达到 $N$, 其他时候干涉相消。</p>
+<p><strong>几何级数峰值</strong>: 当 $j = \lfloor N\phi \rceil$(最近整数) 时, $|\phi - j/N| \leq 1/(2N)$, 所以 $e^{2\pi i x (\phi - j/N)} \approx 1$ 对所有 $x$, 求和 ≈ $N$。</p>
+<p><strong>输出</strong>: 大概率测得 $j = \lfloor N\phi \rceil$, $\tilde\phi = j/N$。</p>
+<h3>12.4.5 QFT⁻¹ 的"为什么不是 QFT"</h3>
+<p><strong>注意</strong>: QPE 用 QFT⁻¹, <strong>不是</strong> QFT。</p>
+<p><strong>为什么</strong>: QPE 的输入是"<strong>频域</strong>"($\sum_x e^{2\pi i x \phi} |x\rangle$), 想要"<strong>时域</strong>"($\lfloor N\phi \rceil$ 峰值)。</p>
+<ul>
+<li><strong>QFT</strong>: 时域 → 频域(<strong>傅里叶变换</strong>)</li>
+<li><strong>QFT⁻¹</strong>: 频域 → 时域(<strong>傅里叶逆变换</strong>)</li>
+</ul>
+<p>如果误用 QFT, 频域会被"<strong>自卷积</strong>", 反而<strong>恶化</strong>精度(变成"原始"叠加态)。</p>
+<p><strong>类比</strong>: 经典信号处理中, 频谱分析用 FFT, 但要<strong>还原</strong>时域信号用 IFFT(逆变换)。QPE 的 QFT⁻¹ 就是 IFFT。</p>
+<hr>
+<h2>12.5 精度分析</h2>
+<h3>12.5.1 精度 vs qubit 数</h3>
+<p><strong>定理</strong>: 用 $n$ 个控制 qubit, QPE 输出 $\tilde{\phi}$ 满足:</p>
+<p>$$|\phi - \tilde{\phi}| \leq \frac{1}{2^{n+1}}$$</p>
+<p>(等价于 $n+1$ 比特精度)</p>
+<p><strong>证明思路</strong>: 步骤 4 的内层求和 $\sum_x e^{2\pi i x (\phi - j/2^n)}$ 在 $j = \lfloor 2^n \phi \rceil$ 时达到峰值。其他 $j$ 的振幅被<strong>干涉相消</strong>压制。</p>
+<h3>12.5.2 成功概率</h3>
+<p><strong>问题</strong>: 测量可能给出"不对"的 $j$(不是 $\lfloor 2^n \phi \rceil$)。</p>
+<p><strong>定理</strong>: 测量得到"对"的 $j$(允许精确恢复 $\phi$) 的概率为:</p>
+<p>$$P(\text{success}) \geq \frac{4}{\pi^2} \approx 0.405 = 40.5\%$$</p>
+<p><strong>证明思路</strong>(Nielsen-Chuang): 对 $|j - 2^n \phi| \leq 1/2$ 的 $j$ 求和几何级数:</p>
+<p>$$\sum_{x=0}^{2^n-1} e^{2\pi i x (\phi - j/2^n)} = \frac{\sin(\pi (2^n \phi - j))}{\sin(\pi (\phi - j/2^n))}$$</p>
+<p>分母<strong>小</strong>的时候, 分子也<strong>小</strong>, 但比值有界。详细给出 $P \geq 4/\pi^2$。</p>
+<h3>12.5.3 重复 + 多数表决</h3>
+<p><strong>问题</strong>: $P = 0.405$ 意味着大约 60% 概率<strong>失败</strong>, 怎么办?</p>
+<p><strong>解决</strong>: <strong>重复</strong>运行 QPE $k$ 次, 取<strong>多数表决</strong>(majority vote)的 $j$。</p>
+<p>成功概率:</p>
+<p>$$P_k = 1 - \sum_{i=0}^{\lfloor k/2 \rfloor} \binom{k}{i} p^i (1-p)^{k-i}$$</p>
+<p>对 $p = 4/\pi^2 \approx 0.405$, $k = 5$ 时 $P_5 \approx 0.94$, $k = 10$ 时 $P_{10} \approx 0.997$。</p>
+<p><strong>注意</strong>: 每次 QPE 输出<strong>同样的 $\phi$</strong>(只是不同 $j$ 估计), 所以<strong>直接平均 $j$ 不行</strong>(因为 $j$ 是离散的), 用<strong>多数表决</strong>。</p>
+<h3>12.5.4 完整复杂度</h3>
+<p><strong>QPE 总复杂度</strong>:</p>
+<table class="concept-table"><thead><tr><th>部分</th><th>门数</th></tr></thead><tbody><tr><td><strong>$H^{\otimes n}$</strong></td><td>$n$ 个 $H$ 门</td></tr><tr><td><strong>受控 $U^{2^k}$</strong></td><td>$\sum_{k=0}^{n-1} T_U(2^k) \approx 2 T_U$ 个门(用重复平方)</td></tr><tr><td><strong>QFT⁻¹</strong></td><td>$O(n^2)$ 个门</td></tr><tr><td><strong>测量</strong></td><td>$n$ 个测量</td></tr><tr><td><strong>总计</strong></td><td>$O(T_U \cdot n + n^2)$</td></tr></tbody></table>
+<p><strong>精度</strong> $\epsilon$: 需要 $n = \lceil \log_2(1/\epsilon) \rceil + 1$ 个控制 qubit, 总门数 $O(T_U \log(1/\epsilon) + \log^2(1/\epsilon))$。</p>
+<h3>12.5.5 精度提升的边际效应</h3>
+<p><strong>观察</strong>: 精度提升 1 比特(从 $n$ 到 $n+1$) 只增加<strong>1 个</strong>控制 qubit 和 <strong>$O(T_U)$</strong> 个门。</p>
+<p><strong>意义</strong>: QPE 的精度成本是<strong>对数增长</strong>!</p>
+<table class="concept-table"><thead><tr><th>精度 $\epsilon$</th><th>qubit 数 $n$</th><th>总门数</th></tr></thead><tbody><tr><td>$10^{-1}$</td><td>4</td><td>$\sim 10 T_U$</td></tr><tr><td>$10^{-3}$</td><td>11</td><td>$\sim 20 T_U$</td></tr><tr><td>$10^{-6}$</td><td>21</td><td>$\sim 40 T_U$</td></tr><tr><td>$10^{-10}$</td><td>35</td><td>$\sim 70 T_U$</td></tr></tbody></table>
+<p><strong>关键</strong>: 精度提 1000 倍, qubit 数只增加 7 个(从 4 到 11)。这是<strong>指数精度 + 线性资源</strong>。</p>
+<h3>12.5.6 失败概率 vs $\epsilon$</h3>
+<p><strong>定理</strong>: 如果 $|\psi\rangle$ 是<strong>近似</strong>本征态(跟精确本征态 $|u_j\rangle$ 重叠 $|c_j|^2 \geq 1 - \epsilon$), QPE 输出:</p>
+<ul>
+<li><strong>正确率</strong>: $\geq (1 - \epsilon) \cdot 4/\pi^2$(对应 $|u_j\rangle$ 的 $\phi_j$)</li>
+<li><strong>错误率</strong>: $\leq \epsilon$(其他本征态的概率)</li>
+</ul>
+<p><strong>含义</strong>: <strong>好的近似本征态</strong> → <strong>QPE 也能跑得好</strong>!</p>
+<p>这是 <strong>Robust QPE</strong> (12.7) 的核心结论, 也是为什么 <strong>ch13 VQE</strong> 能在 NISQ 设备上用 QPE 的原因。</p>
+<hr>
+<h2>12.6 工作例子:$U = R_z(\theta)$</h2>
+<h3>12.6.1 设置</h3>
+<p><strong>取</strong> $U = R_z(\theta) = \begin{pmatrix} e^{-i\theta/2} & 0 \\ 0 & e^{i\theta/2} \end{pmatrix}$。</p>
+<p><strong>本征态</strong>: $|0\rangle$ 对应本征值 $e^{-i\theta/2}$, <strong>相位</strong> $\phi = -\theta/(4\pi)$(归一化到 $[0,1)$)。</p>
+<p><strong>取</strong> $n = 3$ 个控制 qubit(精度 $\sim 1/16$)。</p>
+<p><strong>取</strong> $\theta = \pi/4$ (45°), 所以 $\phi = -1/16 = 15/16$ (mod 1)。</p>
+<h3>12.6.2 5 步执行</h3>
+<p><strong>步骤 1</strong>: 初始化 $|000\rangle|0\rangle$。</p>
+<p><strong>步骤 2</strong>: $H^{\otimes 3}$ 制备 $\frac{1}{\sqrt{8}} \sum_{x=0}^7 |x\rangle|0\rangle$。</p>
+<p><strong>步骤 3</strong>: 相位踢动链</p>
+<ul>
+<li>$CU$: 让 $|x_0\rangle$ 获得 $e^{2\pi i \phi}$ 相位(如果 $x_0 = 1$)</li>
+<li>$CU^2$: 让 $|x_1\rangle$ 获得 $e^{2\pi i \cdot 2\phi}$ 相位(如果 $x_1 = 1$)</li>
+<li>$CU^4$: 让 $|x_2\rangle$ 获得 $e^{2\pi i \cdot 4\phi}$ 相位(如果 $x_2 = 1$)</li>
+</ul>
+<p>总相位 = $e^{2\pi i \phi \cdot (x_0 + 2 x_1 + 4 x_2)} = e^{2\pi i \phi \cdot x}$, 跟理论一致。</p>
+<p><strong>步骤 4</strong>: 逆 QFT 把上方寄存器转换为 $|\lfloor 8\phi \rceil\rangle = |7\rangle$ 的叠加(因为 $8 \cdot 15/16 = 7.5$, 最近整数 = 7 或 8)。</p>
+<p><strong>步骤 5</strong>: 测量, 大概率得到 $j = 7$ 或 $j = 8$。</p>
+<p><strong>还原</strong>: $\tilde{\phi} = 7/8 = 0.875$ 或 $\tilde{\phi} = 8/8 = 1.0 \equiv 0.0$。</p>
+<p><strong>实际 $\phi = 15/16 = 0.9375$</strong>。两个估计都有 $\sim 0.06$ 的误差, 跟 $1/16 = 0.0625$ 的精度一致 ✓。</p>
+<h3>12.6.3 验证</h3>
+<p><strong>用经典方法</strong>: $R_z(\theta) = R_z(\pi/4)$ 的本征值 $e^{\mp i\pi/8}$, 所以 $\phi_{\pm} = \mp 1/16$ 或 $15/16$。</p>
+<p><strong>QPE 输出</strong>: $\tilde{\phi} \in \{7/8, 8/8\} \equiv \{0.875, 0\}$(取模 1)。</p>
+<p><strong>精度</strong>: $|\phi - \tilde{\phi}| \leq 1/8$, 跟 $n = 3$ 的精度 $1/2^{n+1} = 1/16$ <strong>一致</strong>(考虑舍入误差) ✓。</p>
+<hr>
+<h2>12.7 Robust QPE:用近似本征态</h2>
+<h3>12.7.1 现实问题</h3>
+<p><strong>问题</strong>: 在实际量子算法(Shor, 化学, ...) 中, 我们<strong>不总是</strong>有 $U$ 的精确本征态。</p>
+<p><strong>例子</strong>:</p>
+<ul>
+<li><strong>化学</strong>: 我们想要 Hamilton 量 $H$ 的基态(精确本征态), 但<strong>只能准备一个近似</strong> (VQE 输出)</li>
+<li><strong>线性方程组 (HHL)</strong>: 我们想要 $A$ 的本征态, 但只对 $b$ 有访问</li>
+</ul>
+<p><strong>怎么办</strong>?</p>
+<h3>12.7.2 理论结果:近似本征态也能用</h3>
+<p><strong>定理</strong> (Kitaev 1995, Cleve-Ekert-Macchiavello-Mosca 1998): 即使 $|\psi\rangle$ 只是 $U$ 的<strong>近似</strong>本征态:</p>
+<p>$$|\psi\rangle = \sum_k c_k |u_k\rangle$$</p>
+<p>其中 $U|u_k\rangle = e^{2\pi i \phi_k} |u_k\rangle$ 是本征分解, 只要 $|\psi\rangle$ 跟某个本征态 $|u_j\rangle$ 有 $|c_j|^2 \geq 1 - \epsilon$, QPE 输出:</p>
+<ul>
+<li>概率 $\geq 1 - \epsilon$ 给出"接近" $\phi_j$ 的 $\tilde\phi$</li>
+<li>精度 $O(1/2^n)$ 不变</li>
+</ul>
+<p><strong>证明思路</strong>: $c_j$ 大 → 测量得到 $j$ 的概率 $\geq |c_j|^2 \geq 1 - \epsilon$。</p>
+<h3>12.7.3 Robust QPE 在实际应用</h3>
+<p><strong>关键</strong>: <strong>近似本征态</strong> 在实际中<strong>容易准备</strong>, <strong>精确本征态</strong> 通常<strong>很难</strong>(等价于解整个问题!)</p>
+<p><strong>例子</strong>:</p>
+<ul>
+<li><strong>VQE/QAOA</strong>: 准备一个<strong>参数化</strong> $|\psi(\theta)\rangle$, 优化 $\theta$ 让 $\langle\psi|H|\psi\rangle$ 最小</li>
+<li><strong>HHL</strong>: 用 QPE 在 $b$ 上做相位估计, 然后用相位旋转</li>
+</ul>
+<p>这两章 (ch13, ch14) 都会用到 Robust QPE。</p>
+<h3>12.7.4 失败概率 vs 近似误差</h3>
+<p><strong>定理</strong>(完整形式): 设 $|\psi\rangle = \sum_k c_k |u_k\rangle$, 其中 $|u_k\rangle$ 是 $U$ 的本征态, $U|u_k\rangle = e^{2\pi i \phi_k} |u_k\rangle$。QPE 输出 $\tilde\phi$ 满足:</p>
+<p>$$\Pr[\tilde\phi \in [\phi_j - \delta, \phi_j + \delta] \text{ 取模 } 1] \geq |c_j|^2 \cdot P_n(\delta)$$</p>
+<p>其中 $P_n(\delta) \geq 4/\pi^2 \approx 0.405$ 是 QPE 的<strong>条件成功概率</strong>(给定精确本征态时)。</p>
+<p><strong>结论</strong>:</p>
+<ul>
+<li><strong>准备</strong> $|c_j|^2 \geq 0.99$ 的近似本征态 → QPE 成功率 $\geq 0.99 \cdot 0.405 \approx 0.40$</li>
+<li><strong>准备</strong> $|c_j|^2 \geq 0.9999$ 的近似本征态 → QPE 成功率 $\geq 0.9999 \cdot 0.405 \approx 0.40$(还是 ~40%)</li>
+</ul>
+<p><strong>注</strong>: <strong>条件概率</strong> $4/\pi^2$ 是瓶颈, 跟<strong>近似误差</strong> $\epsilon = 1 - |c_j|^2$ 无关。</p>
+<h3>12.7.5 Robust QPE 的"准备-估计"两步范式</h3>
+<p><strong>算法</strong>:</p>
+<pre class="chapter-code"><code class="language-">1. 准备近似本征态 |ψ⟩(用 VQE / adiabatic / 已知 ansatz)
+2. 用 QPE 估 |ψ⟩ 的相位
+3. 重复 k 次, 取多数表决
+4. 输出精度 δ 的相位估计</code></pre>
+<p><strong>关键洞察</strong>: <strong>步骤 1</strong> 由应用决定(VQE, 量子化学, ...), <strong>步骤 2</strong> 跟具体应用无关(标准 QPE)。</p>
+<p><strong>这意味着</strong>: QPE 是<strong>通用工具</strong>, 可以"插拔"到各种算法中。这是 <strong>ch13 VQE + ch14 QML</strong> 的基础。</p>
+<hr>
+<h2>12.8 QPE 的应用</h2>
+<h3>12.8.1 Shor 因式分解(已经在 ch11 学过)</h3>
+<p><strong>QPE 怎么用</strong>: 取 $U = U_a$(模幂算符), 本征态 $|\psi_r\rangle = \frac{1}{\sqrt{r}} \sum_{k=0}^{r-1} |a^k \mod N\rangle$。</p>
+<p><strong>本征值</strong>: $U_a |\psi_r\rangle = e^{2\pi i s/r} |\psi_r\rangle$(对某个 $s$)</p>
+<p><strong>QPE 输出</strong>: $\phi = s/r$, 用连分数提取 $r$。</p>
+<h3>12.8.2 HHL 线性方程组(将在 ch14 学)</h3>
+<p><strong>问题</strong>: 给定 $A \mathbf{x} = \mathbf{b}$, 求 $\mathbf{x} = A^{-1}\mathbf{b}$。</p>
+<p><strong>QPE 怎么用</strong>:</p>
+<ol>
+<li>把 $b$ 编码成量子态 $|b\rangle = \sum_i b_i |i\rangle$</li>
+<li>假设 $A$ 是 Hermitian, $|b\rangle = \sum_i c_i |u_i\rangle$(本征分解)</li>
+<li>用 QPE 估 $e^{iAt}$ 的相位 → 得到 $A$ 的本征值 $\lambda_i$</li>
+<li>对每个本征分量 $|u_i\rangle$ 做<strong>条件旋转</strong> $|u_i\rangle \to \lambda_i^{-1} |u_i\rangle$</li>
+<li>逆 QPE(把相位信息从量子态中"撤销")</li>
+<li>测量得到 $|x\rangle \propto A^{-1}|b\rangle$</li>
+</ol>
+<p><strong>复杂度</strong>: $O(\log(N) \cdot s^2 \cdot \kappa^2 / \epsilon)$, 其中 $s$ 是稀疏度, $\kappa$ 是条件数。</p>
+<p><strong>注意</strong>: HHL <strong>不是</strong>万能解方程组算法(条件数 $\kappa$ 必须是多项式), 但对<strong>特定问题</strong>有指数加速。</p>
+<h3>12.8.3 量子模拟(Lloyd 1996)</h3>
+<p><strong>问题</strong>: 模拟 Hamilton 量 $H$ 的演化 $e^{-iHt}|\psi(0)\rangle$。</p>
+<p><strong>QPE 怎么用</strong>:</p>
+<ol>
+<li>用<strong> Trotter 分解</strong> 把 $e^{-iHt}$ 分解为基本门</li>
+<li>对 $|\psi(0)\rangle$ 应用 QPE(用 $e^{-iHt}$ 作为 $U$)</li>
+<li>测量得到 $H$ 的本征值 $E_k$ 和对应本征态</li>
+</ol>
+<p><strong>应用</strong>: 量子化学(估分子能量)、凝聚态物理(估多体 Hamilton 量本征值)。</p>
+<h3>12.8.4 量子化学(将在 ch13 学)</h3>
+<p><strong>问题</strong>: 求分子 Hamilton 量 $H_{mol}$ 的<strong>基态能量</strong> $E_0$。</p>
+<p><strong>QPE 怎么用</strong>:</p>
+<ol>
+<li><strong>准备近似基态</strong> (用 VQE / adiabatic evolution / ...)</li>
+<li>用 QPE 估 $e^{-iH_{mol}t}$ 的相位 → $E_0$</li>
+<li><strong>比 VQE 更精确</strong>(QPE 是精确算法, VQE 是变分)</li>
+</ol>
+<p><strong>化学意义</strong>: $E_0$ 决定分子的反应活性、化学键强度、催化剂设计等。</p>
+<h3>12.8.5 其他应用</h3>
+<p><strong>量子机器学习</strong>(ch14):</p>
+<ul>
+<li>量子 SVM: 估核矩阵本征值 → 找支持向量</li>
+<li>量子 PCA: 估密度矩阵本征值 → 主成分分析</li>
+<li>量子推荐系统: 估低秩近似的特征值</li>
+</ul>
+<p><strong>量子优化</strong>(ch13):</p>
+<ul>
+<li>QAOA: 把优化问题编码为 Hamilton 量, 用 QPE 估相位</li>
+<li>Quantum Annealing 的"门模型版本"</li>
+</ul>
+<p><strong>量子模拟</strong>(ch14):</p>
+<ul>
+<li>凝聚态物理: Hubbard 模型, Ising 模型</li>
+<li>高能物理: 量子色动力学 (QCD)</li>
+<li>化学动力学: 反应速率, 过渡态</li>
+</ul>
+<p><strong>量子密码学</strong>(ch11):</p>
+<ul>
+<li>Shor 算法本身(用 QPE 估 $U_a$ 的相位)</li>
+<li>其他可能受 QPE 影响的密码学构造</li>
+</ul>
+<hr>
+<h2>12.9 QPE 的变体</h2>
+<h3>12.9.1 Iterative QPE (IQPE)</h3>
+<p><strong>动机</strong>: 标准 QPE 需要 $n$ 个控制 qubit 同时存在(空间需求大)。</p>
+<p><strong>IQPE 的想法</strong>:<strong>只用一个</strong>辅助 qubit, 通过<strong>迭代</strong>估 $\phi$ 的每一位。</p>
+<p><strong>复杂度</strong>: 跟标准 QPE 相同, 但<strong>空间</strong>需求降为 $O(1)$ 个辅助 qubit。</p>
+<p><strong>代价</strong>: 需要<strong>经典反馈</strong>(每次迭代测量后调整下一次的控制)。</p>
+<h3>12.9.2 Bayesian QPE</h3>
+<p><strong>动机</strong>: 标准 QPE 的成功率是 $\geq 4/\pi^2$, 不是 1。</p>
+<p><strong>Bayesian QPE 的想法</strong>: 把每次测量当成<strong>贝叶斯更新</strong>, 维护 $\phi$ 的<strong>后验分布</strong>。</p>
+<p><strong>优势</strong>: 成功率 $\geq 1 - \epsilon$(任意精度), 跟 Robust QPE 结合特别有效。</p>
+<p><strong>代价</strong>: 需要经典后处理 + 多次测量。</p>
+<h3>12.9.3 Signal Processing QPE (SP-QPE)</h3>
+<p><strong>动机</strong>: 在 NISQ 设备上, 受控 $U^{2^k}$ 很难精确实现(深度太大)。</p>
+<p><strong>SP-QPE 的想法</strong>: 不做逆 QFT, 改用<strong>经典信号处理</strong>(傅里叶变换) 提取相位信息。</p>
+<p><strong>优势</strong>: <strong>NISQ 友好</strong>——浅电路, 无需 QFT⁻¹。</p>
+<p><strong>代价</strong>: 精度下降(常数因子), 但<strong>总体</strong> 在 NISQ 上更实用。</p>
+<hr>
+<h2>12.10 QPE 的物理实现挑战</h2>
+<h3>12.10.1 受控 $U^{2^k}$ 的代价</h3>
+<p><strong>问题</strong>: 实现受控 $U^{2^k}$ 需要 $U$ 的 $2^k$ 次连续应用, <strong>深度</strong>随 $k$ 指数增长。</p>
+<p><strong>解决</strong>:<strong>重复平方</strong>(modular exponentiation), 预先计算 $U^2, U^4, \ldots, U^{2^{n-1}}$, 每个只需 $O(T_U)$ 个门。</p>
+<p><strong>总深度</strong>: $O(n \cdot T_U)$(对 $n$ 个受控操作, 每个 $O(T_U)$ 门)。</p>
+<p><strong>对 Shor</strong>: $T_U = O(n^3)$(模幂), 总深度 $O(n^4)$。</p>
+<h3>12.10.2 QFT⁻¹ 的实现</h3>
+<p><strong>资源</strong>: $O(n^2)$ 个基本门($H$ + $R_k$ + SWAP)。</p>
+<p><strong>物理挑战</strong>: $R_k$ 涉及<strong>任意角度</strong>旋转, 在某些硬件上<strong>难以精确实现</strong>(比如超导需要微波脉冲)。</p>
+<p><strong>解决</strong>: 用 Solovay-Kitaev 分解(ch08.7) 把任意 $R_k$ 近似为 $H, S, T$ 序列, 精度 $\delta$ 时深度 $O(\log^c(1/\delta))$。</p>
+<h3>12.10.3 NISQ 时代的 QPE</h3>
+<p><strong>问题</strong>: 标准 QPE 在 NISQ 设备上<strong>不可行</strong>(深度太大, 错误率太高)。</p>
+<p><strong>变体</strong>:</p>
+<ul>
+<li><strong>SP-QPE</strong>(12.9.3): 浅电路, 经典后处理</li>
+<li><strong>Variational QPE</strong>: 把 QPE 嵌入 VQE 框架</li>
+<li><strong>样本-based QPE</strong>: 直接从测量样本估计 $\phi$</li>
+</ul>
+<p><strong>当前最佳实践</strong>: SP-QPE + Bayesian 后处理, 在 IBM 127-qubit 上演示成功。</p>
+<h3>12.10.4 容错 QPE 的资源估算</h3>
+<p><strong>假设</strong>: 物理错误率 $p = 10^{-3}$, 用表面码纠错, 距离 $d = 17$(对应逻辑错误率 $10^{-10}$)。</p>
+<p><strong>资源估算</strong>(对 n=30 qubit QPE, 估化学分子基态能量):</p>
+<table class="concept-table"><thead><tr><th>资源</th><th>数量</th><th>备注</th></tr></thead><tbody><tr><td><strong>逻辑 qubit 数</strong></td><td>30 + 100 = 130(输入 + 输出 + 辅助)</td><td>Shor 类似</td></tr><tr><td><strong>物理 qubit per 逻辑</strong></td><td>$2 \cdot 17^2 = 578$</td><td>表面码</td></tr><tr><td><strong>总物理 qubit</strong></td><td>$130 \times 578 \approx 75,000$</td><td>75K qubit</td></tr><tr><td><strong>T 门数</strong></td><td>$\sim 10^{12}$</td><td>QPE + 受控 $U$ + QFT⁻¹</td></tr><tr><td><strong>运行时间</strong></td><td>$\sim 10$ 小时</td><td>假设物理门 1 μs</td></tr><tr><td><strong>时钟频率</strong></td><td>1 MHz</td><td>当前超导频率</td></tr></tbody></table>
+<p><strong>对比</strong>: 75K 物理 qubit 已经在 IBM Heron (2024, ~5000 qubit) 的 <strong>15 倍</strong>, <strong>远未达到</strong>。</p>
+<h3>12.10.5 QPE 的硬件依赖</h3>
+<table class="concept-table"><thead><tr><th>硬件平台</th><th>QPE 优势</th><th>QPE 挑战</th></tr></thead><tbody><tr><td><strong>超导</strong> (IBM, Google)</td><td>门速度快 (ns)</td><td>退相干时间短 (100 μs)</td></tr><tr><td><strong>离子阱</strong> (IonQ, Quantinuum)</td><td>门保真度高 (99.9%)</td><td>门速度慢 (μs)</td></tr><tr><td><strong>光量子</strong> (PsiQuantum, Xanadu)</td><td>室温运行</td><td>光子损失</td></tr><tr><td><strong>中性原子</strong> (QuEra, Atom)</td><td>可扩展性好</td><td>门保真度较低</td></tr><tr><td><strong>拓扑量子</strong> (Microsoft Majorana)</td><td>天然容错</td><td>技术不成熟</td></tr></tbody></table>
+<p><strong>结论</strong>: QPE 在<strong>所有</strong>主流硬件平台都需要<strong>改进</strong>, 但<strong>没有任何</strong>根本性障碍 —— <strong>容错 QPE</strong> 是可实现的。</p>
+<hr>
+<h2>12.11 总结</h2>
+<h3>12.11.1 概念速查表</h3>
+<table class="concept-table"><thead><tr><th>概念</th><th>定义</th><th>本章位置</th></tr></thead><tbody><tr><td><strong>酉算符</strong></td><td>$U^\dagger U = I$, 本征值 $</td><td>\lambda</td><td>= 1$</td><td>12.1.1</td></tr><tr><td><strong>本征相位</strong></td><td>$\lambda = e^{2\pi i \phi}$, $\phi \in [0, 1)$</td><td>12.1.2</td></tr><tr><td><strong>QPE 问题</strong></td><td>给定 $U,</td><td>\psi\rangle$($U$ 的本征态), 估 $\phi$</td><td>12.1.2</td></tr><tr><td><strong>相位踢动</strong></td><td>受控 $U$ 把 $\phi$ 从目标 qubit 踢到控制 qubit</td><td>12.2.2</td></tr><tr><td><strong>重复平方</strong></td><td>受控 $U^{2^k}$ 用 $O(T_U)$ 门实现</td><td>12.2.3</td></tr><tr><td><strong>QFT⁻¹</strong></td><td>把相位域转换为读出域</td><td>12.4.1</td></tr><tr><td><strong>精度</strong></td><td>$n$ 控制 qubit = 精度 $O(1/2^n)$</td><td>12.5.1</td></tr><tr><td><strong>成功率</strong></td><td>$\geq 4/\pi^2 \approx 40.5\%$(精确本征态)</td><td>12.5.2</td></tr><tr><td><strong>多数表决</strong></td><td>重复 $k$ 次 QPE 取众数</td><td>12.5.3</td></tr><tr><td><strong>Robust QPE</strong></td><td>用近似本征态成功率 $\geq 1 - \epsilon$</td><td>12.7.2</td></tr><tr><td><strong>IQPE</strong></td><td>单 qubit + 经典反馈</td><td>12.9.1</td></tr><tr><td><strong>Bayesian QPE</strong></td><td>多次测量 + 贝叶斯后验</td><td>12.9.2</td></tr><tr><td><strong>SP-QPE</strong></td><td>浅电路 + 经典傅里叶处理</td><td>12.9.3</td></tr></tbody></table>
+<h3>12.11.2 QPE 的"工作原理"总结</h3>
+<p><strong>为什么 QPE 比经典快这么多</strong>? <strong>三个层次的洞察</strong>:</p>
+<p><strong>层次 1: 本征相位不是"原子"问题</strong></p>
+<p>经典看法: 求 $\phi$ 需要解 $U$ 的特征多项式, <strong>指数步</strong>。 量子洞察: <strong>相位踢动</strong>让 $\phi$ <strong>自动出现在控制 qubit</strong>上, $O(T_U \cdot n)$ 步就能精确读出。</p>
+<p><strong>层次 2: 精度不是"原子"问题</strong></p>
+<p>经典看法: 想把精度从 $\epsilon$ 提高到 $\epsilon/2$, 需要重复整个计算。 量子洞察: <strong>重复平方</strong>$U \to U^2 \to U^4 \to \ldots$ 让精度指数增长, $n$ 步实现 $2^n$ 精度。</p>
+<p><strong>层次 3: 干涉不是"原子"问题</strong></p>
+<p>经典看法: 干涉测量只能给出"统计平均"。 量子洞察: <strong>QFT⁻¹</strong> 把"干涉叠加"转换为"读出峰值", 单次测量就给出<strong>精确</strong> $\phi$。</p>
+<h3>12.11.3 QPE 在第三部分的位置</h3>
+<table class="concept-table"><thead><tr><th>章节</th><th>QPE 的角色</th></tr></thead><tbody><tr><td><strong>ch11 Shor</strong></td><td>用 QPE 估 $U_a$ 的相位 → 提取周期</td></tr><tr><td><strong>ch12 本章</strong></td><td>QPE 的核心机制 + 变体</td></tr><tr><td><strong>ch13 VQE/QAOA</strong></td><td>用 Robust QPE 估 Hamilton 量本征值</td></tr><tr><td><strong>ch14 QML</strong></td><td>QPE 用于量子 SVM / 量子 PCA / HHL</td></tr><tr><td><strong>ch15 复杂性</strong></td><td>QPE 是 BQP 类问题的"通用构造器"</td></tr></tbody></table>
+<h3>12.11.4 第三部分后续 3 章铺路</h3>
+<ul>
+<li><strong>ch13 变分量子算法 (VQE/QAOA)</strong>: 用近似本征态(变分制备) + QPE 的近期变体</li>
+<li><strong>ch14 量子机器学习</strong>: 把 QPE 用于数据科学(量子 SVM, 量子 PCA, HHL)</li>
+<li><strong>ch15 量子复杂性理论</strong>: QPE 给出 BQP 问题的标准范式</li>
+</ul>
+<h3>12.11.5 关键概念回顾</h3>
+<p><strong>QPE 三件套</strong>:</p>
+<ol>
+<li><strong>本征相位提取</strong>: 量子电路能把 $U$ 的"本征值"提取为可读比特</li>
+<li><strong>精度可控</strong>: $n$ 控制 qubit = $O(1/2^n)$ 精度</li>
+<li><strong>多项式代价</strong>: 总门数 $O(T_U \cdot n + n^2)$</li>
+</ol>
+<p><strong>QPE 的"通用引擎"地位</strong>:</p>
+<ul>
+<li>Shor / HHL / 化学 / 模拟 都用 QPE</li>
+<li>QPE 的<strong>复杂度直接决定</strong>这些算法的复杂度</li>
+</ul>
+<p><strong>QPE 的现代挑战</strong>:</p>
+<ul>
+<li>重复平方代价大 → Robust QPE / SP-QPE</li>
+<li>受控 $U$ 在 NISQ 难 → 变分 QPE / 迭代 QPE</li>
+<li>容错需求 → 物理 qubit 数大(百万级)</li>
+</ul>
+<h3>12.11.5.1 QPE 的"加速"几何解释</h3>
+<p><strong>QPE 在做什么的几何图景</strong>:</p>
+<ul>
+<li>上方 $n$ 比特寄存器的<strong>球面</strong>(Bloch 球的推广) 被分成 $2^n$ 个"区", 每个对应一个 $x$</li>
+<li>相位 $e^{2\pi i x \phi}$ 让每个 $x$ 区<strong>旋转</strong> $2\pi x \phi$</li>
+<li>旋转后的相位让"区与区之间的相位差" = $2\pi \phi$</li>
+<li>QFT⁻¹ 把"旋转过的相位差"放大为<strong>整数差</strong>, 让<strong>最近 $x$</strong> 的振幅<strong>干涉增强</strong></li>
+</ul>
+<p><strong>直觉</strong>: QPE 就像一个<strong>精密的"相位尺"</strong>, 精度由 $n$ 决定(尺的最小刻度)。</p>
+<h3>12.11.5.2 QPE 的"信息论"角度</h3>
+<p><strong>经典信息论</strong>: 估 $\phi$ 到精度 $\epsilon$ 需要 $O(\log(1/\epsilon))$ 比特信息(连续值量化)。</p>
+<p><strong>QPE</strong>: 用 $n$ 量子比特提供 $n$ 比特信息, <strong>量子化精度</strong> = $1/2^n$。</p>
+<p><strong>关键</strong>: 量子比特提供的信息是<strong>经典比特的 2 倍</strong>(可以处于叠加), 所以 $n$ 量子比特提供 $n$ 比特信息, 但<strong>精度</strong> 比经典高得多(因为<strong>干涉</strong>把"模拟信号"放大为"数字信号")。</p>
+<p><strong>信息论的 QPE 上界</strong>: $O(n)$ 比特信息(最多), 所以 $n$ 控制 qubit 是<strong>最优</strong>的。</p>
+<h3>12.11.5.3 QPE 在量子算法分类中的位置</h3>
+<table class="concept-table"><thead><tr><th>类型</th><th>代表</th><th>用 QPE?</th></tr></thead><tbody><tr><td><strong>代数问题</strong>(指数加速)</td><td>Shor</td><td>✅ 是</td></tr><tr><td><strong>代数问题</strong>(多项式加速)</td><td>Grover</td><td>❌ 否</td></tr><tr><td><strong>物理模拟</strong>(指数加速)</td><td>量子化学, 量子模拟</td><td>✅ 是</td></tr><tr><td><strong>优化问题</strong>(启发式)</td><td>QAOA, VQE</td><td>✅ 是(变分版本)</td></tr><tr><td><strong>机器学习</strong>(取决于数据)</td><td>QML</td><td>✅ 是</td></tr><tr><td><strong>代数 + 线性代数</strong></td><td>HHL</td><td>✅ 是</td></tr></tbody></table>
+<p><strong>模式</strong>: 凡是涉及"求本征值 / 本征向量 / 周期"的问题, QPE 都是关键。</p>
+<h3>12.11.6 思考题</h3>
+<ol>
+<li><strong>基础</strong>: 为什么 QPE 需要用本征态 $|\psi\rangle$? 如果 $|\psi\rangle$ 不是本征态, 测量结果会怎样?</li>
+<li><strong>进阶</strong>: 计算 $U = T$($T$ 门) 的本征值和本征态, 用 QPE 估相位。哪个本征态最容易准备?</li>
+<li><strong>深入</strong>: Robust QPE 的失败概率 $\epsilon$ 跟"近似本征态的距离"有什么关系? 用数学公式证明。</li>
+<li><strong>实践</strong>: 在 NISQ 设备(127 qubit, 错误率 $10^{-3}$)上, 估算跑 QPE 的最大 $n$(用 SP-QPE + 表面码容错, 假设 1 个逻辑 qubit = 100 个物理 qubit)。</li>
+<li><strong>算法</strong>: 用 QPE 设计一个"量子骰子"算法, 模拟一个 $n$ 面骰子的随机投掷, 但<strong>保证</strong>不可预测。</li>
+</ol>
+<h3>12.11.7 推荐阅读</h3>
+<ul>
+<li><strong>Nielsen-Chuang</strong> 第 5.2 节: QPE 的原始介绍</li>
+<li><strong>Kitaev 1995</strong>: QPE 的发明 (arXiv:quant-ph/9511026)</li>
+<li><strong>Cleve-Ekert-Macchiavello-Mosca 1998</strong>: Robust QPE 的理论 (arXiv:quant-ph/9708016)</li>
+<li><strong>Svore-Howe-Terhal 2013</strong>: Signal Processing QPE (arXiv:1304.0741)</li>
+<li><strong>Dobsicek-Johansson-Rezac 2007</strong>: Iterative QPE</li>
+<li><strong>Wiebe-Granade 2016</strong>: Bayesian QPE</li>
+</ul>
+<hr>
+<h2>12.X 附录</h2>
+<h3>12.X.1 QPE 的简短历史</h3>
+<ul>
+<li><strong>1982</strong>: Feynman 提出量子模拟的想法(没具体 QPE)</li>
+<li><strong>1995</strong>: Kitaev 发明 QPE(俄文论文, 后来英译)</li>
+<li><strong>1996</strong>: Lloyd 提出量子模拟的具体方案</li>
+<li><strong>1997</strong>: Shor 的因式分解算法(用 QPE 作为关键子程序)</li>
+<li><strong>1998</strong>: Cleve 等给出 Robust QPE 的严格证明</li>
+<li><strong>2009</strong>: HHL 算法把 QPE 用于解线性方程组</li>
+<li><strong>2013</strong>: SP-QPE 让 QPE 在 NISQ 设备上变得可行</li>
+<li><strong>2020s</strong>: QPE 在 IBM / Google / IonQ 设备上首次实验演示</li>
+</ul>
+<h3>12.X.2 QPE vs QFT vs Grover:三个"指数加速"的对比</h3>
+<table class="concept-table"><thead><tr><th>算法</th><th>输入</th><th>输出</th><th>加速来源</th><th>加速比</th></tr></thead><tbody><tr><td><strong>QFT</strong> (ch09)</td><td>周期叠加态</td><td>周期 $r$ 的估计</td><td>DFT 量子化</td><td>$O(N \cdot \log N) \to O(\log^2 N)$</td></tr><tr><td><strong>Grover</strong> (ch10)</td><td>无结构搜索</td><td>标记态</td><td>振幅放大 + 干涉</td><td>$O(N) \to O(\sqrt{N})$</td></tr><tr><td><strong>QPE</strong> (本章)</td><td>$U$ 的本征态</td><td>本征相位 $\phi$</td><td>相位踢动 + QFT⁻¹</td><td>经典 $O(\text{poly}(1/\epsilon) \cdot 2^n) \to O(\text{poly}(n, 1/\epsilon))$</td></tr></tbody></table>
+<p><strong>QPE 的"加速"角度跟 QFT 类似</strong>: 都是利用 QFT 处理<strong>叠加态的相位信息</strong>。</p>
+<h3>12.X.3 QPE 在"NISQ 之后"的角色</h3>
+<p><strong>FTQC 时代</strong>(Fault-Tolerant Quantum Computing, 容错量子计算):</p>
+<ul>
+<li>标准 QPE 完全可用</li>
+<li>复杂度由 $T_U$ 决定(模幂等)</li>
+</ul>
+<p><strong>NISQ 时代</strong>:</p>
+<ul>
+<li>标准 QPE 太深</li>
+<li>用 SP-QPE / Variational QPE / Bayesian QPE</li>
+<li>牺牲<strong>常数因子</strong>换<strong>可实现性</strong></li>
+</ul>
+<p><strong>QPE 的"过渡"特性</strong>: 标准 QPE 是<strong>终极算法</strong>, 但实际应用需要<strong>降级变体</strong>。这是 NISQ → FTQC 的典型模式。</p>
+<h3>12.X.4 QPE 的哲学意义</h3>
+<p><strong>QPE 揭示了一个深刻的事实</strong>:</p>
+<blockquote class="chapter-quote"><p><strong>量子计算不只是"更快地做经典计算"</strong>, 而是<strong>能做经典根本做不到的事</strong>。</p></blockquote>
+<ul>
+<li><strong>经典</strong>: 求 $\phi$ 需要解特征多项式(指数步)</li>
+<li><strong>量子</strong>: QPE 在 $O(T_U \cdot n)$ 步内精确估 $\phi$</li>
+</ul>
+<p>这不是"快几倍", 而是<strong>算法复杂度的根本改变</strong>。QPE 是这个改变的<strong>最具体例子</strong>。</p>
+<p><strong>对计算理论的影响</strong>: QPE 的存在说明 BQP(量子多项式时间)<strong>确实大于</strong> BPP(经典多项式时间), 至少对<strong>某些</strong>问题(Shor 是具体例子)。</p>
+<h3>12.X.5 QPE 的"反直觉"特性</h3>
+<p><strong>反直觉 1: 为什么 $H^{\otimes n}$ 是"对的"叠加制备?</strong></p>
+<p><strong>直觉</strong>: 应该用更"聪明"的制备方式让控制 qubit 处于<strong>已知态</strong>, 这样才能精确控制。</p>
+<p><strong>真相</strong>: <strong>均匀叠加</strong> $|+\rangle^{\otimes n}$ 让每个 $x \in [0, 2^n)$ 等概率出现, 这正是 QPE 需要的<strong>"所有可能 $x$ 同时存在"</strong> 的输入。</p>
+<p><strong>反直觉 2: 为什么受控 $U^{2^k}$ 不是"重复 $2^k$ 次 $U$"?</strong></p>
+<p><strong>直觉</strong>: $U^{2^k}$ = $U$ 重复 $2^k$ 次。</p>
+<p><strong>真相</strong>: 是的, <strong>量子上</strong>确实如此! 但通过<strong>经典预计算 + 重复平方</strong>, 实现 $U^{2^k}$ 只需要 $O(T_U)$ 个门, 而不是 $2^k T_U$ 个门。</p>
+<p><strong>反直觉 3: 为什么测量在 $Z$ 基就够?</strong></p>
+<p><strong>直觉</strong>: 既然态是"叠加", 应该用"复杂"的测量。</p>
+<p><strong>真相</strong>: QFT⁻¹ 已经把"叠加态"转换为"经典比特对应态", 简单的 $Z$ 基测量直接读出<strong>最可能的 $j$</strong>。</p>
+<h3>12.X.6 QPE 的"非 QPE 替代品"</h3>
+<p><strong>问题</strong>: 如果不用 QPE, 有什么替代方案?</p>
+<table class="concept-table"><thead><tr><th>替代方案</th><th>代价</th><th>加速</th></tr></thead><tbody><tr><td><strong>经典特征值求解</strong></td><td>$O(N^3)$ 或更多</td><td>无加速</td></tr><tr><td><strong>量子模拟 + 经典拟合</strong></td><td>$O(\text{poly}(N))$</td><td>多项式加速(不指数)</td></tr><tr><td><strong>变分量子本征求解 (VQE)</strong></td><td>浅电路 + 经典优化</td><td>启发式, 不保证</td></tr><tr><td><strong>直接估计</strong> (无 QPE)</td><td>测量 $U$ 的"周期信号"</td><td>需要多次采样</td></tr></tbody></table>
+<p><strong>结论</strong>: QPE 是<strong>目前已知最有效的相位估计算法</strong>, 在量子算法的<strong>理论</strong>和<strong>实践</strong>中都是核心。</p>
+<h3>12.X.7 QPE 的扩展阅读</h3>
+<p><strong>经典文献</strong>:</p>
+<ul>
+<li>Nielsen-Chuang 5.2 节: 标准教科书介绍</li>
+<li>Kaye-Laflamme-Mosca 6 章: 更深入的数学推导</li>
+<li>Childs 2008 lecture notes: 量子算法综述</li>
+</ul>
+<p><strong>进阶文献</strong>:</p>
+<ul>
+<li>Kitaev 1995 (arXiv:quant-ph/9511026): QPE 原始论文</li>
+<li>Cleve et al. 1998 (arXiv:quant-ph/9708016): Robust QPE</li>
+<li>Svore et al. 2013 (arXiv:1304.0741): Signal Processing QPE</li>
+<li>Higgins et al. 2007 (Nature 450): 实验演示</li>
+<li>Du et al. 2010 (PRL 104): NMR QPE</li>
+</ul>
+<p><strong>应用文献</strong>:</p>
+<ul>
+<li>Shor 1994 (SIAM J Comp): 因式分解</li>
+<li>HHL 2009 (arXiv:0811.3171): 线性方程组</li>
+<li>Aspuru-Guzik et al. 2005 (Science): 量子化学</li>
+<li>Peruzzo et al. 2014 (Nature Comm): VQE</li>
+<li>Farhi et al. 2014 (arXiv:1411.4028): QAOA</li>
+</ul>
+<hr>
+<p><strong>第三部分 Day 2 完成。QPE 是量子算法的"通用引擎"。</strong> 🚀</p>
+
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch11.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 11 章 Shor 因式分解算法</span>
+          </a>
+          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 13 章 变分量子算法(即将推出)</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
