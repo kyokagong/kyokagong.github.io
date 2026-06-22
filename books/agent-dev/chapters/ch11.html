@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第11章：多Agent协作模式——Supervisor、Crew、Pipeline、Debate | 《AGENT开发从入门到精通》">
+
+  <title>第11章：多Agent协作模式——Supervisor、Crew、Pipeline、Debate | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch10.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+
+<div class="chapter-hero">
+<svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="ch11grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c026d3"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <marker id="arrow11" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c026d3"/>
+    </marker>
+  </defs>
+
+  <text x="400" y="24" text-anchor="middle" font-size="18" font-weight="700" fill="#c026d3">👥 4 大多 Agent 协作模式拓扑</text>
+
+  <!-- Supervisor: 1 center + 3 workers (hub-and-spoke top-left) -->
+  <g transform="translate(110, 80)">
+    <text x="0" y="-12" font-size="13" font-weight="700" fill="#c026d3">① Supervisor</text>
+    <text x="0" y="6" font-size="10" fill="#888">集中调度 / O(N)</text>
+    <line x1="50" y1="60" x2="20" y2="20" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="50" y1="60" x2="20" y2="100" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="50" y1="60" x2="80" y2="20" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="50" y1="60" x2="80" y2="100" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <circle cx="50" cy="60" r="18" fill="url(#ch11grad)"/>
+    <text x="50" y="64" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">SUP</text>
+    <circle cx="20" cy="20" r="10" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+    <text x="20" y="24" text-anchor="middle" font-size="9" fill="#c026d3">W1</text>
+    <circle cx="20" cy="100" r="10" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+    <text x="20" y="104" text-anchor="middle" font-size="9" fill="#c026d3">W2</text>
+    <circle cx="80" cy="20" r="10" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+    <text x="80" y="24" text-anchor="middle" font-size="9" fill="#c026d3">W3</text>
+    <circle cx="80" cy="100" r="10" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+    <text x="80" y="104" text-anchor="middle" font-size="9" fill="#c026d3">W4</text>
+  </g>
+
+  <!-- Crew: sequential pipeline (top-right) -->
+  <g transform="translate(310, 80)">
+    <text x="0" y="-12" font-size="13" font-weight="700" fill="#f97316">② Crew</text>
+    <text x="0" y="6" font-size="10" fill="#888">角色团队 / 顺序</text>
+    <line x1="20" y1="60" x2="50" y2="60" stroke="#f97316" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="50" y1="60" x2="80" y2="60" stroke="#f97316" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="80" y1="60" x2="110" y2="60" stroke="#f97316" stroke-width="2" marker-end="url(#arrow11)"/>
+    <circle cx="20" cy="60" r="12" fill="url(#ch11grad)"/>
+    <text x="20" y="64" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">A₁</text>
+    <circle cx="50" cy="60" r="12" fill="url(#ch11grad)"/>
+    <text x="50" y="64" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">A₂</text>
+    <circle cx="80" cy="60" r="12" fill="url(#ch11grad)"/>
+    <text x="80" y="64" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">A₃</text>
+    <circle cx="110" cy="60" r="12" fill="url(#ch11grad)"/>
+    <text x="110" y="64" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">A₄</text>
+  </g>
+
+  <!-- Pipeline: data DAG (bottom-left) -->
+  <g transform="translate(110, 230)">
+    <text x="0" y="-12" font-size="13" font-weight="700" fill="#c026d3">③ Pipeline</text>
+    <text x="0" y="6" font-size="10" fill="#888">数据流 / 固定 DAG</text>
+    <line x1="15" y1="60" x2="45" y2="60" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="45" y1="60" x2="75" y2="60" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <line x1="75" y1="60" x2="105" y2="60" stroke="#c026d3" stroke-width="2" marker-end="url(#arrow11)"/>
+    <rect x="0" y="48" width="30" height="24" fill="#fff" stroke="#c026d3" stroke-width="2" rx="3"/>
+    <text x="15" y="64" text-anchor="middle" font-size="9" fill="#c026d3">Input</text>
+    <rect x="30" y="48" width="30" height="24" fill="#fff" stroke="#c026d3" stroke-width="2" rx="3"/>
+    <text x="45" y="64" text-anchor="middle" font-size="9" fill="#c026d3">Step1</text>
+    <rect x="60" y="48" width="30" height="24" fill="#fff" stroke="#c026d3" stroke-width="2" rx="3"/>
+    <text x="75" y="64" text-anchor="middle" font-size="9" fill="#c026d3">Step2</text>
+    <rect x="90" y="48" width="30" height="24" fill="url(#ch11grad)" rx="3"/>
+    <text x="105" y="64" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">Out</text>
+  </g>
+
+  <!-- Debate: 3 nodes, all connected (bottom-right) -->
+  <g transform="translate(310, 230)">
+    <text x="0" y="-12" font-size="13" font-weight="700" fill="#f97316">④ Debate</text>
+    <text x="0" y="6" font-size="10" fill="#888">多视角 / O(N²)</text>
+    <line x1="20" y1="30" x2="80" y2="30" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow11)"/>
+    <line x1="80" y1="30" x2="20" y2="80" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow11)"/>
+    <line x1="20" y1="80" x2="80" y2="80" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow11)"/>
+    <line x1="80" y1="80" x2="20" y2="30" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow11)"/>
+    <line x1="20" y1="30" x2="20" y2="80" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow11)"/>
+    <line x1="80" y1="80" x2="80" y2="30" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow11)"/>
+    <circle cx="20" cy="30" r="13" fill="#fff" stroke="#f97316" stroke-width="2"/>
+    <text x="20" y="34" text-anchor="middle" font-size="9" fill="#f97316">正</text>
+    <circle cx="80" cy="30" r="13" fill="#fff" stroke="#f97316" stroke-width="2"/>
+    <text x="80" y="34" text-anchor="middle" font-size="9" fill="#f97316">裁</text>
+    <circle cx="20" cy="80" r="13" fill="#fff" stroke="#f97316" stroke-width="2"/>
+    <text x="20" y="84" text-anchor="middle" font-size="9" fill="#f97316">反</text>
+    <circle cx="80" cy="80" r="13" fill="#fff" stroke="#f97316" stroke-width="2"/>
+    <text x="80" y="84" text-anchor="middle" font-size="9" fill="#f97316">审</text>
+  </g>
+
+  <!-- Decision callout -->
+  <g transform="translate(530, 80)">
+    <text x="0" y="0" font-size="12" font-weight="700" fill="#c026d3">📋 4 步决策树</text>
+    <text x="0" y="22" font-size="10" fill="#555">Q1: 任务有明确流水线步骤?</text>
+    <text x="0" y="40" font-size="10" fill="#888">  ├─ 是 → Pipeline</text>
+    <text x="0" y="58" font-size="10" fill="#888">  └─ 否 ↓</text>
+    <text x="0" y="76" font-size="10" fill="#555">Q2: 需多视角校验?</text>
+    <text x="0" y="94" font-size="10" fill="#888">  ├─ 是 → Debate</text>
+    <text x="0" y="112" font-size="10" fill="#888">  └─ 否 ↓</text>
+    <text x="0" y="130" font-size="10" fill="#555">Q3: 需动态决策?</text>
+    <text x="0" y="148" font-size="10" fill="#888">  ├─ 是 → Supervisor</text>
+    <text x="0" y="166" font-size="10" fill="#888">  └─ 否 → Crew</text>
+  </g>
+
+  <!-- Token cost callout -->
+  <g transform="translate(530, 230)">
+    <text x="0" y="0" font-size="12" font-weight="700" fill="#c026d3">💰 Token 成本对比</text>
+    <text x="0" y="22" font-size="10" fill="#888">Supervisor: ×3-10 (中)</text>
+    <text x="0" y="40" font-size="10" fill="#888">Crew: ×3-5 (中)</text>
+    <text x="0" y="58" font-size="10" fill="#888">Pipeline: ×2-5 (低)</text>
+    <text x="0" y="76" font-size="10" fill="#888">Debate: ×10-30 (高)</text>
+    <text x="0" y="98" font-size="9" fill="#aaa">（估算口径：3 Agent × 3 轮）</text>
+  </g>
+</svg>
+</div>
+<h1 id="sec-第-11-章-多-agent-协作模式-supervisor-crew-pipeline-debate">第 11 章：多 Agent 协作模式——Supervisor、Crew、Pipeline、Debate</h1>
+<blockquote><strong>承上启下</strong>：ch10 讲了<strong>单 Agent 的 5 大范式</strong>（CoT / ToT / Plan-and-Execute / ReAct / LATS）——一个 Agent 自己想、自己做。&lt;br&gt;当任务规模上去、需要多个角色协作时，就要进入<strong>多 Agent 系统</strong>。&lt;br&gt;本章讲 4 种主流协作模式：<strong>Supervisor / Crew / Pipeline / Debate</strong>。</blockquote>
+<hr>
+<h2 id="sec-11-1-引子-为什么需要多-agent">11.1 引子：为什么需要多 Agent</h2>
+<h3 id="sec-11-1-1-单-agent-的-3-大局限">11.1.1 单 Agent 的 3 大局限</h3>
+<p>回想 ch03 的&quot;四大件&quot;——LLM 大脑 + 记忆 + 工具 + 规划。一个 Agent 拥有全部四大件，是不是就能解决所有问题？</p>
+<p><strong>现实是：单 Agent 在生产中频繁踩到 3 类天花板。</strong></p>
+<p><strong>局限 1：Context Window 瓶颈</strong>。</p>
+<p>一个 Agent 的所有&quot;思考&quot;都要塞进同一个 context window（ch06 / ch08 都讲过）。哪怕 GPT-5 是 200K tokens、Claude 4.5 是 1M tokens，<strong>长视野任务</strong>（如分析 50 个文件的代码库、写 2 万字的报告）仍然超出单 context 能力。</p>
+<p><strong>局限 2：专业深度不够</strong>。</p>
+<p>LLM 是个&quot;通才&quot;——什么都懂一点，但任何单一垂直领域（医学 / 法律 / 量化金融）都比不上专门的领域模型。让一个 Agent 同时做需求分析 + 架构设计 + 代码实现 + 测试 = &quot;样样通，样样松&quot;。</p>
+<p><strong>局限 3：错误放大</strong>。</p>
+<p>单 Agent 长链路（规划 → 执行 → 反思 → 重试）每一步都可能出错。<strong>错误会沿着链条向下游传播</strong>——ch03 的 minimal_agent.py 跑 50 步，第 30 步错了，到第 50 步基本就是错的（即使每步只有 5% 错误率，50 步累计失败率 = 1 - 0.95^50 = 92.3%）。</p>
+<blockquote><strong>关键洞察</strong>：单 Agent 失败率 5% × 50 步 = 92.3% 累计失败。多 Agent 通过<strong>专业化分工 + 多视角校验</strong>可降到 30-50%。</blockquote>
+<h3 id="sec-11-1-2-多-agent-协作涌现">11.1.2 多 Agent = 协作涌现</h3>
+<p>把一个&quot;全能 Agent&quot;拆成 N 个&quot;专精 Agent&quot;，让它们协作：</p>
+<table class="md-table"><thead><tr>
+<th>协作价值</th>
+<th>解释</th>
+<th>典型场景</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>专业化</strong></td>
+<td>每个 Agent 只负责一件事，可精调 prompt / 选不同模型 / 接专属工具</td>
+<td>写代码：架构师 Agent + 程序员 Agent + 测试 Agent</td>
+</tr>
+<tr>
+<td><strong>并行化</strong></td>
+<td>多个 Agent 同时干活，总耗时 = max(各 Agent) 而非 sum</td>
+<td>研究报告：5 个研究员 Agent 各自查 1 个子主题</td>
+</tr>
+<tr>
+<td><strong>校验性</strong></td>
+<td>一个 Agent 的输出被另一个 Agent 审阅，错误能被捕获</td>
+<td>辩论模式（11.5）：正方 Agent + 反方 Agent</td>
+</tr>
+<tr>
+<td><strong>可调试性</strong></td>
+<td>失败发生在哪个 Agent 一目了然，不用看 100 步的主循环日志</td>
+<td>supervisor 模式：每个 worker 出错时 supervisor 单独重试</td>
+</tr>
+<tr>
+<td><strong>可扩展性</strong></td>
+<td>加一个新角色 = 加一个新 Agent，不用改主循环</td>
+<td>客服系统：加&quot;法语客服 Agent&quot;只注册一下</td>
+</tr>
+</tbody></table>
+<blockquote><strong>核心论断</strong>：多 Agent 不是&quot;性能更强&quot;，是&quot;<strong>结构更清晰 + 失败更局部 + 可调试性更高</strong>&quot;。</blockquote>
+<h3 id="sec-11-1-3-多-agent-的隐性代价">11.1.3 多 Agent 的隐性代价</h3>
+<p><strong>别急着上多 Agent</strong>——它有 3 类隐性代价：</p>
+<ol>
+<li><strong>通信成本 O(N²)</strong>：N 个 Agent 两两通信 = N(N-1)/2 条消息（监督者模式下中心化 = O(N)，去中心化 = O(N²)）。<strong>5 个 Agent 全连通 = 10 条消息，每个都要 LLM 调用</strong>，token 烧得快。</li>
+<li><strong>失败传播</strong>：单个 Agent 失败 ≠ 单点失败——它会让下游所有 Agent 都基于错误输入继续。<strong>多 Agent 系统需要&quot;熔断&quot;机制</strong>（一个 Agent 失败 3 次，整个链路回滚）。</li>
+<li><strong>调试复杂度</strong>：单 Agent 1 条主循环日志；多 Agent N 条并行日志 + 消息总线 + 状态共享。<strong>没有好的可观测性工具 = 调试黑洞</strong>。</li>
+</ol>
+<blockquote><strong>决策规则</strong>：任务能用单 Agent 干完就别上多 Agent；多 Agent 是<strong>结构复杂度的代价换可维护性 + 可扩展性</strong>。</blockquote>
+<hr>
+<h2 id="sec-11-2-模式-1-supervisor-监督者模式">11.2 模式 1：Supervisor（监督者模式）</h2>
+<h3 id="sec-11-2-1-什么是-supervisor">11.2.1 什么是 Supervisor</h3>
+<p>最经典的多 Agent 模式。<strong>1 个 supervisor（监督者）+ N 个 worker（工人）</strong>：</p>
+<pre><code class="language-text">
+            ┌─→ worker_1 (researcher)
+supervisor ─┼─→ worker_2 (writer)  
+            └─→ worker_3 (reviewer)
+</code></pre>
+<p><strong>supervisor 的职责</strong>：决定&quot;下一步让哪个 worker 干活&quot;，根据 worker 的返回决定继续 / 终止 / 重试。</p>
+<p><strong>worker 的职责</strong>：只负责被分配的具体任务，把结果返回给 supervisor。</p>
+<p><strong>典型场景</strong>：客服系统、AI 研究助手、复杂任务拆解。</p>
+<h3 id="sec-11-2-2-集中调度-vs-去中心化">11.2.2 集中调度 vs 去中心化</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>Supervisor（集中调度）</th>
+<th>去中心化（Peer-to-Peer）</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>消息复杂度</strong></td>
+<td>O(N)（全部走 supervisor）</td>
+<td>O(N²)（N 个 Agent 两两通信）</td>
+</tr>
+<tr>
+<td><strong>决策点</strong></td>
+<td>1 个（supervisor）</td>
+<td>N 个（每个 Agent 都决策）</td>
+</tr>
+<tr>
+<td><strong>调试难度</strong></td>
+<td>低（看 supervisor 日志）</td>
+<td>高（消息总线难追踪）</td>
+</tr>
+<tr>
+<td><strong>扩展性</strong></td>
+<td>加 worker 容易</td>
+<td>加 Agent 难（要重新设计通信协议）</td>
+</tr>
+<tr>
+<td><strong>典型实现</strong></td>
+<td>LangGraph StateGraph + supervisor 节点</td>
+<td>AutoGen GroupChat Manager</td>
+</tr>
+</tbody></table>
+<p><strong>经验法则</strong>：80% 的多 Agent 系统选 Supervisor 就够；去中心化只在&quot;无明确主控者&quot;时用（如多 Agent 辩论）。</p>
+<h3 id="sec-11-2-3-supervisor-的核心数据结构">11.2.3 Supervisor 的核心数据结构</h3>
+<pre><code class="language-python">
+# LangGraph 风格的状态
+state = {
+    &quot;messages&quot;: [],          # 消息历史（所有 worker 共享）
+    &quot;next_worker&quot;: &quot;researcher&quot;,  # supervisor 决定下一个 worker
+    &quot;task&quot;: &quot;研究 2026 年 AI Agent 趋势&quot;,  # 原始任务
+    &quot;results&quot;: {},           # 各 worker 的产出（researcher→报告初稿、writer→最终文稿）
+    &quot;iteration&quot;: 0,          # 循环计数器（防 supervisor 死循环）
+}
+</code></pre>
+<p><strong>关键字段</strong>：<code>iteration</code> 是防死循环的核心——supervisor 可能一直让同一个 worker 重试，每轮 <code>iteration += 1</code>，超过 10 就强制终止。</p>
+<h3 id="sec-11-2-4-supervisor-模式-python-完整示例">11.2.4 Supervisor 模式 Python 完整示例</h3>
+<pre><code class="language-python">
+# ch11_supervisor.py — 60 行最小 Supervisor 模式（mock LLM，可直接跑）
+# 场景：研究助手（researcher → writer → reviewer）
+
+from typing import TypedDict, Literal
+import json
+
+# ============ 1. 状态定义 ============
+class State(TypedDict):
+    task: str
+    research: str
+    draft: str
+    review: str
+    next_agent: Literal[&quot;researcher&quot;, &quot;writer&quot;, &quot;reviewer&quot;, &quot;END&quot;]
+    iteration: int
+
+# ============ 2. Mock LLM ============
+def mock_llm(prompt: str) -&gt; str:
+    &quot;&quot;&quot;最简 mock：根据 prompt 关键词返回不同结果&quot;&quot;&quot;
+    if &quot;reviewer 反馈&quot; in prompt or &quot;reviewer_review&quot; in prompt:
+        return json.dumps({&quot;next&quot;: &quot;END&quot;, &quot;approved&quot;: True, &quot;comment&quot;: &quot;通过&quot;})
+    if &quot;已研究&quot; in prompt or &quot;has_research&quot; in prompt:
+        return json.dumps({&quot;next&quot;: &quot;writer&quot;, &quot;instruction&quot;: &quot;基于研究写初稿&quot;})
+    if &quot;已写初稿&quot; in prompt or &quot;has_draft&quot; in prompt:
+        return json.dumps({&quot;next&quot;: &quot;reviewer&quot;, &quot;instruction&quot;: &quot;审阅初稿&quot;})
+    return json.dumps({&quot;next&quot;: &quot;researcher&quot;, &quot;instruction&quot;: &quot;开始研究&quot;})
+
+# ============ 3. 3 个 Worker ============
+def researcher(state: State) -&gt; State:
+    &quot;&quot;&quot;模拟研究：返回 3 条搜索结果&quot;&quot;&quot;
+    state[&quot;research&quot;] = f&quot;[研究结果] 关于 &#x27;{state[&#x27;task&#x27;]}&#x27;:\n1. 2026 多 Agent 系统成为主流\n2. Supervisor 模式最常用\n3. 通信成本是关键挑战&quot;
+    state[&quot;next_agent&quot;] = &quot;supervisor&quot;
+    state[&quot;iteration&quot;] += 1
+    print(f&quot;  → researcher 完成（iteration={state[&#x27;iteration&#x27;]}）&quot;)
+    return state
+
+def writer(state: State) -&gt; State:
+    &quot;&quot;&quot;模拟写作：把 research 包装成 draft&quot;&quot;&quot;
+    state[&quot;draft&quot;] = f&quot;[初稿] 基于研究：{state[&#x27;research&#x27;]}\n\n—— 总结：多 Agent 系统以 supervisor 为主流。&quot;
+    state[&quot;next_agent&quot;] = &quot;supervisor&quot;
+    state[&quot;iteration&quot;] += 1
+    print(f&quot;  → writer 完成（iteration={state[&#x27;iteration&#x27;]}）&quot;)
+    return state
+
+def reviewer(state: State) -&gt; State:
+    &quot;&quot;&quot;模拟审阅：检查 draft 长度和关键词&quot;&quot;&quot;
+    ok = len(state[&quot;draft&quot;]) &gt; 20 and &quot;supervisor&quot; in state[&quot;draft&quot;]
+    state[&quot;review&quot;] = &quot;通过&quot; if ok else &quot;打回重写（draft 太短）&quot;
+    state[&quot;next_agent&quot;] = &quot;supervisor&quot;
+    state[&quot;iteration&quot;] += 1
+    print(f&quot;  → reviewer 完成（iteration={state[&#x27;iteration&#x27;]}） → {state[&#x27;review&#x27;]}&quot;)
+    return state
+
+# ============ 4. Supervisor 路由 ============
+def supervisor(state: State) -&gt; State:
+    &quot;&quot;&quot;决定下一步调用哪个 worker&quot;&quot;&quot;
+    # 防死循环：iteration &gt; 10 强制结束
+    if state[&quot;iteration&quot;] &gt; 10:
+        print(&quot;  → supervisor: 超过 10 轮，强制结束&quot;)
+        state[&quot;next_agent&quot;] = &quot;END&quot;
+        return state
+
+    # 构建 prompt 给 mock_llm 决策
+    prompt_parts = [f&quot;任务：{state[&#x27;task&#x27;]}&quot;]
+    if state.get(&quot;research&quot;):
+        prompt_parts.append(&quot;已研究 has_research=True&quot;)
+    if state.get(&quot;draft&quot;):
+        prompt_parts.append(&quot;已写初稿 has_draft=True&quot;)
+    if state.get(&quot;review&quot;):
+        prompt_parts.append(f&quot;reviewer 反馈：{state[&#x27;review&#x27;]}&quot;)
+
+    prompt = &quot;\n&quot;.join(prompt_parts)
+    decision = json.loads(mock_llm(prompt))
+    state[&quot;next_agent&quot;] = decision[&quot;next&quot;]
+    print(f&quot;  → supervisor 决策：下一步 = {state[&#x27;next_agent&#x27;]}&quot;)
+    return state
+
+# ============ 5. 主循环 ============
+def run_supervisor(initial_task: str, max_steps: int = 15):
+    state = State(task=initial_task, research=&quot;&quot;, draft=&quot;&quot;, review=&quot;&quot;,
+                  next_agent=&quot;supervisor&quot;, iteration=0)
+    print(f&quot;=== Supervisor 模式启动 ===\n任务：{initial_task}\n&quot;)
+    for step in range(max_steps):
+        print(f&quot;[Step {step+1}] 当前 next_agent = {state[&#x27;next_agent&#x27;]}&quot;)
+        if state[&quot;next_agent&quot;] == &quot;END&quot;:
+            break
+        if state[&quot;next_agent&quot;] == &quot;supervisor&quot;:
+            state = supervisor(state)
+        elif state[&quot;next_agent&quot;] == &quot;researcher&quot;:
+            state = researcher(state)
+        elif state[&quot;next_agent&quot;] == &quot;writer&quot;:
+            state = writer(state)
+        elif state[&quot;next_agent&quot;] == &quot;reviewer&quot;:
+            state = reviewer(state)
+    print(f&quot;\n=== 完成 ===\n最终 draft: {state[&#x27;draft&#x27;][:80]}...&quot;)
+    return state
+
+if __name__ == &quot;__main__&quot;:
+    run_supervisor(&quot;2026 年 AI Agent 趋势研究&quot;)
+</code></pre>
+<p><strong>运行结果</strong>：</p>
+<pre><code class="language-text">
+=== Supervisor 模式启动 ===
+任务：2026 年 AI Agent 趋势研究
+
+[Step 1] 当前 next_agent = supervisor
+  → supervisor 决策：下一步 = researcher
+[Step 2] 当前 next_agent = researcher
+  → researcher 完成（iteration=1）
+...（writer 完成 + reviewer 通过）
+  → supervisor 决策：下一步 = END
+=== 完成 ===
+</code></pre>
+<hr>
+<h2 id="sec-11-3-模式-2-crew-角色团队模式">11.3 模式 2：Crew（角色团队模式）</h2>
+<h3 id="sec-11-3-1-什么是-crew">11.3.1 什么是 Crew</h3>
+<p>CrewAI 把多 Agent 抽象成&quot;<strong>虚拟团队</strong>&quot;：</p>
+<pre><code class="language-text">
+Crew = Agent_1 (研究员) + Agent_2 (作家) + Agent_3 (编辑)
+       +
+       Task_1 (收集资料) + Task_2 (写报告) + Task_3 (校对)
+       +
+       Process (sequential / hierarchical)
+</code></pre>
+<p>每个 Agent 有<strong>角色 + 目标 + 背景故事 + 工具</strong>；每个 Task 有<strong>描述 + 期望输出 + 分配给的 Agent</strong>；Process 决定任务执行顺序。</p>
+<h3 id="sec-11-3-2-crew-vs-supervisor-的关键区别">11.3.2 Crew vs Supervisor 的关键区别</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>Supervisor</th>
+<th>Crew</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>控制流</strong></td>
+<td>supervisor 动态决定下一步</td>
+<td>Task 列表预定义（CrewAI 默认 sequential）</td>
+</tr>
+<tr>
+<td><strong>灵活性</strong></td>
+<td>高（任务变化时 supervisor 调整）</td>
+<td>低（Task 顺序预先定）</td>
+</tr>
+<tr>
+<td><strong>易用性</strong></td>
+<td>中（要自己实现 supervisor 逻辑）</td>
+<td>高（CrewAI 框架封装好）</td>
+</tr>
+<tr>
+<td><strong>典型场景</strong></td>
+<td>客服、研究助手（动态决策）</td>
+<td>报告生成、批量任务（固定流水线）</td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-3-3-crewai-标准范式">11.3.3 CrewAI 标准范式</h3>
+<pre><code class="language-python">
+# ch11_crewai.py — 30 行最小 CrewAI 示例
+# 场景：3 人虚拟团队生成 2026 AI Agent 趋势报告
+
+from crewai import Agent, Task, Crew
+
+# ============ 1. 定义 3 个 Agent ============
+researcher = Agent(
+    role=&quot;高级研究员&quot;,
+    goal=&quot;收集 2026 年 AI Agent 发展趋势的最新资料&quot;,
+    backstory=&quot;你是一个专注 AI Agent 领域 10 年的研究员，擅长从海量信息中提炼关键趋势。&quot;,
+    verbose=False,
+)
+
+writer = Agent(
+    role=&quot;技术作家&quot;,
+    goal=&quot;把研究资料写成结构清晰的技术报告&quot;,
+    backstory=&quot;你是一个有 5 年技术写作经验的作家，擅长把复杂概念讲清楚。&quot;,
+    verbose=False,
+)
+
+editor = Agent(
+    role=&quot;资深编辑&quot;,
+    goal=&quot;审阅报告，确保逻辑通顺 + 数据准确 + 语言流畅&quot;,
+    backstory=&quot;你是一个有 15 年编辑经验的资深编辑，对细节极其敏感。&quot;,
+    verbose=False,
+)
+
+# ============ 2. 定义 3 个 Task ============
+task_research = Task(
+    description=&quot;调研 2026 年 AI Agent 的 3 大关键趋势，输出每条趋势的来源 + 证据。&quot;,
+    expected_output=&quot;3 条趋势，每条 100-200 字，含 1-2 个数据点。&quot;,
+    agent=researcher,
+)
+
+task_write = Task(
+    description=&quot;基于 task_research 的输出，写一份 800-1000 字的技术报告。&quot;,
+    expected_output=&quot;完整报告，含引言 + 3 节趋势 + 总结。&quot;,
+    agent=writer,
+)
+
+task_edit = Task(
+    description=&quot;审阅 task_write 的报告，标注需要修改的地方。&quot;,
+    expected_output=&quot;审阅意见（通过 / 修改建议）。&quot;,
+    agent=editor,
+)
+
+# ============ 3. 组建 Crew ============
+crew = Crew(
+    agents=[researcher, writer, editor],
+    tasks=[task_research, task_write, task_edit],
+    process=&quot;sequential&quot;,  # 任务依次执行
+    verbose=False,
+)
+
+# ============ 4. 启动 ============
+if __name__ == &quot;__main__&quot;:
+    result = crew.kickoff(inputs={&quot;topic&quot;: &quot;2026 AI Agent 趋势&quot;})
+    print(result)
+</code></pre>
+<h3 id="sec-11-3-4-crew-模式的-3-大坑">11.3.4 Crew 模式的 3 大坑</h3>
+<ol>
+<li><strong>角色重叠</strong>：2 个 Agent 角色太像（如&quot;研究员&quot; + &quot;高级研究员&quot;），互相争抢任务。<strong>解决</strong>：角色定义要差异化（&quot;调研员&quot; vs &quot;分析师&quot; vs &quot;写作者&quot;）。</li>
+<li><strong>Task 依赖</strong>：Task 链太长（5+ 步）容易在某一步卡死。<strong>解决</strong>：把长 Task 拆成多个短 Task。</li>
+<li><strong>Process 选错</strong>：<code>sequential</code> 适合&quot;线性流水线&quot;；<code>hierarchical</code> 适合&quot;自动委派&quot;。<strong>选错会导致任务卡死或乱跳</strong>。</li>
+</ol>
+<hr>
+<h2 id="sec-11-4-模式-3-pipeline-流水线模式">11.4 模式 3：Pipeline（流水线模式）</h2>
+<h3 id="sec-11-4-1-什么是-pipeline">11.4.1 什么是 Pipeline</h3>
+<p>最古老、最稳定的多 Agent 模式。<strong>数据沿固定路径单向流动</strong>，每个 Agent 是流水线上的一个&quot;加工站&quot;：</p>
+<pre><code class="language-text">
+Input → [Agent_1: 解析] → [Agent_2: 转换] → [Agent_3: 输出] → Output
+</code></pre>
+<p><strong>典型场景</strong>：数据 ETL（日志 → 解析 → 富化 → 入库）、内容审核（用户输入 → 敏感词过滤 → LLM 改写 → 输出）、RAG 检索增强（ch09）。</p>
+<h3 id="sec-11-4-2-pipeline-vs-crew-的本质区别">11.4.2 Pipeline vs Crew 的本质区别</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>Pipeline</th>
+<th>Crew</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>控制流</strong></td>
+<td>固定的 DAG（有向无环图）</td>
+<td>可变的（基于 LLM 决策）</td>
+</tr>
+<tr>
+<td><strong>状态</strong></td>
+<td>中间结果明确（每步产物）</td>
+<td>共享上下文（Task 间共享状态）</td>
+</tr>
+<tr>
+<td><strong>失败处理</strong></td>
+<td>重试该步骤</td>
+<td>重做整个 Task</td>
+</tr>
+<tr>
+<td><strong>可观测性</strong></td>
+<td>极高（每步输入输出明确）</td>
+<td>中（Task 内部黑盒）</td>
+</tr>
+<tr>
+<td><strong>典型实现</strong></td>
+<td>LangGraph StateGraph（显式节点）</td>
+<td>CrewAI Process</td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-4-3-pipeline-vs-crew-的-失败重试-哲学差异">11.4.3 Pipeline vs Crew 的&quot;失败重试&quot;哲学差异</h3>
+<table class="md-table"><thead><tr>
+<th>失败场景</th>
+<th>Pipeline 哲学</th>
+<th>Crew 哲学</th>
+</tr></thead><tbody>
+<tr>
+<td>单个节点出错</td>
+<td>重跑该节点（输入可重放）</td>
+<td>重做整个 Task（Task 内部可能修改了外部状态）</td>
+</tr>
+<tr>
+<td>节点超时</td>
+<td>跳过该节点 + 标记 partial output</td>
+<td>整个 Crew 终止 + 人工介入</td>
+</tr>
+<tr>
+<td>数据不一致</td>
+<td>用 schema 校验（pydantic）拒绝不合规数据</td>
+<td>用 reviewer Task 兜底</td>
+</tr>
+</tbody></table>
+<p><strong>关键洞察</strong>：Pipeline 假设每步是&quot;纯函数&quot;（输入相同 = 输出相同），所以能安全重试；Crew 假设 Task 是&quot;有副作用&quot;（Task A 写了数据库，Task B 读数据库），所以重试可能重复副作用——<strong>Pipeline 比 Crew 更适合金融 / 医疗等可重试性要求高的场景</strong>。</p>
+<h3 id="sec-11-4-4-pipeline-python-完整示例">11.4.4 Pipeline Python 完整示例</h3>
+<pre><code class="language-python">
+# ch11_pipeline.py — 50 行最小 Pipeline 模式
+# 场景：用户评论自动处理（解析 → 情感分析 → 回复生成）
+
+from typing import TypedDict
+from langgraph.graph import StateGraph, END
+
+# ============ 1. 状态定义 ============
+class PipelineState(TypedDict):
+    raw_text: str        # 原始评论
+    parsed: dict         # 解析后：{用户, 平台, 时间}
+    sentiment: str       # 情感：正面/负面/中性
+    reply: str           # 自动回复
+
+# ============ 2. 3 个加工节点 ============
+def parse_node(state: PipelineState) -&gt; PipelineState:
+    &quot;&quot;&quot;步骤 1：解析原始文本（提取用户、平台、时间）&quot;&quot;&quot;
+    text = state[&quot;raw_text&quot;]
+    state[&quot;parsed&quot;] = {
+        &quot;用户&quot;: text.split(&quot;@&quot;)[1].split(&quot;：&quot;)[0] if &quot;@&quot; in text else &quot;匿名&quot;,
+        &quot;平台&quot;: &quot;微博&quot; if &quot;微博&quot; in text else &quot;其他&quot;,
+        &quot;时间&quot;: &quot;2026-06-22&quot;,
+    }
+    print(f&quot;  [parse] → {state[&#x27;parsed&#x27;]}&quot;)
+    return state
+
+def sentiment_node(state: PipelineState) -&gt; PipelineState:
+    &quot;&quot;&quot;步骤 2：情感分析（mock）&quot;&quot;&quot;
+    text = state[&quot;raw_text&quot;]
+    if any(k in text for k in [&quot;好&quot;, &quot;棒&quot;, &quot;喜欢&quot;, &quot;满意&quot;]):
+        state[&quot;sentiment&quot;] = &quot;正面&quot;
+    elif any(k in text for k in [&quot;差&quot;, &quot;糟&quot;, &quot;失望&quot;, &quot;退款&quot;]):
+        state[&quot;sentiment&quot;] = &quot;负面&quot;
+    else:
+        state[&quot;sentiment&quot;] = &quot;中性&quot;
+    print(f&quot;  [sentiment] → {state[&#x27;sentiment&#x27;]}&quot;)
+    return state
+
+def reply_node(state: PipelineState) -&gt; PipelineState:
+    &quot;&quot;&quot;步骤 3：生成自动回复（基于情感）&quot;&quot;&quot;
+    if state[&quot;sentiment&quot;] == &quot;正面&quot;:
+        state[&quot;reply&quot;] = &quot;感谢您的好评，期待您再次光临！&quot;
+    elif state[&quot;sentiment&quot;] == &quot;负面&quot;:
+        state[&quot;reply&quot;] = &quot;非常抱歉给您带来不便，客服将尽快联系您处理。&quot;
+    else:
+        state[&quot;reply&quot;] = &quot;感谢您的反馈。&quot;
+    print(f&quot;  [reply] → {state[&#x27;reply&#x27;]}&quot;)
+    return state
+
+# ============ 3. 构建 Pipeline ============
+workflow = StateGraph(PipelineState)
+workflow.add_node(&quot;parse&quot;, parse_node)
+workflow.add_node(&quot;sentiment&quot;, sentiment_node)
+workflow.add_node(&quot;reply&quot;, reply_node)
+
+workflow.set_entry_point(&quot;parse&quot;)
+workflow.add_edge(&quot;parse&quot;, &quot;sentiment&quot;)
+workflow.add_edge(&quot;sentiment&quot;, &quot;reply&quot;)
+workflow.add_edge(&quot;reply&quot;, END)
+
+app = workflow.compile()
+
+# ============ 4. 启动 ============
+if __name__ == &quot;__main__&quot;:
+    sample = &quot;@张三：你们家的产品太差了，我要退款！&quot;
+    result = app.invoke({&quot;raw_text&quot;: sample, &quot;parsed&quot;: {}, &quot;sentiment&quot;: &quot;&quot;, &quot;reply&quot;: &quot;&quot;})
+    print(f&quot;\n最终回复：{result[&#x27;reply&#x27;]}&quot;)
+</code></pre>
+<p><strong>运行结果</strong>：</p>
+<pre><code class="language-text">
+  [parse] → {&#x27;用户&#x27;: &#x27;张三&#x27;, &#x27;平台&#x27;: &#x27;其他&#x27;, &#x27;时间&#x27;: &#x27;2026-06-22&#x27;}
+  [sentiment] → 负面
+  [reply] → 非常抱歉给您带来不便，客服将尽快联系您处理。
+最终回复：非常抱歉给您带来不便，客服将尽快联系您处理。
+</code></pre>
+<hr>
+<h2 id="sec-11-5-模式-4-debate-辩论模式">11.5 模式 4：Debate（辩论模式）</h2>
+<h3 id="sec-11-5-1-什么是-debate">11.5.1 什么是 Debate</h3>
+<p><strong>多个 Agent 扮演不同立场，互相辩论，最终由&quot;裁判 Agent&quot;裁决</strong>。</p>
+<p>源自 Du et al. 2023《<em>Improving Factuality and Reasoning in Language Models through Multiagent Debate</em>》——核心发现：<strong>多 Agent 辩论比单 Agent 自问自答在事实性 / 推理任务上提升 5-15 pp</strong>。</p>
+<h3 id="sec-11-5-2-debate-的-3-类角色">11.5.2 Debate 的 3 类角色</h3>
+<table class="md-table"><thead><tr>
+<th>角色</th>
+<th>职责</th>
+<th>典型 prompt</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>正方</strong></td>
+<td>持 A 立场，给出证据</td>
+<td>&quot;你是 X 派，列出 3 条支持 X 的证据&quot;</td>
+</tr>
+<tr>
+<td><strong>反方</strong></td>
+<td>持 B 立场，攻击正方</td>
+<td>&quot;你是 Y 派，指出正方的 2 个漏洞&quot;</td>
+</tr>
+<tr>
+<td><strong>裁判</strong></td>
+<td>综合双方，给最终结论</td>
+<td>&quot;基于以上辩论，给出最终答案 + 理由&quot;</td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-5-3-debate-适用场景-vs-不适用场景">11.5.3 Debate 适用场景 vs 不适用场景</h3>
+<p><strong>适用</strong>：</p>
+<ul>
+<li><strong>事实核查</strong>（多视角校验减少幻觉）</li>
+<li><strong>复杂决策</strong>（买股票、选技术栈，列出正反面）</li>
+<li><strong>教育 / 培训</strong>（苏格拉底式提问）</li>
+</ul>
+<p><strong>不适用</strong>：</p>
+<ul>
+<li><strong>创意写作</strong>（辩论会扼杀发散思维）</li>
+<li><strong>快速响应</strong>（辩论 = 至少 3 轮，慢）</li>
+<li><strong>成本敏感任务</strong>（每轮 3 个 Agent = 3× token 成本）</li>
+</ul>
+<h3 id="sec-11-5-4-debate-python-完整示例">11.5.4 Debate Python 完整示例</h3>
+<pre><code class="language-python">
+# ch11_debate.py — 50 行最小 Debate 模式
+# 场景：是否应该在生产环境用多 Agent 系统（正反方辩论 + 裁判）
+
+# ============ 1. 正方 Agent ============
+def pro_agent(topic: str) -&gt; str:
+    return f&quot;&quot;&quot;[正方观点] 关于 &#x27;{topic}&#x27;：
+  证据 1：多 Agent 系统提升 5-15 pp 事实性（Du et al. 2023）
+  证据 2：supervisor 模式让失败局部化，可调试性高
+  证据 3：可扩展性好——加 worker 即可，不必改主循环&quot;&quot;&quot;
+
+# ============ 2. 反方 Agent ============
+def con_agent(topic: str) -&gt; str:
+    return f&quot;&quot;&quot;[反方观点] 关于 &#x27;{topic}&#x27;：
+  论点 1：通信成本（详见 §11.9.1：5 个 Agent 全连通 = 10 条消息 / Supervisor 集中 = O(N)），token 烧得快
+  论点 2：失败传播——单 Agent 失败会影响下游所有 Agent
+  论点 3：调试复杂——N 条并行日志 + 状态共享是调试黑洞&quot;&quot;&quot;
+
+# ============ 3. 裁判 Agent ============
+def judge_agent(topic: str, pro: str, con: str) -&gt; str:
+    &quot;&quot;&quot;综合双方 + 给出最终建议&quot;&quot;&quot;
+    # 模拟 LLM 裁判：基于关键词做最简决策
+    if &quot;通信成本&quot; in con and &quot;局部化&quot; in pro:
+        return f&quot;&quot;&quot;[裁判结论] &#x27;{topic}&#x27;：
+  推荐：**任务能用单 Agent 干完就别上多 Agent**。
+  理由：正方的&quot;可调试性 + 失败局部化&quot;是真实价值，但反方的&quot;通信成本 + 调试复杂&quot;也是真实代价。
+  决策规则：单 Agent 失败率 &lt; 5% 用单 Agent；&gt; 5% 或 &gt; 30 步才考虑多 Agent。&quot;&quot;&quot;
+    return f&quot;[裁判结论] 数据不足，无法裁决。\n正方：{pro[:50]}\n反方：{con[:50]}&quot;
+
+# ============ 4. 启动辩论 ============
+if __name__ == &quot;__main__&quot;:
+    topic = &quot;是否应该在生产环境用多 Agent 系统？&quot;
+    print(f&quot;=== Debate 模式启动 ===\n辩题：{topic}\n&quot;)
+    pro = pro_agent(topic)
+    print(pro)
+    print()
+    con = con_agent(topic)
+    print(con)
+    print()
+    final = judge_agent(topic, pro, con)
+    print(final)
+</code></pre>
+<p><strong>运行结果</strong>：</p>
+<pre><code class="language-text">
+[正方观点] ... 证据 1/2/3
+[反方观点] ... 论点 1/2/3
+[裁判结论] 推荐：任务能用单 Agent 干完就别上多 Agent。
+</code></pre>
+<hr>
+<h2 id="sec-11-6-4-大模式横向对比-决策树">11.6 4 大模式横向对比 + 决策树</h2>
+<h3 id="sec-11-6-1-横向对比表">11.6.1 横向对比表</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>Supervisor</th>
+<th>Crew</th>
+<th>Pipeline</th>
+<th>Debate</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>控制流</strong></td>
+<td>动态（supervisor 决定）</td>
+<td>预定义（Task 列表）</td>
+<td>固定 DAG</td>
+<td>多轮迭代</td>
+</tr>
+<tr>
+<td><strong>消息复杂度</strong></td>
+<td>O(N)</td>
+<td>O(N)（顺序）</td>
+<td>O(N)（链式）</td>
+<td>O(N²)（两两辩论）</td>
+</tr>
+<tr>
+<td><strong>典型 Agent 数</strong></td>
+<td>3-8</td>
+<td>2-5</td>
+<td>2-10</td>
+<td>2-4</td>
+</tr>
+<tr>
+<td><strong>适合任务规模</strong></td>
+<td>中（10-50 步）</td>
+<td>小（5-15 步）</td>
+<td>大（10-100 步）</td>
+<td>小（3-10 步）</td>
+</tr>
+<tr>
+<td><strong>失败定位</strong></td>
+<td>容易（看 worker）</td>
+<td>中（看 Task）</td>
+<td>极易（看步骤）</td>
+<td>难（多轮混合）</td>
+</tr>
+<tr>
+<td><strong>典型框架</strong></td>
+<td>LangGraph / AutoGen v0.4</td>
+<td>CrewAI</td>
+<td>LangGraph</td>
+<td>AutoGen / LangGraph</td>
+</tr>
+<tr>
+<td><strong>Token 成本</strong></td>
+<td>中（×3-10）</td>
+<td>中（×3-5）</td>
+<td>低（×2-5）</td>
+<td>高（×10-30，<strong>估算口径</strong>：3 个 Agent 辩论 3 轮 ≈ Supervisor 5 个 worker 的 6-10 倍）</td>
+</tr>
+<tr>
+<td><strong>调试难度</strong></td>
+<td>中</td>
+<td>中</td>
+<td>低</td>
+<td>高</td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-6-2-决策树-4-步选模式">11.6.2 决策树（4 步选模式）</h3>
+<pre><code class="language-text">
+Q1: 任务是否有明确的&quot;流水线&quot;步骤？
+  ├─ 是 → Pipeline（数据 ETL / 内容审核 / RAG）
+  └─ 否 ↓
+
+Q2: 是否需要&quot;多视角校验&quot;（事实核查 / 复杂决策）？
+  ├─ 是 → Debate（2-3 个 Agent 辩论 + 裁判）
+  └─ 否 ↓
+
+Q3: 任务步骤是否需要&quot;动态决策&quot;（下一步取决于上一步结果）？
+  ├─ 是 → Supervisor（1 个 supervisor + N 个 worker）
+  └─ 否 → Crew（2-5 个 Agent 顺序执行 Task）
+</code></pre>
+<h3 id="sec-11-6-3-一句话选型速查">11.6.3 一句话选型速查</h3>
+<table class="md-table"><thead><tr>
+<th>任务一句话描述</th>
+<th>推荐模式</th>
+</tr></thead><tbody>
+<tr>
+<td>&quot;数据从 A 到 B 要经过 5 个处理步骤&quot;</td>
+<td><strong>Pipeline</strong></td>
+</tr>
+<tr>
+<td>&quot;需要正反方互相校验才能下结论&quot;</td>
+<td><strong>Debate</strong></td>
+</tr>
+<tr>
+<td>&quot;下一步干什么取决于上一步结果&quot;</td>
+<td><strong>Supervisor</strong></td>
+</tr>
+<tr>
+<td>&quot;3 个人各自干一段活，最后合并&quot;</td>
+<td><strong>Crew</strong></td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-6-4-4-大模式的-失败处理-统一对照表">11.6.4 4 大模式的&quot;失败处理&quot;统一对照表</h3>
+<table class="md-table"><thead><tr>
+<th>失败类型</th>
+<th>Supervisor 怎么处理</th>
+<th>Crew 怎么处理</th>
+<th>Pipeline 怎么处理</th>
+<th>Debate 怎么处理</th>
+</tr></thead><tbody>
+<tr>
+<td>单 worker / 节点失败</td>
+<td>让同一 worker 重试 N 次</td>
+<td>整个 Task 重做</td>
+<td>重跑该节点</td>
+<td>让反方攻击正方漏洞</td>
+</tr>
+<tr>
+<td>Supervisor / Manager 失败</td>
+<td>极少见（单点）</td>
+<td>hierarchical 自动切换 manager</td>
+<td>不适用（无中心）</td>
+<td>裁判裁决</td>
+</tr>
+<tr>
+<td>通信超时</td>
+<td>worker 重连 + supervisor 标记</td>
+<td>Task 重连 + 重做</td>
+<td>节点超时 = 跳过</td>
+<td>轮次超时 = 终止辩论</td>
+</tr>
+<tr>
+<td>失败成本</td>
+<td>中（worker 重试）</td>
+<td>高（Task 重做）</td>
+<td>低（节点重跑）</td>
+<td>极高（重开辩论）</td>
+</tr>
+<tr>
+<td>失败可观测性</td>
+<td>高（supervisor 日志）</td>
+<td>中（Task 日志）</td>
+<td>极高（每步日志）</td>
+<td>低（多轮混合）</td>
+</tr>
+</tbody></table>
+<p><strong>经验法则</strong>：Pipeline &gt; Supervisor &gt; Crew &gt; Debate（按&quot;失败可观测性 + 重试成本&quot;综合排序）。</p>
+<h3 id="sec-11-6-5-4-模式-可观察选型信号-清单">11.6.5 4 模式&quot;可观察选型信号&quot;清单</h3>
+<p><strong>实战中不需要靠&quot;决策树&quot;硬选，而是看运行时信号</strong>：</p>
+<table class="md-table"><thead><tr>
+<th>运行时信号</th>
+<th>推荐模式</th>
+</tr></thead><tbody>
+<tr>
+<td>supervisor 总是委派给同一个 worker</td>
+<td>单 Agent 化（§11.10.1）—— 退回单 Agent</td>
+</tr>
+<tr>
+<td>Crew Task 链 &gt; 5 步且经常卡在某步</td>
+<td>改 Pipeline（每步可独立重试）</td>
+</tr>
+<tr>
+<td>Debate 反方经常提不出新论点</td>
+<td>退回 Supervisor（避免 token 浪费）</td>
+</tr>
+<tr>
+<td>Pipeline 节点间需要&quot;全局视图&quot;</td>
+<td>改 Supervisor（Pipeline 不适合全局决策）</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-11-7-实战-用-langgraph-实现-supervisor-模式-完整版">11.7 实战：用 LangGraph 实现 Supervisor 模式（完整版）</h2>
+<h3 id="sec-11-7-1-目标">11.7.1 目标</h3>
+<p>用 LangGraph StateGraph 写一个<strong>生产级 Supervisor</strong>——比 §11.2.4 的 60 行手写循环更稳健（带图结构 + 显式路由 + 防死循环）。</p>
+<blockquote><strong>§11.2.4 vs §11.7.2 的关系</strong>：§11.2.4 是&quot;60 行手写循环&quot;（理解 Supervisor 本质），§11.7.2 是&quot;80 行 LangGraph StateGraph&quot;（生产级实现）。两者讲同一模式的不同抽象层级——读完两份才能完整理解 Supervisor。</blockquote>
+<h3 id="sec-11-7-2-完整代码">11.7.2 完整代码</h3>
+<pre><code class="language-python">
+# ch11_langgraph_supervisor.py — 80 行 LangGraph Supervisor
+# pip install langgraph langchain-openai  （mock 模式无需真实 API）
+
+from typing import TypedDict, Literal
+from langgraph.graph import StateGraph, END
+
+# ============ 状态 ============
+class ResearchState(TypedDict):
+    task: str
+    research: str
+    draft: str
+    review: str
+    next: Literal[&quot;researcher&quot;, &quot;writer&quot;, &quot;reviewer&quot;, &quot;__end__&quot;]
+    iteration: int
+    max_iter: int
+
+# ============ Mock LLM（生产替换为 ChatOpenAI） ============
+def mock_llm_decide(state: ResearchState) -&gt; str:
+    &quot;&quot;&quot;基于 state 决定下一步（mock）&quot;&quot;&quot;
+    if state.get(&quot;review&quot;) and &quot;通过&quot; in state[&quot;review&quot;]:
+        return &quot;__end__&quot;
+    if state.get(&quot;research&quot;) and not state.get(&quot;draft&quot;):
+        return &quot;writer&quot;
+    if state.get(&quot;draft&quot;) and not state.get(&quot;review&quot;):
+        return &quot;reviewer&quot;
+    return &quot;researcher&quot;
+
+# ============ 3 个 Worker ============
+def researcher(state: ResearchState) -&gt; ResearchState:
+    state[&quot;research&quot;] = f&quot;[研究] &#x27;{state[&#x27;task&#x27;]}&#x27;: 2026 多 Agent 系统主流，supervisor 模式估计占 50-70%（业界估算，非严格统计）。&quot;
+    state[&quot;iteration&quot;] += 1
+    print(f&quot;  [worker:researcher] 完成 (iter={state[&#x27;iteration&#x27;]})&quot;)
+    return state
+
+def writer(state: ResearchState) -&gt; ResearchState:
+    state[&quot;draft&quot;] = f&quot;[初稿] {state[&#x27;research&#x27;]} —— 总结：supervisor 模式最适合动态决策。&quot;
+    state[&quot;iteration&quot;] += 1
+    print(f&quot;  [worker:writer] 完成 (iter={state[&#x27;iteration&#x27;]})&quot;)
+    return state
+
+def reviewer(state: ResearchState) -&gt; ResearchState:
+    ok = &quot;supervisor&quot; in state.get(&quot;draft&quot;, &quot;&quot;) and len(state[&quot;draft&quot;]) &gt; 20
+    state[&quot;review&quot;] = &quot;通过&quot; if ok else &quot;打回（draft 缺关键词或太短）&quot;
+    state[&quot;iteration&quot;] += 1
+    print(f&quot;  [worker:reviewer] 完成 (iter={state[&#x27;iteration&#x27;]}) → {state[&#x27;review&#x27;]}&quot;)
+    return state
+
+# ============ Supervisor 路由节点 ============
+def supervisor_node(state: ResearchState) -&gt; ResearchState:
+    if state[&quot;iteration&quot;] &gt;= state[&quot;max_iter&quot;]:
+        print(f&quot;  [supervisor] 达到 max_iter={state[&#x27;max_iter&#x27;]}，强制结束&quot;)
+        state[&quot;next&quot;] = &quot;__end__&quot;
+        return state
+    state[&quot;next&quot;] = mock_llm_decide(state)
+    print(f&quot;  [supervisor] 决策：next = {state[&#x27;next&#x27;]}&quot;)
+    return state
+
+# ============ 路由函数（决定图走向） ============
+def route_decision(state: ResearchState) -&gt; str:
+    return state[&quot;next&quot;]
+
+# ============ 构建图 ============
+workflow = StateGraph(ResearchState)
+workflow.add_node(&quot;supervisor&quot;, supervisor_node)
+workflow.add_node(&quot;researcher&quot;, researcher)
+workflow.add_node(&quot;writer&quot;, writer)
+workflow.add_node(&quot;reviewer&quot;, reviewer)
+
+workflow.set_entry_point(&quot;supervisor&quot;)
+
+# supervisor → worker
+workflow.add_conditional_edges(&quot;supervisor&quot;, route_decision, {
+    &quot;researcher&quot;: &quot;researcher&quot;,
+    &quot;writer&quot;: &quot;writer&quot;,
+    &quot;reviewer&quot;: &quot;reviewer&quot;,
+    &quot;__end__&quot;: END,
+})
+
+# worker → supervisor（每次 worker 完成后回到 supervisor 决定下一步）
+workflow.add_edge(&quot;researcher&quot;, &quot;supervisor&quot;)
+workflow.add_edge(&quot;writer&quot;, &quot;supervisor&quot;)
+workflow.add_edge(&quot;reviewer&quot;, &quot;supervisor&quot;)
+
+app = workflow.compile()
+
+# ============ 启动 ============
+if __name__ == &quot;__main__&quot;:
+    initial = ResearchState(
+        task=&quot;研究 2026 多 Agent 系统趋势&quot;,
+        research=&quot;&quot;, draft=&quot;&quot;, review=&quot;&quot;,
+        next=&quot;supervisor&quot;, iteration=0, max_iter=10,
+    )
+    print(&quot;=== LangGraph Supervisor 启动 ===\n&quot;)
+    result = app.invoke(initial)
+    print(f&quot;\n=== 完成 ===\n最终 draft：{result[&#x27;draft&#x27;][:80]}...&quot;)
+</code></pre>
+<h3 id="sec-11-7-3-与-ch10-plan-and-execute-的对比">11.7.3 与 ch10 Plan-and-Execute 的对比</h3>
+<p>ch10 §10.7 已经写过 LangGraph Plan-and-Execute。<strong>Supervisor 与它的核心区别</strong>：</p>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>Plan-and-Execute</th>
+<th>Supervisor</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Planner</strong></td>
+<td>1 次性生成完整计划</td>
+<td>每步决定下一个 worker（动态）</td>
+</tr>
+<tr>
+<td><strong>Replanner</strong></td>
+<td>失败时回 planner 重做</td>
+<td>失败时 supervisor 路由到不同 worker</td>
+</tr>
+<tr>
+<td><strong>并行</strong></td>
+<td>计划内可并行</td>
+<td>supervisor 每次只派 1 个</td>
+</tr>
+<tr>
+<td><strong>复杂度</strong></td>
+<td>中（planner + executor + replanner）</td>
+<td>中（supervisor + N worker）</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-11-8-实战-用-crewai-实现-crew-模式">11.8 实战：用 CrewAI 实现 Crew 模式</h2>
+<p>CrewAI 是当前最成熟的&quot;虚拟团队&quot;框架。ch11.3.3 已给最小示例，本节补充<strong>生产级 3 个要点</strong>。</p>
+<h3 id="sec-11-8-1-agent-定义三大纪律">11.8.1 Agent 定义三大纪律</h3>
+<ol>
+<li><strong>role 单一职责</strong>：&quot;研究员&quot;和&quot;高级研究员&quot;是 2 个角色，<strong>不要写 1 个 role 把 3 件事干完</strong>。</li>
+<li><strong>backstory 200 字以内</strong>：用 1 段话定义&quot;我是谁、专长什么、风格如何&quot;，<strong>别写小说</strong>（LLM 不会读 500 字 backstory）。</li>
+<li><strong>goal 可衡量</strong>：写&quot;输出 3 条趋势，每条 100 字&quot;而非&quot;调研 AI Agent&quot;。</li>
+</ol>
+<h3 id="sec-11-8-2-task-定义三大纪律">11.8.2 Task 定义三大纪律</h3>
+<ol>
+<li><strong>expected_output 写明</strong>：LLM 才知道交付什么形态（&quot;3 条 100 字趋势&quot; vs &quot;1000 字报告&quot;）。</li>
+<li><strong>agent 显式指定</strong>：别用 <code>crew.kickoff()</code> 自动分配，<strong>Task 必须明确 agent</strong>。</li>
+<li><strong>dependencies 显式声明</strong>：<code>task_write.context = [task_research]</code> —— 让 Task 知道依赖。</li>
+</ol>
+<h3 id="sec-11-8-3-process-三选项">11.8.3 Process 三选项</h3>
+<table class="md-table"><thead><tr>
+<th>选项</th>
+<th>行为</th>
+<th>适用</th>
+</tr></thead><tbody>
+<tr>
+<td><code>sequential</code></td>
+<td>Task 按列表顺序执行</td>
+<td>大多数场景</td>
+</tr>
+<tr>
+<td><code>hierarchical</code></td>
+<td>自动选 manager + 委派</td>
+<td>复杂任务，manager 自动拆分</td>
+</tr>
+<tr>
+<td><code>consensual</code></td>
+<td>Manager 协商（2026 新功能）</td>
+<td>需多视角校验</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-11-9-通信成本与失败传播">11.9 通信成本与失败传播</h2>
+<h3 id="sec-11-9-1-通信成本-o-n²-详解">11.9.1 通信成本 O(N²) 详解</h3>
+<p>N 个 Agent 的两两通信消息数：</p>
+<table class="md-table"><thead><tr>
+<th>N</th>
+<th>全连通消息数</th>
+<th>Supervisor 模式</th>
+<th>成本比</th>
+</tr></thead><tbody>
+<tr>
+<td>2</td>
+<td>2</td>
+<td>2</td>
+<td>1×</td>
+</tr>
+<tr>
+<td>3</td>
+<td>6</td>
+<td>3</td>
+<td>2×</td>
+</tr>
+<tr>
+<td>5</td>
+<td>20</td>
+<td>5</td>
+<td>4×</td>
+</tr>
+<tr>
+<td>10</td>
+<td>90</td>
+<td>10</td>
+<td>9×</td>
+</tr>
+</tbody></table>
+<p><strong>经验法则</strong>：去中心化多 Agent 不要超过 5 个 Agent（否则通信爆炸）。超过就用<strong>分层 Supervisor</strong>（supervisor 管 supervisor）。</p>
+<h3 id="sec-11-9-2-失败传播模型">11.9.2 失败传播模型</h3>
+<p><strong>单 Agent</strong>：失败率 p，每步独立。n 步后累计失败 = 1 - (1-p)^n。</p>
+<p><strong>多 Agent</strong>：N 个 Agent 串联，失败率 = 1 - (1-p)^(N × n/N) = 1 - (1-p)^n（<strong>等价</strong>）。</p>
+<p><strong>但</strong>：多 Agent 引入<strong>协作失败</strong>（消息丢失 / 上下文不一致），实际失败率 = (1-p)^n × (1-q)^m，q 是协作失败率（<strong>典型经验值 1-3% / 消息</strong>），m 是消息数。</p>
+<blockquote><strong>关键洞察</strong>：多 Agent 不直接降低失败率，它降低的是<strong>失败的爆炸半径</strong>——单 Agent 全链路崩，多 Agent 只崩 1 个 worker。</blockquote>
+<h3 id="sec-11-9-3-3-种熔断机制">11.9.3 3 种熔断机制</h3>
+<table class="md-table"><thead><tr>
+<th>机制</th>
+<th>做法</th>
+<th>适用</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>重试上限</strong></td>
+<td>同一 worker 失败 N 次 → 跳过</td>
+<td>所有场景</td>
+</tr>
+<tr>
+<td><strong>断路器</strong></td>
+<td>整个链路失败率 &gt; 阈值 → 暂停 5 分钟</td>
+<td>生产 API</td>
+</tr>
+<tr>
+<td><strong>降级</strong></td>
+<td>worker 失败 → 退回单 Agent 模式</td>
+<td>关键路径</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-11-10-5-大坑">11.10 5 大坑</h2>
+<h3 id="sec-11-10-1-坑-1-单-agent-化-多-agent-假装是单-agent">11.10.1 坑 1：单 Agent 化（&quot;多 Agent 假装是单 Agent&quot;）</h3>
+<p><strong>症状</strong>：supervisor 把所有任务都委派给同一个 worker，本质还是单 Agent。</p>
+<p><strong>诊断</strong>：看日志，如果 1 个 worker 被调用 &gt; 80% 步数 = 出了问题。</p>
+<p><strong>修复</strong>：worker 角色要差异化；supervisor 路由逻辑要分散。</p>
+<h3 id="sec-11-10-2-坑-2-supervisor-死循环">11.10.2 坑 2：Supervisor 死循环</h3>
+<p><strong>症状</strong>：supervisor 一直让 researcher 重试，iteration 飙到 50 还没完。</p>
+<p><strong>诊断</strong>：iteration &gt; 10 应该自动终止。</p>
+<p><strong>修复</strong>：max_iter 必填 + 每轮 iteration += 1 + 超过强制 END。</p>
+<h3 id="sec-11-10-3-坑-3-crew-任务冲突">11.10.3 坑 3：Crew 任务冲突</h3>
+<p><strong>症状</strong>：Task_A 修改了 Task_B 需要的输入，导致 Task_B 输出错乱。</p>
+<p><strong>诊断</strong>：Task 顺序错乱 + 共享状态没隔离。</p>
+<p><strong>修复</strong>：每个 Task 的输入显式声明，不依赖隐式共享。</p>
+<h3 id="sec-11-10-4-坑-4-通信风暴">11.10.4 坑 4：通信风暴</h3>
+<p><strong>症状</strong>：5 个 Agent 全连通，每轮 20 条消息，token 成本 ×10。</p>
+<p><strong>诊断</strong>：消息总线消息数 &gt; Agent 数 × 5。</p>
+<p><strong>修复</strong>：改 Supervisor 集中模式；或分层 Supervisor。</p>
+<h3 id="sec-11-10-5-坑-5-调试黑洞">11.10.5 坑 5：调试黑洞</h3>
+<p><strong>症状</strong>：多 Agent 系统报错，不知道哪个 Agent 出问题。</p>
+<p><strong>诊断</strong>：没有结构化日志（每条消息带 agent 名 + 时间戳 + 输入输出）。</p>
+<p><strong>修复</strong>：用 LangSmith / LangGraph Studio / AutoGen Studio 等可观测性工具。</p>
+<hr>
+<h2 id="sec-11-11-本章小结">11.11 本章小结</h2>
+<h3 id="sec-11-11-1-8-条速记">11.11.1 8 条速记</h3>
+<ol>
+<li><strong>单 Agent 失败率 5% × 50 步 = 92.3% 累计失败</strong>——多 Agent 的真正价值是失败局部化</li>
+<li><strong>4 大模式</strong>：Supervisor（动态）/ Crew（团队）/ Pipeline（流水线）/ Debate（辩论）</li>
+<li><strong>Supervisor 是 80% 多 Agent 的默认选择</strong>（集中调度 + 易调试）</li>
+<li><strong>Pipeline 是数据流动场景的最优解</strong>（RAG / ETL / 内容审核）</li>
+<li><strong>Debate 只在多视角校验时用</strong>（事实核查 / 复杂决策），代价是 ×10-30 token</li>
+<li><strong>通信成本 O(N²)</strong>——多 Agent 不要超过 5 个</li>
+<li><strong>失败传播</strong>——多 Agent 不降低失败率，降低失败爆炸半径</li>
+<li><strong>决策规则</strong>：单 Agent 能干完就别上多 Agent</li>
+</ol>
+<h3 id="sec-11-11-2-22-术语速查表">11.11.2 22 术语速查表</h3>
+<table class="md-table"><thead><tr>
+<th>术语</th>
+<th>含义</th>
+<th>关联章节</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Supervisor</strong></td>
+<td>监督者模式（1 + N）</td>
+<td>§11.2</td>
+</tr>
+<tr>
+<td><strong>Crew</strong></td>
+<td>角色团队模式</td>
+<td>§11.3</td>
+</tr>
+<tr>
+<td><strong>Pipeline</strong></td>
+<td>流水线模式</td>
+<td>§11.4</td>
+</tr>
+<tr>
+<td><strong>Debate</strong></td>
+<td>辩论模式</td>
+<td>§11.5</td>
+</tr>
+<tr>
+<td><strong>Worker</strong></td>
+<td>工人（被 supervisor 调度）</td>
+<td>§11.2</td>
+</tr>
+<tr>
+<td><strong>Agent</strong></td>
+<td>单个智能体（角色 + 工具）</td>
+<td>§11.3</td>
+</tr>
+<tr>
+<td><strong>Task</strong></td>
+<td>任务（CrewAI 抽象）</td>
+<td>§11.3</td>
+</tr>
+<tr>
+<td><strong>Process</strong></td>
+<td>任务执行流程（sequential / hierarchical）</td>
+<td>§11.3</td>
+</tr>
+<tr>
+<td><strong>DAG</strong></td>
+<td>有向无环图（Pipeline 结构）</td>
+<td>§11.4</td>
+</tr>
+<tr>
+<td><strong>StateGraph</strong></td>
+<td>LangGraph 状态机</td>
+<td>§11.7</td>
+</tr>
+<tr>
+<td><strong>Iteration</strong></td>
+<td>循环计数器（防 supervisor 死循环）</td>
+<td>§11.2</td>
+</tr>
+<tr>
+<td><strong>熔断器</strong></td>
+<td>失败超过阈值自动暂停</td>
+<td>§11.9</td>
+</tr>
+<tr>
+<td><strong>断路器</strong></td>
+<td>见上</td>
+<td>§11.9</td>
+</tr>
+<tr>
+<td><strong>降级</strong></td>
+<td>worker 失败退回单 Agent</td>
+<td>§11.9</td>
+</tr>
+<tr>
+<td><strong>O(N²)</strong></td>
+<td>全连通消息复杂度</td>
+<td>§11.9</td>
+</tr>
+<tr>
+<td><strong>Du et al. 2023</strong></td>
+<td>多 Agent 辩论原论文</td>
+<td>§11.5</td>
+</tr>
+<tr>
+<td><strong>LangGraph</strong></td>
+<td>多 Agent 编排框架</td>
+<td>§11.7</td>
+</tr>
+<tr>
+<td><strong>CrewAI</strong></td>
+<td>Crew 模式框架</td>
+<td>§11.3</td>
+</tr>
+<tr>
+<td><strong>AutoGen</strong></td>
+<td>多 Agent 对话框架（ch14 详）</td>
+<td>§11.5</td>
+</tr>
+<tr>
+<td><strong>LangSmith</strong></td>
+<td>LangChain 可观测性工具</td>
+<td>§11.10</td>
+</tr>
+<tr>
+<td><strong>GroupChat Manager</strong></td>
+<td>AutoGen 去中心化调度</td>
+<td>§11.2</td>
+</tr>
+<tr>
+<td><strong>Hierarchical Process</strong></td>
+<td>CrewAI 自动委派模式</td>
+<td>§11.8</td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-11-3-概念桥-ch11-ch12-ch13-ch14-ch15">11.11.3 概念桥：ch11 ↔ ch12 ↔ ch13 ↔ ch14 ↔ ch15</h3>
+<table class="md-table"><thead><tr>
+<th>本章学到的</th>
+<th>下一部分怎么用</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>11.2 Supervisor 模式</strong></td>
+<td><strong>ch12 MCP / A2A 通信协议</strong> —— &quot;Supervisor 和 Worker 之间怎么传消息？→ MCP 协议&quot;（共享工具调用标准）+ <strong>ch13 LangGraph</strong> —— &quot;Supervisor 的图结构 = LangGraph StateGraph&quot;</td>
+</tr>
+<tr>
+<td><strong>11.3 Crew 模式</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;ch11.3 给了 30 行最小 Crew；ch15 展开 CrewAI 全特性（hierarchical process / 自定义工具 / memory）&quot;</td>
+</tr>
+<tr>
+<td><strong>11.4 Pipeline 模式</strong></td>
+<td><strong>ch13 LangGraph</strong> —— &quot;Pipeline = LangGraph 的核心抽象（StateGraph 节点 + 边）&quot;</td>
+</tr>
+<tr>
+<td><strong>11.5 Debate 模式</strong></td>
+<td><strong>ch14 AutoGen</strong> —— &quot;AutoGen 的 GroupChat + Debate 是辩论模式的标准实现&quot;</td>
+</tr>
+<tr>
+<td><strong>11.7 LangGraph Supervisor</strong></td>
+<td><strong>ch13 LangGraph</strong> —— &quot;ch11.7 给了完整 Supervisor；ch13 展开 StateGraph / 节点 / 边 / 状态 / 检查点&quot;</td>
+</tr>
+<tr>
+<td><strong>11.8 CrewAI 范式</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;ch11.8 给了 3 大纪律；ch15 给完整 CrewAI 实战 + 与 LangGraph 对比&quot;</td>
+</tr>
+<tr>
+<td><strong>11.9 通信成本 O(N²)</strong></td>
+<td><strong>ch12 MCP / A2A</strong> —— &quot;通信成本是协议层要解决的核心问题（A2A = Agent-to-Agent 协议）&quot;</td>
+</tr>
+<tr>
+<td><strong>11.10 调试黑洞</strong></td>
+<td><strong>ch16-20 实战项目</strong> —— &quot;实战项目都会踩这个坑，ch18 研究型 Agent 会展开 LangSmith 用法&quot;</td>
+</tr>
+</tbody></table>
+<p><strong>第三部分进度预告</strong>：</p>
+<ul>
+<li>第三部分（多 Agent 系统）0/5 → Day 11 启动 → <strong>1/5</strong></li>
+<li>Day 12：第 12 章《Agent 通信协议——MCP、A2A、Google ADK》（通信协议层）</li>
+<li>Day 13：第 13 章《用 LangGraph 编排工作流》（编排框架）</li>
+<li>Day 14：第 14 章《用 AutoGen 构建对话式多 Agent》（对话式多 Agent）</li>
+<li>Day 15：第 15 章《用 CrewAI 组建&quot;虚拟团队&quot;》（团队多 Agent）</li>
+</ul>
+<h3 id="sec-11-11-4-4-大模式选型速查-一句话版">11.11.4 4 大模式选型速查（一句话版）</h3>
+<table class="md-table"><thead><tr>
+<th>任务一句话描述</th>
+<th>推荐模式</th>
+<th>典型框架</th>
+</tr></thead><tbody>
+<tr>
+<td>&quot;数据从 A 到 B 要经过多个处理步骤&quot;</td>
+<td><strong>Pipeline</strong></td>
+<td>LangGraph StateGraph</td>
+</tr>
+<tr>
+<td>&quot;需要正反方互相校验才能下结论&quot;</td>
+<td><strong>Debate</strong></td>
+<td>AutoGen GroupChat</td>
+</tr>
+<tr>
+<td>&quot;下一步干什么取决于上一步结果&quot;</td>
+<td><strong>Supervisor</strong></td>
+<td>LangGraph / OpenAI Agents SDK</td>
+</tr>
+<tr>
+<td>&quot;几个人各自干一段活，最后合并&quot;</td>
+<td><strong>Crew</strong></td>
+<td>CrewAI</td>
+</tr>
+</tbody></table>
+<h3 id="sec-11-11-5-第三部分开篇标语">11.11.5 第三部分开篇标语</h3>
+<blockquote><strong>&quot;ch10 你学会了让单 Agent 想清楚（CoT / ToT / ReAct / LATS）；ch11 你学会了让多个 Agent 协作起来（Supervisor / Crew / Pipeline / Debate）。&quot;</strong>&lt;br&gt;<strong>&quot;从 Day 12 开始，进入通信协议层——MCP / A2A / Google ADK。Supervisor 和 Worker 之间到底怎么传消息？怎么保证协议安全？2025-2026 协议层的标准化浪潮是怎么回事？&quot;</strong></blockquote>
+<hr>
+<h3 id="sec-进一步阅读">进一步阅读</h3>
+<ol>
+<li>Du et al., 2023-05, <em>Improving Factuality and Reasoning in Language Models through Multiagent Debate</em> — Debate 原论文</li>
+<li>Hong et al., 2024-03, <em>MetaGPT: Meta Programming for A Multi-Agent Collaborative Framework</em> — MetaGPT（角色化多 Agent）</li>
+<li>Wu et al., 2023-08, <em>AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation</em> — AutoGen 论文</li>
+<li>LangChain, 2024, <em>LangGraph Multi-Agent Documentation</em> — LangGraph 多 Agent 文档</li>
+<li>CrewAI, 2024-2026, <em>CrewAI Documentation</em> — CrewAI 官方文档</li>
+<li>Anthropic, 2024-12, <em>Building Effective Agents</em> — Agent 设计模式（含多 Agent）</li>
+<li>OpenAI, 2025, <em>OpenAI Agents SDK Multi-Agent Patterns</em> — OpenAI Agents SDK 多 Agent 模式</li>
+<li>Park et al., 2023-05, <em>Generative Agents: Interactive Simulacra of Human Behavior</em> — 生成式 Agent 模拟</li>
+</ol>
+<hr>
+<blockquote><strong>下章预告</strong>：第 12 章《Agent 通信协议——MCP（Model Context Protocol）、A2A、Google ADK》——ch11 讲了多 Agent 的 4 大模式，但<strong>模式和模式之间怎么通信？Worker 调用工具的标准是什么？跨厂商 Agent 怎么互通？</strong> MCP 是 2024 年 Anthropic 提出的开放协议，A2A 是 Google 在 2025 年推出的 Agent-to-Agent 协议。Day 12 见。</blockquote>
+  <hr style="margin-top: 60px;">
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; gap:16px; margin-top:30px;">
+    <a href="ch10.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">← 上一章：规划与推理（第 10 章）</a>
+    <a href="ch12.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">下一章：Agent 通信协议（第 12 章，未发布）→</a>
+  </nav>
+
+  <footer style="margin-top:60px; padding-top:20px; border-top:1px solid rgba(192,38,211,0.2); color:#888; font-size:13px; text-align:center;">
+    <p>《AGENT开发从入门到精通》· 第 11 章 · 多 Agent 协作模式——Supervisor、Crew、Pipeline、Debate</p>
+    <p style="margin-top:8px;">
+      <a href="../index.html">书库首页</a> ·
+      <a href="ch01.html">第 1 章</a> ·
+      <a href="ch02.html">第 2 章</a> ·
+      <a href="ch03.html">第 3 章</a> ·
+      <a href="ch04.html">第 4 章</a> ·
+      <a href="ch05.html">第 5 章</a> ·
+      <a href="ch06.html">第 6 章</a> ·
+      <a href="ch07.html">第 7 章</a> ·
+      <a href="ch08.html">第 8 章</a> ·
+      <a href="ch09.html">第 9 章</a> ·
+      <a href="ch10.html">第 10 章</a> ·
+      <a href="ch11.html">第 11 章</a>
+    </p>
+  </footer>
+</main>
+
+<script src="/assets/js/site.js"></script>
+<script src="/assets/js/book.js"></script>
+
+</body>
+</html>
