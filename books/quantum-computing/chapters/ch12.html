@@ -175,6 +175,13 @@
 <p>更一般地, 受控 $U^{2^k}$ 让控制 qubit 获得相位 $e^{2\pi i \cdot 2^k \phi}$:</p>
 <p>$$CU^{2^k} \cdot |+\rangle|\psi\rangle = \frac{1}{\sqrt{2}}(|0\rangle + e^{2\pi i \cdot 2^k \phi}|1\rangle) \otimes |\psi\rangle$$</p>
 <p><strong>为什么需要 $U^{2^k}$</strong>: 通过<strong>重复平方</strong>让 $\phi$ 的精度提高 1 比特。这跟 ch11 Shor 算法中 $U_a^{2^k}$ 的角色完全一致。</p>
+<p><strong>为什么是 $U^{2^k}$ 而不是 $U^k$</strong>:</p>
+<ul>
+<li>QPE 的精度由<strong>控制 qubit 的个数 $n$</strong> 决定, 每个 qubit 增加 1 比特精度</li>
+<li>第 $k$ 个 qubit 控制 $U^{2^k}$, 所以<strong>总相位</strong> = $\sum_{k=0}^{n-1} x_k \cdot 2^k \phi = x\phi$(二进制编码)</li>
+<li>这是<strong>二进制编码</strong>的自然结果: 每个 $x_k$ 决定 $U$ 出现 $2^k$ 次</li>
+<li>如果用 $U^k$(普通指数), 则需要 $U^1, U^2, U^3, \ldots$, <strong>门数线性增长</strong>, 无法用<strong>重复平方</strong>优化</li>
+</ul>
 <h3>12.2.4 QPE 的"两次反转"</h3>
 <p>QPE 实际上做了<strong>两次反向操作</strong>:</p>
 <ol>
@@ -262,7 +269,8 @@
   <text class="label" x="610" y="184">j₂</text>
 
   <!-- Phase / result label -->
-  <text class="label" x="640" y="245" text-anchor="end">$|\psiangle$ 保持</text>
+  <text class="label" x="640" y="245" text-anchor="end">$|\psi
+angle$ 保持</text>
 
   <!-- Title -->
   <text class="qft-text" x="360" y="20" font-size="15">QPE 完整电路图 (n = 3 控制 qubit)</text>
@@ -308,6 +316,7 @@
 <p>$$|\psi_1\rangle = (H^{\otimes n} \otimes I)|\psi_0\rangle = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} |x\rangle \otimes |\psi\rangle$$</p>
 <p><strong>步骤 3: 相位踢动</strong>(受控 $U^{2^k}$ 链)</p>
 <p>注意受控 $U^{2^k}$ 在第 $k$ 个 qubit 上, 所以当控制 qubit 是 $|x\rangle = |x_{n-1} \cdots x_1 x_0\rangle$ 时, 总的 $U$ 操作是 $U^{x_0 \cdot 2^0 + x_1 \cdot 2^1 + \cdots + x_{n-1} \cdot 2^{n-1}} = U^x$:</p>
+<blockquote class="chapter-quote"><p><strong>$U^a \cdot U^b = U^{a+b}$ 的原因</strong>: $U$ 是酉算符, 所以 $U^a \cdot U^b = U^{a+b}$(指数相加律)。这是<strong>酉算符的标准性质</strong>, 跟经典线性算符一致。</p></blockquote>
 <p>$$|\psi_2\rangle = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} |x\rangle \otimes U^x|\psi\rangle = \frac{1}{\sqrt{2^n}} \sum_{x=0}^{2^n-1} e^{2\pi i x \phi} |x\rangle \otimes |\psi\rangle$$</p>
 <p><strong>步骤 4: 逆 QFT + 测量</strong></p>
 <p>$$|\psi_3\rangle = (\text{QFT}^{-1} \otimes I)|\psi_2\rangle$$</p>
@@ -454,6 +463,15 @@
 <p><strong>证明思路</strong>(Nielsen-Chuang): 对 $|j - 2^n \phi| \leq 1/2$ 的 $j$ 求和几何级数:</p>
 <p>$$\sum_{x=0}^{2^n-1} e^{2\pi i x (\phi - j/2^n)} = \frac{\sin(\pi (2^n \phi - j))}{\sin(\pi (\phi - j/2^n))}$$</p>
 <p>分母<strong>小</strong>的时候, 分子也<strong>小</strong>, 但比值有界。详细给出 $P \geq 4/\pi^2$。</p>
+<p><strong>$4/\pi^2$ 的来源</strong>:</p>
+<ul>
+<li><strong>关键求和</strong>: $\sum_{x=0}^{N-1} e^{2\pi i x \delta} = \frac{\sin(\pi N \delta)}{\sin(\pi \delta)}$(几何级数, $\delta = \phi - j/N$)</li>
+<li><strong>振幅</strong> = $\frac{1}{N} \cdot \frac{\sin(\pi N \delta)}{\sin(\pi \delta)}$(归一化后)</li>
+<li><strong>$|\text{振幅}|^2$</strong> = $\frac{1}{N^2} \cdot \frac{\sin^2(\pi N \delta)}{\sin^2(\pi \delta)}$(Born 规则概率)</li>
+<li>对 $|\delta| \leq 1/(2N)$ 求和(成功范围): $\int_{-1/(2N)}^{1/(2N)} \frac{\sin^2(\pi N \delta)}{\sin^2(\pi \delta)} d\delta \approx \int_{-\infty}^{\infty} \frac{\sin^2(\pi N \delta)}{(\pi \delta)^2} d\delta = 1$(连续极限)</li>
+<li>实际<strong>离散</strong>求和给出 $\geq 4/\pi^2 \approx 0.405$(Nielsen-Chuang 定理 5.2)</li>
+</ul>
+<p><strong>直观理解</strong>: $4/\pi^2 \approx 40.5\%$ 来自连续 $\sin^2$ 积分 vs 离散求和的差异。<strong>连续</strong>极限下, 概率是 1(成功范围内的所有能量都在那里);<strong>离散</strong>情况下, 由于 $\sin(\pi \delta)$ 在 $\delta = 0$ 附近的<strong>有限</strong>斜率, 损失了一部分能量, 剩下 $\geq 4/\pi^2$。</p>
 <h3>12.5.3 重复 + 多数表决</h3>
 <p><strong>问题</strong>: $P = 0.405$ 意味着大约 60% 概率<strong>失败</strong>, 怎么办?</p>
 <p><strong>解决</strong>: <strong>重复</strong>运行 QPE $k$ 次, 取<strong>多数表决</strong>(majority vote)的 $j$。</p>
@@ -485,6 +503,13 @@
 <p><strong>本征态</strong>: $|0\rangle$ 对应本征值 $e^{-i\theta/2}$, <strong>相位</strong> $\phi = -\theta/(4\pi)$(归一化到 $[0,1)$)。</p>
 <p><strong>取</strong> $n = 3$ 个控制 qubit(精度 $\sim 1/16$)。</p>
 <p><strong>取</strong> $\theta = \pi/4$ (45°), 所以 $\phi = -1/16 = 15/16$ (mod 1)。</p>
+<p><strong>为什么选 $\theta = \pi/4$</strong>:</p>
+<ul>
+<li>$\pi/4$ = 45°, 对应 $R_z(\pi/4)$ 是基本门($T$ 门 = $R_z(\pi/4)$ 的修正版本)</li>
+<li>$\phi = 15/16$ 接近 1, <strong>测量结果 $j = 7$ 或 $j = 8$(mod 8)</strong> 能展示<strong>取模 1</strong>的细节</li>
+<li>$n = 3$ 控制 qubit 足够展示<strong>精度 vs qubit 数</strong>的关系</li>
+<li>如果选 $\phi = 1/4$, 则 $j = 2$ 单一结果, 误差分析看不出 $1/2^n$ 的量化</li>
+</ul>
 <h3>12.6.2 5 步执行</h3>
 <p><strong>步骤 1</strong>: 初始化 $|000\rangle|0\rangle$。</p>
 <p><strong>步骤 2</strong>: $H^{\otimes 3}$ 制备 $\frac{1}{\sqrt{8}} \sum_{x=0}^7 |x\rangle|0\rangle$。</p>
@@ -565,6 +590,14 @@
 <li>逆 QPE(把相位信息从量子态中"撤销")</li>
 <li>测量得到 $|x\rangle \propto A^{-1}|b\rangle$</li>
 </ol>
+<p><strong>HHL 的限制</strong>(不是万能解方程组算法):</p>
+<ul>
+<li><strong>稀疏性</strong>: $A$ 必须是 $s$-稀疏($s = O(\text{poly} \log N)$)</li>
+<li><strong>条件数</strong>: $\kappa = \|A\| \cdot \|A^{-1}\|$ 必须是多项式(否则 HHL 退化)</li>
+<li><strong>输出</strong>: 只给<strong>量子态</strong> $|x\rangle$, 提取经典 $\mathbf{x}$ 需要 $O(N)$ 步(破坏加速!)</li>
+<li><strong>应用</strong>: 只对<strong>特定问题</strong>(量子模拟、Hamilton 演化、机器学习内核)有效</li>
+<li><strong>结论</strong>: HHL 不是经典 LAPACK 的替代品, 是<strong>特定问题的专用工具</strong></li>
+</ul>
 <p><strong>复杂度</strong>: $O(\log(N) \cdot s^2 \cdot \kappa^2 / \epsilon)$, 其中 $s$ 是稀疏度, $\kappa$ 是条件数。</p>
 <p><strong>注意</strong>: HHL <strong>不是</strong>万能解方程组算法(条件数 $\kappa$ 必须是多项式), 但对<strong>特定问题</strong>有指数加速。</p>
 <h3>12.8.3 量子模拟(Lloyd 1996)</h3>
@@ -809,9 +842,9 @@
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 11 章 Shor 因式分解算法</span>
           </a>
-          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch13.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
-            <span class="pager-title">第 13 章 变分量子算法(即将推出)</span>
+            <span class="pager-title">第 13 章 变分量子算法 (VQE/QAOA)</span>
           </a>
         </nav>
 
@@ -863,6 +896,7 @@
           <li><a href="ch10.html">第 10 章</a></li>
           <li><a href="ch11.html">第 11 章</a></li>
           <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

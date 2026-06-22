@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第13章：变分量子算法 (VQE/QAOA) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第13章：变分量子算法 (VQE/QAOA) | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第三部分 · 量子算法与复杂性 · Day 3</span>
+        <span class="chapter-day-tag">Day 15 · 2026-06-22</span>
+      </div>
+      <h1 class="chapter-title">第 13 章 变分量子算法 (VQE/QAOA)</h1>
+      <p class="chapter-subtitle">NISQ 时代的"实用引擎"——变分原理 + VQE 5 步 + QAOA 参数化态 + 经典-量子混合</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,548 字</span>
+        <span class="stat">🔢 12 节 · 70 子节</span>
+        <span class="stat">📑 VQE + QAOA + Barren Plateau + 错误缓解</span>
+        <span class="stat">⏱ ~55 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+<h1>第 13 章 变分量子算法 (VQE/QAOA)</h1>
+
+<blockquote class="chapter-quote"><p><strong>章节定位</strong>: 第三部分「量子算法与复杂性」 — 第 3 章
+<p><strong>核心问题</strong>: 在 NISQ 时代(无纠错、浅电路), 如何设计<strong>实用</strong>的量子算法?</p>
+<p><strong>本章地位</strong>: <strong>NISQ 时代的"实用引擎"</strong> —— VQE(量子化学)+ QAOA(组合优化)</p></blockquote></p>
+<hr>
+
+<h2>13.0 引言:从 QPE 到 VQE/QAOA</h2>
+
+<h3>13.0.1 一个让人困惑的问题</h3>
+
+<p>如果你问"<strong>今天的量子计算机能跑哪些有用算法</strong>?", 答案令人意外:</p>
+
+<blockquote class="chapter-quote"><p><strong>不是</strong> Shor 算法(需要数百万 qubit + 几小时), <strong>不是</strong> QPE(需要深电路 + 容错),
+<p><strong>而是</strong> <strong>VQE 和 QAOA</strong>(50-100 qubit + 浅电路 + 几分钟)</p></blockquote></p>
+<table class="concept-table"><thead><tr><th>算法</th></tr></thead><tbody></tbody></table>qubit 数 | 电路深度 | 状态 |
+<p>|:---|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>Shor</strong></th></tr></thead><tbody></tbody></table>4096+ (逻辑) | $O(n^3) \sim 10^7$ 门 | 容错量子计算时代 |
+<table class="concept-table"><thead><tr><th><strong>QPE</strong></th></tr></thead><tbody></tbody></table>$n+1$ (逻辑) | $O(n^2) \sim 10^3$ 门 | 容错量子计算时代 |
+<table class="concept-table"><thead><tr><th><strong>VQE</strong></th></tr></thead><tbody></tbody></table>$n$ (物理) | $\sim 10^2$ 门 | <strong>NISQ 时代</strong> ✅ |
+<table class="concept-table"><thead><tr><th><strong>QAOA</strong></th></tr></thead><tbody></tbody></table>$n$ (物理) | $\sim p \cdot 10$ 门 | <strong>NISQ 时代</strong> ✅ |
+
+<p><strong>关键洞察</strong>: QPE 的设计假设是<strong>容错量子计算</strong>(FTQC) 时代 —— 长电路、多 qubit、错误率极低($< 10^{-6}$)。但<strong>今天</strong>的硬件(50-1000 qubit + 无纠错 + 错误率 $\sim 10^{-3}$) 跑不了 QPE。</p>
+
+<h3>13.0.2 变分算法的核心思想</h3>
+
+<p><strong>变分量子算法</strong> = <strong>量子 + 经典优化</strong> 的混合:</p>
+
+<p>``<code></p>
+<p>┌─────────────────────────────────────────────────────────┐</p>
+<p>│  量子部分(浅电路):                                        │</p>
+<p>│    准备参数化态 |ψ(θ)⟩                                  │</p>
+<p>│    测量期望值 ⟨ψ(θ)|H|ψ(θ)⟩                              │</p>
+<p>│                                                         │</p>
+<p>│  经典部分(优化器):                                        │</p>
+<p>│    接收 ⟨H⟩ 数值                                         │</p>
+<p>│    计算梯度 ∇L(θ) 或用无梯度方法                          │</p>
+<p>│    更新参数 θ ← θ - α∇L(θ)                              │</p>
+<p>│                                                         │</p>
+<p>│  重复到收敛                                               │</p>
+<p>└─────────────────────────────────────────────────────────┘</p>
+<p></code>`<code></p>
+
+<p><strong>为什么能跑</strong>:</p>
+<ul><li><</li></ul>strong>浅电路</strong>: 量子电路深度 $\leq 1000$ 门(NISQ 限制)
+<ul><li><</li></ul>strong>测量容错</strong>: 经典优化器可以<strong>平均掉</strong>部分噪声
+<ul><li><</li></ul>strong>无 QFT</strong>: 不需要 QPE 的 $O(n^2)$ QFT 电路
+
+<h3>13.0.3 本章在第三部分的定位</h3>
+<ul><li>c</li></ul>h11 <strong>Shor</strong> + ch12 <strong>QPE</strong> = 容错时代的算法(理论漂亮, 实际跑不了)
+<ul><li><</li></ul>strong>本章 VQE/QAOA</strong> = NISQ 时代的算法(实际能跑, 加速有限)
+<ul><li>c</li></ul>h14 <strong>QML</strong> = 用 VQE 做机器学习
+<ul><li>c</li></ul>h15 <strong>复杂性</strong> = 给出变分算法的理论边界
+
+<h3>13.0.4 读者的先验知识清单</h3>
+
+<p>本章假设读者已掌握:</p>
+<ul><li>c</li></ul>h02: bra-ket、内积、期望值
+<ul><li>c</li></ul>h05: 量子测量、期望值、方差
+<ul><li>c</li></ul>h06: qubit、Bloch 球
+<ul><li>c</li></ul>h07: 单 qubit 门 ($R_x, R_y, R_z$)、受控门
+<ul><li>c</li></ul>h08: 量子电路、张量网络
+<ul><li>c</li></ul>h09: QFT(对比 QPE 电路深度)
+<ul><li>c</li></ul>h12: QPE(对比, 为何 VQE/QAOA 不用 QPE)
+
+<h3>13.0.5 变分算法的"前世今生"</h3>
+
+<p><strong>变分算法的思想</strong> 在量子力学诞生之前就有了:</p>
+
+<p><strong>1. Ritz 变分法</strong>(1908)<strong>:</strong></p>
+<p>Walter Ritz 提出: 对任意波函数 $\psi$, $\langle \psi | H | \psi \rangle \geq E_0$。</p>
+<p>这是<strong>量子力学</strong>奠基性的方法, 早于 Schrödinger 方程 1926 年才提出。</p>
+
+<p><strong>2. Hartree-Fock 自洽场</strong>(1930s)**:</p>
+<p>在 Ritz 框架下, 用 Slater 行列式作 ansatz, 自洽求解分子轨道。</p>
+
+<p><strong>3. Configuration Interaction (CI)</strong>(1950s)**:</p>
+<p>更复杂的 ansatz(多个 Slater 行列式的线性组合), 但<strong>指数</strong>复杂。</p>
+
+<p><strong>4. 量子 VQE</strong>(2014)**:</p>
+<p><strong>Peruzzo 等人</strong>(加州大学圣巴巴拉 + Bristol) 第一次把变分原理<strong>直接</strong>实现在量子计算机上, 用光子平台跑 H₂ 分子。</p>
+
+<p><strong>5. QAOA</strong>(2014)**:</p>
+<p><strong>Farhi, Goldstone, Gutmann</strong>(MIT) 同时提出, 针对组合优化问题。</p>
+
+<p><strong>6. 工业时代</strong>(2017+)**:</p>
+<p>IBM Qiskit, Google Cirq, PennyLane, Quantinuum 全部支持 VQE/QAOA。</p>
+
+<p><strong>核心洞察</strong>: 变分算法<strong>不新</strong>, <strong>量子化</strong>让它有了<strong>新生命</strong>。经典方法 $O(\exp(N))$ 的代价在量子 VQE 上变成<strong>多项式</strong>(因为 $\langle H \rangle$ 可以高效测量)。</p>
+
+<h3>13.0.6 VQE vs QAOA 的"应用图"</h3>
+
+<p></code>`<code></p>
+<p>┌─────────────────────────────────────────────────────┐</p>
+<p>│           变分量子算法家族                            │</p>
+<p>│                                                      │</p>
+<p>│   ┌──────────────┐      ┌──────────────┐            │</p>
+<p>│   │     VQE      │      │    QAOA      │            │</p>
+<p>│   │              │      │              │            │</p>
+<p>│   │ 目标:基态能量 │      │ 目标:组合优化│            │</p>
+<p>│   │ 应用:量子化学│      │ 应用:组合优化│            │</p>
+<p>│   │ Hamilton:H   │      │ Hamilton:H_C│            │</p>
+<p>│   │ Ansatz:灵活  │      │ Ansatz:固定  │            │</p>
+<p>│   └──────────────┘      └──────────────┘            │</p>
+<p>│           ↑                     ↑                    │</p>
+<p>│           │                     │                    │</p>
+<p>│   ┌───────┴─────────────────────┴────────┐          │</p>
+<p>│   │   共同特点:                            │          │</p>
+<p>│   │   - 浅电路(≤ 1000 门)                │          │</p>
+<p>│   │   - 经典-量子混合                     │          │</p>
+<p>│   │   - 噪声容忍                          │          │</p>
+<p>│   │   - 无需 QFT                          │          │</p>
+<p>│   │   - NISQ 时代核心                     │          │</p>
+<p>│   └─────────────────────────────────────┘          │</p>
+<p>└─────────────────────────────────────────────────────┘</p>
+<p></code>`<code></p>
+
+<hr>
+
+<h2>13.1 NISQ 时代的挑战</h2>
+
+<h3>13.1.1 什么是 NISQ</h3>
+
+<p><strong>NISQ</strong> = <strong>Noisy Intermediate-Scale Quantum</strong>(噪声中等规模量子)</p>
+
+<p>John Preskill 2018 年提出的术语:</p>
+
+<table class="concept-table"><thead><tr><th>维度</th></tr></thead><tbody></tbody></table>NISQ 时代 | 容错 (FTQC) 时代 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>qubit 数</strong></th></tr></thead><tbody></tbody></table>50-1000 | $10^6$+ |
+<table class="concept-table"><thead><tr><th><strong>错误率</strong></th></tr></thead><tbody></tbody></table>$10^{-3}$ | $10^{-6}$ |
+<table class="concept-table"><thead><tr><th><strong>电路深度</strong></th></tr></thead><tbody></tbody></table>$\leq 1000$ 门 | 任意深 |
+<table class="concept-table"><thead><tr><th><strong>纠错</strong></th></tr></thead><tbody></tbody></table>无 | 表面码等 |
+<table class="concept-table"><thead><tr><th><strong>典型硬件</strong></th></tr></thead><tbody></tbody></table>Willow, Heron, IonQ | 未来(2030s+) |
+
+<h3>13.1.2 NISQ 的三大限制</h3>
+
+<p><strong>限制 1: qubit 数有限</strong></p>
+<ul><li>2</li></ul>026 年最大: ~1000 qubit(IBM Condor, Atom Computing)
+<ul><li>但</li></ul><strong>有效</strong>qubit(可用的)更少: ~100-200
+<ul><li>距</li></ul>离 Shor 的 4096+ 逻辑 qubit 仍<strong>遥远</strong>
+
+<p><strong>限制 2: 无纠错</strong></p>
+<ul><li>没</li></ul>有表面码或 Shor 码(ch17-18 详述)
+<ul><li>单</li></ul>门错误率 $10^{-3}$ 累积, 1000 门电路保真度 $e^{-1} \approx 37\%$
+<ul><li>不</li></ul>能跑深电路
+
+<p><strong>限制 3: 浅电路 + 测量</strong></p>
+<ul><li>相</li></ul>干时间 $T_1, T_2 \sim 100 \mu s$(超导)或 1 s(离子阱)
+<ul><li>测</li></ul>量本身有错误(读出错误率 ~1%)
+
+<h3>13.1.3 应对 NISQ 的哲学</h3>
+
+<p><strong>经典-量子混合</strong>(hybrid classical-quantum) 是核心:</p>
+
+<blockquote class="chapter-quote"><p><strong>不试图让量子单独完成所有事</strong>, 而是:
+<ol><li><</li></ol>strong>量子</strong>做它擅长的事: 制备量子态 + 测量期望值
+<ul><li><</li></ul>strong>经典</strong>做它擅长的事: 优化参数 + 后处理
+<ul><li><</li></ul>strong>迭代</strong>: 量子-经典循环直到收敛</p></blockquote>
+<p>这是 <strong>VQE/QAOA</strong> 的<strong>哲学基础</strong>。</p>
+
+<h3>13.1.4 NISQ 算法的"硬约束"</h3>
+
+<p><strong>深度约束</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>算法</th></tr></thead><tbody></tbody></table>电路深度 | NISQ 兼容 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>Shor</strong></th></tr></thead><tbody></tbody></table>$O(n^3) \sim 10^7$ 门 | ❌ 不可行 |
+<table class="concept-table"><thead><tr><th><strong>QPE</strong></th></tr></thead><tbody></tbody></table>$O(n^2) \sim 10^3$ 门 | ❌ 勉强(无纠错) |
+<table class="concept-table"><thead><tr><th><strong>Grover</strong></th></tr></thead><tbody></tbody></table>$O(\sqrt{N})$ 迭代 | ⚠️ 困难 |
+<table class="concept-table"><thead><tr><th><strong>VQE</strong></th></tr></thead><tbody></tbody></table>$O(L \cdot n) \sim 10^2$ 门 | ✅ 友好 |
+<table class="concept-table"><thead><tr><th><strong>QAOA</strong></th></tr></thead><tbody></tbody></table>$O(p \cdot n) \sim 50$ 门 | ✅ 友好 |
+
+<p><strong>qubit 约束</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>算法</th></tr></thead><tbody></tbody></table>qubit 数 | NISQ 兼容 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>Shor (RSA-2048)</strong></th></tr></thead><tbody></tbody></table>4096+ 逻辑 qubit | ❌ 远期 |
+<table class="concept-table"><thead><tr><th><strong>QPE</strong></th></tr></thead><tbody></tbody></table>$n+1 \sim 50$ | ⚠️ 困难 |
+<table class="concept-table"><thead><tr><th><strong>VQE (H₂O)</strong></th></tr></thead><tbody></tbody></table>~12 物理 qubit | ✅ 当前 |
+<table class="concept-table"><thead><tr><th><strong>QAOA (MaxCut 50 节点)</strong></th></tr></thead><tbody></tbody></table>~50 物理 qubit | ⚠️ 当前 |
+
+<h3>13.1.5 量子优势的"分水岭"</h3>
+
+<p><strong>问题</strong>: 量子计算机什么时候<strong>真正</strong>超越经典?</p>
+
+<p><strong>2026 年的"量子优势地图"</strong>:</p>
+
+<p></code>`<code></p>
+<p>        量子优势?</p>
+<p>          ↑</p>
+<p>          │         ╱  ─ ─ ─ ─ 理论曲线</p>
+<p>          │       ╱</p>
+<p>          │     ╱           当前硬件(100-200 qubit)</p>
+<p>          │   ╱           ─ ─ ─</p>
+<p>          │  ╱           ┄┄┄┄┄</p>
+<p>          │╱           ┄┄┄┄┄</p>
+<p>          │          ┄┄┄┄┄</p>
+<p>          │        ┄┄┄┄┄     ← 经典超级计算机</p>
+<p>          └───────────────────────→ qubit 数</p>
+<p>           50  100  200  500  1000+</p>
+<p></code>`<code></p>
+
+<p><strong>观察</strong>:</p>
+<ul><li><</li></ul>strong>小问题</strong> ($n \leq 50$): 经典 + 量子<strong>等价</strong>
+<ul><li><</li></ul>strong>中等</strong> ($n = 100-200$): 量子开始<strong>接近</strong>经典
+<ul><li><</li></ul>strong>大</strong> ($n \geq 500$): 量子<strong>可能</strong>超越(NISQ 时代<strong>未达</strong>)
+<ul><li><</li></ul>strong>真正超越</strong>: $n \geq 1000$ + 容错(FTQC 时代)
+
+<p><strong>VQE/QAOA 目标</strong>: 在中等规模 ($n = 100-200$) <strong>首次</strong>展示实际量子优势。</p>
+
+<hr>
+
+<h2>13.2 变分原理(Variational Principle)</h2>
+
+<h3>13.2.1 量子力学的老方法</h3>
+
+<p><strong>变分原理</strong>不是新东西 —— 它是量子力学<strong>百年老方法</strong>:</p>
+
+<blockquote class="chapter-quote"><p><strong>变分原理</strong>: 任意态 $|\psi\rangle$ 的期望值 $\langle H \rangle \geq E_0$(基态能量)</p></blockquote>
+<p><strong>证明</strong>: 设 $|\psi\rangle = \sum_i c_i |u_i\rangle$(本征展开, $H|u_i\rangle = E_i |u_i\rangle$, $E_0 \leq E_1 \leq \cdots$)</p>
+
+<p>$$\langle \psi | H | \psi \rangle = \sum_i |c_i|^2 E_i \geq E_0 \sum_i |c_i|^2 = E_0$$</p>
+
+<p>(因为 $E_i \geq E_0$ 对所有 $i$)</p>
+
+<p><strong>结论</strong>: 任意态 $|\psi\rangle$ 给出基态能量的<strong>上界</strong>。</p>
+
+<h3>13.2.2 变分原理的量子算法版</h3>
+
+<p><strong>经典做法</strong>(Hartree-Fock, CI):</p>
+<ul><li>选</li></ul>一个参数化的态 $|\psi(\theta)\rangle$(e.g. Slater 行列式)
+<ul><li>计</li></ul>算 $\langle H \rangle$(经典代价: $O(\text{exp}(N))$)
+<ul><li>优</li></ul>化 $\theta$ 找最小
+
+<p><strong>量子做法</strong>(VQE):</p>
+<ul><li>选</li></ul>一个<strong>量子电路</strong> $U(\theta)$ 作为 ansatz
+<ul><li>量</li></ul>子态 $|\psi(\theta)\rangle = U(\theta)|0\rangle$
+<ul><li><</li></ul>strong>量子测量</strong>得到 $\langle H \rangle$(量子代价: 多项式)
+<ul><li>经</li></ul>典优化器更新 $\theta$
+
+<p><strong>为什么 VQE 工作</strong></p>
+
+<p><strong>关键洞察</strong>: $\langle H \rangle$ 在量子计算机上是<strong>多项式代价</strong>测量的(对<strong>局域</strong> Hamilton 量)。</p>
+
+<p><strong>局域 Hamilton 量</strong>: $H = \sum_k h_k P_k$(Pauli 张量项的线性组合)</p>
+
+<p><strong>测量</strong>: 对每个 $P_k$ 测量 $O(1/\epsilon^2)$ 次得到 $\langle P_k \rangle \pm \epsilon$, 然后加权求和:</p>
+
+<p>$$\langle H \rangle = \sum_k h_k \langle P_k \rangle$$</p>
+
+<p><strong>总测量次数</strong>: $O(M/\epsilon^2)$, 其中 $M$ = Pauli 项数(对 $n$ qubit 系统 $M \leq 4^n$, 但对<strong>物理</strong> Hamilton $M = O(n^4)$ 即多项式)。</p>
+
+<p><strong>例子</strong>: H₂ 分子的 Hamilton 量(在 STO-3G 基组下):</p>
+
+<p>$$H = -0.81261 I + 0.171201 Z_0 + 0.171201 Z_1 + 0.168623 Z_2 - 0.222796 Z_3 + 0.171201 X_0 X_1 + 0.171201 X_2 X_3$$</p>
+
+<p>只有 <strong>6 个 Pauli 项</strong>($M = 6$)。VQE 测 6 次就够。</p>
+
+<h3>13.2.4 经典 vs 量子:对 Hamilton 量计算的对比</h3>
+
+<p><strong>经典 FCI</strong>(Full CI):</p>
+<ul><li><</li></ul>strong>态空间</strong>: $C^N$(Hilbert 空间维数, $N = 2^n$ 个 Slater 行列式)
+<ul><li><</li></ul>strong>计算 $\langle H \rangle$</strong>: 算 $N \times N$ 矩阵元 = $O(N^2)$ 经典步
+<ul><li><</li></ul>strong>优化</strong>: 在 $N$ 维子空间搜索 = $O(\text{poly}(N))$ 但常数极大
+<ul><li><</li></ul>strong>总代价</strong>: $O(\exp(n))$(经典 FCI 是<strong>指数</strong>步)
+
+<p><strong>量子 VQE</strong>:</p>
+<ul><li><</li></ul>strong>态空间</strong>: $C^N$(同样维数, 但量子态是 Hilbert 空间的<strong>叠加</strong>)
+<ul><li><</li></ul>strong>计算 $\langle H \rangle$</strong>: 量子测量, 每个 Pauli 项 $O(1/\epsilon^2)$ 次
+<ul><li><</li></ul>strong>总测量</strong>: $O(M/\epsilon^2) = O(\text{poly}(n) / \epsilon^2)$
+<ul><li><</li></ul>strong>物理时间</strong>: 每次测量 ~微秒级
+
+<p><strong>关键对比</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>步骤</th></tr></thead><tbody></tbody></table>经典 FCI | 量子 VQE |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>状态制备</th></tr></thead><tbody></tbody></table>$O(\exp(n))$ | $O(L \cdot n)$ (浅 ansatz) |
+<table class="concept-table"><thead><tr><th>期望值计算</th></tr></thead><tbody></tbody></table>$O(\exp(n))$ | $O(M/\epsilon^2)$ (多项式) |
+<table class="concept-table"><thead><tr><th>优化搜索</th></tr></thead><tbody></tbody></table>$O(\exp(n))$ | $O(L \cdot \text{iter})$ |
+<table class="concept-table"><thead><tr><th><strong>总代价</strong></th></tr></thead><tbody></tbody></table>$O(\exp(n))$ | $O(\text{poly}(n) / \epsilon^2)$ |
+
+<p><strong>重要警告</strong>:</p>
+<ul><li>"</li></ul>多项式" 指的是<strong>测量次数</strong>$\langle H \rangle$, 不是计算步骤
+<ul><li><</li></ul>strong>每次</strong>量子测量<strong>比每次经典 FCI 慢得多</strong>(微秒 vs 纳秒)
+<ul><li><</li></ul>strong>净加速</strong>只在<strong>qubit 数大</strong>($n > 50$)+ <strong>硬件快</strong>时实现
+
+<h3>13.2.5 量子优势的几何直觉</h3>
+
+<p>为什么 VQE <strong>可能</strong>比经典快?</p>
+
+<p></code>`<code></p>
+<p>经典:</p>
+<p>  在 N 维 Hilbert 空间"硬"算 Hamiltonian 矩阵 → 指数步</p>
+
+<p>量子:</p>
+<p>  在 N 维 Hilbert 空间"自然"制备叠加态 → 多项式步</p>
+
+<p>                       ↓</p>
+
+<p>量子态天然就是 N 维向量的叠加, 但制备/演化的代价是 O(poly(n))</p>
+<p>经典需要把 N 维向量"显式"存在内存里 → O(N) 内存 + O(N²) 操作</p>
+<p></code>`<code></p>
+
+<p><strong>关键洞察</strong>: 量子计算机的<strong>存储</strong>是 $n$ qubit(指数级信息), 但<strong>操作</strong>是 $n$ qubit 上的<strong>多项式</strong>门数。经典计算机存储 $N = 2^n$ 个复数需要 $O(2^n)$ 内存。<strong>信息论上的</strong>指数优势, <strong>但操作</strong>的多项式代价需要<strong>仔细设计算法</strong>才能体现。</p>
+
+<hr>
+
+<h2>13.3 变分量子本征求解 (VQE)</h2>
+
+<h3>13.3.1 VQE 5 步算法</h3>
+
+<p></code>`<code></p>
+<p>┌────────────────────────────────────────────────────────┐</p>
+<p>│  VQE 算法流程:                                          │</p>
+<p>│                                                        │</p>
+<p>│  1. 准备初始态 |ψ_0⟩ = |0⟩^n                           │</p>
+<p>│  2. 应用 ansatz U(θ) 得到 |ψ(θ)⟩                      │</p>
+<p>│  3. 测量 ⟨ψ(θ)|H|ψ(θ)⟩(对每个 Pauli 项)              │</p>
+<p>│  4. 经典优化器更新 θ ← θ - α∇L(θ)                    │</p>
+<p>│  5. 检查收敛: |L(θ_t) - L(θ_{t-1})| < tol?            │</p>
+<p>│                                                        │</p>
+<p>│  否 → 回到步骤 2                                        │</p>
+<p>│  是 → 输出 θ* 和 E_0 ≈ L(θ*)                          │</p>
+<p>└────────────────────────────────────────────────────────┘</p>
+<p></code>`<code></p>
+
+<h3>13.3.2 Ansatz(拟设)</h3>
+
+<p><strong>Ansatz</strong> = 参数化量子电路 $U(\theta)$, 决定 VQE 能<strong>达到</strong>哪些态。</p>
+
+<p><strong>类型 1: 硬件高效 ansatz</strong>(Hardware-Efficient Ansatz)</p>
+
+<p></code>`<code>python</p>
+<h1>n qubit, L 层的硬件高效 ansatz</h1>
+<p>def HEA_circuit(params, n, L):</p>
+<p>    for layer in range(L):</p>
+<p>        # 单 qubit 旋转(每个 qubit 都有 RX, RY, RZ)</p>
+<p>        for q in range(n):</p>
+<p>            RX(params[layer, q, 0], q)</p>
+<p>            RY(params[layer, q, 1], q)</p>
+<p>            RZ(params[layer, q, 2], q)</p>
+<p>        # 纠缠(线性连接)</p>
+<p>        for q in range(n-1):</p>
+<p>            CNOT(q, q+1)</p>
+<p>    return state</p>
+<p></code>`<code></p>
+
+<p><strong>特点</strong>: 浅电路 + 跟硬件匹配(连接性)。<strong>缺点</strong>: 不保证能表达目标态。</p>
+
+<p><strong>类型 2: 化学启发 ansatz</strong>(UCCSD)</p>
+
+<p><strong>UCCSD</strong> = Unitary Coupled Cluster Singles and Doubles</p>
+
+<p>$$U(\theta) = e^{T(\theta) - T^\dagger(\theta)}$$</p>
+
+<p>其中 $T = T_1 + T_2$(单激发 + 双激发), $\theta$ 是激发振幅。</p>
+
+<p><strong>特点</strong>: 量子化学的"金标准",<strong>保证</strong>能表达基态。<strong>缺点</strong>: 深电路, 不适合 NISQ。</p>
+
+<p><strong>类型 3: 适应性 ansatz</strong>(ADAPT-VQE)</p>
+<ul><li>从</li></ul>一个简单 ansatz 开始
+<ul><li><</li></ul>strong>逐步</strong>添加最有用的激发算符
+<ul><li>自</li></ul>动平衡深度 vs 表达能力
+
+<h3>13.3.3 优化器</h3>
+
+<p><strong>类型 A: 梯度下降类</strong></p>
+<ul><li><</li></ul>strong>Adam</strong>(深度学习标准)
+<ul><li><</li></ul>strong>L-BFGS</strong>(经典数值优化金标准)
+<ul><li><</li></ul>strong>梯度计算</strong>: parameter-shift rule(量子梯度 $\partial \langle H \rangle / \partial \theta = (\langle H \rangle_{\theta + s/2} - \langle H \rangle_{\theta - s/2}) / \sin(s)$, 其中 $s = \pi/2$)
+
+<p><strong>类型 B: 无梯度类</strong></p>
+<ul><li><</li></ul>strong>SPSA</strong>(Simultaneous Perturbation Stochastic Approximation)
+<ul><li><</li></ul>strong>COBYLA</strong>(Constrained Optimization By Linear Approximation)
+<ul><li><</li></ul>strong>Nelder-Mead</strong>(单纯形法)
+
+<p><strong>类型 C: 几何/全局</strong></p>
+<ul><li><</li></ul>strong>贝叶斯优化</strong>(昂贵函数)
+<ul><li><</li></ul>strong>模拟退火</strong>
+
+<h3>13.3.4 完整例子:H₂ 分子基态</h3>
+
+<p><strong>目标</strong>: 找 H₂ 分子基态能量(键长 $R = 0.735$ Å)</p>
+
+<p><strong>Hamilton 量</strong>: 见 13.2.3</p>
+
+<p><strong>Ansatz</strong>: 2 qubit 硬件高效 ansatz, 1 层(6 个参数)</p>
+
+<p><strong>结果</strong>(模拟 + 真实硬件):</p>
+
+<table class="concept-table"><thead><tr><th>阶段</th></tr></thead><tbody></tbody></table>能量 (Hartree) | 误差 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>经典 HF</th></tr></thead><tbody></tbody></table>-1.117 | 参考 |
+<table class="concept-table"><thead><tr><th>经典 FCI (精确)</th></tr></thead><tbody></tbody></table>-1.137 | 0 |
+<table class="concept-table"><thead><tr><th>VQE (理想模拟)</th></tr></thead><tbody></tbody></table>-1.137 | $< 10^{-6}$ |
+<table class="concept-table"><thead><tr><th>VQE (真实硬件)</th></tr></thead><tbody></tbody></table>-1.13 | $\sim 0.01$ |
+<table class="concept-table"><thead><tr><th>加上错误缓解</th></tr></thead><tbody></tbody></table>-1.135 | $\sim 0.005$ |
+
+<p><strong>结论</strong>: VQE 在 H₂ 上<strong>已经能跑</strong> —— 这是量子化学历史上第一次用量子计算机给出分子能量。</p>
+
+<h3>13.3.5 VQE 收敛过程的可视化</h3>
+
+<p><strong>典型 VQE 运行</strong>:</p>
+
+<p></code>`<code></p>
+<p>能量(Hartree)</p>
+<p>    ↑</p>
+<p>    │</p>
+<p>    │  ●─●</p>
+<p>    │      ●─●─●</p>
+<p>    │              ●─●─●</p>
+<p>    │                      ●─●─●──●─●─●─●─●─●─● (收敛)</p>
+<p>    │</p>
+<p>    │  经典 HF 参考 ─────────</p>
+<p>    │</p>
+<p>    │  真实基态 ──────────────────</p>
+<p>    │</p>
+<p>    └──────────────────────────────→ 优化步数</p>
+<p>     0    10    20    30    40   50</p>
+
+<p>       ↑ 探索期    ↑ 下降期  ↑ 收敛期</p>
+<p></code>`<code></p>
+
+<p><strong>3 个阶段</strong>:</p>
+<ol><li><</li></ol>strong>探索期</strong>(0-10 步): 经典优化器找到<strong>下降方向</strong>
+<ul><li><</li></ul>strong>下降期</strong>(10-30 步): 快速接近基态
+<ul><li><</li></ul>strong>收敛期</strong>(30-50 步): 在最小附近"振荡", 经典优化器收敛判定
+
+<p><strong>VQE 实际行为</strong>:</p>
+<ul><li><</li></ul>strong>典型收敛步数</strong>: 50-200 步
+<ul><li><</li></ul>strong>每次评估</strong>: 量子电路 1 次运行 + $M$ 次测量($M$ = Pauli 项数)
+<ul><li><</li></ul>strong>总运行时间</strong>: 50 × 6 次测量 × 1 ms = 300 ms(NISQ 设备)
+
+<h3>13.3.6 噪声对 VQE 的具体影响</h3>
+
+<p><strong>实验观察</strong>(IBM 真实硬件):</p>
+
+<p><strong>1. 测量噪声</strong>(dominant):</p>
+<ul><li>读</li></ul>出错误 1% → $\langle H \rangle$ 偏 0.01 Hartree
+<ul><li>对</li></ul> H₂ 来说误差 0.01/1.137 = 0.88%
+<ul><li><</li></ul>strong>超化学精度</strong>(1.6 × 10⁻³ Hartree), 但<strong>接近</strong>
+
+<p><strong>2. 门噪声</strong>:</p>
+<ul><li>单</li></ul>门错误 $10^{-3}$, 50 门电路 → 保真度 $\sim 95\%$
+<ul><li>加</li></ul>上测量 → 整体保真度 $\sim 85\%$
+<ul><li>需</li></ul>要 <strong>1000+ 次重复</strong>得到稳定期望值
+
+<p><strong>3. 退相干</strong>:</p>
+<ul><li>$</li></ul>T_2 = 100 \mu s$, 50 门 × 50 ns = 2.5 $\mu s$(可接受)
+<ul><li>但</li></ul> 200 门 ansatz: 200 × 50 ns = 10 $\mu s$(临界)
+
+<p><strong>实践结论</strong>:</p>
+<ul><li><</li></ul>strong>ansatz 深度</strong> $L$ ≤ 20 层(NISQ 限制)
+<ul><li><</li></ul>strong>qubit 数</strong> $n$ ≤ 100(NISQ 限制)
+<ul><li><</li></ul>strong>需要错误缓解</strong>(13.7) 把误差<strong>降低 1-2 个数量级</strong>
+
+<hr>
+
+<h2>13.4 量子近似优化算法 (QAOA)</h2>
+
+<h3>13.4.1 Farhi 2014 的原始想法</h3>
+
+<p>Edward Farhi, Jeffrey Goldstone, Sam Gutmann 2014 年提出:</p>
+
+<blockquote class="chapter-quote"><p><strong>把组合优化问题编码成 Hamilton 量的基态</strong></p></blockquote>
+<p><strong>步骤</strong>:</p>
+<ol><li>优</li></ol>化问题(目标函数 $C(x)$) → 编码为 $H_C$(问题 Hamilton)
+<ul><li>混</li></ul>合器 $H_M$(让量子态"游走") → 通常取 $H_M = \sum_i X_i$
+<ul><li>参</li></ul>数化态 $|\gamma, \beta\rangle = e^{-i\beta_p H_M} e^{-i\gamma_p H_C} \cdots e^{-i\beta_1 H_M} e^{-i\gamma_1 H_C} |+\rangle^{\otimes n}$
+<ul><li>测</li></ul>量 $\langle H_C \rangle$
+<ul><li>经</li></ul>典优化器更新 $(\gamma_1, \ldots, \gamma_p, \beta_1, \ldots, \beta_p)$
+
+<h3>13.4.2 参数化态 $|\gamma, \beta\rangle$</h3>
+
+<p><strong>详细结构</strong>:</p>
+
+<p>$$|\gamma, \beta\rangle = \prod_{k=1}^{p} e^{-i\beta_k H_M} e^{-i\gamma_k H_C} |+\rangle^{\otimes n}$$</p>
+
+<p><strong>直觉</strong>:</p>
+<ul><li>$</li></ul>|+\rangle^{\otimes n}$ = 均匀叠加(所有可能解)
+<ul><li>$</li></ul>e^{-i\gamma H_C}$ = <strong>相位分离</strong>(给目标函数低的态大相位)
+<ul><li>$</li></ul>e^{-i\beta H_M}$ = <strong>混合</strong>(让量子态在不同经典态之间游走)
+
+<p><strong>深度 $p$</strong> = QAOA 的关键参数:</p>
+<ul><li>$</li></ul>p = 1$: 2 个参数, 浅电路
+<ul><li>$</li></ul>p = 10$: 20 个参数, 中等电路
+<ul><li>$</li></ul>p \to \infty$: 渐近收敛到精确解
+
+<h3>13.4.3 MaxCut 例子(3 节点三角形)</h3>
+
+<p><strong>MaxCut 问题</strong>: 把图的节点分成两组, 让<strong>跨组边数</strong>最大。</p>
+
+<p><strong>3 节点三角形</strong>: 节点 A, B, C, 边 (A,B), (B,C), (A,C)</p>
+
+<p><strong>最大割</strong>: 分成 {A} + {B, C}, 跨组边数 = 3(所有边)</p>
+
+<p><strong>Hamilton 量</strong>:</p>
+
+<p>$$H_C = \frac{1}{2}(Z_0 Z_1 + Z_1 Z_2 + Z_0 Z_2)$$</p>
+
+<p>(每条边 $Z_i Z_j$, 当两个节点不同侧时为 $-1$, 同侧时为 $+1$, cut 数 = $(-H_C)$ 的最大值的相反数)</p>
+
+<p><strong>混合器</strong>: $H_M = X_0 + X_1 + X_2$</p>
+
+<p><strong>QAOA 流程</strong>(p=1):</p>
+<ul><li>$</li></ul>|+\rangle^{\otimes 3}$ = $\frac{1}{\sqrt{8}}(|000\rangle + |001\rangle + \cdots + |111\rangle)$
+<ul><li>$</li></ul>e^{-i\gamma H_C}|+\rangle^{\otimes 3}$ = 加相位
+<ul><li>$</li></ul>e^{-i\beta H_M}$ = 混合
+<ul><li>测</li></ul>量 → $\langle H_C \rangle$
+<ul><li>经</li></ul>典优化找最优 $(\gamma^*, \beta^*)$
+
+<p><strong>经典最优</strong>: $\gamma^* = 2\pi/3$, $\beta^* = \pi/6$(对 3 节点)</p>
+
+<p><strong>QAOA(p=1) 给出</strong>: 期望 cut 数 = 2.5/3 = 83.3%(比随机 50% 好)</p>
+
+<p><strong>QAOA(p→∞) 给出</strong>: 3.0/3 = 100%(精确)</p>
+
+<p><strong>结论</strong>: QAOA(p=1) 已经在简单问题上<strong>超过经典</strong>。</p>
+
+<h3>13.4.4 QAOA 的性能保证</h3>
+
+<p><strong>定理</strong>(Farhi-Goldstone-Gutmann 2014):</p>
+
+<p>对 $n$ 节点 MaxCut:</p>
+<ul><li><</li></ul>strong>经典最优</strong>: $\sim 0.878 n$(Goemans-Williamson)
+<ul><li><</li></ul>strong>QAOA(p=1)</strong>: $\sim 0.6924 n$
+<ul><li><</li></ul>strong>QAOA(p→∞)</strong>: $n$(精确)
+
+<p><strong>加速来源</strong>: QAOA 不是"指数加速", 是<strong>启发式 + 浅电路</strong>。</p>
+
+<blockquote class="chapter-quote"><p><strong>QAOA 的本质</strong>: 不是替代经典最优算法, 是<strong>在 NISQ 设备上能跑</strong>的<strong>实用启发式</strong>。</p></blockquote>
+<h3>13.4.5 QAOA 深度 $p$ 的影响</h3>
+
+<p><strong>深度 $p$</strong> = QAOA 的<strong>唯一</strong>超参数。</p>
+
+<p><strong>理论结果</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>深度 $p$</th></tr></thead><tbody></tbody></table>QAOA 性能 | 经典对应 | 备注 |
+<p>|:---|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>$p = 1$</th></tr></thead><tbody></tbody></table>$0.6924 n$ | GW 0.878n 的 79% | 浅电路, 演示用 |
+<table class="concept-table"><thead><tr><th>$p = 2$</th></tr></thead><tbody></tbody></table>$0.7559 n$ | GW 0.878n 的 86% | 改进 |
+<table class="concept-table"><thead><tr><th>$p = 4$</th></tr></thead><tbody></tbody></table>$0.7918 n$ | GW 0.878n 的 90% | 接近 |
+<table class="concept-table"><thead><tr><th>$p = 8$</th></tr></thead><tbody></tbody></table>$0.8345 n$ | GW 0.878n 的 95% | 接近 GW |
+<table class="concept-table"><thead><tr><th>$p \to \infty$</th></tr></thead><tbody></tbody></table>$n$ | 精确 | 极限 |
+
+<p><strong>关键观察</strong>:</p>
+<ul><li><</li></ul>strong>$p = 8$</strong>: 接近经典最优
+<ul><li><</li></ul>strong>$p > 10$</strong>: 边际效应递减 + 噪声敏感
+<ul><li><</li></ul>strong>$p = O(1)$</strong>: 实用范围(NISQ)
+
+<p><strong>为什么 $p$ 大时不实用</strong>:</p>
+<ol><li><</li></ol>strong>电路深度</strong>: $p \times O(n)$ 门 → NISQ 限制
+<ul><li><</li></ul>strong>参数数</strong>: $2p$(每个 $\gamma_i, \beta_i$) → 优化难度
+<ul><li><</li></ul>strong>噪声累积</strong>: 噪声随 $p$ 指数累积
+
+<h3>13.4.6 QAOA 在调度问题上的应用</h3>
+
+<p><strong>调度问题</strong>: 给定 $N$ 个任务 + $M$ 台机器 + 约束(时间、依赖), 找<strong>最优执行顺序</strong>。</p>
+
+<p><strong>应用案例</strong>:</p>
+
+<p><strong>1. 物流配送</strong>(京东、美团):</p>
+<ul><li>$</li></ul>N = 100$ 订单 + $M = 20$ 骑手
+<ul><li>目</li></ul>标: 最短总距离
+<ul><li>Q</li></ul>AOA 编码: 每订单 × 每骑手(2000 qubit, NISQ 困难)
+
+<p><strong>2. 投资组合</strong>(金融):</p>
+<ul><li>$</li></ul>N = 100$ 资产 + 风险/回报约束
+<ul><li>目</li></ul>标: 最大夏普比率
+<ul><li>Q</li></ul>AOA 编码: 简化为二元选择
+
+<p><strong>3. 药物分子设计</strong>(制药):</p>
+<ul><li>$</li></ul>N = 50$ 化学基团 + 组合约束
+<ul><li>目</li></ul>标: 最优药物分子
+<ul><li>Q</li></ul>AOA 编码: 链式结构
+
+<p><strong>现实</strong>:</p>
+<ul><li><</li></ul>strong>小问题</strong>($n \leq 30$): QAOA 已经能跑
+<ul><li><</li></ul>strong>大问题</strong>($n \geq 100$): 经典启发式(模拟退火、遗传算法)更实用
+<ul><li><</li></ul>strong>量子优势</strong>: 尚未在 QAOA 上<strong>明确</strong>证明
+
+<hr>
+
+<h3>13.5 VQE vs QAOA 对比</h3>
+
+<table class="concept-table"><thead><tr><th>维度</th></tr></thead><tbody></tbody></table>VQE | QAOA |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>目标</strong></th></tr></thead><tbody></tbody></table>基态能量 $\langle H \rangle$ 最小 | 优化目标 $C(x)$ 期望最大 |
+<table class="concept-table"><thead><tr><th><strong>Ansatz</strong></th></tr></thead><tbody></tbody></table>任意参数化电路 $U(\theta)$ | 特定结构: 交替 $H_C, H_M$ |
+<table class="concept-table"><thead><tr><th><strong>应用</strong></th></tr></thead><tbody></tbody></table>量子化学、材料 | 组合优化、调度 |
+<table class="concept-table"><thead><tr><th><strong>深度</strong></th></tr></thead><tbody></tbody></table>$O(L \cdot n)$ (一般) | $O(p \cdot n)$ (固定) |
+<table class="concept-table"><thead><tr><th><strong>理论保证</strong></th></tr></thead><tbody></tbody></table>无(启发式) | 渐近最优($p \to \infty$) |
+<table class="concept-table"><thead><tr><th><strong>硬件</strong></th></tr></thead><tbody></tbody></table>IBM, Google, Quantinuum | IBM, Google, Rigetti |
+<table class="concept-table"><thead><tr><th><strong>经典对应</strong></th></tr></thead><tbody></tbody></table>Hartree-Fock, CI | 模拟退火, 遗传算法 |
+<table class="concept-table"><thead><tr><th><strong>代表论文</strong></th></tr></thead><tbody></tbody></table>Peruzzo 2014 | Farhi 2014 |
+
+<p><strong>共同点</strong>:</p>
+<ul><li><</li></ul>strong>NISQ 友好</strong>: 浅电路($\leq 1000$ 门)
+<ul><li><</li></ul>strong>经典-量子混合</strong>: 量子测期望, 经典优化
+<ul><li><</li></ul>strong>噪声容忍</strong>: 经典优化可以部分平均掉噪声
+
+<p><strong>不同点</strong>:</p>
+<ul><li>V</li></ul>QE 更<strong>灵活</strong>(任意 ansatz), QAOA 更<strong>结构化</strong>(固定交替)
+<ul><li>V</li></ul>QE 更<strong>实用</strong>(化学上跑通), QAOA 更<strong>理论</strong>(有渐近保证)
+
+<h3>13.5.1 选择 VQE 还是 QAOA?</h3>
+
+<p><strong>决策树</strong>:</p>
+
+<p></code>`<code></p>
+<p>                优化目标?</p>
+<p>                │</p>
+<p>        ┌───────┴───────┐</p>
+<p>        │               │</p>
+<p>   连续(化学)         离散(组合)</p>
+<p>        │               │</p>
+<p>        ↓               ↓</p>
+<p>       VQE            QAOA</p>
+<p>        │               │</p>
+<p>        ↓               ↓</p>
+<p>   需要 ansatz?     目标 Hamilton?</p>
+<p>        │               │</p>
+<p>   ┌────┴────┐      ┌────┴────┐</p>
+<p>   │         │      │         │</p>
+<p>  HEA      UCCSD    自然      复杂</p>
+<p>   │         │      │         │</p>
+<p>   ↓         ↓      ↓         ↓</p>
+<p>  浅电路   深电路   浅QAOA   深QAOA</p>
+<p>   ↓         ↓      ↓         ↓</p>
+<p>  NISQ    中期NISQ  NISQ    FTQC</p>
+<p></code>`<code></p>
+
+<p><strong>实践</strong>:</p>
+<ul><li><</li></ul>strong>化学/材料</strong> → VQE + UCCSD(可能需要纠错)
+<ul><li><</li></ul>strong>组合优化(简单)</strong> → QAOA(p=1-4)
+<ul><li><</li></ul>strong>机器学习</strong> → VQE + 自定义 ansatz
+<ul><li><</li></ul>strong>原型验证</strong> → VQE + 硬件高效(快)
+
+<h3>13.5.2 VQE/QAOA 的"非对等性"</h3>
+
+<p><strong>一个常被忽视的事实</strong>: VQE 和 QAOA <strong>不是</strong>平等可选的。</p>
+
+<table class="concept-table"><thead><tr><th>场景</th></tr></thead><tbody></tbody></table>VQE 优势 | QAOA 优势 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>化学精度</strong></th></tr></thead><tbody></tbody></table>✅ | ❌ |
+<table class="concept-table"><thead><tr><th><strong>理论保证</strong></th></tr></thead><tbody></tbody></table>❌ | ✅($p \to \infty$) |
+<table class="concept-table"><thead><tr><th><strong>实现简单</strong></th></tr></thead><tbody></tbody></table>✅(任意 ansatz) | ✅(固定结构) |
+<table class="concept-table"><thead><tr><th><strong>NISQ 友好</strong></th></tr></thead><tbody></tbody></table>✅ | ✅ |
+<table class="concept-table"><thead><tr><th><strong>可扩展</strong></th></tr></thead><tbody></tbody></table>⚠️(ansatz 设计) | ❌(深度限制) |
+<table class="concept-table"><thead><tr><th><strong>清晰目标</strong></th></tr></thead><tbody></tbody></table>⚠️(依赖 ansatz) | ✅($H_C$ 直接编码) |
+
+<p><strong>结论</strong>: <strong>VQE 适合"探索未知问题"</strong>(化学), <strong>QAOA 适合"已知问题的优化"</strong>(MaxCut)。</p>
+
+<hr>
+
+<h2>13.6 变分算法的理论基础</h2>
+
+<h3>13.6.1 表达力 vs 训练性</h3>
+
+<p><strong>表达力</strong>(expressibility): ansatz 能覆盖态空间<strong>多大比例</strong>?</p>
+<ul><li><</li></ul>strong>浅</strong> ansatz: 表达力有限
+<ul><li><</li></ul>strong>深</strong> ansatz: 表达力强
+
+<p><strong>训练性</strong>(trainability): 优化器能否<strong>高效找到最优</strong>?</p>
+<ul><li>浅</li></ul> ansatz: 训练容易(局部极少)
+<ul><li>深</li></ul> ansatz: 训练难(局部极多, 梯度消失)
+
+<p><strong>权衡</strong>: 实际需要<strong>刚好够用</strong>的 ansatz 深度。</p>
+
+<h3>13.6.2 Barren Plateau 问题</h3>
+
+<p><strong>Barren Plateau</strong>(贫瘠高原) = 梯度消失问题:</p>
+
+<p>$$|\partial_\theta \langle H \rangle| \sim O(2^{-n})$$</p>
+
+<p>随着 qubit 数 $n$ 增大, 梯度<strong>指数消失</strong>。</p>
+
+<p><strong>后果</strong>: 优化器找不到方向, VQE/QAOA 训练<strong>失败</strong>。</p>
+
+<p><strong>原因</strong>:</p>
+<ol><li><</li></ol>strong>随机 ansatz</strong>: 高度对称 → 期望值集中在 Haar 测度附近 → 梯度消失
+<ul><li><</li></ul>strong>深度电路</strong>: 多次随机化 → 指数小梯度
+<ul><li><</li></ul>strong>全局观测</strong>: $\langle H \rangle$ 涉及 $O(2^n)$ 项 → 抵消
+
+<p><strong>解决</strong>:</p>
+<ol><li><</li></ol>strong>结构化 ansatz</strong>(不随机, 有问题结构)
+<ul><li><</li></ul>strong>浅电路</strong>($L = O(1)$ 而非 $L = O(n)$)
+<ul><li><</li></ul>strong>局部观测</strong>(小 Hamilton 量项)
+<ul><li><</li></ul>strong>预训练</strong>(先用经典方法找好初值)
+
+<h3>13.6.3 Barren Plateau 的可视化</h3>
+
+<p><strong>类比: 沙漠找绿洲</strong></p>
+
+<p></code>`<code></p>
+<p>                  ↑ 损失函数 L(θ)</p>
+<p>                  │</p>
+<p>                  │   ╱╲</p>
+<p>                  │  ╱  ╲     ← 真实最小(绿洲)</p>
+<p>                  │ ╱    ╲___ </p>
+<p>                  │╱         </p>
+<p>    ──────────────┴───────────────────→ 参数 θ</p>
+<p>                 ↑ 梯度</p>
+<p>                0.001  ← 在平原上(barren)</p>
+<p></code>`<code></p>
+
+<p><strong>在平原上</strong>:</p>
+<ul><li>梯</li></ul>度<strong>极小</strong>($\sim 2^{-n}$)
+<ul><li>优</li></ul>化器<strong>随机游走</strong>(噪声主导)
+<ul><li><</li></ul>strong>指数</strong>次评估才能找到下降方向
+
+<p><strong>实验观察</strong>:</p>
+<ul><li>$</li></ul>n = 4$ qubit: 梯度 $\sim 0.1$(可优化)
+<ul><li>$</li></ul>n = 10$ qubit: 梯度 $\sim 0.001$(困难)
+<ul><li>$</li></ul>n = 20$ qubit: 梯度 $\sim 10^{-6}$(实际不可行)
+
+<h3>13.6.4 收敛性</h3>
+
+<p><strong>问题</strong>: VQE/QAOA 收<strong>敛到局部极小</strong>而非全局最优?</p>
+
+<p><strong>回答</strong>:</p>
+<ul><li><</li></ul>strong>可能</strong>(ansatz 浅时)
+<ul><li><</li></ul>strong>实证</strong>: 在简单问题上, VQE/QAOA 找到<strong>接近全局最优</strong>
+<ul><li><</li></ul>strong>理论</strong>: 对某些问题 QAOA 是<strong>多项式时间收敛</strong>(Farhi 2020)
+
+<p><strong>实践建议</strong>: 多<strong>初始点</strong> + <strong>适应性 ansatz</strong> 增加找到全局最优的概率。</p>
+
+<h3>13.6.5 优化景观的几何直觉</h3>
+
+<p><strong>参数空间</strong>: 多维"景观", 高度 = 损失函数值。</p>
+
+<p><strong>好的景观</strong>(易优化):</p>
+<p></code>`<code></p>
+<p>   ↑ L</p>
+<p>   │    ╱╲</p>
+<p>   │   ╱  ╲</p>
+<p>   │  ╱    ╲</p>
+<p>   │ ╱      ╲      ← 单个全局最小, 平滑下降</p>
+<p>   └───────────────→ θ</p>
+<p></code>`<code></p>
+
+<p><strong>差的景观</strong>(难优化):</p>
+<p></code>`<code></p>
+<p>   ↑ L</p>
+<p>   │  ╱╲  ╱╲  ╱╲</p>
+<p>   │ ╱  ╲╱  ╲╱  ╲    ← 多个局部极小</p>
+<p>   │╱              </p>
+<p>   └───────────────→ θ</p>
+<p></code>`<code></p>
+
+<p><strong>Barren Plateau</strong>(最难):</p>
+<p></code>`<code></p>
+<p>   ↑ L</p>
+<p>   │────────────────  ← 几乎是平的(barren)</p>
+<p>   │  </p>
+<p>   │       ●         ← 一个微小凹陷(小到看不见)</p>
+<p>   └───────────────→ θ</p>
+<p></code>`<code></p>
+
+<p><strong>量子 ansatz 的特点</strong>:</p>
+<ul><li><</li></ul>strong>随机 ansatz</strong>: 容易产生 barren plateau
+<ul><li><</li></ul>strong>结构化 ansatz</strong>: 较好景观
+<ul><li><</li></ul>strong>问题启发 ansatz</strong>: 最好(贴合问题)
+
+<hr>
+
+<h2>13.7 噪声的影响与错误缓解</h2>
+
+<h3>13.7.1 NISQ 噪声的来源</h3>
+
+<p><strong>1. 门错误</strong>(gate error)</p>
+<ul><li>单</li></ul> qubit 门: $10^{-4}$(超导最好)
+<ul><li>双</li></ul> qubit 门: $10^{-3}$
+<ul><li>累</li></ul>积: 100 门电路保真度 $\sim e^{-0.1} \approx 90\%$
+
+<p><strong>2. 测量错误</strong>(measurement error)</p>
+<ul><li>读</li></ul>出错误率: $\sim 1\%$
+<ul><li>1</li></ul>000 次测量 → ~10 次错误
+
+<p><strong>3. 退相干</strong>(decoherence)</p>
+<ul><li>$</li></ul>T_1$ (能量弛豫): $\sim 100 \mu s$(超导)
+<ul><li>$</li></ul>T_2$ (相位弛豫): $\sim 50 \mu s$
+<ul><li>累</li></ul>积相位误差 → 量子态"塌缩"到经典
+
+<h3>13.7.2 错误缓解(Error Mitigation)</h3>
+
+<p><strong>不是</strong>纠错(ch17-19 详述), 而是<strong>事后</strong>校正。</p>
+
+<p><strong>方法 1: 零噪声外推</strong>(Zero-Noise Extrapolation, ZNE)</p>
+
+<p></code>`<code></p>
+<p>测量在不同噪声强度 λ 下的 ⟨H⟩_λ:</p>
+<p>⟨H⟩_0  ←  外推 λ → 0</p>
+<p></code>`<code></p>
+
+<p><strong>直觉</strong>: 噪声使期望值偏小, 线性/多项式外推到零噪声。</p>
+
+<p><strong>方法 2: 概率误差消除</strong>(Probabilistic Error Cancellation, PEC)</p>
+
+<p></code>`<code></p>
+<p>用"反向噪声"操作抵消噪声</p>
+<p>⟨H⟩_noise-free ← ⟨H⟩_PEC (有偏估计, 但无偏)</p>
+<p></code>`<code></p>
+
+<p><strong>方法 3: 测量错误缓解</strong>(Measurement Error Mitigation)</p>
+
+<p></code>`<code></p>
+<p>预先标定测量错误矩阵 M</p>
+<p>正确分布 = M^{-1} × 测量分布</p>
+<p></code>`<code></p>
+
+<h3>13.7.3 VQE 的错误缓解案例</h3>
+
+<p><strong>Google 2020</strong>(Sycamore 量子计算机):</p>
+
+<table class="concept-table"><thead><tr><th>方法</th></tr></thead><tbody></tbody></table>能量 (Hartree) | 相对误差 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>原始测量</th></tr></thead><tbody></tbody></table>-1.05 | 8% |
+<table class="concept-table"><thead><tr><th>+ 测量错误缓解</th></tr></thead><tbody></tbody></table>-1.11 | 2.5% |
+<table class="concept-table"><thead><tr><th>+ ZNE</th></tr></thead><tbody></tbody></table>-1.135 | 0.5% |
+<table class="concept-table"><thead><tr><th>+ PEC(理论)</th></tr></thead><tbody></tbody></table>-1.137 | < 0.1% |
+
+<p><strong>结论</strong>: 错误缓解可以把 VQE 从"差 8%" 提升到"差 0.5%",<strong>接近</strong>化学精度(1 kcal/mol = 1.6 × 10⁻³ Hartree)。</p>
+
+<h3>13.7.4 错误缓解 vs 量子纠错</h3>
+
+<p><strong>重要区分</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>维度</th></tr></thead><tbody></tbody></table>错误缓解 (EM) | 量子纠错 (QEC) |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>原理</strong></th></tr></thead><tbody></tbody></table>事后校正 | 实时保护 |
+<table class="concept-table"><thead><tr><th><strong>qubit 代价</strong></th></tr></thead><tbody></tbody></table>1× | 1000×+ (表面码) |
+<table class="concept-table"><thead><tr><th><strong>电路深度</strong></th></tr></thead><tbody></tbody></table>不增加 | 显著增加(辅助操作) |
+<table class="concept-table"><thead><tr><th><strong>可处理错误率</strong></th></tr></thead><tbody></tbody></table>$10^{-3}$(入门) | $10^{-6}$(全功能) |
+<table class="concept-table"><thead><tr><th><strong>理论保证</strong></th></tr></thead><tbody></tbody></table>无(统计方法) | 有(阈值定理) |
+<table class="concept-table"><thead><tr><th><strong>代表方法</strong></th></tr></thead><tbody></tbody></table>ZNE, PEC, 测量纠错 | Shor 码, Steane 码, 表面码 |
+<table class="concept-table"><thead><tr><th><strong>NISQ 兼容</strong></th></tr></thead><tbody></tbody></table>✅ 兼容 | ❌ 不兼容(代价太大) |
+
+<p><strong>结论</strong>: NISQ 时代<strong>只用</strong>错误缓解, <strong>等待</strong>纠错时代(ch17-19)。</p>
+
+<h3>13.7.5 ZNE 的详细算法</h3>
+
+<p><strong>Zero-Noise Extrapolation</strong> 步骤:</p>
+
+<p></code>`<code></p>
+<ol><li>在</li></ol>不同噪声强度 λ = 1, 2, 3, ... 下测量 ⟨H⟩_λ
+<ul><li>拟</li></ul>合 ⟨H⟩_λ = a + b·λ(线性) 或 a + b·λ + c·λ²(多项式)
+<ul><li>外</li></ul>推到 λ → 0: ⟨H⟩_0 = a
+<p></code>`<code></p>
+
+<p><strong>实现方式</strong>:</p>
+<ul><li><</li></ul>strong>脉冲拉伸</strong>: 拉长每个门的脉冲时间 → 增加有效噪声
+<ul><li><</li></ul>strong>门插入</strong>: 在电路中插入恒等操作 → 累积更多噪声
+<ul><li><</li></ul>strong>测量重复</strong>: 同一电路测量多次 → 统计平均
+
+<p><strong>例子</strong>(H₂ VQE):</p>
+
+<table class="concept-table"><thead><tr><th>噪声倍数 λ</th></tr></thead><tbody></tbody></table>测量能量 (Hartree) |
+<p>|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>1.0</th></tr></thead><tbody></tbody></table>-1.135 |
+<table class="concept-table"><thead><tr><th>2.0</th></tr></thead><tbody></tbody></table>-1.125 |
+<table class="concept-table"><thead><tr><th>3.0</th></tr></thead><tbody></tbody></table>-1.115 |
+
+<p><strong>外推</strong>: 拟合直线 → 截距 = -1.145(接近真实 -1.137)</p>
+
+<h3>13.7.6 PEC 的详细算法</h3>
+
+<p><strong>Probabilistic Error Cancellation</strong> 步骤:</p>
+
+<p></code>`<code></p>
+<ol><li>标</li></ol>定噪声通道: ρ_noisy = N(ρ_ideal)
+<ul><li>构</li></ul>造反向操作: N^{-1} = Σ_k c_k B_k(基操作)
+<ul><li>在</li></ul>电路中插入 N^{-1}: 期望 ⟨H⟩_noise-free = ⟨H⟩_PEC
+<p></code>`<code></p>
+
+<p><strong>特点</strong>:</p>
+<ul><li><</li></ul>strong>无偏</strong>: 数学上严格正确(代价是更高的采样数)
+<ul><li><</li></ul>strong>代价</strong>: 采样数 × |Σ c_k|(可能 10× - 100×)
+<ul><li><</li></ul>strong>限制</strong>: 需精确知道噪声模型(在 NISQ 上难以精确标定)
+
+<hr>
+
+<h2>13.8 应用</h2>
+
+<h3>13.8.1 量子化学</h3>
+
+<p><strong>应用</strong>: 分子基态能量、反应路径、激发态</p>
+
+<p><strong>代表工作</strong>:</p>
+<ul><li><</li></ul>strong>Google Sycamore H₂</strong>(2020): 第一个 VQE 实验
+<ul><li><</li></ul>strong>IBM H₂/LiH</strong>(2020-2022): 多分子 VQE
+<ul><li><</li></ul>strong>Quantinuum H₁-1 H₂</strong>(2022): 离子阱 + 错误缓解
+<ul><li><</li></ul>strong>PsiQuantum H₂O</strong>(2023): 光子平台
+<ul><li><</li></ul>strong>Google Willow 分子</strong>(2024-2025): 100+ qubit 平台
+
+<p><strong>意义</strong>: 量子化学是 VQE 的"杀手级应用" —— 经典计算的瓶颈是 $O(\exp(N))$, VQE 是<strong>多项式代价</strong>。</p>
+
+<h3>13.8.2 材料科学</h3>
+
+<p><strong>应用</strong>: Hubbard 模型、高温超导、强关联电子系统</p>
+
+<p><strong>代表工作</strong>:</p>
+<ul><li><</li></ul>strong>IBM Hubbard 链</strong>(2021-2022)
+<ul><li><</li></ul>strong>Google 镍氧化物超导</strong>(2024)
+
+<p><strong>意义</strong>: 经典计算<strong>无法</strong>精确求解 Hubbard 模型(强关联), VQE 有希望。</p>
+
+<h3>13.8.3 组合优化</h3>
+
+<p><strong>应用</strong>: MaxCut、TSP、投资组合、调度、物流</p>
+
+<p><strong>代表工作</strong>:</p>
+<ul><li><</li></ul>strong>Google MaxCut 23 节点</strong>(2019): QAOA p=1
+<ul><li><</li></ul>strong>IBM QAO 投资组合</strong>(2022): 100+ 资产
+<ul><li><</li></ul>strong>Recursion Pharmaceuticals 药物发现</strong>(2023): QAOA
+
+<p><strong>意义</strong>: 现实世界<strong>几乎所有</strong>业务都是优化问题(虽然 QAOA 不一定<strong>超过</strong>经典启发式)。</p>
+
+<h3>13.8.4 机器学习</h3>
+
+<p><strong>应用</strong>: 量子神经网络、量子核、量子 SVM</p>
+
+<p><strong>代表工作</strong>:</p>
+<ul><li><</li></ul>strong>Google 量子核 SVM</strong>(2021)
+<ul><li><</li></ul>strong>IBM QNN 分类</strong>(2022)
+<ul><li><</li></ul>strong>Xanadu 量子 GAN</strong>(2023)
+
+<p><strong>意义</strong>: QML 是 VQE 的"数据科学变体" —— ch14 详述。</p>
+
+<h3>13.8.5 应用全景图</h3>
+
+<p><strong>按行业的潜在影响</strong>:</p>
+
+<p></code>`<code></p>
+<p>┌──────────────────────────────────────────────────────┐</p>
+<p>│  VQE/QAOA 应用热度图(2026)                            │</p>
+<p>│                                                       │</p>
+<p>│  高度影响 ▓▓▓▓▓▓▓▓▓▓ 量子化学(分子设计)               │</p>
+<p>│           ▓▓▓▓▓▓▓▓    材料科学(超导、新材料)           │</p>
+<p>│           ▓▓▓▓▓▓      组合优化(物流、金融)             │</p>
+<p>│           ▓▓▓▓        机器学习(QNN、量子核)            │</p>
+<p>│           ▓▓          量子模拟(凝聚态)                 │</p>
+<p>│           ▓            其他                           │</p>
+<p>│  低度影响                                               │</p>
+<p>└──────────────────────────────────────────────────────┘</p>
+<p></code>``</p>
+
+<h3>13.8.6 量子化学应用的细节</h3>
+
+<p><strong>为什么量子化学是 VQE 的"杀手级应用"</strong>?</p>
+
+<p><strong>1. 经典 FCI 是指数步</strong>:</p>
+<ul><li>N</li></ul> 原子分子 → Hilbert 空间 $2^N$ 维 Slater 行列式空间
+<ul><li>$</li></ul>N = 10$ 个原子: $2^{10} = 1024$(可计算)
+<ul><li>$</li></ul>N = 20$ 个原子: $2^{20} = 10^6$(困难)
+<ul><li>$</li></ul>N = 50$ 个原子: $2^{50} = 10^{15}$(不可行)
+
+<p><strong>2. VQE 是多项式步</strong>:</p>
+<ul><li>N</li></ul> 原子分子 → N 个电子轨道 → 用 STO-3G 基组映射到 ~N qubit
+<ul><li>每</li></ul>次 $\langle H \rangle$ 测量: $O(N^4)$ 个 Pauli 项
+<ul><li>总</li></ul>代价: $O(N^4/\epsilon^2)$(多项式)
+
+<p><strong>3. 实际加速</strong>:</p>
+<ul><li>$</li></ul>N = 20$ 原子: 经典 1 小时 → VQE 1 秒(?)
+<ul><li>$</li></ul>N = 50$ 原子: 经典不可行 → VQE 几小时(?)
+<ul><li><</li></ul>strong>加速比</strong>: 在 $N$ 大时<strong>可能</strong>指数
+
+<p><strong>但</strong>:</p>
+<ul><li><</li></ul>strong>常数因子</strong>巨大(量子电路运行 ~微秒 vs 经典 CPU ~纳秒)
+<ul><li><</li></ul>strong>纠错缺失</strong>: 噪声限制实际 N ≤ 100
+<ul><li><</li></ul>strong>硬件未成熟</strong>: 当前 N ≤ 20 可行
+
+<h3>13.8.7 组合优化的诚实评估</h3>
+
+<p><strong>QAOA 在 MaxCut 上的性能</strong>(实际实验):</p>
+
+<table class="concept-table"><thead><tr><th>节点数 $n$</th></tr></thead><tbody></tbody></table>QAOA(p=1) | QAOA(p=4) | 经典 GW | 经典随机 |
+<p>|:---|:---|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>6</th></tr></thead><tbody></tbody></table>0.83n | 0.96n | 1.00n | 0.75n |
+<table class="concept-table"><thead><tr><th>12</th></tr></thead><tbody></tbody></table>0.69n | 0.85n | 0.95n | 0.75n |
+<table class="concept-table"><thead><tr><th>23</th></tr></thead><tbody></tbody></table>0.65n | 0.78n | 0.88n | 0.75n |
+<table class="concept-table"><thead><tr><th>100</th></tr></thead><tbody></tbody></table>0.62n | 0.72n | 0.86n | 0.75n |
+
+<p><strong>观察</strong>:</p>
+<ul><li><</li></ul>strong>小图</strong>: QAOA 接近 GW
+<ul><li><</li></ul>strong>大图</strong>: QAOA 退化, GW 优势明显
+<ul><li><</li></ul>strong>随机</strong>: QAOA 始终好于随机
+
+<p><strong>结论</strong>: QAOA 在<strong>小图</strong> + <strong>特殊结构</strong>上<strong>可能</strong>超 GW, <strong>大图</strong>不保证。</p>
+
+<hr>
+
+<h2>13.9 工业进展(2024-2026)</h2>
+
+<h3>13.9.1 2024 年的里程碑</h3>
+
+<p><strong>Google Willow</strong>(2024 年 12 月):</p>
+<ul><li>1</li></ul>05 qubit 超导
+<ul><li><</li></ul>strong>首次</strong>大规模 VQE 演示(> 50 量子比特)
+<ul><li>错</li></ul>误率 $10^{-3}$ → $10^{-4}$(显著提升)
+
+<p><strong>IBM Heron</strong>(2024):</p>
+<ul><li>1</li></ul>56 qubit 超导
+<ul><li><</li></ul>strong>重设计</strong>的量子比特(降低串扰)
+<ul><li>V</li></ul>QE 应用: H₂O, NH₃ 基态
+
+<p><strong>Quantinuum H2</strong>(2024):</p>
+<ul><li>5</li></ul>6 qubit 离子阱(全连接!)
+<ul><li><</li></ul>strong>量子体积</strong> 2²⁰(业界最高)
+<ul><li>V</li></ul>QE 应用: H₂ 基态 + 错误缓解
+
+<h3>13.9.2 2025-2026 进展</h3>
+
+<p><strong>IBM Heron R2</strong>(2025):</p>
+<ul><li>1</li></ul>56 qubit + 错误缓解
+<ul><li>演</li></ul>示 VQE 在 <strong>50+ qubit</strong> 上跑
+<ul><li>实</li></ul>用化学精度(1.6 × 10⁻³ Hartree)
+
+<p><strong>Google Willow 应用</strong>(2025):</p>
+<ul><li>V</li></ul>QE 用于镍氧化物超导
+<ul><li>量</li></ul>子化学"黄金标准"逼近
+
+<p><strong>IonQ Forte</strong>(2025):</p>
+<ul><li>3</li></ul>6 qubit 离子阱
+<ul><li>全</li></ul>连接 + 高保真
+<ul><li>Q</li></ul>AOA 在调度问题上跑通
+
+<h3>13.9.3 趋势</h3>
+
+<table class="concept-table"><thead><tr><th>趋势</th></tr></thead><tbody></tbody></table>描述 |
+<p>|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>更大规模</strong></th></tr></thead><tbody></tbody></table>qubit 数从 50 → 200+(NISQ 上限) |
+<table class="concept-table"><thead><tr><th><strong>更深电路</strong></th></tr></thead><tbody></tbody></table>ansatz 从 $L = 5$ → $L = 100$+(用错误缓解) |
+<table class="concept-table"><thead><tr><th><strong>更好错误缓解</strong></th></tr></thead><tbody></tbody></table>ZNE, PEC, 测量纠错(都成熟) |
+<table class="concept-table"><thead><tr><th><strong>混合算法</strong></th></tr></thead><tbody></tbody></table>经典预训练 + 量子精修 |
+<table class="concept-table"><thead><tr><th><strong>应用领域</strong></th></tr></thead><tbody></tbody></table>化学 → 材料 → 优化 → ML |
+
+<hr>
+
+<h2>13.10 局限与挑战</h2>
+
+<h3>13.10.1 理论局限</h3>
+
+<p><strong>问题 1: Barren Plateau</strong></p>
+
+<p>对深电路 + 大系统, 梯度<strong>指数消失</strong>, 训练失败。</p>
+
+<p><strong>缓解</strong>: 浅电路、结构化 ansatz、局部观测。</p>
+
+<p><strong>问题 2: 局部极小</strong></p>
+
+<p>ansatz 浅时, 优化器可能陷入<strong>局部极小</strong>。</p>
+
+<p><strong>缓解</strong>: 多初始点 + 适应性 ansatz。</p>
+
+<p><strong>问题 3: 测量的代价</strong></p>
+
+<p>对 $n$ qubit 系统, $\langle H \rangle$ 的 Pauli 项数 $M = O(n^4)$(物理 Hamilton)。</p>
+
+<p><strong>总测量</strong>: $O(M/\epsilon^2) = O(n^4/\epsilon^2)$。</p>
+
+<p><strong>缓解</strong>: 分组测量、测量算符约简。</p>
+
+<h3>13.10.2 硬件局限</h3>
+
+<p><strong>问题 1: qubit 数</strong></p>
+
+<p>2026 年 ~1000 qubit, 但 VQE 应用需要<strong>有效</strong>qubit(~100-200, 因连接性)。</p>
+
+<p><strong>问题 2: 相干时间</strong></p>
+
+<p>超导 $T_2 \sim 100 \mu s$, ansatz 深度 $\leq 1000$ 门(1 ns/门)。</p>
+
+<p><strong>问题 3: 错误率</strong></p>
+
+<p>$10^{-3}$ 双门错误率 → 100 门电路保真度 $\sim 90\%$。</p>
+
+<h3>13.10.3 算法局限</h3>
+
+<p><strong>问题 1: 不超越经典</strong></p>
+
+<p>QAOA(p=O(1)) 在很多问题上<strong>不超越</strong>经典最优算法。</p>
+
+<p><strong>问题 2: 加速有限</strong></p>
+
+<p>VQE 的"加速"是<strong>减少测量次数</strong>($O(\text{poly}(N))$ vs $O(\text{exp}(N))$ 经典), 不是计算步骤。</p>
+
+<p><strong>问题 3: 无容错</strong></p>
+
+<p>VQE/QAOA <strong>无法</strong>用表面码纠错(电路深度太大)。</p>
+
+<h3>13.10.4 经济成本</h3>
+
+<p><strong>真实成本</strong>(2026 年):</p>
+
+<p><strong>1. 硬件成本</strong>:</p>
+<ul><li>I</li></ul>BM Quantum: \$1.60/分钟(按需) 或 \$9000/月(订阅)
+<ul><li>A</li></ul>WS Braket: \$0.075/shot(每次量子电路运行)
+<ul><li>G</li></ul>oogle Quantum AI: 学术免费 + 工业 \$待谈
+<ul><li>Q</li></ul>uantinuum H1: \$待谈(高端)
+
+<p><strong>2. 经典计算成本</strong>:</p>
+<ul><li>V</li></ul>QE 优化器: 经典 CPU/GPU(几乎免费)
+<ul><li>模</li></ul>拟 VQE: GPU 几小时 \$10
+<ul><li>真</li></ul>实 VQE: 硬件 \$100-1000/实验
+
+<p><strong>3. 人力成本</strong>:</p>
+<ul><li>量</li></ul>子算法工程师: \$200k-400k 美元/年
+<ul><li>量</li></ul>子化学家: \$150k-300k 美元/年
+<ul><li>软</li></ul>件工程师: \$150k-250k 美元/年
+
+<p><strong>ROI</strong>: 目前 VQE/QAOA 的<strong>商业</strong>价值<strong>尚未超过成本</strong>(NISQ 时代仍在投资期)。</p>
+
+<h3>13.10.5 2026 年的"诚实评估"</h3>
+
+<p><strong>VQE/QAOA 在 2026 年的地位</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>维度</th></tr></thead><tbody></tbody></table>状态 |
+<p>|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>学术成熟度</strong></th></tr></thead><tbody></tbody></table>⭐⭐⭐⭐ 成熟, 大量论文 |
+<table class="concept-table"><thead><tr><th><strong>工业成熟度</strong></th></tr></thead><tbody></tbody></table>⭐⭐ 早期, 演示为主 |
+<table class="concept-table"><thead><tr><th><strong>量子优势证明</strong></th></tr></thead><tbody></tbody></table>⭐⭐ 未明确(仅小问题演示) |
+<table class="concept-table"><thead><tr><th><strong>实用商业价值</strong></th></tr></thead><tbody></tbody></table>⭐ 仍待验证 |
+<table class="concept-table"><thead><tr><th><strong>未来 5 年预期</strong></th></tr></thead><tbody></tbody></table>⭐⭐⭐⭐ 显著进步(qubit 数 + 错误缓解) |
+
+<p><strong>结论</strong>:</p>
+<ul><li><</li></ul>strong>VQE/QAOA 是 NISQ 时代的"合理尝试"</strong>, 不是"成熟方案"
+<ul><li><</li></ul>strong>明确</strong>证明量子优势<strong>仍需</strong>: 更快的硬件 + 更深的电路 + 更成熟的错误缓解
+<ul><li><</li></ul>strong>2026-2030</strong>: 期望在 100-200 qubit 上<strong>第一次</strong>展示<strong>实际</strong>量子优势
+
+<hr>
+
+<h2>13.11 总结: NISQ 时代的实用主义</h2>
+
+<h3>13.11.1 核心要点</h3>
+<ul><li><</li></ul>strong>VQE/QAOA = 经典-量子混合</strong>: 量子测量 + 经典优化
+<ul><li><</li></ul>strong>变分原理</strong>: 任意态 $\langle H \rangle \geq E_0$, 优化参数找最小
+<ul><li><</li></ul>strong>NISQ 友好</strong>: 浅电路 + 测量容错
+<ul><li><</li></ul>strong>Ansatz 设计</strong>: 表达力 vs 训练性的权衡
+<ul><li><</li></ul>strong>错误缓解</strong>: ZNE, PEC, 测量纠错(无纠错, 但能校正)
+<ul><li><</li></ul>strong>应用</strong>: 量子化学 + 组合优化 + QML
+
+<h3>13.11.2 概念速查表</h3>
+
+<table class="concept-table"><thead><tr><th>概念</th></tr></thead><tbody></tbody></table>定义 | 章节 |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>NISQ</strong></th></tr></thead><tbody></tbody></table>Noisy Intermediate-Scale Quantum (50-1000 qubit, 无纠错) | 13.1.1 |
+<table class="concept-table"><thead><tr><th><strong>变分原理</strong></th></tr></thead><tbody></tbody></table>$\langle \psi \| H \| \psi \rangle \geq E_0$ | 13.2.1 |
+<table class="concept-table"><thead><tr><th><strong>VQE</strong></th></tr></thead><tbody></tbody></table>Variational Quantum Eigensolver, 估基态能量 | 13.3.1 |
+<table class="concept-table"><thead><tr><th><strong>QAOA</strong></th></tr></thead><tbody></tbody></table>Quantum Approximate Optimization Algorithm, 组合优化 | 13.4.1 |
+<table class="concept-table"><thead><tr><th><strong>Ansatz</strong></th></tr></thead><tbody></tbody></table>参数化量子电路 $U(\theta)$ | 13.3.2 |
+<table class="concept-table"><thead><tr><th><strong>硬件高效 ansatz</strong></th></tr></thead><tbody></tbody></table>浅电路 + 匹配硬件 | 13.3.2 |
+<table class="concept-table"><thead><tr><th><strong>UCCSD</strong></th></tr></thead><tbody></tbody></table>量子化学金标准 ansatz | 13.3.2 |
+<table class="concept-table"><thead><tr><th><strong>H_C</strong></th></tr></thead><tbody></tbody></table>问题 Hamilton(编码目标) | 13.4.1 |
+<table class="concept-table"><thead><tr><th><strong>H_M</strong></th></tr></thead><tbody></tbody></table>混合 Hamilton(让态游走) | 13.4.1 |
+<table class="concept-table"><thead><tr><th><strong>参数化态</strong></th></tr></thead><tbody></tbody></table>$\lvert \gamma, \beta \rangle = e^{-i\beta_p H_M} \cdots e^{-i\gamma_1 H_C} \lvert + \rangle^{\otimes n}$ | 13.4.2 |
+<table class="concept-table"><thead><tr><th><strong>QAOA 深度 $p$</strong></th></tr></thead><tbody></tbody></table>交替 $H_C, H_M$ 的层数 | 13.4.2 |
+<table class="concept-table"><thead><tr><th><strong>Barren Plateau</strong></th></tr></thead><tbody></tbody></table>梯度 $\sim 2^{-n}$ 指数消失 | 13.6.2 |
+<table class="concept-table"><thead><tr><th><strong>ZNE</strong></th></tr></thead><tbody></tbody></table>Zero-Noise Extrapolation, 外推零噪声 | 13.7.2 |
+<table class="concept-table"><thead><tr><th><strong>PEC</strong></th></tr></thead><tbody></tbody></table>Probabilistic Error Cancellation, 概率误差消除 | 13.7.2 |
+<table class="concept-table"><thead><tr><th><strong>参数移位</strong></th></tr></thead><tbody></tbody></table>$\partial_\theta \langle H \rangle$ 量子梯度公式 | 13.3.3 |
+
+<h3>13.11.3 三层洞察</h3>
+
+<p><strong>第一层(技术)</strong>: VQE/QAOA 已经在 H₂、MaxCut 等问题上<strong>跑通</strong> —— NISQ 时代<strong>实用</strong>的量子算法。</p>
+
+<p><strong>第二层(哲学)</strong>: 经典-量子<strong>混合</strong>是 NISQ 时代的<strong>主旋律</strong> —— 量子不做所有事, 而做它擅长的部分。</p>
+
+<p><strong>第三层(战略)</strong>: VQE/QAOA 是从"理论漂亮"到"实际有用"的<strong>桥梁</strong> —— 即使加速有限, 也是 NISQ 时代<strong>唯一</strong>可用的量子优势。</p>
+
+<h3>13.11.4 为什么 VQE/QAOA 是"实用主义"?</h3>
+
+<p><strong>对比</strong>: 三种"量子优势"哲学</p>
+
+<table class="concept-table"><thead><tr><th>哲学</th></tr></thead><tbody></tbody></table>代表 | 目标 | 现状 |
+<p>|:---|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>理论至上</strong></th></tr></thead><tbody></tbody></table>Shor | 指数加速, 数学漂亮 | 容错时代 |
+<table class="concept-table"><thead><tr><th><strong>混合实用</strong></th></tr></thead><tbody></tbody></table>VQE/QAOA | NISQ 能跑, 加速有限 | NISQ 时代 |
+<table class="concept-table"><thead><tr><th><strong>工程至上</strong></th></tr></thead><tbody></tbody></table>量子模拟 | 解决具体物理问题 | 中期 NISQ |
+
+<p><strong>VQE/QAOA 的实用主义</strong>:</p>
+<ol><li><</li></ol>strong>承认限制</strong>: 不假装能跑 Shor
+<ul><li><</li></ul>strong>接受混合</strong>: 量子做一部分, 经典做一部分
+<ul><li><</li></ul>strong>强调可跑</strong>: 即使加速有限, <strong>能跑</strong>比"漂亮但跑不了"好
+<ul><li><</li></ul>strong>等待硬件</strong>: 容错时代到了再考虑 Shor
+
+<h3>13.11.5 VQE/QAOA 的"三个不"</h3>
+
+<p><strong>1. 不承诺量子优势</strong>:</p>
+<ul><li>很</li></ul>多情况下 VQE/QAOA <strong>不</strong>比经典启发式快
+<ul><li>但</li></ul><strong>能跑</strong>就是进步(NISQ 时代)
+
+<p><strong>2. 不替代经典</strong>:</p>
+<ul><li>经</li></ul>典 FCI, GW 算法等仍是黄金标准
+<ul><li>V</li></ul>QE/QAOA 是<strong>补充</strong>, 不是<strong>替代</strong>
+
+<p><strong>3. 不容错</strong>:</p>
+<ul><li>不</li></ul>能用表面码纠错
+<ul><li>只</li></ul>能<strong>事后</strong>错误缓解
+
+<h3>13.11.6 学习本章的"最小路径"</h3>
+
+<p><strong>如果时间有限, 优先读</strong>:</p>
+<ol><li>1</li></ol>3.0 引言(NISQ 哲学)
+<ul><li>1</li></ul>3.2 变分原理(量子版 1908 年老方法)
+<ul><li>1</li></ul>3.3 VQE 5 步流程(核心算法)
+<ul><li>1</li></ul>3.4 QAOA 参数化态(优化算法)
+<ul><li>1</li></ul>3.6 Barren Plateau(理论挑战)
+<ul><li>1</li></ul>3.7 错误缓解(实用技巧)
+<ul><li>1</li></ul>3.11 总结(三层洞察)
+
+<p><strong>如果做研究, 优先读</strong>:</p>
+<ol><li>1</li></ol>3.3.2 ansatz 设计(实际应用)
+<ul><li>1</li></ul>3.5 VQE vs QAOA 选择
+<ul><li>1</li></ul>3.6 Barren Plateau 解决
+<ul><li>1</li></ul>3.7 错误缓解详细算法
+<ul><li>1</li></ul>3.8 应用全景
+<ul><li>1</li></ul>3.10 经济成本与局限
+
+<h3>13.11.7 后续铺路(第三部分 Day 3 → Day 4-5)</h3>
+<ul><li><</li></ul>strong>ch14 量子机器学习</strong> —— VQE 的数据科学变体(量子 SVM, QNN, 量子核)
+<ul><li><</li></ul>strong>ch15 复杂性理论</strong> —— 给出变分算法的理论边界(BQP vs VQE 类)
+
+<hr>
+
+<h2>13.X 附录</h2>
+
+<h3>13.X.1 历史</h3>
+<ul><li><</li></ul>strong>2014</strong>: Peruzzo 等首次提出 VQE(Nat. Commun.)
+<ul><li><</li></ul>strong>2014</strong>: Farhi 等首次提出 QAOA(arXiv)
+<ul><li><</li></ul>strong>2017</strong>: IBM Qiskit 第一个 VQE 实现
+<ul><li><</li></ul>strong>2019</strong>: Google Sycamore VQE 实验(53 qubit)
+<ul><li><</li></ul>strong>2020</strong>: Google H₂ 基态 VQE 演示
+<ul><li><</li></ul>strong>2022</strong>: Quantinuum H1-1 H₂ + 错误缓解
+<ul><li><</li></ul>strong>2024</strong>: Google Willow 大规模 VQE
+<ul><li><</li></ul>strong>2025-2026</strong>: 工业级 VQE 部署(IBM, Google, Quantinuum)
+
+<h3>13.X.2 VQE 资源估算</h3>
+
+<p><strong>电路深度</strong> vs <strong>qubit 数</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>应用</th></tr></thead><tbody></tbody></table>qubit | 深度 | 错误率 | 状态 |
+<p>|:---|:---|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th>H₂</th></tr></thead><tbody></tbody></table>2-4 | 10 | $10^{-3}$ | 已实现 |
+<table class="concept-table"><thead><tr><th>LiH</th></tr></thead><tbody></tbody></table>4-8 | 50 | $10^{-3}$ | 已实现 |
+<table class="concept-table"><thead><tr><th>H₂O</th></tr></thead><tbody></tbody></table>8-12 | 200 | $10^{-3}$ | 演示 |
+<table class="concept-table"><thead><tr><th>100 原子分子</th></tr></thead><tbody></tbody></table>200+ | 1000+ | $10^{-4}$ | 目标 |
+
+<p><strong>结论</strong>: VQE 在<strong>小分子</strong>上已经成熟, <strong>大分子</strong>仍是挑战。</p>
+
+<h3>13.X.3 QAOA 与经典优化</h3>
+
+<p>QAOA 的"加速"声明<strong>需要谨慎</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>问题</th></tr></thead><tbody></tbody></table>经典最优 | QAOA(p=1) | QAOA(p=∞) |
+<p>|:---|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>MaxCut 随机图</strong></th></tr></thead><tbody></tbody></table>$0.878 n$ (GW) | $0.6924 n$ | $n$ |
+<table class="concept-table"><thead><tr><th><strong>TSP</strong></th></tr></thead><tbody></tbody></table>$1.0 \cdot n$(精确) | ? | $1.0 \cdot n$ |
+<table class="concept-table"><thead><tr><th><strong>投资组合</strong></th></tr></thead><tbody></tbody></table>$?$(启发式) | $0.85 \times$ 经典 | 精确 |
+
+<p><strong>结论</strong>: QAOA 在<strong>特殊结构</strong>的问题上<strong>可能</strong>超经典, 但<strong>通用</strong>情况下不保证。</p>
+
+<h3>13.X.4 VQE 在 NISQ 上的"加速"本质</h3>
+
+<p>VQE 不是"加速计算步骤", 而是<strong>减少测量次数</strong>:</p>
+<ul><li><</li></ul>strong>经典 FCI</strong>: $O(\binom{N}{k})$(指数)个 Slater 行列式
+<ul><li><</li></ul>strong>量子 VQE</strong>: $O(n^4)$ 次测量(多项式)
+
+<p><strong>但</strong>: 每<strong>次</strong>量子测量的<strong>物理时间</strong>可能很长(目前 ~ms 级)。</p>
+
+<p><strong>净加速</strong>: 在 qubit 数 $n$ 大时<strong>潜在</strong>加速, 实际<strong>取决于硬件</strong>。</p>
+
+<h3>13.X.5 VQE/QAOA 失败的常见原因</h3>
+
+<p><strong>1. Ansatz 太浅</strong>: 表达力不够, 找不到基态</p>
+<p><strong>2. Ansatz 太深</strong>: Barren plateau, 训练失败</p>
+<p><strong>3. 优化器不好</strong>: 局部极小, 收敛慢</p>
+<p><strong>4. 噪声太大</strong>: 测量误差 > 信号</p>
+<p><strong>5. 初始点差</strong>: 优化器陷入错误盆地</p>
+
+<p><strong>应对</strong>:</p>
+<ol><li><</li></ol>strong>适应性 ansatz</strong>(ADAPT-VQE): 自动找深度
+<ul><li><</li></ul>strong>多初始点</strong>: 随机重启
+<ul><li><</li></ul>strong>好优化器</strong>: L-BFGS / SPSA
+<ul><li><</li></ul>strong>错误缓解</strong>: ZNE / PEC
+<ul><li><</li></ul>strong>预训练</strong>: 经典 HF / 退火给出初值
+
+<h3>13.X.6 VQE 跟 ch12 QPE 的关系</h3>
+
+<table class="concept-table"><thead><tr><th>维度</th></tr></thead><tbody></tbody></table>QPE | VQE |
+<p>|:---|:---|:---|</p>
+<table class="concept-table"><thead><tr><th><strong>算法类型</strong></th></tr></thead><tbody></tbody></table>量子算法 | 经典-量子混合 |
+<table class="concept-table"><thead><tr><th><strong>电路深度</strong></th></tr></thead><tbody></tbody></table>$O(n^2)$ (QFT) | $O(L \cdot n)$ (ansatz) |
+<table class="concept-table"><thead><tr><th><strong>qubit 数</strong></th></tr></thead><tbody></tbody></table>$n+1$ (控制 + 目标) | $n$ (单寄存器) |
+<table class="concept-table"><thead><tr><th><strong>是否容错</strong></th></tr></thead><tbody></tbody></table>需要($10^{-6}$ 错误率) | 不需要(NISQ 容忍) |
+<table class="concept-table"><thead><tr><th><strong>输出</strong></th></tr></thead><tbody></tbody></table>经典相位 $\phi$ | 经典参数 $\theta^*$ |
+<table class="concept-table"><thead><tr><th><strong>加速</strong></th></tr></thead><tbody></tbody></table>指数 | 多项式(对局域 Hamilton) |
+<table class="concept-table"><thead><tr><th><strong>状态</strong></th></tr></thead><tbody></tbody></table>容错时代 | NISQ 时代 |
+
+<p><strong>结论</strong>: QPE 和 VQE 是<strong>不同范式</strong> —— QPE 是"硬算", VQE 是"启发式"。</p>
+
+<h3>13.X.7 推荐阅读(详细)</h3>
+
+<p><strong>论文(经典必读)</strong>:</p>
+<ul><li>P</li></ul>eruzzo et al. "A variational eigenvalue solver on a photonic quantum processor" (2014, Nat. Commun.) —— VQE 原始论文
+<ul><li>F</li></ul>arhi, Goldstone, Gutmann "A Quantum Approximate Optimization Algorithm" (2014, arXiv) —— QAOA 原始论文
+<ul><li>M</li></ul>cClean et al. "Barren plateaus in quantum neural network training landscapes" (2018, Nat. Commun.) —— Barren plateau 问题
+<ul><li>K</li></ul>andala et al. "Hardware-efficient variational quantum eigensolver for small molecules" (2017, Nature) —— IBM 实验
+<ul><li>T</li></ul>emme et al. "Error mitigation for short-depth quantum circuits" (2017, PRL) —— ZNE 理论
+<ul><li>E</li></ul>ndo et al. "Practical quantum error mitigation for near-future applications" (2018, PRX) —— 错误缓解综述
+
+<p><strong>论文(2024-2026 最新)</strong>:</p>
+<ul><li>G</li></ul>oogle Quantum AI "Quantum error correction below the surface code threshold" (2024, Nature) —— 错误缓解的最新进展
+<ul><li>I</li></ul>BM Quantum "Scaling VQE to 100+ qubits" (2024, arXiv) —— 工业级 VQE
+<ul><li>Q</li></ul>uantinuum "System Model H2: 56 qubit trapped ion" (2024) —— 离子阱 VQE
+
+<p><strong>教材</strong>:</p>
+<ul><li>N</li></ul>ielsen & Chuang《Quantum Computation and Quantum Information》第 7 章(QPE 对比)
+<ul><li>S</li></ul>chuld & Petruccione《Supervised Learning with Quantum Computers》ch14(机器学习视角)
+<ul><li>M</li></ul>itarai et al. "Quantum Circuit Learning" (2018, Phys. Rev. A) —— 量子梯度计算
+<ul><li>B</li></ul>harti et al. "Noisy intermediate-scale quantum (NISQ) algorithms" (2022, Rev. Mod. Phys.) —— 综述
+
+<p><strong>软件工具</strong>:</p>
+<ul><li><</li></ul>strong>Qiskit</strong>(IBM): qiskit.org, VQE/QAOA 完整实现
+<ul><li><</li></ul>strong>Cirq</strong>(Google): quantumai.google/cirq
+<ul><li><</li></ul>strong>PennyLane</strong>(Xanadu): pennylane.ai, 量子机器学习
+<ul><li><</li></ul>strong>Braket</strong>(AWS): aws.amazon.com/braket
+<ul><li><</li></ul>strong>TFQ</strong>(Google): tensorflow/quantum
+
+<hr>
+
+<p><strong>第 13 章结束。第三部分 3/5 章完成 (60%)。下一章: 第 14 章 量子机器学习 —— VQE 的数据科学变体。</strong></p>
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch12.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 12 章 量子相位估计</span>
+          </a>
+          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 14 章 量子机器学习(即将推出)</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
