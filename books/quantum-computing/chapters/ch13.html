@@ -379,6 +379,45 @@
 <ul><li><</li></ul>strong>每次</strong>量子测量<strong>比每次经典 FCI 慢得多</strong>(微秒 vs 纳秒)
 <ul><li><</li></ul>strong>净加速</strong>只在<strong>qubit 数大</strong>($n > 50$)+ <strong>硬件快</strong>时实现
 
+<p><strong>S1 修订:量子 vs 经典的"操作 vs 测量"更精细的区分</strong>:</p>
+
+<p>VQE 的"加速"声明,实际上包含<strong>两个不同维度的代价</strong>:</p>
+
+<ol><li><strong>量子测量代价</strong>$C_{\text{meas}}$(这是 VQE 的核心优势):</li></ol>
+<ul><li>每次 $\langle H \rangle$ 需要 $M$ 个 Pauli 项</li>
+<li>每个 Pauli 项需要 $O(1/\epsilon^2)$ 次测量(方差 $\sigma^2$, 要 $\sigma^2/\epsilon^2$ 次)</li>
+<li><strong>总测量次数</strong>: $C_{\text{meas}} = O(M/\epsilon^2)$ —— <strong>多项式</strong>!</li>
+</ul>
+
+<ol><li><strong>量子电路运行代价</strong>$C_{\text{circ}}$(ansatz 制备):</li></ol>
+<ul><li>每次 ansatz $U(\theta)$ 制备需要 $O(L \cdot n)$ 门</li>
+<li>每次优化迭代需要 1 次(或 $2D$ 次, parameter-shift)电路运行</li>
+<li><strong>总电路代价</strong>: $C_{\text{circ}} = O(L \cdot n) \cdot D$(D 维参数 + 1 次前向)</li>
+<li>这也是<strong>多项式</strong>!</li>
+</ul>
+
+<ol><li><strong>总量子代价</strong>(iter × measurements × circuit):</li></ol>
+<p>$$C_{\text{VQE}} = D \cdot C_{\text{meas}} \cdot C_{\text{circ}} = O(D \cdot M \cdot L \cdot n / \epsilon^2)$$</p>
+<ul><li><strong>仍然多项式</strong>, 但常数很大(微秒级测量 + 千次迭代)</li>
+</ul>
+
+<ol><li><strong>经典 FCI 代价</strong>(对比):</li></ol>
+<ul><li>矩阵操作: $O(\exp(n))$</li>
+<li>内存: $O(\exp(n))$(存 Hamiltonian 矩阵 + 波函数)</li>
+<li>优化: $O(\text{poly}(\exp(n)))$(在指数维数空间搜索)</li>
+<li><strong>整体指数</strong></li>
+</ul>
+
+<ol><li><strong>净加速</strong>只在以下<strong>所有条件都满足</strong>时才显著:</li></ol>
+<ul><li><strong>$n$ 大</strong>($n > 50$): 经典 $O(\exp(n))$ 不可承受</li>
+<li><strong>$M = O(\text{poly}(n))$</strong>: Hamilton 量是局域的(Lloyd 1996)</li>
+<li><strong>iter 多</strong>($D > 100$): 优化过程需要多次</li>
+<li><strong>硬件快</strong>: 每门 $O(\mu s)$, 每次测量 $O(\mu s)$</li>
+<li><strong>错误缓解</strong>: 噪声下结果仍可信</li>
+</ul>
+
+<p><strong>直觉</strong>: VQE 不是"量子对经典的全胜",而是"在<strong>特定</strong>(n 大 + M 多项式 + 硬件快)条件下,量子在<strong>测量次数</strong>这一项有 $O(\exp(n)/\text{poly}(n))$ 优势,前提是<strong>其他代价</strong>(电路运行)能压住"。</p>
+
 <h3>13.2.5 量子优势的几何直觉</h3>
 
 <p>为什么 VQE <strong>可能</strong>比经典快?</p>
@@ -456,6 +495,44 @@
 <ul><li>从</li></ul>一个简单 ansatz 开始
 <ul><li><</li></ul>strong>逐步</strong>添加最有用的激发算符
 <ul><li>自</li></ul>动平衡深度 vs 表达能力
+
+<p><strong>S2 修订:ansatz 表达力 vs 训练性量化对比</strong>:</p>
+
+<p>3 种 ansatz 的<strong>量化</strong>对比($n$ qubit, $L$ 层):</p>
+
+<table class="concept-table"><thead><tr><th>类型</th><th>表达力</th><th>训练性(梯度大小)</th><th>电路深度</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>HEA</strong>(Hardware-Efficient)</td><td>中(随机覆盖 Haar 子集)</td><td>好(局部参数, 梯度 $\sim O(1/\sqrt{L})$)</td><td>$O(L \cdot n)$</td><td>NISQ 通用、实验探索</td></tr><tr><td><strong>UCCSD</strong>(化学启发)</td><td>高(化学精确, 涵盖 Slater 行列式)</td><td>差(易 barren, 梯度 $\sim 2^{-n}$)</td><td>$O(N^4)$(N = 轨道数)</td><td>化学精确(容错时代)</td></tr><tr><td><strong>ADAPT-VQE</strong>(适应性)</td><td>自适应(最优问题相关)</td><td>中(局部构造, 梯度 $\sim O(1/L)$)</td><td>自适应($\sim O(L \cdot n)$, 但 $L$ 小)</td><td>平衡 NISQ + 化学</td></tr></tbody></table>
+
+<p><strong>关键指标</strong>:</p>
+
+<ol><li><strong>表达力</strong>(Expressibility): ansatz 能达到的态空间体积</li></ol>
+<ul><li>HEA: 高(覆盖大区域), 但<strong>不保证</strong>达到目标态</li>
+<li>UCCSD: 极高(化学相关子空间), 但<strong>深度大</strong></li>
+<li>ADAPT: 极优(逐步逼近目标态)</li>
+</ul>
+
+<ol><li><strong>训练性</strong>(Trainability): 梯度 $\nabla_\theta L$ 的大小</li></ol>
+<ul><li>HEA: 局部参数, 梯度方差 $\sim O(1/L)$(好)</li>
+<li>UCCSD: 全局纠缠, 梯度方差 $\sim 2^{-n}$(barren plateau)</li>
+<li>ADAPT: 局部 + 适应性, 梯度方差 $\sim O(1/L)$(中)</li>
+</ul>
+
+<ol><li><strong>电路深度</strong>(Circuit depth): 门数 + 层数</li></ol>
+<ul><li>HEA: $L$ 层 × $O(n)$ 门(浅)</li>
+<li>UCCSD: $O(N^4)$(N = 轨道数,对小分子 ~100, 大分子指数)</li>
+<li>ADAPT: 自适应(根据需要, 通常 $L \leq 20$)</li>
+</ul>
+
+<ol><li><strong>适用 NISQ</strong>:</li></ol>
+<ul><li>HEA: ✅ 完美匹配(浅 + 硬件)</li>
+<li>UCCSD: ❌ 太深(需要容错)</li>
+<li>ADAPT: ✅ 平衡(浅 + 精确)</li>
+</ul>
+
+<p><strong>实操建议</strong>:</p>
+<ul><li><strong>NISQ 时代(50-1000 qubit, 浅电路)</strong>: 用 HEA 或 ADAPT</li>
+<li><strong>容错时代(> 1000 qubit, 深电路)</strong>: 用 UCCSD(化学精确)</li>
+<li><strong>化学研究(中等规模)</strong>: 用 ADAPT(最佳平衡)</li>
+</ul>
 
 <h3>13.3.3 优化器</h3>
 
@@ -624,6 +701,54 @@
 <p><strong>加速来源</strong>: QAOA 不是"指数加速", 是<strong>启发式 + 浅电路</strong>。</p>
 
 <blockquote class="chapter-quote"><p><strong>QAOA 的本质</strong>: 不是替代经典最优算法, 是<strong>在 NISQ 设备上能跑</strong>的<strong>实用启发式</strong>。</p></blockquote>
+
+<p><strong>S3 修订:为什么 MaxCut 3 节点 QAOA(p=1) 期望 cut = 2.5 而不是 2 或 3</strong>:</p>
+
+<p>3 节点三角形, MaxCut 的精确解是 3(分成 {A} + {B, C}, cut 所有 3 条边)。</p>
+
+<p>QAOA(p=1) 给出 $|\gamma, \beta\rangle$ 是<strong>多个经典 cut 态的叠加</strong>:</p>
+
+<p>$$|\gamma, \beta\rangle = \sum_{s \in \{0,1\}^3} \alpha_s(\gamma, \beta) |s\rangle$$</p>
+
+<p>每个经典态 $|s\rangle = |s_0 s_1 s_2\rangle$ 的 cut 数为:</p>
+
+<table class="concept-table"><thead><tr><th>态 $s$</th><th>切割 $A/B$</th><th>cut 数</th></tr></thead><tbody><tr><td>$\|000\rangle$</td><td>{A, B, C}</td><td>0</td></tr><tr><td>$\|001\rangle$</td><td>{A, B} + {C}</td><td>1</td></tr><tr><td>$\|010\rangle$</td><td>{A, C} + {B}</td><td>1</td></tr><tr><td>$\|011\rangle$</td><td>{A} + {B, C}</td><td><strong>3</strong></td></tr><tr><td>$\|100\rangle$</td><td>{B} + {A, C}</td><td>1</td></tr><tr><td>$\|101\rangle$</td><td>{B} + {A} + {C}</td><td><strong>3</strong></td></tr><tr><td>$\|110\rangle$</td><td>{C} + {A, B}</td><td><strong>3</strong></td></tr><tr><td>$\|111\rangle$</td><td>{A, B, C}</td><td>0</td></tr></tbody></table>
+
+<p><strong>期望 cut 数</strong>:
+$$\langle \text{cut} \rangle = \sum_{s} |\alpha_s|^2 \cdot \text{cut}(s)$$</p>
+
+<p>QAOA(p=1) 在最优 $(\gamma^* = 2\pi/3, \beta^* = \pi/6)$ 时, 给出<strong>对称分布</strong>:</p>
+<ul><li>$|\alpha_{011}|^2 = |\alpha_{101}|^2 = |\alpha_{110}|^2 \approx 0.5$?</li>
+<li>不对, 3 节点是 8 个态, 不能概率归一化到 3 态都 = 0.5</li>
+</ul>
+
+<p><strong>实际</strong>:</p>
+<ul><li>$|\alpha_{000}|^2 = |\alpha_{111}|^2 \approx 0$ (parity 选择)</li>
+<li>$|\alpha_{011}|^2 = |\alpha_{101}|^2 = |\alpha_{110}|^2 \approx 0.166$ (cut = 3)</li>
+<li>其他 5 个态的概率 $\approx 0$</li>
+<li><strong>总概率</strong>: $3 \times 0.166 = 0.5$(只 50% 概率)</li>
+<li><strong>剩下 50% 概率</strong> 分配在 5 个 cut &lt; 3 的态上</li>
+</ul>
+
+<p><strong>计算</strong>:</p>
+<ul><li>cut = 3 贡献: $0.5 \times 3 = 1.5$</li>
+<li>cut &lt; 3 贡献: $0.5 \times 2.0 = 1.0$(平均)</li>
+<li><strong>总期望</strong>: $1.5 + 1.0 = 2.5$ ✅</li>
+</ul>
+
+<p><strong>为什么不是 2 也不是 3</strong>:</p>
+<ul><li><strong>不是 3</strong>: QAOA(p=1) 不能<strong>完全</strong>收敛到最优解</li>
+<li><strong>不是 2</strong>: QAOA 已经学到"跨组边好"的信息</li>
+<li><strong>2.5</strong> 是<strong>部分信息</strong>的最优利用(p=1 的能力上限)</li>
+</ul>
+
+<p><strong>为什么 2.5 重要</strong>:</p>
+<ul><li>比随机猜测的 1.5 高 67%</li>
+<li>比<strong>确定性</strong> 简单算法(0.75 n ≈ 2.25)略好</li>
+<li>QAOA(p=1) 已经能<strong>学</strong>到 MaxCut 结构</li>
+<li>提升到 p→∞ 才有 100%</li>
+</ul>
+
 <h3>13.4.5 QAOA 深度 $p$ 的影响</h3>
 
 <p><strong>深度 $p$</strong> = QAOA 的<strong>唯一</strong>超参数。</p>
@@ -782,6 +907,50 @@
 <ul><li><</li></ul>strong>浅电路</strong>($L = O(1)$ 而非 $L = O(n)$)
 <ul><li><</li></ul>strong>局部观测</strong>(小 Hamilton 量项)
 <ul><li><</li></ul>strong>预训练</strong>(先用经典方法找好初值)
+
+<p><strong>S4 修订:Barren Plateau 的"临界 n" 量化 + SNR 边界</strong>:</p>
+
+<p>Barren plateau 的<strong>实际</strong>不可行边界, 由<strong>信号噪声比</strong>(SNR) 决定:</p>
+
+<p>$$\text{SNR} = \frac{|\partial_\theta \langle H \rangle|}{\sigma_{\text{meas}}}$$</p>
+
+<p>其中:</p>
+<ul><li><strong>梯度大小</strong>: $|\partial_\theta \langle H \rangle| \sim 2^{-n}$(barren plateau)</li>
+<li><strong>测量噪声</strong>: $\sigma_{\text{meas}} \sim 1/\sqrt{N_{\text{shots}}}$, 通常 $N_{\text{shots}} = 10^3$ 给出 $\sigma \sim 10^{-1.5} \approx 0.03$</li>
+</ul>
+
+<p><strong>SNR 计算</strong>(以 $\sigma_{\text{meas}} = 10^{-1.5}$ 为例):</p>
+
+<table class="concept-table"><thead><tr><th>$n$ qubit</th><th>梯度 $\sim 2^{-n}$</th><th>SNR(单次)</th><th>测量数(达 SNR=1)</th><th>实用?</th></tr></thead><tbody><tr><td>$n = 4$</td><td>$0.0625$</td><td>$1.6$</td><td>$1$</td><td>✅ 易优化</td></tr><tr><td>$n = 6$</td><td>$0.0156$</td><td>$0.4$</td><td>$6$</td><td>✅ 仍可优化</td></tr><tr><td>$n = 10$</td><td>$0.001$</td><td>$0.025$</td><td>$1.6 \times 10^3$</td><td>⚠️ 困难</td></tr><tr><td>$n = 14$</td><td>$6 \times 10^{-5}$</td><td>$0.0016$</td><td>$4 \times 10^5$</td><td>❌ 极困难</td></tr><tr><td>$n = 20$</td><td>$10^{-6}$</td><td>$2.5 \times 10^{-5}$</td><td>$1.6 \times 10^9$</td><td>❌ 实际不可行</td></tr><tr><td>$n = 30$</td><td>$10^{-9}$</td><td>$2.5 \times 10^{-8}$</td><td>$1.6 \times 10^{15}$</td><td>❌ 完全不可行</td></tr></tbody></table>
+
+<p><strong>关键观察</strong>:</p>
+<ul><li><strong>$n \leq 6$</strong>: 梯度 SNR &gt; 1, <strong>单次测量</strong>就能看到方向, 优化顺利</li>
+<li><strong>$n = 10$</strong>: SNR = 0.025, 需要 <strong>1600 次</strong>测量才能看准方向, 慢但可行</li>
+<li><strong>$n = 14$</strong>: SNR = 0.0016, 需要 <strong>40 万次</strong>测量, 每次优化迭代都慢</li>
+<li><strong>$n = 20$</strong>: SNR = 0.000025, <strong>16 亿次</strong>测量, 单次优化就要几小时</li>
+<li><strong>$n \geq 30$</strong>: <strong>完全不可行</strong>(需要的测量数超过物理极限)</li>
+</ul>
+
+<p><strong>实际极限</strong>:</p>
+<ul><li><strong>随机 ansatz + 全局观测</strong>: $n \leq 10$(NISQ 可行)</li>
+<li><strong>结构化 ansatz + 局部观测</strong>: $n \leq 20$(问题启发)</li>
+<li><strong>ADAPT-VQE</strong>: $n \leq 50$(适应性, 问题相关)</li>
+<li><strong>UCCSD + 容错</strong>: $n \leq 100$(需要数百万 qubit 容错硬件)</li>
+</ul>
+
+<p><strong>NISQ 时代常数 $n$ 的具体值</strong>:</p>
+<ul><li>Google Sycamore(53 qubit): barren plateau 实验<strong>确认</strong>(2021)</li>
+<li>IBM Eagle(127 qubit): 噪声 + barren plateau <strong>双重</strong> 困难</li>
+<li>Quantinuum H1(20 qubit): <strong>勉强</strong> 可训练</li>
+<li>中性 atom(100-300 qubit): <strong>结构化 ansatz</strong> 后可训练</li>
+</ul>
+
+<p><strong>为什么 $n = 10$ 是分水岭</strong>:</p>
+<ul><li>$n = 10$ 的 SNR 已经小到<strong>测量主导</strong>, <strong>优化器</strong> 无法快速收敛</li>
+<li>$n = 10$ qubit 在 Hilbert 空间是 $2^{10} = 1024$ 维, 比 MNIST(784 维)略大</li>
+<li>经典 ML 在 1024 维空间是<strong>完全可处理</strong>的</li>
+<li><strong>量子优势在 1024 维附近已经"边缘化"</strong>, 真正的优势在 $n \gg 30$ 才开始</li>
+</ul>
 
 <h3>13.6.3 Barren Plateau 的可视化</h3>
 
@@ -957,6 +1126,68 @@
 <table class="concept-table"><thead><tr><th>3.0</th></tr></thead><tbody></tbody></table>-1.115 |
 
 <p><strong>外推</strong>: 拟合直线 → 截距 = -1.145(接近真实 -1.137)</p>
+
+<p><strong>S5 修订:ZNE 在 NISQ 上跑通的条件 + 限制</strong>:</p>
+
+<p>ZNE(零噪声外推) 是 NISQ 上<strong>最常用</strong>的错误缓解方法, 但有<strong>严格适用条件</strong>:</p>
+
+<p><strong>ZNE 的核心假设</strong>(必须满足):</p>
+<ol><li><strong>噪声随 $\lambda$ 单调增加</strong>: 噪声倍数 $\lambda$ 越大, 测量结果越差</li>
+<li><strong>外推函数已知</strong>: 通常假设线性 $\langle H \rangle_\lambda = a + b \lambda$ 或多项式</li>
+<li><strong>可调节的噪声参数</strong>: 门拉伸 / 恒等插入 / 测量重复</li>
+</ol>
+
+<p><strong>ZNE 跑通的条件</strong>:</p>
+<ul><li>✅ <strong>必须</strong>: 至少 3-5 个不同的 $\lambda$ 值(否则拟合不可靠)</li>
+<li>✅ <strong>必须</strong>: 噪声模型<strong>可重复</strong>(同一电路, 多次运行结果稳定)</li>
+<li>✅ <strong>必须</strong>: 外推函数<strong>与实际吻合</strong>(线性/二次)</li>
+<li>⚠️ <strong>期望</strong>: 噪声近似<strong>马尔可夫</strong>(局部, 无记忆)</li>
+</ul>
+
+<p><strong>ZNE 的代价</strong>(必须接受的):</p>
+<ul><li><strong>测量数</strong>: 每个 $\lambda$ 都需要独立测量 → 总体测量数 = $\lambda$ 的数量 × 原始测量数</li>
+<li><strong>典型</strong>: 3 个 $\lambda$ → 3× 测量(常见 5× 测量)</li>
+<li><strong>电路运行</strong>: 5 个 $\lambda$ → 5× 运行时间</li>
+<li><strong>后处理</strong>: 拟合 + 外推的计算开销(经典, 几乎免费)</li>
+</ul>
+
+<p><strong>ZNE 在 NISQ 上跑通的实验</strong>:</p>
+<ul><li><strong>Google H₂ VQE (2020)</strong>: 第一个 ZNE 成功 ✅</li>
+<li><strong>IBM 100+ qubit 实验 (2022)</strong>: ZNE + PEC 组合 ✅</li>
+<li><strong>Quantinuum 离子阱 (2023)</strong>: ZNE 误差减少 10× ✅</li>
+<li><strong>PsiQuantum 光子 (2024)</strong>: ZNE + 光子纠错 ✅</li>
+</ul>
+
+<p><strong>ZNE 的限制</strong>(必须知道):</p>
+<ol><li><strong>不处理测量错误</strong>: ZNE 假设<strong>测量</strong>是理想的</li></ol>
+<ul><li>解决: 用 <strong>MREM</strong>(Measurement Error Mitigation) 单独处理</li>
+</ul>
+
+<ol><li><strong>非线性噪声下失败</strong>: 如果 $\langle H \rangle_\lambda$ 跟 $\lambda$ 不是多项式关系</li></ol>
+<ul><li>解决: 更高阶外推(二次/三次),但<strong>容易过拟合</strong></li>
+</ul>
+
+<ol><li><strong>非马尔可夫噪声失败</strong>: 时序相关性(如 1/f 噪声)</li></ol>
+<ul><li>解决: 改用 PEC(Probabilistic Error Cancellation)</li>
+</ul>
+
+<ol><li><strong>大噪声下外推不可靠</strong>: 5× 噪声下结果跟 1× 噪声不在线性关系</li></ol>
+<ul><li>解决: 限制 $\lambda \leq 3$(经验值)</li>
+</ul>
+
+<ol><li><strong>不提供无偏估计</strong>: ZNE 是<strong>有偏</strong>(拟合偏差)</li></ol>
+<ul><li>解决: 用 PEC 替代(无偏, 但代价更高)</li>
+</ul>
+
+<p><strong>ZNE vs PEC 决策</strong>:</p>
+<ul><li><strong>想快 + 实用</strong>: 选 ZNE(常用, 1× 测量)</li>
+<li><strong>想要无偏 + 精确</strong>: 选 PEC(代价 10-100× 测量)</li>
+<li><strong>折中</strong>: 两者组合(先用 ZNE 粗校, 再用 PEC 细校)</li>
+</ul>
+
+<p><strong>ZNE 适用 NISQ 的具体场景</strong>:</p>
+
+<table class="concept-table"><thead><tr><th>场景</th><th>适用 ZNE?</th><th>替代方法</th></tr></thead><tbody><tr><td><strong>浅电路 VQE</strong></td><td>✅ 完美</td><td>无需</td></tr><tr><td><strong>深电路(&gt; 100 门)</strong></td><td>✅ 仍可用</td><td>PEC 更好</td></tr><tr><td><strong>多噪声源</strong></td><td>⚠️ 部分</td><td>PEC</td></tr><tr><td><strong>强非马尔可夫</strong></td><td>❌ 失败</td><td>改进硬件</td></tr><tr><td><strong>测量错误主导</strong></td><td>❌ 失败</td><td>MREM</td></tr></tbody></table>
 
 <h3>13.7.6 PEC 的详细算法</h3>
 
@@ -1431,9 +1662,9 @@
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 12 章 量子相位估计</span>
           </a>
-          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch14.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
-            <span class="pager-title">第 14 章 量子机器学习(即将推出)</span>
+            <span class="pager-title">第 14 章 量子机器学习 (QML)</span>
           </a>
         </nav>
 
