@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第12章：Agent通信协议——MCP、A2A、ANP | 《AGENT开发从入门到精通》">
+
+  <title>第12章：Agent通信协议——MCP、A2A、ANP | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch11.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+
+<div class="chapter-hero">
+<svg viewBox="0 0 800 360" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="ch12grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c026d3"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <marker id="arrow12" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c026d3"/>
+    </marker>
+  </defs>
+
+  <text x="400" y="24" text-anchor="middle" font-size="18" font-weight="700" fill="#c026d3">📡 Agent 通信协议层 5 步握手</text>
+
+  <!-- Client (left) -->
+  <g transform="translate(80, 100)">
+    <rect x="-50" y="-30" width="100" height="60" fill="url(#ch12grad)" rx="8"/>
+    <text x="0" y="-4" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Client</text>
+    <text x="0" y="14" text-anchor="middle" font-size="10" fill="#fff">LLM / Agent A</text>
+  </g>
+
+  <!-- Protocol (middle-left) -->
+  <g transform="translate(280, 100)">
+    <rect x="-50" y="-30" width="100" height="60" fill="#fff" stroke="#c026d3" stroke-width="2" rx="6"/>
+    <text x="0" y="-4" text-anchor="middle" font-size="13" font-weight="700" fill="#c026d3">MCP / A2A</text>
+    <text x="0" y="14" text-anchor="middle" font-size="9" fill="#888">JSON-RPC 2.0</text>
+  </g>
+
+  <!-- Server (right) -->
+  <g transform="translate(480, 100)">
+    <rect x="-50" y="-30" width="100" height="60" fill="url(#ch12grad)" rx="8"/>
+    <text x="0" y="-4" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Server</text>
+    <text x="0" y="14" text-anchor="middle" font-size="10" fill="#fff">Tool / Agent B</text>
+  </g>
+
+  <!-- 5 steps arrows -->
+  <g>
+    <!-- 1: Client → Protocol (initialize) -->
+    <line x1="130" y1="100" x2="230" y2="100" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow12)"/>
+    <text x="180" y="92" text-anchor="middle" font-size="10" fill="#c026d3" font-weight="700">1. initialize</text>
+
+    <!-- 2: Protocol → Server (route) -->
+    <line x1="330" y1="100" x2="430" y2="100" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow12)"/>
+    <text x="380" y="92" text-anchor="middle" font-size="10" fill="#c026d3" font-weight="700">2. dispatch</text>
+
+    <!-- 3: Server → Protocol (result) -->
+    <line x1="430" y1="140" x2="330" y2="140" stroke="#f97316" stroke-width="2.5" marker-end="url(#arrow12)"/>
+    <text x="380" y="158" text-anchor="middle" font-size="10" fill="#f97316" font-weight="700">3. response</text>
+
+    <!-- 4: Protocol → Client (deliver) -->
+    <line x1="230" y1="140" x2="130" y2="140" stroke="#f97316" stroke-width="2.5" marker-end="url(#arrow12)"/>
+    <text x="180" y="158" text-anchor="middle" font-size="10" fill="#f97316" font-weight="700">4. result</text>
+
+    <!-- 5: loop back -->
+    <line x1="80" y1="200" x2="480" y2="200" stroke="#888" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow12)"/>
+    <text x="280" y="218" text-anchor="middle" font-size="10" fill="#888" font-weight="700">5. next call (tools/call 或 tasks/send)</text>
+  </g>
+
+  <!-- 3 protocol labels at bottom -->
+  <g transform="translate(100, 250)">
+    <rect x="0" y="0" width="180" height="80" fill="rgba(192,38,211,0.05)" stroke="#c026d3" stroke-width="1" rx="6"/>
+    <text x="90" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#c026d3">MCP</text>
+    <text x="90" y="40" text-anchor="middle" font-size="9" fill="#555">LLM ↔ 工具</text>
+    <text x="90" y="55" text-anchor="middle" font-size="9" fill="#555">Anthropic 2024-11</text>
+    <text x="90" y="70" text-anchor="middle" font-size="9" fill="#888">tools/list + tools/call</text>
+  </g>
+
+  <g transform="translate(310, 250)">
+    <rect x="0" y="0" width="180" height="80" fill="rgba(249,115,22,0.05)" stroke="#f97316" stroke-width="1" rx="6"/>
+    <text x="90" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#f97316">A2A</text>
+    <text x="90" y="40" text-anchor="middle" font-size="9" fill="#555">Agent ↔ Agent</text>
+    <text x="90" y="55" text-anchor="middle" font-size="9" fill="#555">Google 2025-04</text>
+    <text x="90" y="70" text-anchor="middle" font-size="9" fill="#888">Agent Card + tasks/send</text>
+  </g>
+
+  <g transform="translate(520, 250)">
+    <rect x="0" y="0" width="180" height="80" fill="rgba(107,114,128,0.05)" stroke="#6b7280" stroke-width="1" rx="6"/>
+    <text x="90" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#6b7280">ANP</text>
+    <text x="90" y="40" text-anchor="middle" font-size="9" fill="#555">跨组织 Agent</text>
+    <text x="90" y="55" text-anchor="middle" font-size="9" fill="#555">社区 2025-09</text>
+    <text x="90" y="70" text-anchor="middle" font-size="9" fill="#888">DID 身份 + 元协议</text>
+  </g>
+</svg>
+</div>
+
+<h1 id="sec-第-12-章-agent-通信协议-mcp-model-context-protocol-a2a-anp">第 12 章：Agent 通信协议——MCP（Model Context Protocol）、A2A、ANP</h1>
+<blockquote><strong>承上启下</strong>：ch11 讲了 4 大多 Agent 协作模式（Supervisor / Crew / Pipeline / Debate）——但模式之间怎么通信？Worker 调用工具的标准是什么？跨厂商 Agent 怎么互通？&lt;br&gt;答案就是<strong>协议层</strong>。2024-11 Anthropic 提出 MCP、2025-04 Google 推出 A2A 和 ADK——12 个月内出现 3 大开放协议，<strong>Agent 通信从&quot;手写 JSON&quot;进入&quot;标准化时代&quot;</strong>。&lt;br&gt;本章拆解 MCP / A2A / ANP 三大协议、配套实战一个 FastMCP Server 和一个 A2A Agent Card 发现器——读完能搭起&quot;跨厂商互操作&quot;的最小骨架。</blockquote>
+<hr>
+<h2 id="sec-12-1-引子-从-手写-json-到-标准化协议">12.1 引子：从&quot;手写 JSON&quot;到&quot;标准化协议&quot;</h2>
+<h3 id="sec-12-1-1-ch11-留下的-3-个未解问题">12.1.1 ch11 留下的 3 个未解问题</h3>
+<p>ch11 的 4 大模式（Supervisor / Crew / Pipeline / Debate）都假设了一个前提：<strong>Agent 之间能用 JSON 互相发消息</strong>。但 JSON 本身不是协议——只有&quot;消息里每个字段代表什么 + 失败时怎么重试 + 跨语言怎么互解析&quot;才构成协议。</p>
+<p>回头看 ch11 的 mock 实现，会发现 3 个未解问题：</p>
+<table class="md-table"><thead><tr>
+<th>问题</th>
+<th>ch11 的解决方案</th>
+<th>生产环境会怎样</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>工具调用协议</strong></td>
+<td><code>worker.tool_call({&quot;name&quot;: &quot;search&quot;, &quot;args&quot;: {...}})</code> 手写 dict</td>
+<td>跨进程 / 跨语言时 dict 的字段名/嵌套层不统一 → 解析失败</td>
+</tr>
+<tr>
+<td><strong>Agent 间通信协议</strong></td>
+<td><code>agent.send_message({&quot;role&quot;: &quot;researcher&quot;, &quot;content&quot;: &quot;...&quot;})</code> 手写</td>
+<td>接收方不知道 <code>role</code> 枚举有几种、content 是 str 还是 list</td>
+</tr>
+<tr>
+<td><strong>跨厂商互通</strong></td>
+<td>全部 mock，假设都是 Python in-process</td>
+<td>OpenAI Agent 想调用 Anthropic Agent？字段不兼容</td>
+</tr>
+</tbody></table>
+<p><strong>结论</strong>：ch11 的 4 大模式解决了&quot;协作的拓扑结构&quot;问题，<strong>没有解决&quot;通信的协议标准&quot;问题</strong>——而后者是从 demo 走向生产的关键一步。</p>
+<h3 id="sec-12-1-2-2024-2025-协议层标准化浪潮的-3-大推力">12.1.2 2024-2025 协议层标准化浪潮的 3 大推力</h3>
+<table class="md-table"><thead><tr>
+<th>推力</th>
+<th>2023 状态</th>
+<th>2025 状态</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>工具调用碎片化</strong></td>
+<td>每家 LLM 厂商自己定义（OpenAI <code>function_calling</code> / Anthropic <code>tool_use</code> / Google <code>function_calling</code>），第三方工具（如 Zapier）要写 N 套适配器</td>
+<td>1 个 MCP 协议搞定所有 LLM ↔ 工具的桥接，第三方工具只需暴露 1 个 MCP Server</td>
+</tr>
+<tr>
+<td><strong>Agent 互操作碎片化</strong></td>
+<td>Agent A 想调 Agent B？没标准，全靠开发者约定字段</td>
+<td>A2A 协议定义&quot;Agent Card&quot;（能力描述）+ JSON-RPC 通信，跨厂商可发现 + 可调用</td>
+</tr>
+<tr>
+<td><strong>企业级部署需求</strong></td>
+<td>单 Agent 跑通就行，多 Agent 系统靠&quot;消息总线 + 共享状态&quot;硬扛</td>
+<td>Salesforce Agentforce / Microsoft Copilot Studio / Google ADK 全部基于标准化协议构建</td>
+</tr>
+</tbody></table>
+<blockquote><strong>关键观察</strong>：<strong>2024-11 MCP、2025-04 A2A + ADK、2025-09 ANP</strong>——12 个月内 4 大协议集中发布。这不是巧合，是 LLM 厂商达成共识：<strong>&quot;协议层 = 下一个战场&quot;</strong>。谁先把协议推成事实标准，谁就掌握 Agent 生态的入口。</blockquote>
+<h3 id="sec-12-1-3-本章的-3-大协议定位">12.1.3 本章的 3 大协议定位</h3>
+<table class="md-table"><thead><tr>
+<th>协议</th>
+<th>提出方</th>
+<th>时间</th>
+<th>核心定位</th>
+<th>通信双方</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>MCP（Model Context Protocol）</strong></td>
+<td>Anthropic</td>
+<td>2024-11</td>
+<td>LLM ↔ 工具（资源）的标准化桥接</td>
+<td>LLM Client ↔ MCP Server</td>
+</tr>
+<tr>
+<td><strong>A2A（Agent-to-Agent）</strong></td>
+<td>Google</td>
+<td>2025-04</td>
+<td>Agent ↔ Agent 的发现 + 任务委托</td>
+<td>Agent A ↔ Agent B</td>
+</tr>
+<tr>
+<td><strong>ANP（Agent Network Protocol）</strong></td>
+<td>开源社区（agent-network-protocol.org）</td>
+<td>2025-09</td>
+<td>跨组织 / 跨互联网的 Agent 发现 + 协作</td>
+<td>任意两个 Agent（无需预共享密钥）</td>
+</tr>
+</tbody></table>
+<blockquote class="chapter-intro"><strong>本章不讲 Google ADK</strong>——ADK 是 Google 内部实现 A2A 的 SDK 之一（与 OpenAI Agents SDK / LangGraph / CrewAI 同一抽象层级），已在 ch04 框架对比里覆盖。<strong>本章专注协议本身</strong>。</blockquote>
+<hr>
+<h2 id="sec-12-2-mcp-model-context-protocol-llm-调用工具的标准">12.2 MCP（Model Context Protocol）——LLM 调用工具的标准</h2>
+<h3 id="sec-12-2-1-mcp-是什么">12.2.1 MCP 是什么</h3>
+<p><strong>MCP = Model Context Protocol</strong>——Anthropic 在 2024-11 提出的开放协议，<strong>专门解决 LLM 调用工具的标准化问题</strong>。核心理念：</p>
+<blockquote>把&quot;工具&quot;抽象成 <strong>MCP Server</strong>，把&quot;使用工具的 LLM&quot;抽象成 <strong>MCP Client</strong>。Client 和 Server 之间用 <strong>JSON-RPC 2.0</strong> 通信。<strong>一次实现，所有兼容 MCP 的 LLM（Claude / GPT / Gemini）都能用</strong>。</blockquote>
+<p><strong>MCP 类比 USB-C</strong>：之前每个工具（数据库 / 文件系统 / API）都要给每家 LLM 写适配器（4 工具 × 3 LLM = 12 套代码），MCP 之后<strong>工具写 1 套 MCP Server，所有 LLM 通过标准协议调用</strong>。</p>
+<h3 id="sec-12-2-2-mcp-三大原语">12.2.2 MCP 三大原语</h3>
+<table class="md-table"><thead><tr>
+<th>原语</th>
+<th>作用</th>
+<th>类比</th>
+<th>示例</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Tools</strong></td>
+<td>LLM 可调用的&quot;动作&quot;（带副作用）</td>
+<td>HTTP POST</td>
+<td><code>search_web(query)</code> / <code>send_email(to, body)</code> / <code>query_db(sql)</code></td>
+</tr>
+<tr>
+<td><strong>Resources</strong></td>
+<td>LLM 可读取的&quot;数据&quot;（只读）</td>
+<td>HTTP GET</td>
+<td><code>file:///report.pdf</code> / <code>postgres://users/schema</code> / <code>git://repo/HEAD/readme</code></td>
+</tr>
+<tr>
+<td><strong>Prompts</strong></td>
+<td>LLM 可选的&quot;预制 prompt 模板&quot;</td>
+<td>模板库</td>
+<td><code>/summarize</code> prompt 模板 / <code>/extract_entities</code> prompt 模板</td>
+</tr>
+</tbody></table>
+<p><strong>关键区别</strong>：Tools 改变世界状态（写 DB / 发邮件），Resources 只读世界状态（读文件 / 读 schema），Prompts 是 LLM 端的辅助。</p>
+<h3 id="sec-12-2-3-mcp-架构">12.2.3 MCP 架构</h3>
+<pre><code class="language-text">
+┌────────────────────────┐                    ┌────────────────────────┐
+│  MCP Client (LLM 端)    │                    │  MCP Server (工具端)     │
+│  ┌──────────────────┐  │   JSON-RPC 2.0      │  ┌──────────────────┐  │
+│  │ Claude / GPT      │  │   over stdio/SSE/HTTP│  │ Tools             │  │
+│  │ MCP Client SDK    │◄─┼──────────────────────┼─►│ Resources         │  │
+│  │ (Python / TS / Go) │  │                    │  │ Prompts           │  │
+│  └──────────────────┘  │                    │  └──────────────────┘  │
+└────────────────────────┘                    └────────────────────────┘
+</code></pre>
+<p><strong>通信方式 3 种</strong>：</p>
+<ul>
+<li><strong>stdio</strong>（标准输入/输出）—— 本地进程间通信，最常用</li>
+<li><strong>SSE</strong>（Server-Sent Events）—— HTTP 长连接，远程服务器</li>
+<li><strong>HTTP</strong>（streamable HTTP）—— 2025 新增，支持双向流</li>
+</ul>
+<h3 id="sec-12-2-4-完整-python-示例-mcp-client-server-mock">12.2.4 完整 Python 示例：MCP Client-Server（mock）</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;
+最小可运行的 MCP client-server 演示
+无需 pip install —— 完全用标准库模拟 JSON-RPC 2.0 协议
+&quot;&quot;&quot;
+
+import json
+import subprocess
+import sys
+from typing import Any, Dict, List
+
+# ===== MCP Server 端 =====
+
+MCP_SERVER_CODE = &#x27;&#x27;&#x27;
+import json, sys
+
+# 1. 声明能力（Server Capabilities）
+SERVER_INFO = {
+    &quot;protocolVersion&quot;: &quot;2024-11-05&quot;,
+    &quot;serverInfo&quot;: {&quot;name&quot;: &quot;demo-mcp-server&quot;, &quot;version&quot;: &quot;1.0.0&quot;},
+    &quot;capabilities&quot;: {&quot;tools&quot;: {}, &quot;resources&quot;: {}, &quot;prompts&quot;: {}}
+}
+
+# 2. 注册 3 个 Tools
+TOOLS = [
+    {
+        &quot;name&quot;: &quot;get_weather&quot;,
+        &quot;description&quot;: &quot;查询指定城市的天气&quot;,
+        &quot;inputSchema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {&quot;city&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;城市名&quot;}},
+            &quot;required&quot;: [&quot;city&quot;]
+        }
+    },
+    {
+        &quot;name&quot;: &quot;search_docs&quot;,
+        &quot;description&quot;: &quot;在本地文档库中搜索关键词&quot;,
+        &quot;inputSchema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;query&quot;: {&quot;type&quot;: &quot;string&quot;},
+                &quot;top_k&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 3}
+            },
+            &quot;required&quot;: [&quot;query&quot;]
+        }
+    },
+    {
+        &quot;name&quot;: &quot;send_email&quot;,
+        &quot;description&quot;: &quot;发送邮件（mock，不真发）&quot;,
+        &quot;inputSchema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;to&quot;: {&quot;type&quot;: &quot;string&quot;},
+                &quot;subject&quot;: {&quot;type&quot;: &quot;string&quot;},
+                &quot;body&quot;: {&quot;type&quot;: &quot;string&quot;}
+            },
+            &quot;required&quot;: [&quot;to&quot;, &quot;subject&quot;, &quot;body&quot;]
+        }
+    }
+]
+
+# 3. Tool 实现（mock）
+def tool_get_weather(args):
+    return {&quot;city&quot;: args[&quot;city&quot;], &quot;temp&quot;: 22, &quot;condition&quot;: &quot;晴&quot;}
+
+def tool_search_docs(args):
+    docs = [&quot;MCP 是 LLM 调用工具的标准协议&quot;, &quot;A2A 是 Agent 间的通信协议&quot;,
+            &quot;JSON-RPC 2.0 是 MCP 的传输层&quot;]
+    q = args[&quot;query&quot;]
+    matches = [d for d in docs if any(w in d for w in q.split())]
+    return {&quot;results&quot;: matches[:args.get(&quot;top_k&quot;, 3)]}
+
+def tool_send_email(args):
+    return {&quot;status&quot;: &quot;sent&quot;, &quot;to&quot;: args[&quot;to&quot;], &quot;subject&quot;: args[&quot;subject&quot;]}
+
+TOOL_DISPATCH = {
+    &quot;get_weather&quot;: tool_get_weather,
+    &quot;search_docs&quot;: tool_search_docs,
+    &quot;send_email&quot;: tool_send_email,
+}
+
+# 4. JSON-RPC 2.0 消息循环
+def handle_request(req):
+    method = req.get(&quot;method&quot;)
+    params = req.get(&quot;params&quot;, {})
+    req_id = req.get(&quot;id&quot;)
+
+    if method == &quot;initialize&quot;:
+        return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;result&quot;: SERVER_INFO}
+    elif method == &quot;tools/list&quot;:
+        return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id,
+                &quot;result&quot;: {&quot;tools&quot;: TOOLS}}
+    elif method == &quot;tools/call&quot;:
+        name = params[&quot;name&quot;]
+        args = params.get(&quot;arguments&quot;, {})
+        if name not in TOOL_DISPATCH:
+            return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id,
+                    &quot;error&quot;: {&quot;code&quot;: -32601, &quot;message&quot;: f&quot;Tool {name} not found&quot;}}
+        try:
+            result = TOOL_DISPATCH[name](args)
+            return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id,
+                    &quot;result&quot;: {&quot;content&quot;: [{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: json.dumps(result, ensure_ascii=False)}]}}
+        except Exception as e:
+            return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id,
+                    &quot;error&quot;: {&quot;code&quot;: -32603, &quot;message&quot;: str(e)}}
+    else:
+        return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id,
+                &quot;error&quot;: {&quot;code&quot;: -32601, &quot;message&quot;: f&quot;Method {method} not found&quot;}}
+
+# 5. stdio 主循环
+for line in sys.stdin:
+    line = line.strip()
+    if not line:
+        continue
+    try:
+        req = json.loads(line)
+        resp = handle_request(req)
+        print(json.dumps(resp, ensure_ascii=False), flush=True)
+    except Exception as e:
+        err = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: None,
+               &quot;error&quot;: {&quot;code&quot;: -32700, &quot;message&quot;: f&quot;Parse error: {e}&quot;}}
+        print(json.dumps(err, ensure_ascii=False), flush=True)
+&#x27;&#x27;&#x27;
+
+# ===== MCP Client 端 =====
+
+class MCPClient:
+    &quot;&quot;&quot;简化版 MCP Client（用 subprocess + stdio）&quot;&quot;&quot;
+    def __init__(self, server_script: str):
+        self.proc = subprocess.Popen(
+            [sys.executable, &quot;-c&quot;, server_script],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE, text=True, bufsize=1
+        )
+        self.req_id = 0
+        self._initialize()
+
+    def _send(self, method: str, params: Dict = None) -&gt; Dict[str, Any]:
+        self.req_id += 1
+        req = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: self.req_id, &quot;method&quot;: method, &quot;params&quot;: params or {}}
+        self.proc.stdin.write(json.dumps(req, ensure_ascii=False) + &quot;\n&quot;)
+        self.proc.stdin.flush()
+        line = self.proc.stdout.readline()
+        return json.loads(line)
+
+    def _initialize(self):
+        info = self._send(&quot;initialize&quot;)
+        print(f&quot;[MCP] 连接 server: {info[&#x27;result&#x27;][&#x27;serverInfo&#x27;]}&quot;)
+
+    def list_tools(self) -&gt; List[Dict]:
+        resp = self._send(&quot;tools/list&quot;)
+        return resp[&quot;result&quot;][&quot;tools&quot;]
+
+    def call_tool(self, name: str, arguments: Dict) -&gt; Dict:
+        resp = self._send(&quot;tools/call&quot;, {&quot;name&quot;: name, &quot;arguments&quot;: arguments})
+        if &quot;error&quot; in resp:
+            return {&quot;error&quot;: resp[&quot;error&quot;]}
+        return json.loads(resp[&quot;result&quot;][&quot;content&quot;][0][&quot;text&quot;])
+
+    def close(self):
+        self.proc.stdin.close()
+        self.proc.terminate()
+
+# ===== Demo 跑通 =====
+
+if __name__ == &quot;__main__&quot;:
+    client = MCPClient(MCP_SERVER_CODE)
+    try:
+        print(&quot;\n=== 1. 列出所有工具 ===&quot;)
+        for t in client.list_tools():
+            print(f&quot;  - {t[&#x27;name&#x27;]}: {t[&#x27;description&#x27;]}&quot;)
+
+        print(&quot;\n=== 2. 调用 get_weather ===&quot;)
+        print(client.call_tool(&quot;get_weather&quot;, {&quot;city&quot;: &quot;北京&quot;}))
+
+        print(&quot;\n=== 3. 调用 search_docs ===&quot;)
+        print(client.call_tool(&quot;search_docs&quot;, {&quot;query&quot;: &quot;MCP 协议&quot;, &quot;top_k&quot;: 2}))
+
+        print(&quot;\n=== 4. 调用 send_email ===&quot;)
+        print(client.call_tool(&quot;send_email&quot;, {
+            &quot;to&quot;: &quot;[email protected]&quot;,
+            &quot;subject&quot;: &quot;测试&quot;,
+            &quot;body&quot;: &quot;这是来自 MCP Server 的邮件&quot;
+        }))
+    finally:
+        client.close()
+
+# 预期输出（节选）:
+# [MCP] 连接 server: {&#x27;name&#x27;: &#x27;demo-mcp-server&#x27;, &#x27;version&#x27;: &#x27;1.0.0&#x27;}
+# === 1. 列出所有工具 ===
+#   - get_weather: 查询指定城市的天气
+#   - search_docs: 在本地文档库中搜索关键词
+#   - send_email: 发送邮件（mock，不真发）
+# === 2. 调用 get_weather ===
+# {&#x27;city&#x27;: &#x27;北京&#x27;, &#x27;temp&#x27;: 22, &#x27;condition&#x27;: &#x27;晴&#x27;}
+# === 3. 调用 search_docs ===
+# {&#x27;results&#x27;: [&#x27;MCP 是 LLM 调用工具的标准协议&#x27;]}
+# === 4. 调用 send_email ===
+# {&#x27;status&#x27;: &#x27;sent&#x27;, &#x27;to&#x27;: &#x27;[email protected]&#x27;, &#x27;subject&#x27;: &#x27;测试&#x27;}
+</code></pre>
+<blockquote><strong>运行提示</strong>：直接 <code>python3 ch12_mcp_demo.py</code> 即可，无需任何第三方包。<strong>真实场景</strong>用 <code>pip install mcp</code> 拿到官方 SDK，把 <code>subprocess</code> 换成 <code>MCPClient</code> 类即可。</blockquote>
+<p><strong>关键设计点</strong>：</p>
+<ol>
+<li><strong>Server 端用 stdio 与 Client 通信</strong> —— 这是 MCP 的默认传输方式，本地进程最简单</li>
+<li><strong>JSON-RPC 2.0 协议</strong> —— <code>id</code> 用于请求-响应匹配；<code>error</code> 字段遵循 JSON-RPC 错误码（-32700 ParseError / -32601 MethodNotFound / -32603 InternalError）</li>
+<li><strong>Tools 声明 + 实现分离</strong> —— <code>TOOLS</code> 列表声明元数据（LLM 看到这些就知道能调什么），<code>TOOL_DISPATCH</code> dict 存实际函数</li>
+</ol>
+<hr>
+<h2 id="sec-12-3-a2a-agent-to-agent-agent-间的发现与协作">12.3 A2A（Agent-to-Agent）——Agent 间的发现与协作</h2>
+<h3 id="sec-12-3-1-a2a-是什么">12.3.1 A2A 是什么</h3>
+<p><strong>A2A = Agent-to-Agent</strong>——Google 在 2025-04 提出的开放协议，<strong>专门解决 Agent 之间的发现、协商、任务委托问题</strong>。MCP 解决&quot;LLM 调工具&quot;，A2A 解决&quot;Agent 调 Agent&quot;。</p>
+<p><strong>核心实体</strong>：</p>
+<ul>
+<li><strong>Agent Card</strong> —— 一张 JSON 卡片，描述&quot;我是谁 / 我能干什么 / 怎么联系我&quot;，类似&quot;Agent 的名片&quot;</li>
+<li><strong>Task</strong> —— Agent 之间的任务单元，有完整生命周期（submitted → working → input-required → completed/failed/canceled）</li>
+<li><strong>Message / Part</strong> —— Task 内的消息载荷，Message 含多个 Part（text / file / data）</li>
+</ul>
+<h3 id="sec-12-3-2-a2a-完整工作流">12.3.2 A2A 完整工作流</h3>
+<pre><code class="language-text">
+1. Agent A 想要找能干的 Agent → 读 A2A Registry / 已知 Agent Card URL
+2. Agent A 拿 Agent B 的 Card → 知道 B 干啥、参数格式
+3. Agent A 发 &quot;tasks/send&quot; 给 Agent B → B 接收任务
+4. Agent B 工作过程中可能 &quot;input-required&quot; → A 提供补充输入
+5. Agent B 完成 → 返回 artifacts（最终产出） + status=&quot;completed&quot;
+</code></pre>
+<h3 id="sec-12-3-3-agent-card-示例">12.3.3 Agent Card 示例</h3>
+<pre><code class="language-json">
+{
+  &quot;name&quot;: &quot;Research Agent&quot;,
+  &quot;description&quot;: &quot;专业的网络研究 Agent，能搜索最新论文并撰写综述&quot;,
+  &quot;url&quot;: &quot;https://agents.example.com/research-agent&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;capabilities&quot;: {
+    &quot;streaming&quot;: true,
+    &quot;pushNotifications&quot;: false,
+    &quot;stateTransitionHistory&quot;: true
+  },
+  &quot;skills&quot;: [
+    {
+      &quot;id&quot;: &quot;arxiv-search&quot;,
+      &quot;name&quot;: &quot;ArXiv 论文搜索&quot;,
+      &quot;description&quot;: &quot;在 arXiv 上按关键词搜索论文，返回摘要 + 链接&quot;
+    },
+    {
+      &quot;id&quot;: &quot;summarize&quot;,
+      &quot;name&quot;: &quot;论文综述&quot;,
+      &quot;description&quot;: &quot;对 3-10 篇论文生成结构化综述&quot;
+    }
+  ],
+  &quot;authentication&quot;: {
+    &quot;schemes&quot;: [&quot;apiKey&quot;, &quot;oauth2&quot;]
+  }
+}
+</code></pre>
+<blockquote><strong>类比 RESTful API</strong>：A2A 就像 HTTP + OpenAPI 规范——Card 是 OpenAPI spec，Task 是 HTTP request，Artifact 是 HTTP response。</blockquote>
+<h3 id="sec-12-3-4-完整-python-示例-a2a-风格的-agent-发现-mock">12.3.4 完整 Python 示例：A2A 风格的 Agent 发现（mock）</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;
+A2A 风格的 Agent 发现 + 任务委派 mock
+演示 Agent Card 注册、发现、tasks/send 全流程
+&quot;&quot;&quot;
+
+import json
+import time
+import uuid
+from typing import Dict, List, Optional
+
+# ===== 1. Agent Card 注册中心 =====
+
+AGENT_REGISTRY: Dict[str, dict] = {}
+
+def register_agent(card: dict):
+    &quot;&quot;&quot;注册一个 Agent（生产环境是 A2A Registry 服务）&quot;&quot;&quot;
+    AGENT_REGISTRY[card[&quot;url&quot;]] = card
+    print(f&quot;[Registry] 已注册 Agent: {card[&#x27;name&#x27;]} @ {card[&#x27;url&#x27;]}&quot;)
+
+def discover_agents(skill: Optional[str] = None) -&gt; List[dict]:
+    &quot;&quot;&quot;发现具备某技能的 Agent（生产环境是 GET /.well-known/agent.json）&quot;&quot;&quot;
+    results = []
+    for url, card in AGENT_REGISTRY.items():
+        if skill is None or any(skill in s[&quot;id&quot;] for s in card.get(&quot;skills&quot;, [])):
+            results.append(card)
+    return results
+
+# ===== 2. Task 生命周期管理 =====
+
+TASK_STATES = [&quot;submitted&quot;, &quot;working&quot;, &quot;input-required&quot;, &quot;completed&quot;, &quot;failed&quot;, &quot;canceled&quot;]
+
+class Task:
+    def __init__(self, agent_url: str, message: dict):
+        self.id = str(uuid.uuid4())[:8]
+        self.agent_url = agent_url
+        self.message = message
+        self.status = &quot;submitted&quot;
+        self.artifacts: List[dict] = []
+        self.history: List[dict] = [{&quot;status&quot;: &quot;submitted&quot;, &quot;ts&quot;: time.time()}]
+
+    def transition(self, new_status: str):
+        if new_status not in TASK_STATES:
+            raise ValueError(f&quot;非法状态: {new_status}&quot;)
+        self.status = new_status
+        self.history.append({&quot;status&quot;: new_status, &quot;ts&quot;: time.time()})
+
+# ===== 3. Remote Agent 端（mock）=====
+
+class RemoteAgent:
+    &quot;&quot;&quot;模拟一个远程 Agent，接收 tasks/send，处理后返回 artifacts&quot;&quot;&quot;
+    def __init__(self, card: dict):
+        self.card = card
+        self.tasks: Dict[str, Task] = {}
+
+    def handle_task(self, task: Task):
+        &quot;&quot;&quot;执行任务（真实环境是 HTTP POST {agent_url}/tasks/send）&quot;&quot;&quot;
+        self.tasks[task.id] = task
+        task.transition(&quot;working&quot;)
+        # 模拟处理
+        time.sleep(0.01)
+        # 根据 skill 执行不同逻辑
+        skill = task.message.get(&quot;skill&quot;, &quot;&quot;)
+        if skill == &quot;arxiv-search&quot;:
+            artifacts = [{&quot;type&quot;: &quot;papers&quot;, &quot;data&quot;: [
+                {&quot;title&quot;: &quot;MCP: An Open Protocol for LLM-Tool Integration&quot;, &quot;year&quot;: 2024},
+                {&quot;title&quot;: &quot;A2A: Agent-to-Agent Protocol&quot;, &quot;year&quot;: 2025}
+            ]}]
+        elif skill == &quot;summarize&quot;:
+            artifacts = [{&quot;type&quot;: &quot;summary&quot;, &quot;data&quot;: &quot;本综述覆盖 2 篇核心论文...&quot;}]
+        else:
+            artifacts = [{&quot;type&quot;: &quot;text&quot;, &quot;data&quot;: f&quot;Agent {self.card[&#x27;name&#x27;]} 收到任务: {task.message}&quot;}]
+        task.artifacts = artifacts
+        task.transition(&quot;completed&quot;)
+
+# ===== 4. Client 端：发现 + 委派 =====
+
+class A2AClient:
+    def __init__(self):
+        self.registry = AGENT_REGISTRY
+        self.remote_agents: Dict[str, RemoteAgent] = {}
+
+    def register(self, card: dict):
+        register_agent(card)
+        self.remote_agents[card[&quot;url&quot;]] = RemoteAgent(card)
+
+    def discover(self, skill: str) -&gt; List[dict]:
+        return discover_agents(skill)
+
+    def send_task(self, agent_url: str, message: dict) -&gt; Task:
+        if agent_url not in self.remote_agents:
+            raise ValueError(f&quot;Agent {agent_url} 未注册&quot;)
+        task = Task(agent_url, message)
+        self.remote_agents[agent_url].handle_task(task)
+        return task
+
+# ===== 5. Demo 跑通 =====
+
+if __name__ == &quot;__main__&quot;:
+    client = A2AClient()
+
+    # 注册 3 个 Agent
+    client.register({
+        &quot;name&quot;: &quot;Research Agent&quot;,
+        &quot;url&quot;: &quot;https://agents.example.com/research&quot;,
+        &quot;version&quot;: &quot;1.0.0&quot;,
+        &quot;skills&quot;: [
+            {&quot;id&quot;: &quot;arxiv-search&quot;, &quot;name&quot;: &quot;ArXiv 搜索&quot;},
+            {&quot;id&quot;: &quot;summarize&quot;, &quot;name&quot;: &quot;论文综述&quot;}
+        ]
+    })
+    client.register({
+        &quot;name&quot;: &quot;Code Agent&quot;,
+        &quot;url&quot;: &quot;https://agents.example.com/code&quot;,
+        &quot;version&quot;: &quot;1.0.0&quot;,
+        &quot;skills&quot;: [
+            {&quot;id&quot;: &quot;code-review&quot;, &quot;name&quot;: &quot;代码审查&quot;},
+            {&quot;id&quot;: &quot;refactor&quot;, &quot;name&quot;: &quot;代码重构&quot;}
+        ]
+    })
+    client.register({
+        &quot;name&quot;: &quot;Data Agent&quot;,
+        &quot;url&quot;: &quot;https://agents.example.com/data&quot;,
+        &quot;version&quot;: &quot;1.0.0&quot;,
+        &quot;skills&quot;: [
+            {&quot;id&quot;: &quot;sql-query&quot;, &quot;name&quot;: &quot;SQL 查询&quot;},
+            {&quot;id&quot;: &quot;viz&quot;, &quot;name&quot;: &quot;数据可视化&quot;}
+        ]
+    })
+
+    # 发现能搜索 arXiv 的 Agent
+    print(&quot;\n=== 1. 发现 &#x27;arxiv&#x27; 技能的 Agent ===&quot;)
+    for card in client.discover(&quot;arxiv&quot;):
+        print(f&quot;  - {card[&#x27;name&#x27;]} @ {card[&#x27;url&#x27;]}&quot;)
+
+    # 委派任务给 Research Agent
+    print(&quot;\n=== 2. 委派 arxiv-search 任务 ===&quot;)
+    task = client.send_task(&quot;https://agents.example.com/research&quot;, {
+        &quot;skill&quot;: &quot;arxiv-search&quot;,
+        &quot;query&quot;: &quot;MCP A2A 协议&quot;
+    })
+    print(f&quot;  Task ID: {task.id}&quot;)
+    print(f&quot;  最终状态: {task.status}&quot;)
+    print(f&quot;  Artifacts: {json.dumps(task.artifacts, ensure_ascii=False, indent=2)}&quot;)
+    print(f&quot;  状态历史: {[h[&#x27;status&#x27;] for h in task.history]}&quot;)
+
+    # 委派任务给 Code Agent
+    print(&quot;\n=== 3. 委派 code-review 任务 ===&quot;)
+    task2 = client.send_task(&quot;https://agents.example.com/code&quot;, {
+        &quot;skill&quot;: &quot;code-review&quot;,
+        &quot;code&quot;: &quot;def add(a, b): return a + b&quot;
+    })
+    print(f&quot;  Task ID: {task2.id}&quot;)
+    print(f&quot;  最终状态: {task2.status}&quot;)
+    print(f&quot;  Artifacts: {json.dumps(task2.artifacts, ensure_ascii=False)}&quot;)
+
+# 预期输出:
+# [Registry] 已注册 Agent: Research Agent @ https://agents.example.com/research
+# [Registry] 已注册 Agent: Code Agent @ https://agents.example.com/code
+# [Registry] 已注册 Agent: Data Agent @ https://agents.example.com/data
+#
+# === 1. 发现 &#x27;arxiv&#x27; 技能的 Agent ===
+#   - Research Agent @ https://agents.example.com/research
+#
+# === 2. 委派 arxiv-search 任务 ===
+#   Task ID: a3f8b2c1
+#   最终状态: completed
+#   Artifacts: [{&quot;type&quot;: &quot;papers&quot;, &quot;data&quot;: [...]}]
+#   状态历史: [&#x27;submitted&#x27;, &#x27;working&#x27;, &#x27;completed&#x27;]
+</code></pre>
+<blockquote><strong>运行提示</strong>：直接 <code>python3 ch12_a2a_demo.py</code>。<strong>真实场景</strong>用 <code>pip install a2a-sdk</code> + HTTP 通信。</blockquote>
+<p><strong>关键设计点</strong>：</p>
+<ol>
+<li><strong>Agent Card 是公开的&quot;名片&quot;</strong> —— 任何人都能 <code>GET /.well-known/agent.json</code> 拿到（类比网站的 robots.txt）</li>
+<li><strong>Task 是有状态的&quot;工作单元&quot;</strong> —— 生命周期 6 个状态，Client 可以轮询 / SSE 订阅 / webhook 推送</li>
+<li><strong>Artifact 是&quot;产出物&quot;</strong> —— 可包含 text / file / data，最终由 Client 解析</li>
+</ol>
+<hr>
+<h2 id="sec-12-4-mcp-vs-a2a-横向对比-决策树">12.4 MCP vs A2A 横向对比 + 决策树</h2>
+<h3 id="sec-12-4-1-8-维度对比">12.4.1 8 维度对比</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>MCP</th>
+<th>A2A</th>
+<th>实战含义</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>提出方</strong></td>
+<td>Anthropic</td>
+<td>Google + Linux Foundation</td>
+<td>厂商中立性：MCP 偏 Anthropic 系、A2A 更中立</td>
+</tr>
+<tr>
+<td><strong>发布时间</strong></td>
+<td>2024-11</td>
+<td>2025-04</td>
+<td>MCP 早 5 个月，生态更成熟</td>
+</tr>
+<tr>
+<td><strong>通信双方</strong></td>
+<td>LLM ↔ 工具</td>
+<td>Agent ↔ Agent</td>
+<td>抽象层级：A2A 比 MCP 高一层</td>
+</tr>
+<tr>
+<td><strong>传输协议</strong></td>
+<td>JSON-RPC 2.0（stdio / SSE / HTTP）</td>
+<td>JSON-RPC 2.0（SSE / HTTP）</td>
+<td>两者底层相同，互操作性强</td>
+</tr>
+<tr>
+<td><strong>能力发现</strong></td>
+<td><code>tools/list</code> 返回</td>
+<td>Agent Card 公开 HTTP</td>
+<td>MCP 是&quot;主动问&quot;，A2A 是&quot;被动展示&quot;</td>
+</tr>
+<tr>
+<td><strong>调用粒度</strong></td>
+<td>单次 Tool 调用</td>
+<td>长生命周期 Task</td>
+<td>MCP 是 HTTP POST 模式，A2A 是异步工作流</td>
+</tr>
+<tr>
+<td><strong>状态管理</strong></td>
+<td>无状态（一次调用一次结果）</td>
+<td>有状态（Task 6 个状态）</td>
+<td>A2A 适合长任务（&gt;10s），MCP 适合短任务</td>
+</tr>
+<tr>
+<td><strong>典型场景</strong></td>
+<td>LLM 调数据库 / 调 API</td>
+<td>Agent A 委派研究任务给 Agent B</td>
+<td>MCP 是&quot;工具替代&quot;，A2A 是&quot;团队协作&quot;</td>
+</tr>
+</tbody></table>
+<h3 id="sec-12-4-2-4-步决策树">12.4.2 4 步决策树</h3>
+<pre><code class="language-text">
+Q1: 你要解决的通信问题，是 LLM ↔ 工具 还是 Agent ↔ Agent？
+    ├─ LLM ↔ 工具 → Q2
+    └─ Agent ↔ Agent → Q3
+
+Q2: 工具是本地的（数据库 / 文件 / shell）还是远程的（云 API）？
+    ├─ 本地为主 → **MCP（stdio）**
+    └─ 远程为主 → **MCP（SSE / streamable HTTP）**
+
+Q3: Agent 之间是同组织内部协作，还是跨组织 / 跨互联网？
+    ├─ 同组织内部 → **A2A**
+    └─ 跨组织 / 跨互联网 → **A2A + 鉴权层**（OAuth2 / mTLS）
+
+总结：
+- 80% 的场景只用 MCP 就够（LLM 调工具是刚需）
+- 多 Agent 系统用 A2A（Agent 间通信是高级需求）
+- 真实生产环境 = MCP（工具层）+ A2A（Agent 层）的组合
+</code></pre>
+<h3 id="sec-12-4-3-5-大关键差异">12.4.3 5 大关键差异</h3>
+<table class="md-table"><thead><tr>
+<th>差异</th>
+<th>MCP</th>
+<th>A2A</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>谁发起调用</strong></td>
+<td>LLM（Client 主动调 Server）</td>
+<td>任意 Agent（双向）</td>
+</tr>
+<tr>
+<td><strong>调用完成时间</strong></td>
+<td>通常 &lt;5s（短操作）</td>
+<td>可能 5s-数小时（长任务）</td>
+</tr>
+<tr>
+<td><strong>失败处理</strong></td>
+<td>立即返回 error</td>
+<td>Task 状态机 + 重试 + cancel</td>
+</tr>
+<tr>
+<td><strong>可发现性</strong></td>
+<td>LLM 通过 system prompt 知道有哪些 Tool</td>
+<td>任意 Agent 通过 Registry 发现其他 Agent</td>
+</tr>
+<tr>
+<td><strong>鉴权</strong></td>
+<td>通常无（本地进程）</td>
+<td>必须有（跨网络 = 必须鉴权）</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-12-5-协议混搭架构-mcp-a2a-实战模式">12.5 协议混搭架构：MCP + A2A 实战模式</h2>
+<h3 id="sec-12-5-1-真实生产案例-mcp-做-手-a2a-做-团队">12.5.1 真实生产案例：MCP 做&quot;手&quot;，A2A 做&quot;团队&quot;</h3>
+<table class="md-table"><thead><tr>
+<th>案例</th>
+<th>MCP 用法</th>
+<th>A2A 用法</th>
+<th>效果</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Salesforce Agentforce</strong></td>
+<td>暴露 100+ 业务系统（CRM / ERP / 财务）作为 MCP Server</td>
+<td>多个 Agent（销售 Agent / 客服 Agent）通过 A2A 互派任务</td>
+<td>一个客户的请求可触发 3-5 个 Agent 协作 + 10+ 业务系统调用</td>
+</tr>
+<tr>
+<td><strong>Microsoft Copilot Studio</strong></td>
+<td>每个 Copilot 都接 MCP Server（Microsoft 365 全套）</td>
+<td>Copilot 间通过 A2A-style 协议互调</td>
+<td>Word / Excel / Teams 中的 Copilot 可互调完成任务</td>
+</tr>
+<tr>
+<td><strong>CrewAI 企业版</strong></td>
+<td>Tool 层用 MCP（统一工具接入）</td>
+<td>Agent 层用 A2A-like 协议（任务委派）</td>
+<td>企业 IT 一周内可搭出 50+ Agent 协作系统</td>
+</tr>
+</tbody></table>
+<h3 id="sec-12-5-2-一个最小可运行的-协议混搭-架构图">12.5.2 一个最小可运行的&quot;协议混搭&quot;架构图</h3>
+<pre><code class="language-text">
+┌────────────────────────────────────────────────────────────┐
+│                    多 Agent 协作系统                          │
+│                                                              │
+│   Agent A (Supervisor)                                       │
+│   ┌──────────────┐     A2A tasks/send    ┌──────────────┐   │
+│   │ LLM: Claude  │ ───────────────────► │ Agent B       │   │
+│   │ MCP Client   │                       │ LLM: GPT      │   │
+│   └──────┬───────┘                       │ MCP Client   │   │
+│          │ MCP (stdio)                    └──────┬───────┘   │
+│          ▼                                      │ MCP (stdio) │
+│   ┌──────────────┐                       ┌──────▼───────┐   │
+│   │ MCP Server   │                       │ MCP Server   │   │
+│   │ (DB 查询)    │                       │ (邮件发送)    │   │
+│   └──────────────┘                       └──────────────┘   │
+└────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>核心模式</strong>：每个 Agent <strong>内部</strong>用 MCP 调工具（统一标准），<strong>之间</strong>用 A2A 通信（统一协议）。<strong>两层标准化互不干扰</strong>。</p>
+<h3 id="sec-12-5-3-选型速查表">12.5.3 选型速查表</h3>
+<table class="md-table"><thead><tr>
+<th>你的场景</th>
+<th>用什么</th>
+<th>原因</th>
+</tr></thead><tbody>
+<tr>
+<td>单 Agent 调 5 个工具</td>
+<td><strong>MCP</strong></td>
+<td>5 个 MCP Server 比 5 套自定义 SDK 简单</td>
+</tr>
+<tr>
+<td>多 Agent 协作（5-10 个）</td>
+<td><strong>A2A</strong></td>
+<td>Task 状态机管长任务，比手写消息总线简单</td>
+</tr>
+<tr>
+<td>多 Agent + 多工具（10+ Agent × 10+ 工具）</td>
+<td><strong>MCP + A2A</strong></td>
+<td>必须双层标准化，否则维护成本爆炸</td>
+</tr>
+<tr>
+<td>跨公司 Agent 协作</td>
+<td><strong>A2A + OAuth2</strong></td>
+<td>鉴权是刚需，标准协议必须配标准鉴权</td>
+</tr>
+<tr>
+<td>只想跑个 demo</td>
+<td><strong>直接调 API</strong></td>
+<td>协议有学习成本，demo 阶段不必上</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-12-6-协议层-5-大坑">12.6 协议层 5 大坑</h2>
+<h3 id="sec-12-6-1-坑-1-mcp-工具描述不一致">12.6.1 坑 1：MCP 工具描述不一致</h3>
+<p><strong>症状</strong>：MCP Server 暴露了 <code>query_db(sql)</code>，但 description 写的是&quot;查询数据库&quot;，没有说支持哪些 SQL 语法、返回什么字段。LLM 看到这种模糊描述，要么不调、要么调错。</p>
+<p><strong>根因</strong>：MCP Server 的 <code>inputSchema</code> 是 JSON Schema，<strong>质量完全靠开发者</strong>。协议不强制每个参数写 <code>description</code>。</p>
+<p><strong>修复</strong>：</p>
+<pre><code class="language-json">
+{
+  &quot;name&quot;: &quot;query_db&quot;,
+  &quot;description&quot;: &quot;查询 PostgreSQL 数据库。支持 SELECT，参数化查询防注入。返回 [{column: value}] 格式。&quot;,
+  &quot;inputSchema&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;sql&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;参数化 SQL，例如 &#x27;SELECT * FROM users WHERE id = $1&#x27;&quot;},
+      &quot;params&quot;: {&quot;type&quot;: &quot;array&quot;, &quot;description&quot;: &quot;SQL 参数列表&quot;, &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;}}
+    },
+    &quot;required&quot;: [&quot;sql&quot;, &quot;params&quot;]
+  }
+}
+</code></pre>
+<p><strong>检验方法</strong>：让 LLM 调一次，如果调对 → 描述够好；调错 → 加 description。</p>
+<h3 id="sec-12-6-2-坑-2-a2a-兼容性碎片化">12.6.2 坑 2：A2A 兼容性碎片化</h3>
+<p><strong>症状</strong>：A2A 协议 2025-04 才发布 v0.1，到 2025-09 已经出现 3 个不兼容版本（v0.1 / v0.2 / v0.3）。不同厂商实现的 A2A Client / Server 之间经常握手失败。</p>
+<p><strong>根因</strong>：标准化早期协议版本号频繁变更，所有厂商都在追规范但节奏不一。</p>
+<p><strong>修复</strong>：</p>
+<ol>
+<li><strong>生产环境固定一个版本</strong>（如 v0.2.1），所有 Agent 统一</li>
+<li><strong>加版本协商层</strong> —— 握手时 Client 声明支持的版本，Server 选最高兼容的</li>
+<li><strong>抽象一层 wrapper</strong> —— 不要直接用官方 SDK，而是封装一层（未来换版本只改 wrapper）</li>
+</ol>
+<h3 id="sec-12-6-3-坑-3-协议版本管理">12.6.3 坑 3：协议版本管理</h3>
+<p><strong>症状</strong>：MCP 协议 2024-11 → 2025-06 升级了 3 次，每次升级可能加新字段、改默认行为。<strong>你的 MCP Server 跑在 v2024-11-05，Client 跑在 v2025-06-18，可能莫名其妙调用失败</strong>。</p>
+<p><strong>根因</strong>：协议版本号在 <code>initialize</code> 响应里返回（<code>protocolVersion</code> 字段），但很多代码不检查。</p>
+<p><strong>修复</strong>：</p>
+<pre><code class="language-python">
+def _initialize(self):
+    info = self._send(&quot;initialize&quot;)
+    server_version = info[&quot;result&quot;][&quot;protocolVersion&quot;]
+    if not is_compatible(server_version, SUPPORTED_VERSIONS):
+        raise RuntimeError(f&quot;Server protocol {server_version} 不兼容&quot;)
+</code></pre>
+<h3 id="sec-12-6-4-坑-4-安全边界">12.6.4 坑 4：安全边界</h3>
+<p><strong>症状</strong>：MCP Server 暴露 <code>send_email(to, body)</code>，LLM 在用户引导下发了 100 封垃圾邮件。A2A Agent 接收了恶意 Agent 的 task，执行了破坏性操作。</p>
+<p><strong>根因</strong>：协议本身不强制鉴权 / 限流 / 内容审计。</p>
+<p><strong>修复</strong>：</p>
+<ol>
+<li><strong>MCP Server 侧</strong>：加调用频率限制（每分钟 10 次）、敏感操作二次确认（<code>send_email</code> 前要求 user 确认）</li>
+<li><strong>A2A 侧</strong>：必须 OAuth2 鉴权、Task payload 加签名、接收方用沙箱环境执行</li>
+<li><strong>审计层</strong>：所有 Tool / Task 调用记日志，事后审计</li>
+</ol>
+<h3 id="sec-12-6-5-坑-5-协议开销">12.6.5 坑 5：协议开销</h3>
+<p><strong>症状</strong>：MCP 比直接调 Python 函数慢 5-10 倍（subprocess + JSON 序列化 + 进程间通信），A2A 比 in-process 消息慢 50-100 倍（HTTP + JSON-RPC + 网络往返）。</p>
+<p><strong>根因</strong>：协议开销 = 序列化 + 传输 + 解析，跨进程 / 跨网络必然慢。</p>
+<p><strong>修复</strong>：</p>
+<ul>
+<li><strong>本地高频调用不要用 MCP</strong> —— 直接 Python import</li>
+<li><strong>远程低频调用放心用 A2A</strong> —— 50ms 延迟不影响 5s 任务</li>
+<li><strong>批量调用</strong> —— MCP 一次 tools/call 调一个工具，A2A 一次任务多 artifact 一起回</li>
+</ul>
+<hr>
+<h2 id="sec-12-7-mcp-a2a-生态与未来">12.7 MCP / A2A 生态与未来</h2>
+<h3 id="sec-12-7-1-2025-2026-厂商支持矩阵">12.7.1 2025-2026 厂商支持矩阵</h3>
+<table class="md-table"><thead><tr>
+<th>协议</th>
+<th>Anthropic</th>
+<th>OpenAI</th>
+<th>Google</th>
+<th>Microsoft</th>
+<th>Meta</th>
+<th>开源社区</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>MCP</strong></td>
+<td>✅ 首发支持</td>
+<td>✅ 2025-04 兼容</td>
+<td>✅ 2025-06 兼容</td>
+<td>✅ Copilot Studio</td>
+<td>⚠ 实验性</td>
+<td>✅ 100+ Server</td>
+</tr>
+<tr>
+<td><strong>A2A</strong></td>
+<td>⚠ 观望</td>
+<td>⚠ 观望</td>
+<td>✅ 首发</td>
+<td>✅ 兼容</td>
+<td>❌ 未表态</td>
+<td>✅ 50+ Agent</td>
+</tr>
+</tbody></table>
+<blockquote><strong>关键观察</strong>：MCP 已成事实标准（A2A 还在拉锯中），生态规模 100+ Server 远超 A2A 的 50+ Agent。<strong>生产环境首选 MCP</strong>。&lt;br&gt;&lt;br&gt;<strong>数据出处</strong>：Anthropic 官方 MCP 公告（2024-11）+ Google A2A 公告（2025-04）+ OpenAI 兼容声明（2025-04 官方博客）。<strong>截至 2025-12</strong>，<strong>2026 厂商态度可能变化</strong>。</blockquote>
+<h3 id="sec-12-7-2-协议路线图">12.7.2 协议路线图</h3>
+<table class="md-table"><thead><tr>
+<th>时间</th>
+<th>事件</th>
+<th>影响</th>
+</tr></thead><tbody>
+<tr>
+<td>2024-11</td>
+<td>Anthropic 发布 MCP</td>
+<td>LLM 工具调用标准化开始</td>
+</tr>
+<tr>
+<td>2025-04</td>
+<td>Google 发布 A2A + ADK</td>
+<td>Agent 间通信标准化开始</td>
+</tr>
+<tr>
+<td>2025-06</td>
+<td>OpenAI 宣布兼容 MCP</td>
+<td>MCP 成&quot;事实标准&quot;</td>
+</tr>
+<tr>
+<td>2025-09</td>
+<td>社区发布 ANP</td>
+<td>跨组织 Agent 协作标准化</td>
+</tr>
+<tr>
+<td>2026 预测</td>
+<td>MCP 2.0 / A2A 1.0 稳定</td>
+<td>大规模生产部署</td>
+</tr>
+</tbody></table>
+<h3 id="sec-12-7-3-5-大悬而未决">12.7.3 5 大悬而未决</h3>
+<ol>
+<li><strong>统一鉴权标准</strong> —— MCP / A2A / ANP 各自有鉴权规范（API Key / OAuth2 / mTLS），跨协议互操作需要 adapter</li>
+<li><strong>协议性能优化</strong> —— 当前协议开销 5-100 倍，2026 年是否能做到 &lt;2 倍？</li>
+<li><strong>Agent 语义互操作</strong> —— A2A 的 Skill 描述是自由文本，LLM 解析有歧义；未来是否需要结构化 Skill 描述？</li>
+<li><strong>隐私 / 合规</strong> —— 跨组织 Agent 协作用什么数据脱敏标准？（GDPR / CCPA 怎么映射？）</li>
+<li><strong>协议分裂</strong> —— MCP / A2A / ANP 三大协议可能长期共存，是否会出现&quot;协议联邦&quot;（类似 HTTP/HTTPS 协同）？</li>
+</ol>
+<hr>
+<h2 id="sec-12-8-本章中段小结">12.8 本章中段小结</h2>
+<blockquote><strong>§12.8 vs §12.11 的关系</strong>：§12.8 是&quot;中段小结&quot;（讲完 §12.1-§12.7 协议层核心后的阶段总结），§12.11 是&quot;终极小结&quot;（讲完 §12.9-§12.10 实战与 FAQ 后的总收尾）。两节互补：§12.8 总结协议层概念，§12.11 整合实战经验。</blockquote>
+<h3 id="sec-12-8-1-8-条速记">12.8.1 8 条速记</h3>
+<ol>
+<li><strong>ch11 解决&quot;模式&quot;，ch12 解决&quot;协议&quot;</strong> —— 模式是拓扑，协议是通信</li>
+<li><strong>MCP = LLM ↔ 工具</strong> —— JSON-RPC 2.0，3 种传输（stdio / SSE / HTTP）</li>
+<li><strong>A2A = Agent ↔ Agent</strong> —— Agent Card + Task 状态机</li>
+<li><strong>MCP 三大原语</strong> —— Tools（写）/ Resources（读）/ Prompts（模板）</li>
+<li><strong>A2A 6 个状态</strong> —— submitted / working / input-required / completed / failed / canceled</li>
+<li><strong>80% 场景用 MCP</strong> —— 工具调用是刚需，Agent 间通信是高级需求</li>
+<li><strong>生产架构 = MCP + A2A</strong> —— 工具层 MCP，协作层 A2A</li>
+<li><strong>协议开销 5-100 倍</strong> —— 本地不要用协议，远程/跨组织必用</li>
+</ol>
+<h3 id="sec-12-8-2-概念速查表-22-术语">12.8.2 概念速查表（22 术语）</h3>
+<table class="md-table"><thead><tr>
+<th>术语</th>
+<th>解释</th>
+<th>首次出现</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>MCP</strong></td>
+<td>Model Context Protocol，LLM ↔ 工具的开放协议</td>
+<td>§12.2.1</td>
+</tr>
+<tr>
+<td><strong>A2A</strong></td>
+<td>Agent-to-Agent，Agent 间的开放协议</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>ANP</strong></td>
+<td>Agent Network Protocol，跨组织 Agent 协作协议</td>
+<td>§12.1.3</td>
+</tr>
+<tr>
+<td><strong>JSON-RPC 2.0</strong></td>
+<td>轻量级 RPC 协议，MCP / A2A 的传输层</td>
+<td>§12.2.4</td>
+</tr>
+<tr>
+<td><strong>stdio</strong></td>
+<td>标准输入/输出，本地进程间通信方式</td>
+<td>§12.2.3</td>
+</tr>
+<tr>
+<td><strong>SSE</strong></td>
+<td>Server-Sent Events，HTTP 长连接</td>
+<td>§12.2.3</td>
+</tr>
+<tr>
+<td><strong>Streamable HTTP</strong></td>
+<td>MCP 2025 新增双向流 HTTP 传输</td>
+<td>§12.2.3</td>
+</tr>
+<tr>
+<td><strong>Agent Card</strong></td>
+<td>A2A 中描述 Agent 能力的 JSON 文档</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>Task</strong></td>
+<td>A2A 中 Agent 间的任务单元，6 个状态</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>Artifact</strong></td>
+<td>A2A Task 完成后的产出物</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>Tools</strong></td>
+<td>MCP 三大原语之一，可调用的&quot;动作&quot;</td>
+<td>§12.2.2</td>
+</tr>
+<tr>
+<td><strong>Resources</strong></td>
+<td>MCP 三大原语之一，可读取的&quot;数据&quot;</td>
+<td>§12.2.2</td>
+</tr>
+<tr>
+<td><strong>Prompts</strong></td>
+<td>MCP 三大原语之一，预制 prompt 模板</td>
+<td>§12.2.2</td>
+</tr>
+<tr>
+<td><strong>inputSchema</strong></td>
+<td>JSON Schema 描述 Tool 参数</td>
+<td>§12.2.4</td>
+</tr>
+<tr>
+<td><strong>capabilities</strong></td>
+<td>Server 声明自己支持哪些原语</td>
+<td>§12.2.4</td>
+</tr>
+<tr>
+<td><strong>streaming</strong></td>
+<td>A2A Card 声明是否支持流式响应</td>
+<td>§12.3.3</td>
+</tr>
+<tr>
+<td><strong>pushNotifications</strong></td>
+<td>A2A Card 声明是否支持 push 通知</td>
+<td>§12.3.3</td>
+</tr>
+<tr>
+<td><strong>OAuth2</strong></td>
+<td>跨网络鉴权标准协议</td>
+<td>§12.6.4</td>
+</tr>
+<tr>
+<td><strong>mTLS</strong></td>
+<td>双向 TLS 鉴权</td>
+<td>§12.6.4</td>
+</tr>
+<tr>
+<td><strong>protocolVersion</strong></td>
+<td>MCP 协议版本号，在 initialize 返回</td>
+<td>§12.6.3</td>
+</tr>
+<tr>
+<td><strong>Registry</strong></td>
+<td>A2A Agent 注册中心，类似 DNS</td>
+<td>§12.3.2</td>
+</tr>
+<tr>
+<td><strong>Skill</strong></td>
+<td>A2A Agent 能力的最小单元</td>
+<td>§12.3.3</td>
+</tr>
+</tbody></table>
+<h3 id="sec-12-8-3-概念桥-ch12-ch13-ch14-ch15">12.8.3 概念桥：ch12 ↔ ch13 ↔ ch14 ↔ ch15</h3>
+<table class="md-table"><thead><tr>
+<th>本章学到的</th>
+<th>下一章怎么用</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>12.2 MCP Tools 原语</strong></td>
+<td><strong>ch13 LangGraph</strong> —— &quot;LangGraph 节点可直接包装 MCP Server&quot;（用 LangChain MCP Adapter 库）</td>
+</tr>
+<tr>
+<td><strong>12.3 A2A Task 状态机</strong></td>
+<td><strong>ch14 AutoGen</strong> —— &quot;AutoGen GroupChat Manager 实现 A2A 风格的 Agent 协商&quot;（ch11 提到的去中心化模式）</td>
+</tr>
+<tr>
+<td><strong>12.4 8 维度对比</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;CrewAI 默认用 A2A-like 协议做 Agent 委派&quot;（可与 MCP 桥接）</td>
+</tr>
+<tr>
+<td><strong>12.5 协议混搭架构</strong></td>
+<td><strong>ch13 LangGraph 实战</strong> —— &quot;Supervisor 节点 = A2A 客户端；Worker 节点 = MCP 客户端&quot;（ch11 模式 + ch12 协议落地）</td>
+</tr>
+<tr>
+<td><strong>12.6.2 A2A 兼容性碎片化</strong></td>
+<td><strong>ch14 AutoGen</strong> —— &quot;AutoGen 0.2 vs 0.4 是不兼容升级（类似 A2A v0.1/v0.2）&quot;（框架版本管理教训）</td>
+</tr>
+<tr>
+<td><strong>12.7.3 协议分裂</strong></td>
+<td><strong>第三部分整体</strong> —— &quot;MCP / A2A / ANP 三大协议可能在 ch15-CrewAI 之后形成事实统一标准&quot;</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-12-9-实战-搭建-fastmcp-server-80-行-python">12.9 实战：搭建 FastMCP Server（80 行 Python）</h2>
+<h3 id="sec-12-9-1-为什么需要-fastmcp">12.9.1 为什么需要 FastMCP</h3>
+<p>上节用 80 行手写了一个 MCP Server（JSON-RPC 2.0 协议解析 + 工具注册 + 调用派发）——真实开发中<strong>没人会从零手写</strong>。<code>mcp</code> 官方库（<code>pip install mcp</code>）提供了装饰器风格的 SDK，让开发者用 5-10 行代码暴露 1 个 MCP Server。</p>
+<p><strong>FastMCP</strong> 是 <code>mcp</code> 库的高级 API（类似 Flask vs WSGI 的关系）：</p>
+<pre><code class="language-python">
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP(&quot;my-server&quot;)
+
+@mcp.tool()
+def add(a: int, b: int) -&gt; int:
+    &quot;&quot;&quot;两个整数相加（LLM 看到 description 会知道何时调它）&quot;&quot;&quot;
+    return a + b
+
+if __name__ == &quot;__main__&quot;:
+    mcp.run()  # 默认 stdio 传输
+</code></pre>
+<p><strong>真实开发中</strong>：</p>
+<ul>
+<li>第 1-10 个 MCP Server：直接用 <code>mcp.server.fastmcp</code> 装饰器</li>
+<li>第 11+ 个 MCP Server：封装到内部框架，共享鉴权、日志、限流中间件</li>
+<li>生产部署：stdio → streamable HTTP 模式（<code>mcp.run(transport=&quot;streamable-http&quot;)</code>）</li>
+</ul>
+<h3 id="sec-12-9-2-80-行完整-fastmcp-server-模拟-3-个工具">12.9.2 80 行完整 FastMCP Server：模拟 3 个工具</h3>
+<pre><code class="language-python">
+# ch12_fastmcp_server.py
+# 真实环境: pip install mcp
+# 运行: python3 ch12_fastmcp_server.py
+#       （MCP Client 通过 stdio 启动此进程，然后 JSON-RPC 通信）
+# 本示例 mock 实现演示完整协议流程
+
+import json
+import sys
+from typing import Any, Dict, List
+
+# ===== 1. FastMCP 装饰器（mock 真实 mcp.server.fastmcp 的 API）=====
+
+class FastMCP:
+    def __init__(self, name: str):
+        self.name = name
+        self.tools: Dict[str, Dict[str, Any]] = {}
+        self.resources: Dict[str, str] = {}
+
+    def tool(self, name: str = None):
+        &quot;&quot;&quot;装饰器：把函数注册为 MCP Tool&quot;&quot;&quot;
+        def decorator(func):
+            tool_name = name or func.__name__
+            # 自动从函数签名生成 JSON Schema
+            import inspect
+            sig = inspect.signature(func)
+            params = {}
+            required = []
+            for pname, param in sig.parameters.items():
+                if param.annotation is inspect.Parameter.empty:
+                    ptype = &quot;string&quot;
+                elif param.annotation == int:
+                    ptype = &quot;integer&quot;
+                elif param.annotation == float:
+                    ptype = &quot;number&quot;
+                else:
+                    ptype = &quot;string&quot;
+                params[pname] = {&quot;type&quot;: ptype, &quot;description&quot;: f&quot;参数 {pname}&quot;}
+                if param.default is inspect.Parameter.empty:
+                    required.append(pname)
+            self.tools[tool_name] = {
+                &quot;name&quot;: tool_name,
+                &quot;description&quot;: func.__doc__ or &quot;&quot;,
+                &quot;inputSchema&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: params, &quot;required&quot;: required},
+                &quot;func&quot;: func,
+            }
+            return func
+        return decorator
+
+    def resource(self, uri: str):
+        &quot;&quot;&quot;装饰器：把 URI 注册为 MCP Resource&quot;&quot;&quot;
+        def decorator(func):
+            self.resources[uri] = func()
+            return func
+        return decorator
+
+    def run_stdio(self):
+        &quot;&quot;&quot;stdin/stdout JSON-RPC 主循环（生产用 mcp 库实现）&quot;&quot;&quot;
+        print(f&quot;[FastMCP] Server &#x27;{self.name}&#x27; 启动，等待 Client 连接...&quot;, file=sys.stderr)
+        for line in sys.stdin:
+            try:
+                req = json.loads(line)
+                resp = self._handle(req)
+                sys.stdout.write(json.dumps(resp) + &quot;\n&quot;)
+                sys.stdout.flush()
+            except Exception as e:
+                err = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: None, &quot;error&quot;: {&quot;code&quot;: -32603, &quot;message&quot;: str(e)}}
+                sys.stdout.write(json.dumps(err) + &quot;\n&quot;)
+                sys.stdout.flush()
+
+    def _handle(self, req: Dict[str, Any]) -&gt; Dict[str, Any]:
+        method = req.get(&quot;method&quot;)
+        req_id = req.get(&quot;id&quot;)
+        if method == &quot;initialize&quot;:
+            return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;result&quot;: {
+                &quot;protocolVersion&quot;: &quot;2025-06-18&quot;,
+                &quot;serverInfo&quot;: {&quot;name&quot;: self.name, &quot;version&quot;: &quot;1.0.0&quot;},
+                &quot;capabilities&quot;: {&quot;tools&quot;: {}, &quot;resources&quot;: {}}
+            }}
+        elif method == &quot;tools/list&quot;:
+            tools_list = [{&quot;name&quot;: t[&quot;name&quot;], &quot;description&quot;: t[&quot;description&quot;],
+                           &quot;inputSchema&quot;: t[&quot;inputSchema&quot;]} for t in self.tools.values()]
+            return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;result&quot;: {&quot;tools&quot;: tools_list}}
+        elif method == &quot;tools/call&quot;:
+            params = req.get(&quot;params&quot;, {})
+            tool_name = params.get(&quot;name&quot;)
+            args = params.get(&quot;arguments&quot;, {})
+            if tool_name not in self.tools:
+                return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;error&quot;: {&quot;code&quot;: -32601, &quot;message&quot;: f&quot;Tool {tool_name} not found&quot;}}
+            try:
+                result = self.tools[tool_name][&quot;func&quot;](**args)
+                return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;result&quot;: {
+                    &quot;content&quot;: [{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: str(result)}]
+                }}
+            except Exception as e:
+                return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;error&quot;: {&quot;code&quot;: -32603, &quot;message&quot;: str(e)}}
+        return {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: req_id, &quot;error&quot;: {&quot;code&quot;: -32601, &quot;message&quot;: f&quot;Method {method} not found&quot;}}
+
+# ===== 2. 用 FastMCP 装饰器风格定义 3 个 Tool =====
+
+mcp = FastMCP(&quot;agent-tools&quot;)
+
+@mcp.tool()
+def get_weather(city: str) -&gt; str:
+    &quot;&quot;&quot;查询某城市的当前天气（生产环境调真实气象 API）&quot;&quot;&quot;
+    # mock 实现
+    weather_db = {&quot;北京&quot;: &quot;晴 25°C&quot;, &quot;上海&quot;: &quot;多云 28°C&quot;, &quot;深圳&quot;: &quot;雷阵雨 30°C&quot;}
+    return weather_db.get(city, f&quot;未收录 {city}，默认：晴 22°C&quot;)
+
+@mcp.tool()
+def calculate(expression: str) -&gt; str:
+    &quot;&quot;&quot;计算数学表达式（生产环境用 sympy 防止注入）&quot;&quot;&quot;
+    # 简化实现：仅允许数字和 + - * / ( )
+    allowed = set(&quot;0123456789+-*/.() &quot;)
+    if not all(c in allowed for c in expression):
+        return &quot;错误：表达式包含非法字符&quot;
+    try:
+        result = eval(expression)  # ⚠️ 真实环境不要直接 eval
+        return f&quot;{expression} = {result}&quot;
+    except Exception as e:
+        return f&quot;计算错误: {e}&quot;
+
+@mcp.tool()
+def search_arxiv(query: str, max_results: int = 3) -&gt; str:
+    &quot;&quot;&quot;在 arXiv 搜索论文（生产环境调 arxiv API）&quot;&quot;&quot;
+    # mock 实现
+    mock_papers = [
+        {&quot;title&quot;: &quot;MCP: An Open Protocol for LLM-Tool Integration&quot;, &quot;year&quot;: 2024, &quot;authors&quot;: &quot;Anthropic&quot;},
+        {&quot;title&quot;: &quot;A2A: Agent-to-Agent Protocol&quot;, &quot;year&quot;: 2025, &quot;authors&quot;: &quot;Google&quot;},
+        {&quot;title&quot;: &quot;Constitutional AI: Harmlessness from AI Feedback&quot;, &quot;year&quot;: 2022, &quot;authors&quot;: &quot;Anthropic&quot;},
+    ]
+    relevant = [p for p in mock_papers if any(kw in p[&quot;title&quot;].lower() for kw in query.lower().split())]
+    if not relevant:
+        relevant = mock_papers[:max_results]
+    return json.dumps(relevant[:max_results], ensure_ascii=False, indent=2)
+
+# ===== 3. 模拟一个 MCP Client 演示完整流程 =====
+
+if __name__ == &quot;__main__&quot;:
+    # 直接演示 1 个完整 Client-Server 交互（不启动子进程）
+    print(&quot;=== FastMCP Server 自测 ===\n&quot;)
+
+    # 模拟 Client 请求 1: initialize
+    req1 = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 1, &quot;method&quot;: &quot;initialize&quot;, &quot;params&quot;: {}}
+    resp1 = mcp._handle(req1)
+    print(&quot;1. initialize:&quot;, json.dumps(resp1[&quot;result&quot;], ensure_ascii=False, indent=2))
+
+    # 模拟 Client 请求 2: tools/list
+    req2 = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 2, &quot;method&quot;: &quot;tools/list&quot;, &quot;params&quot;: {}}
+    resp2 = mcp._handle(req2)
+    print(f&quot;\n2. tools/list: 共 {len(resp2[&#x27;result&#x27;][&#x27;tools&#x27;])} 个工具&quot;)
+    for t in resp2[&#x27;result&#x27;][&#x27;tools&#x27;]:
+        print(f&quot;   - {t[&#x27;name&#x27;]}: {t[&#x27;description&#x27;]}&quot;)
+
+    # 模拟 Client 请求 3: tools/call get_weather
+    req3 = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 3, &quot;method&quot;: &quot;tools/call&quot;, &quot;params&quot;: {
+        &quot;name&quot;: &quot;get_weather&quot;, &quot;arguments&quot;: {&quot;city&quot;: &quot;北京&quot;}
+    }}
+    resp3 = mcp._handle(req3)
+    print(f&quot;\n3. get_weather(北京):&quot;, resp3[&#x27;result&#x27;][&#x27;content&#x27;][0][&#x27;text&#x27;])
+
+    # 模拟 Client 请求 4: tools/call calculate
+    req4 = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 4, &quot;method&quot;: &quot;tools/call&quot;, &quot;params&quot;: {
+        &quot;name&quot;: &quot;calculate&quot;, &quot;arguments&quot;: {&quot;expression&quot;: &quot;3.14 * 2.71&quot;}
+    }}
+    resp4 = mcp._handle(req4)
+    print(f&quot;4. calculate(3.14 * 2.71):&quot;, resp4[&#x27;result&#x27;][&#x27;content&#x27;][0][&#x27;text&#x27;])
+
+    # 模拟 Client 请求 5: tools/call search_arxiv
+    req5 = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 5, &quot;method&quot;: &quot;tools/call&quot;, &quot;params&quot;: {
+        &quot;name&quot;: &quot;search_arxiv&quot;, &quot;arguments&quot;: {&quot;query&quot;: &quot;MCP&quot;}
+    }}
+    resp5 = mcp._handle(req5)
+    print(f&quot;5. search_arxiv(&#x27;MCP&#x27;):&quot;)
+    print(resp5[&#x27;result&#x27;][&#x27;content&#x27;][0][&#x27;text&#x27;])
+
+    # 模拟错误处理
+    req_err = {&quot;jsonrpc&quot;: &quot;2.0&quot;, &quot;id&quot;: 6, &quot;method&quot;: &quot;tools/call&quot;, &quot;params&quot;: {
+        &quot;name&quot;: &quot;unknown_tool&quot;, &quot;arguments&quot;: {}
+    }}
+    resp_err = mcp._handle(req_err)
+    print(f&quot;\n6. 错误处理 (未知工具):&quot;, json.dumps(resp_err[&#x27;error&#x27;], ensure_ascii=False))
+
+# 预期输出:
+# === FastMCP Server 自测 ===
+#
+# 1. initialize: { &quot;protocolVersion&quot;: &quot;2025-06-18&quot;, &quot;serverInfo&quot;: {...}, &quot;capabilities&quot;: {...} }
+# 2. tools/list: 共 3 个工具
+#    - get_weather: 查询某城市的当前天气...
+#    - calculate: 计算数学表达式...
+#    - search_arxiv: 在 arXiv 搜索论文...
+# 3. get_weather(北京): 晴 25°C
+# 4. calculate(3.14 * 2.71): 3.14 * 2.71 = 8.5094
+# 5. search_arxiv(&#x27;MCP&#x27;):
+#    [{&quot;title&quot;: &quot;MCP: An Open Protocol for LLM-Tool Integration&quot;, &quot;year&quot;: 2024, ...}]
+# 6. 错误处理 (未知工具): {&quot;code&quot;: -32601, &quot;message&quot;: &quot;Tool unknown_tool not found&quot;}
+</code></pre>
+<blockquote><strong>运行提示</strong>：直接 <code>python3 ch12_fastmcp_server.py</code>。<strong>真实环境</strong>用 <code>pip install mcp</code> 后用官方 <code>FastMCP</code> 替代本示例的 mock 实现，<strong>仅协议字段相同</strong>（<code>tools/list</code> / <code>tools/call</code> / <code>initialize</code>）。</blockquote>
+<p><strong>核心设计点</strong>：</p>
+<ol>
+<li><strong>装饰器自动生成 inputSchema</strong> —— 函数签名 → JSON Schema，开发者只写函数体</li>
+<li><strong>stdio JSON-RPC 主循环</strong> —— 一行一请求一行一响应，简单可调试</li>
+<li><strong>错误码标准化</strong> —— JSON-RPC 错误码（-32601 方法不存在 / -32603 内部错误 / -32600 无效请求）</li>
+</ol>
+<h3 id="sec-12-9-3-fastmcp-server-vs-手写-mcp-server-对比">12.9.3 FastMCP Server vs 手写 MCP Server 对比</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>手写 MCP Server（§12.2.4）</th>
+<th>FastMCP Server（本节）</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>代码量</strong></td>
+<td>80 行</td>
+<td>50 行 + 30 行自测</td>
+</tr>
+<tr>
+<td><strong>inputSchema 生成</strong></td>
+<td>手写 JSON</td>
+<td>自动从签名生成</td>
+</tr>
+<tr>
+<td><strong>错误处理</strong></td>
+<td>手写 try/except</td>
+<td>装饰器自动包装</td>
+</tr>
+<tr>
+<td><strong>传输层切换</strong></td>
+<td>改主循环</td>
+<td>改 <code>mcp.run(transport=...)</code></td>
+</tr>
+<tr>
+<td><strong>学习价值</strong></td>
+<td>高（理解协议）</td>
+<td>高（理解工程化封装）</td>
+</tr>
+<tr>
+<td><strong>生产推荐</strong></td>
+<td>❌ 仅学习</td>
+<td>✅ 实际项目都用 FastMCP</td>
+</tr>
+</tbody></table>
+<blockquote><strong>§12.2.4 vs §12.9.2 的关系</strong>：§12.2.4 是&quot;手写 MCP Server 协议演示&quot;（理解 JSON-RPC 字段 + 客户端/服务端交互），§12.9.2 是&quot;FastMCP 工程化封装&quot;（生产推荐）。<strong>先读 §12.2.4 理解协议，再读 §12.9.2 学工程化</strong>——两者讲同一协议的不同抽象层级。</blockquote>
+<hr>
+<h2 id="sec-12-10-协议层-6-个常见疑问-faq">12.10 协议层 6 个常见疑问 FAQ</h2>
+<h3 id="sec-12-10-1-q1-我应该用-mcp-还是直接用厂商-sdk">12.10.1 Q1: 我应该用 MCP 还是直接用厂商 SDK？</h3>
+<p><strong>A</strong>: 看调用频率。</p>
+<table class="md-table"><thead><tr>
+<th>场景</th>
+<th>推荐</th>
+<th>原因</th>
+</tr></thead><tbody>
+<tr>
+<td>每天调 1000+ 次同一工具</td>
+<td>直接 SDK（跳过协议）</td>
+<td>协议开销 5-10 倍不可接受</td>
+</tr>
+<tr>
+<td>每天调 10-100 次不同工具</td>
+<td>MCP</td>
+<td>一套协议覆盖所有工具</td>
+</tr>
+<tr>
+<td>工具需要跨 LLM 厂商</td>
+<td>MCP</td>
+<td>MCP 一次实现，Claude / GPT / Gemini 都能用</td>
+</tr>
+<tr>
+<td>LLM 是固定的（如只用 Claude）</td>
+<td>直接 Claude SDK</td>
+<td>没必要加协议层</td>
+</tr>
+</tbody></table>
+<h3 id="sec-12-10-2-q2-a2a-协议会不会取代-mcp">12.10.2 Q2: A2A 协议会不会取代 MCP？</h3>
+<p><strong>A</strong>: 不会，两者定位互补。</p>
+<ul>
+<li><strong>MCP</strong> 解决&quot;LLM ↔ 工具&quot;——是<strong>垂直</strong>通信（一个调用方对一个被调用方）</li>
+<li><strong>A2A</strong> 解决&quot;Agent ↔ Agent&quot;——是<strong>水平</strong>通信（多个对等方互调）</li>
+<li>真实生产 = MCP（工具层）+ A2A（协作层），两者<strong>不互斥</strong></li>
+</ul>
+<p>类比：<strong>HTTP 不会取代 SQL</strong>——一个管传输、一个管数据，<strong>不在同一抽象层</strong>。</p>
+<h3 id="sec-12-10-3-q3-自建-agent-不暴露-a2a-端点-会被淘汰吗">12.10.3 Q3: 自建 Agent 不暴露 A2A 端点，会被淘汰吗？</h3>
+<p><strong>A</strong>: 短期不会，长期会&quot;协议孤岛化&quot;。</p>
+<ul>
+<li><strong>短期（2026-2027）</strong>：自建 Agent 用 JSON + REST 仍能跑通——多数企业内 Agent 协作是预定义的</li>
+<li><strong>长期（2028+）</strong>：跨厂商 Agent 互操作需求增长时，<strong>不暴露 A2A 端点 = 别的 Agent 找不到你 = 生态孤立</strong></li>
+<li><strong>建议</strong>：2026 年新项目<strong>默认实现 A2A 端点</strong>（增量成本 &lt; 5%），老项目逐步加</li>
+</ul>
+<h3 id="sec-12-10-4-q4-mcp-协议安全吗">12.10.4 Q4: MCP 协议安全吗？</h3>
+<p><strong>A</strong>: 协议本身安全（基于 JSON-RPC + 鉴权可选），<strong>但 Server 实现安全性完全靠开发者</strong>。</p>
+<table class="md-table"><thead><tr>
+<th>风险</th>
+<th>MCP 是否解决</th>
+<th>开发者必须做</th>
+</tr></thead><tbody>
+<tr>
+<td>Tool 描述歧义导致 LLM 调错</td>
+<td>❌</td>
+<td>写好 description 和 inputSchema</td>
+</tr>
+<tr>
+<td>Tool 执行破坏性操作</td>
+<td>❌</td>
+<td>加二次确认 / 限流</td>
+</tr>
+<tr>
+<td>Server 被恶意 Client 攻击</td>
+<td>❌</td>
+<td>加鉴权 + 输入验证</td>
+</tr>
+<tr>
+<td>敏感数据泄露</td>
+<td>❌</td>
+<td>加密传输 + 审计日志</td>
+</tr>
+</tbody></table>
+<p><strong>核心</strong>：<strong>MCP 是&quot;标准化通信层&quot;</strong>，<strong>不是&quot;安全沙箱&quot;</strong>。生产部署 MCP Server 必须自己加 4 层防护：鉴权 / 限流 / 审计 / 沙箱。</p>
+<h3 id="sec-12-10-5-q5-协议性能开销具体多少">12.10.5 Q5: 协议性能开销具体多少？</h3>
+<p><strong>A</strong>: 5-100 倍，取决于部署方式。</p>
+<p><strong>估算口径</strong>：<strong>对比基准 = 直接 SDK 调用（Python in-process）</strong>。stdio MCP 慢 5-10 倍（进程启动 + 序列化），A2A HTTP 委派慢 50-100 倍（多次网络往返）。<strong>对比真实生产需求</strong>（单次调用 50-200ms 容忍），stdio / SSE 几乎无感，A2A 在长任务（&gt;10s）也可接受。</p>
+<table class="md-table"><thead><tr>
+<th>部署方式</th>
+<th>协议开销</th>
+<th>原因</th>
+</tr></thead><tbody>
+<tr>
+<td>stdio（本地）</td>
+<td>5-10 倍</td>
+<td>进程启动 + JSON 序列化</td>
+</tr>
+<tr>
+<td>SSE（HTTP 长连接）</td>
+<td>20-50 倍</td>
+<td>网络往返 + SSE 帧解析</td>
+</tr>
+<tr>
+<td>streamable HTTP</td>
+<td>10-30 倍</td>
+<td>HTTP/2 多路复用 + 双向流</td>
+</tr>
+<tr>
+<td>A2A（HTTP 任务委派）</td>
+<td>50-100 倍</td>
+<td>多次往返 + 状态轮询</td>
+</tr>
+</tbody></table>
+<p><strong>优化方向</strong>：</p>
+<ul>
+<li><strong>本地高频调用</strong> → 直接 Python import（0 开销）</li>
+<li><strong>远程低频调用</strong> → 接受 50ms 延迟</li>
+<li><strong>批量调用</strong> → 1 次任务传 N 个参数，减少往返</li>
+</ul>
+<h3 id="sec-12-10-6-q6-现在学-mcp-a2a-来得及吗">12.10.6 Q6: 现在学 MCP / A2A 来得及吗？</h3>
+<p><strong>A</strong>: <strong>正是时候</strong>——2025-2026 是&quot;协议层红利期&quot;。</p>
+<ul>
+<li><strong>2024-11 前</strong>：没协议，开发者各写各的</li>
+<li><strong>2025-04 后</strong>：协议发布，懂协议的开发者<strong>稀缺</strong></li>
+<li><strong>2026 预测</strong>：80% 招聘要求&quot;熟悉 MCP 或 A2A&quot;</li>
+<li><strong>2027+</strong>：协议稳定成&quot;必会技能&quot;（类似&quot;懂 HTTP&quot;）</li>
+</ul>
+<p><strong>学习路径</strong>：</p>
+<ol>
+<li><strong>第 1 周</strong>：读 MCP 官方文档（modelcontextprotocol.io） + 跑通 stdio demo</li>
+<li><strong>第 2 周</strong>：实现 1 个自定义 MCP Server（封装你常用的 API）</li>
+<li><strong>第 3 周</strong>：读 A2A 规范 + 实现 1 个 A2A 端点</li>
+<li><strong>第 4 周</strong>：搭一个&quot;MCP Server + A2A Agent&quot;的最小混搭系统</li>
+<li><strong>第 2 个月</strong>：贡献 1 个开源 MCP Server / A2A Agent</li>
+</ol>
+<hr>
+<h2 id="sec-12-11-本章终极小结">12.11 本章终极小结</h2>
+<blockquote class="chapter-intro"><strong>§12.11 的定位</strong>：本章最后 1 节，整合 §12.9 FastMCP 实战 + §12.10 6 FAQ 的工程化经验。<strong>配合 §12.8 中段小结</strong>一起读——前者讲概念，后者讲实战。</blockquote>
+<h3 id="sec-12-11-1-10-条速记">12.11.1 10 条速记</h3>
+<ol>
+<li><strong>ch11 解决&quot;模式&quot;（拓扑结构），ch12 解决&quot;协议&quot;（通信标准）</strong>——两者配套使用</li>
+<li><strong>MCP = LLM ↔ 工具</strong> —— JSON-RPC 2.0，3 种传输（stdio / SSE / streamable HTTP）</li>
+<li><strong>A2A = Agent ↔ Agent</strong> —— Agent Card（能力描述）+ Task 状态机（任务追踪）</li>
+<li><strong>MCP 三大原语</strong> —— Tools（写）/ Resources（读）/ Prompts（模板）</li>
+<li><strong>A2A 6 个状态</strong> —— submitted / working / input-required / completed / failed / canceled</li>
+<li><strong>80% 场景用 MCP</strong> —— 工具调用是刚需，Agent 间通信是高级需求</li>
+<li><strong>生产架构 = MCP + A2A</strong> —— 工具层 MCP，协作层 A2A</li>
+<li><strong>协议开销 5-100 倍</strong> —— 本地不要用协议，远程/跨组织必用</li>
+<li><strong>FastMCP 装饰器风格</strong> —— 5-10 行暴露 1 个 MCP Server，生产首选</li>
+<li><strong>2026 是协议层红利期</strong> —— 现在学 MCP / A2A 正是时候</li>
+</ol>
+<h3 id="sec-12-11-2-概念速查表-25-术语-扩展-3-个">12.11.2 概念速查表（25 术语 → 扩展 3 个）</h3>
+<table class="md-table"><thead><tr>
+<th>术语</th>
+<th>解释</th>
+<th>首次出现</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>MCP</strong></td>
+<td>Model Context Protocol，LLM ↔ 工具的开放协议</td>
+<td>§12.2.1</td>
+</tr>
+<tr>
+<td><strong>A2A</strong></td>
+<td>Agent-to-Agent，Agent 间的开放协议</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>ANP</strong></td>
+<td>Agent Network Protocol，跨组织 Agent 协作协议</td>
+<td>§12.1.3</td>
+</tr>
+<tr>
+<td><strong>JSON-RPC 2.0</strong></td>
+<td>轻量级 RPC 协议，MCP / A2A 的传输层</td>
+<td>§12.2.4</td>
+</tr>
+<tr>
+<td><strong>stdio</strong></td>
+<td>标准输入/输出，本地进程间通信方式</td>
+<td>§12.2.3</td>
+</tr>
+<tr>
+<td><strong>SSE</strong></td>
+<td>Server-Sent Events，HTTP 长连接</td>
+<td>§12.2.3</td>
+</tr>
+<tr>
+<td><strong>Streamable HTTP</strong></td>
+<td>MCP 2025 新增双向流 HTTP 传输</td>
+<td>§12.2.3</td>
+</tr>
+<tr>
+<td><strong>Agent Card</strong></td>
+<td>A2A 中描述 Agent 能力的 JSON 文档</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>Task</strong></td>
+<td>A2A 中 Agent 间的任务单元，6 个状态</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>Artifact</strong></td>
+<td>A2A Task 完成后的产出物</td>
+<td>§12.3.1</td>
+</tr>
+<tr>
+<td><strong>Tools</strong></td>
+<td>MCP 三大原语之一，可调用的&quot;动作&quot;</td>
+<td>§12.2.2</td>
+</tr>
+<tr>
+<td><strong>Resources</strong></td>
+<td>MCP 三大原语之一，可读取的&quot;数据&quot;</td>
+<td>§12.2.2</td>
+</tr>
+<tr>
+<td><strong>Prompts</strong></td>
+<td>MCP 三大原语之一，预制 prompt 模板</td>
+<td>§12.2.2</td>
+</tr>
+<tr>
+<td><strong>inputSchema</strong></td>
+<td>JSON Schema 描述 Tool 参数</td>
+<td>§12.2.4</td>
+</tr>
+<tr>
+<td><strong>capabilities</strong></td>
+<td>Server 声明自己支持哪些原语</td>
+<td>§12.2.4</td>
+</tr>
+<tr>
+<td><strong>streaming</strong></td>
+<td>A2A Card 声明是否支持流式响应</td>
+<td>§12.3.3</td>
+</tr>
+<tr>
+<td><strong>pushNotifications</strong></td>
+<td>A2A Card 声明是否支持 push 通知</td>
+<td>§12.3.3</td>
+</tr>
+<tr>
+<td><strong>OAuth2</strong></td>
+<td>跨网络鉴权标准协议</td>
+<td>§12.6.4</td>
+</tr>
+<tr>
+<td><strong>mTLS</strong></td>
+<td>双向 TLS 鉴权</td>
+<td>§12.6.4</td>
+</tr>
+<tr>
+<td><strong>protocolVersion</strong></td>
+<td>MCP 协议版本号，在 initialize 返回</td>
+<td>§12.6.3</td>
+</tr>
+<tr>
+<td><strong>Registry</strong></td>
+<td>A2A Agent 注册中心，类似 DNS</td>
+<td>§12.3.2</td>
+</tr>
+<tr>
+<td><strong>Skill</strong></td>
+<td>A2A Agent 能力的最小单元</td>
+<td>§12.3.3</td>
+</tr>
+<tr>
+<td><strong>FastMCP</strong></td>
+<td>mcp 官方高级 SDK，装饰器风格</td>
+<td>§12.9.1</td>
+</tr>
+<tr>
+<td><strong>inspect</strong></td>
+<td>Python 标准库，函数签名反射</td>
+<td>§12.9.2</td>
+</tr>
+<tr>
+<td><strong>JSON-RPC Error Code</strong></td>
+<td>标准化错误码（-32600/-32601/-32603）</td>
+<td>§12.9.3</td>
+</tr>
+</tbody></table>
+<h3 id="sec-12-11-3-概念桥-ch12-ch13-ch14-ch15">12.11.3 概念桥：ch12 ↔ ch13 ↔ ch14 ↔ ch15</h3>
+<table class="md-table"><thead><tr>
+<th>本章学到的</th>
+<th>下一章怎么用</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>12.2 MCP Tools 原语</strong></td>
+<td><strong>ch13 LangGraph</strong> —— &quot;LangGraph 节点可直接包装 MCP Server&quot;（用 LangChain MCP Adapter 库）</td>
+</tr>
+<tr>
+<td><strong>12.3 A2A Task 状态机</strong></td>
+<td><strong>ch14 AutoGen</strong> —— &quot;AutoGen GroupChat Manager 实现 A2A 风格的 Agent 协商&quot;（ch11 提到的去中心化模式）</td>
+</tr>
+<tr>
+<td><strong>12.4 8 维度对比</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;CrewAI 默认用 A2A-like 协议做 Agent 委派&quot;（可与 MCP 桥接）</td>
+</tr>
+<tr>
+<td><strong>12.5 协议混搭架构</strong></td>
+<td><strong>ch13 LangGraph 实战</strong> —— &quot;Supervisor 节点 = A2A 客户端；Worker 节点 = MCP 客户端&quot;（ch11 模式 + ch12 协议落地）</td>
+</tr>
+<tr>
+<td><strong>12.6.2 A2A 兼容性碎片化</strong></td>
+<td><strong>ch14 AutoGen</strong> —— &quot;AutoGen 0.2 vs 0.4 是不兼容升级（类似 A2A v0.1/v0.2）&quot;（框架版本管理教训）</td>
+</tr>
+<tr>
+<td><strong>12.7.3 协议分裂</strong></td>
+<td><strong>第三部分整体</strong> —— &quot;MCP / A2A / ANP 三大协议可能在 ch15-CrewAI 之后形成事实统一标准&quot;</td>
+</tr>
+<tr>
+<td><strong>12.9 FastMCP 装饰器</strong></td>
+<td><strong>ch13/ch14/ch15 实战</strong> —— &quot;3 个框架都用类似的装饰器风格封装 MCP / A2A&quot;</td>
+</tr>
+<tr>
+<td><strong>12.10 FAQ 协议性能</strong></td>
+<td><strong>ch24 成本控制</strong> —— &quot;协议层开销 5-100 倍是 Token 成本的重要组成部分&quot;</td>
+</tr>
+</tbody></table>
+<p><strong>第三部分进度</strong>：2/5 章完成 + 接下来 3 章预告</p>
+<ul>
+<li>ch13《用 LangGraph 编排工作流》—— 把 ch11 的 Supervisor 模式 + ch12 的 MCP 协议结合</li>
+<li>ch14《用 AutoGen 构对话式多 Agent》—— 把 ch11 的 Crew / Debate 模式 + ch12 的 A2A 协议结合</li>
+<li>ch15《用 CrewAI 组建虚拟团队》—— 把 ch11 + ch12 + ch13 + ch14 集成，搭一个完整多 Agent 系统</li>
+</ul>
+  <hr style="margin-top: 60px;">
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; gap:16px; margin-top:30px;">
+    <a href="ch11.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">← 上一章：多 Agent 协作模式（第 11 章）</a>
+    <a href="ch13.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">下一章：LangGraph 编排（第 13 章，未发布）→</a>
+  </nav>
+
+  <footer style="margin-top:60px; padding-top:20px; border-top:1px solid rgba(192,38,211,0.2); color:#888; font-size:13px; text-align:center;">
+    <p>《AGENT开发从入门到精通》· 第 12 章 · Agent 通信协议——MCP、A2A、ANP</p>
+    <p style="margin-top:8px;">
+      <a href="../index.html">书库首页</a> ·
+      <a href="ch01.html">第 1 章</a> ·
+      <a href="ch02.html">第 2 章</a> ·
+      <a href="ch03.html">第 3 章</a> ·
+      <a href="ch04.html">第 4 章</a> ·
+      <a href="ch05.html">第 5 章</a> ·
+      <a href="ch06.html">第 6 章</a> ·
+      <a href="ch07.html">第 7 章</a> ·
+      <a href="ch08.html">第 8 章</a> ·
+      <a href="ch09.html">第 9 章</a> ·
+      <a href="ch10.html">第 10 章</a> ·
+      <a href="ch11.html">第 11 章</a> ·
+      <a href="ch12.html">第 12 章</a>
+    </p>
+  </footer>
+</main>
+
+<script src="/assets/js/site.js"></script>
+<script src="/assets/js/book.js"></script>
+
+</body>
+</html>
