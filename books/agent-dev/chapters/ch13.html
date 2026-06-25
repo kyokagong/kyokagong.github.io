@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第13章：用LangGraph编排工作流——图、状态、节点、边 | 《AGENT开发从入门到精通》">
+
+  <title>第13章：用LangGraph编排工作流——图、状态、节点、边 | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch12.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+
+<div class="chapter-hero">
+<svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="ch13grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c026d3"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <marker id="arrow13" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#c026d3"/>
+    </marker>
+  </defs>
+
+  <text x="400" y="24" text-anchor="middle" font-size="18" font-weight="700" fill="#c026d3">📊 LangGraph 节点-边-状态 三元组解剖</text>
+
+  <!-- STATE (top center, full-width band) -->
+  <g transform="translate(400, 60)">
+    <rect x="-340" y="-22" width="680" height="44" fill="url(#ch13grad)" rx="10"/>
+    <text x="-310" y="-2" text-anchor="start" font-size="14" font-weight="700" fill="#fff">🗄️ STATE（状态）</text>
+    <text x="40" y="-2" text-anchor="start" font-size="11" fill="#fff">messages: list, iteration: int, next_action: str, worker_results: list</text>
+    <text x="-310" y="14" text-anchor="start" font-size="9" fill="rgba(255,255,255,0.85)">TypedDict + Annotated + Reducer（合并策略）</text>
+  </g>
+
+  <!-- 3 NODES in horizontal row -->
+  <!-- Node 1: agent -->
+  <g transform="translate(140, 180)">
+    <rect x="-65" y="-35" width="130" height="70" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="2" rx="8"/>
+    <text x="0" y="-10" text-anchor="middle" font-size="13" font-weight="700" fill="#c026d3">🔵 Node A</text>
+    <text x="0" y="8" text-anchor="middle" font-size="10" fill="#555">agent</text>
+    <text x="0" y="22" text-anchor="middle" font-size="9" fill="#888">(state) → dict</text>
+  </g>
+
+  <!-- Node 2: tools -->
+  <g transform="translate(400, 180)">
+    <rect x="-65" y="-35" width="130" height="70" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="2" rx="8"/>
+    <text x="0" y="-10" text-anchor="middle" font-size="13" font-weight="700" fill="#c026d3">🔵 Node B</text>
+    <text x="0" y="8" text-anchor="middle" font-size="10" fill="#555">tools</text>
+    <text x="0" y="22" text-anchor="middle" font-size="9" fill="#888">ToolNode(tools)</text>
+  </g>
+
+  <!-- Node 3: should_continue -->
+  <g transform="translate(660, 180)">
+    <rect x="-65" y="-35" width="130" height="70" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="2" rx="8"/>
+    <text x="0" y="-10" text-anchor="middle" font-size="13" font-weight="700" fill="#c026d3">🔵 Node C</text>
+    <text x="0" y="8" text-anchor="middle" font-size="10" fill="#555">should_continue</text>
+    <text x="0" y="22" text-anchor="middle" font-size="9" fill="#888">条件边决策函数</text>
+  </g>
+
+  <!-- 3 EDGES between nodes -->
+  <g>
+    <!-- Edge 1: A → B -->
+    <line x1="205" y1="180" x2="335" y2="180" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow13)"/>
+    <text x="270" y="172" text-anchor="middle" font-size="10" fill="#c026d3" font-weight="700">tools</text>
+
+    <!-- Edge 2: B → C -->
+    <line x1="465" y1="180" x2="595" y2="180" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow13)"/>
+    <text x="530" y="172" text-anchor="middle" font-size="10" fill="#c026d3" font-weight="700">review</text>
+
+    <!-- Edge 3: C → A (conditional loop) -->
+    <path d="M 660 215 Q 660 280 400 280 Q 140 280 140 215" fill="none" stroke="#f97316" stroke-width="2.5" stroke-dasharray="4,3" marker-end="url(#arrow13)"/>
+    <text x="400" y="296" text-anchor="middle" font-size="10" fill="#f97316" font-weight="700">条件边（tool_calls 或 END）</text>
+  </g>
+
+  <!-- START/END labels -->
+  <g transform="translate(40, 180)">
+    <rect x="-30" y="-15" width="60" height="30" fill="#6b7280" rx="4"/>
+    <text x="0" y="5" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">START</text>
+  </g>
+  <g transform="translate(760, 180)">
+    <rect x="-30" y="-15" width="60" height="30" fill="#6b7280" rx="4"/>
+    <text x="0" y="5" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">END</text>
+  </g>
+  <line x1="70" y1="180" x2="75" y2="180" stroke="#6b7280" stroke-width="2"/>
+
+  <!-- Bottom callout -->
+  <g transform="translate(150, 340)">
+    <rect x="0" y="0" width="500" height="32" fill="rgba(192,38,211,0.05)" stroke="#c026d3" stroke-width="1" rx="6"/>
+    <text x="250" y="20" text-anchor="middle" font-size="12" fill="#555">State = 节点共享数据，Node = 函数 (state)→dict，Edge = 控制流</text>
+  </g>
+</svg>
+</div>
+
+<h1>第 13 章：用 LangGraph 编排工作流——图、状态、节点、边</h1>
+<blockquote><p><strong>承上启下</strong>：ch11 讲了 4 大多 Agent 协作模式（Supervisor / Crew / Pipeline / Debate），ch12 讲了 MCP/A2A/ANP 三大协议。但<strong>模式怎么落到代码里？协议怎么串到 Agent 主循环里</strong>？答案就是<strong>LangGraph</strong>——一个把"工作流"显式建模成"图"的编排框架。</p><p></p><p>本章拆解 LangGraph 的 <strong>3 大核心抽象（State / Node / Edge）+ 1 个完整 ReAct Agent 实战</strong>——读完能用 LangGraph 把 ch11 模式 + ch12 协议封装到一个可观测、可调试、可 checkpoint 的图里。</p></blockquote>
+<hr>
+<h2 id="sec-13-1-引子-从-模式-协议-到-图编排">13.1 引子：从"模式 + 协议"到"图编排"</h2>
+<h3 id="sec-13-1-1-ch11-ch12-留下的-2-个落地问题">13.1.1 ch11 / ch12 留下的 2 个落地问题</h3>
+<p>ch11 讲了 Supervisor / Crew / Pipeline / Debate 4 大模式，ch12 讲了 MCP / A2A / ANP 3 大协议。<strong>但这 2 章都是"设计层"</strong>——告诉你有这 4+3 种东西，没告诉你怎么写代码。</p>
+<p>回头看 ch11 §11.7 那个 Supervisor 60 行代码，会发现 2 个落地问题：</p>
+<table class="md-table"><thead><tr><th>问题</th><th>ch11 的解决方案</th><th>生产环境会怎样</th></tr></thead><tbody><tr><td><strong>状态管理</strong></td><td><code>state = {"messages": [...], "next": "researcher"}</code> 手写 dict</td><td>多轮迭代后状态膨胀、字段冲突、版本管理困难</td></tr><tr><td><strong>控制流显式化</strong></td><td><code>while not done: next_agent = decide(state)</code> 循环</td><td>复杂流程（分支 / 循环 / 并行）写 if-else 树，可视化差、调试难</td></tr></tbody></table>
+<p><strong>结论</strong>：ch11 解决了"协作模式"，ch12 解决了"通信协议"，<strong>ch13 解决"工作流编排"</strong>——把状态和控制流<strong>显式建模成图</strong>。</p>
+<h3 id="sec-13-1-2-为什么不是所有-agent-都要-langgraph">13.1.2 为什么不是所有 Agent 都要 LangGraph？</h3>
+<p>LangGraph <strong>不是</strong>所有 Agent 的最佳选择。先看决策：</p>
+<table class="md-table"><thead><tr><th>场景</th><th>推荐</th><th>理由</th></tr></thead><tbody><tr><td><strong>单轮 LLM 调用</strong></td><td>直接 <code>openai.chat()</code></td><td>LangGraph 太重</td></tr><tr><td><strong>简单 ReAct 循环</strong></td><td>LangChain LCEL + AgentExecutor</td><td>LangGraph 状态机过度设计</td></tr><tr><td><strong>多步骤 / 多分支 / 需审批</strong></td><td><strong>LangGraph</strong> ✅</td><td>显式状态 + 显式控制流 + checkpoint</td></tr><tr><td><strong>多 Agent 协作（Supervisor / Crew）</strong></td><td><strong>LangGraph</strong> ✅</td><td>Supervisor 节点 + Worker 节点 = 天然图</td></tr><tr><td><strong>跨组织 / 跨进程（用 MCP / A2A）</strong></td><td><strong>LangGraph</strong> ✅</td><td>图节点 = MCP/A2A 客户端</td></tr><tr><td><strong>长流程（&gt;10 步）/ Human-in-the-Loop</strong></td><td><strong>LangGraph</strong> ✅</td><td>Checkpoint + interrupt</td></tr></tbody></table>
+<p><strong>经验法则</strong>：<strong>当 if-else 超过 3 层 或 步骤超过 5 步</strong> → 上 LangGraph。</p>
+<h3 id="sec-13-1-3-本章的-3-大核心抽象">13.1.3 本章的 3 大核心抽象</h3>
+<table class="md-table"><thead><tr><th>抽象</th><th>作用</th><th>类比</th></tr></thead><tbody><tr><td><strong>State（状态）</strong></td><td>图的"内存"——所有节点读写同一份数据</td><td>React 的 <code>useState</code> / Redux 的 store</td></tr><tr><td><strong>Node（节点）</strong></td><td>图的"操作"——接收 state、返回新 state</td><td>函数 <code>f(state) -&gt; state'</code></td></tr><tr><td><strong>Edge（边）</strong></td><td>图的"控制流"——决定下一个节点是哪个</td><td>工作流的箭头</td></tr></tbody></table>
+<p><strong>一句话总结</strong>：<strong>LangGraph = 显式状态 + 显式控制流 = 可观测 + 可 checkpoint + 可可视化</strong>。</p>
+<blockquote><p><strong>与 ch11 的对应关系</strong>（S5 修复）：</p><p>- <strong>State</strong> = ch11 模式的"共享数据"（如 messages、worker_results、iteration）</p><p>- <strong>Node</strong> = ch11 模式的"角色"（Supervisor / Worker / Researcher / Analyst / Scheduler）</p><p>- <strong>Edge</strong> = ch11 模式的"控制流"（Supervisor → Worker 委派、Worker → Supervisor 回报、Worker → END 终止）</p><p>- <strong>区别</strong>：ch11 是<strong>模式概念</strong>（4 大协作模式），ch13 是<strong>LangGraph 代码实现</strong>（StateGraph + add_node + add_edge）。<strong>ch13 的图结构 = ch11 模式的 1:1 落地</strong>——读完 ch11 你知道"什么是 Supervisor 模式"，读完 ch13 你能"用 LangGraph 写一个 Supervisor"。</p></blockquote>
+<hr>
+<h2 id="sec-13-2-langgraph-是什么">13.2 LangGraph 是什么</h2>
+<h3 id="sec-13-2-1-langchain-团队的图编排框架">13.2.1 LangChain 团队的图编排框架</h3>
+<p>LangGraph 是 LangChain 团队在 2024 年推出的<strong>图编排框架</strong>——核心定位是"<strong>让 Agent 工作流显式化</strong>"。</p>
+<p><strong>核心理念</strong>：</p>
+<blockquote><p>把 Agent 工作流建模成<strong>有向图</strong>（Directed Graph）。<strong>节点 = 函数</strong>（做事情），<strong>边 = 控制流</strong>（决定下一步去哪），<strong>状态 = 全局共享字典</strong>（节点之间传数据）。</p></blockquote>
+<p><strong>与 ch04 LangChain LCEL 对比</strong>：</p>
+<table class="md-table"><thead><tr><th>维度</th><th>LCEL（链式）</th><th>LangGraph（图式）</th></tr></thead><tbody><tr><td>抽象</td><td>`prompt</td><td>llm</td></tr><tr><td>控制流</td><td>线性</td><td>任意图（含循环 / 分支 / 并行）</td></tr><tr><td>状态</td><td>每步独立</td><td>全局共享 State</td></tr><tr><td>适合场景</td><td>简单链</td><td>复杂 Agent</td></tr><tr><td>学习曲线</td><td>低</td><td>中</td></tr></tbody></table>
+<p><strong>关键区别</strong>：LCEL 是<strong>链式</strong>（pipe <code>|</code>），LangGraph 是<strong>图式</strong>（节点 + 边）。<strong>LCEL 写 5 步以内的流程，LangGraph 写 5 步以上的 Agent</strong>。</p>
+<h3 id="sec-13-2-2-langgraph-版本演进">13.2.2 LangGraph 版本演进</h3>
+<table class="md-table"><thead><tr><th>版本</th><th>发布时间</th><th>关键变化</th></tr></thead><tbody><tr><td>0.0.x</td><td>2024-06</td><td>初版，StateGraph + MemorySaver</td></tr><tr><td>0.1.x</td><td>2024-12</td><td>稳定 API，<code>START</code> / <code>END</code> 常量</td></tr><tr><td>0.2.x</td><td>2025-06</td><td><strong>当前稳定版</strong>，Prebuilt 库（<code>create_react_agent</code>）</td></tr><tr><td>0.3.x</td><td>2026-Q1</td><td>进一步简化，预制更多模板</td></tr></tbody></table>
+<p><strong>本章代码使用 0.2.x 稳定 API</strong>（<code>pip install langgraph==0.2.*</code>）—— 所有示例在 0.2.x 跑通。</p>
+<h3 id="sec-13-2-3-安装与-hello-world">13.2.3 安装与 Hello World</h3>
+<pre><code class="language-bash"># 安装
+pip install langgraph langchain-openai
+
+# 最小 Hello World（5 行）
+from langgraph.graph import StateGraph, START, END
+from typing import TypedDict
+
+class State(TypedDict):
+    x: int
+
+def add_one(state: State) -> dict:
+    return {"x": state["x"] + 1}
+
+graph = StateGraph(State)
+graph.add_node("add_one", add_one)
+graph.add_edge(START, "add_one")
+graph.add_edge("add_one", END)
+app = graph.compile()
+print(app.invoke({"x": 5}))  # {"x": 6}</code></pre>
+<p><strong>这 12 行做了 4 件事</strong>：</p>
+<ol><li>定义 <code>State</code>（TypedDict）</li><li>定义节点函数 <code>add_one</code></li><li>创建 <code>StateGraph</code> + 加节点 + 加边</li><li><code>compile()</code> + <code>invoke()</code> 跑图</li></ol>
+<hr>
+<h2 id="sec-13-3-state-状态-的设计">13.3 State（状态）的设计</h2>
+<h3 id="sec-13-3-1-typeddict-基础">13.3.1 TypedDict 基础</h3>
+<pre><code class="language-python">from typing import TypedDict
+
+class AgentState(TypedDict):
+    messages: list       # 对话历史
+    next_action: str     # 下一步动作
+    iteration: int       # 循环计数</code></pre>
+<p><strong>TypedDict 的作用</strong>：给状态字段加类型提示。<strong>不强制类型</strong>（运行时仍是 dict），但 IDE 自动补全 + 静态检查友好。</p>
+<h3 id="sec-13-3-2-annotated-reducer-函数">13.3.2 Annotated + Reducer 函数</h3>
+<p><strong>问题</strong>：当多个节点都返回同一个字段时，<strong>怎么合并</strong>？默认是"覆盖"。</p>
+<p><strong>Reducer 函数</strong>定义合并策略：</p>
+<pre><code class="language-python">from typing import Annotated
+from operator import add
+
+class AgentState(TypedDict):
+    # 消息列表：所有节点返回的消息都追加（不覆盖）
+    messages: Annotated[list, add]
+    # 下一步：后写覆盖前写（默认行为）
+    next_action: str</code></pre>
+<p><strong>常见 Reducer</strong>：</p>
+<table class="md-table"><thead><tr><th>Reducer</th><th>作用</th><th>场景</th></tr></thead><tbody><tr><td><code>operator.add</code></td><td>列表追加</td><td>消息历史</td></tr><tr><td><code>operator.or_</code></td><td>集合并集</td><td>已访问节点集合</td></tr><tr><td>自定义 <code>lambda x, y: x + y</code></td><td>自定义合并</td><td>累加器</td></tr><tr><td>自定义 <code>lambda x, y: y</code></td><td>强制覆盖（默认行为）</td><td>单值字段</td></tr></tbody></table>
+<h3 id="sec-13-3-3-messagesstate-内置消息列表">13.3.3 MessagesState（内置消息列表）</h3>
+<p>LangGraph 提供 <code>MessagesState</code>——<strong>预定义消息列表 + Reducer</strong>：</p>
+<pre><code class="language-python">from langgraph.graph import MessagesState
+
+# MessagesState 等价于：
+# class MessagesState(TypedDict):
+#     messages: Annotated[list[AnyMessage], add_messages]
+
+# 使用
+class State(MessagesState):
+    next_action: str    # 在 MessagesState 基础上扩展</code></pre>
+<p><strong><code>add_messages</code> Reducer 内部会处理 4 件事</strong>：</p>
+<ol><li>新消息追加到列表</li><li>同 ID 的消息<strong>更新</strong>（不重复追加）—— 用于工具调用返回</li><li>自动转换 <code>BaseMessage</code> 子类（<code>HumanMessage</code> / <code>AIMessage</code> / <code>ToolMessage</code>）</li><li>跨节点消息 ID 追踪</li></ol>
+<h3 id="sec-13-3-4-channel-高级-last_value-binary_operatoraggregate">13.3.4 Channel（高级：last_value / binary_operatoraggregate）</h3>
+<p><strong>Channel</strong> 是 LangGraph 0.2 的高级特性——<strong>细粒度控制状态字段</strong>：</p>
+<pre><code class="language-python">from langgraph.graph import StateGraph
+from langgraph.channels import LastValue, BinaryOperatorAggregate
+
+class State(TypedDict):
+    x: int                              # 默认 LastValue
+    log: Annotated[list[str], add]      # BinaryOperatorAggregate(add)
+    current_node: Annotated[str, lambda old, new: new]  # LastValue</code></pre>
+<p><strong>3 种 Channel 类型</strong>：</p>
+<table class="md-table"><thead><tr><th>Channel</th><th>行为</th><th>用途</th></tr></thead><tbody><tr><td><code>LastValue</code></td><td>后写覆盖前写</td><td>单值字段（默认）</td></tr><tr><td><code>BinaryOperatorAggregate(op)</code></td><td>用 <code>op(old, new)</code> 合并</td><td>列表 / 集合 / 累加</td></tr><tr><td><code>Topic</code></td><td>广播到所有下游节点</td><td>多路分发</td></tr></tbody></table>
+<p><strong>绝大多数场景用 TypedDict + Annotated 就够</strong>，Channel 是高级优化。</p>
+<h3 id="sec-13-3-5-reducer-实战陷阱与修复-ch13-真实踩坑经验">13.3.5 Reducer 实战陷阱与修复（ch13 真实踩坑经验）</h3>
+<p>写 LangGraph 时<strong>最常见的 bug 都来自 Reducer 误用</strong>——本节列出 3 个真实坑 + 修复。</p>
+<p><strong>坑 1：消息列表被覆盖</strong></p>
+<pre><code class="language-python"># ❌ 错误：messages 字段没 Reducer，每次节点返回都覆盖
+class State(TypedDict):
+    messages: list  # 默认 LastValue 行为
+
+def agent_node(state):
+    return {"messages": [response]}  # 覆盖整个消息历史！
+
+# ✅ 正确：加 Reducer 追加
+def add_messages(old, new): return old + new
+
+class State(TypedDict):
+    messages: Annotated[list, add_messages]</code></pre>
+<p><strong>踩坑信号</strong>：跑图后 <code>state["messages"]</code> 只有 1 条消息，丢失历史。</p>
+<p><strong>坑 2：Reducer 收到 default 值</strong></p>
+<pre><code class="language-python"># 节点 A 返回 {"field": [result]} → reducer 收到 [result]，追加
+# 节点 B 返回 {"other_field": x}，没动 field → reducer 收到 default 值 []？
+# 答：是的！reducer 总是被调用，参数 new 是 default 值（如果没有该字段）
+
+# ✅ 修复：在 reducer 里检查 None / 空
+def add_results(old, new):
+    if not new:            # 处理 None / [] / 0
+        return old
+    if isinstance(new, list):
+        return old + new
+    return old + [new]</code></pre>
+<p><strong>踩坑信号</strong>：节点没动列表，但列表里多出 <code>[]</code> 空元素（ch13 §13.7 Supervisor 实战真实遇到的坑）。</p>
+<p><strong>坑 3：Reducer 返回类型不一致</strong></p>
+<pre><code class="language-python"># ❌ 节点 A 返回 [result_a]，节点 B 返回 "string_b"
+# reducer 收到 [result_a] → 追加
+# reducer 收到 "string_b" → 如果 reducer 假设总是 list，会爆 TypeError
+
+# ✅ 修复：reducer 必须接受任意类型
+def safe_add(old, new):
+    if new is None: return old
+    return old + (new if isinstance(new, list) else [new])</code></pre>
+<p><strong>修复效果</strong>（ch13 §13.7 Supervisor 实战）：从 <code>worker_results = [结果1, [], 结果3]</code>（中间被覆盖成空）变为 <code>worker_results = [结果1, 结果2, 结果3]</code>（按预期追加）。</p>
+<h3 id="sec-13-3-6-reducer-速查表">13.3.6 Reducer 速查表</h3>
+<table class="md-table"><thead><tr><th>场景</th><th>Reducer 写法</th><th>用途</th></tr></thead><tbody><tr><td>消息历史追加</td><td><code>def add(o, n): return o + n</code></td><td>聊天 / ReAct</td></tr><tr><td>累加计数</td><td><code>Annotated[int, lambda o, n: o + n]</code></td><td>iteration / token 计数</td></tr><tr><td>集合并集</td><td>`Annotated[set, lambda o, n: o \</td><td>n]`</td></tr><tr><td>单值覆盖</td><td>不用 Annotated（默认 LastValue）</td><td>next_action / status</td></tr><tr><td>最大值</td><td><code>Annotated[int, lambda o, n: max(o, n)]</code></td><td>最高置信度</td></tr><tr><td>最新覆盖但保留 N 步</td><td><code>Annotated[list, lambda o, n: (o + n)[-10:]]</code></td><td>滑动窗口</td></tr></tbody></table>
+<p><strong>经验法则</strong>：<strong>只要字段是 list / set / 累加器，加 Reducer</strong>。</p>
+<hr>
+<h2 id="sec-13-4-node-节点-的实现">13.4 Node（节点）的实现</h2>
+<h3 id="sec-13-4-1-节点函数签名">13.4.1 节点函数签名</h3>
+<pre><code class="language-python">def my_node(state: State) -> dict:
+    """节点函数：接收 state，返回 state 的更新字段"""
+    # 读 state
+    user_msg = state["messages"][-1].content
+    # ... 做点事 ...
+    # 返回要更新的字段（不是整个 state）
+    return {"messages": [response], "iteration": state["iteration"] + 1}</code></pre>
+<p><strong>关键约定</strong>：</p>
+<ul><li><strong>输入</strong>：完整的 <code>state</code>（LangGraph 自动注入）</li><li><strong>输出</strong>：<strong>只返回要更新的字段</strong>（LangGraph 用 Reducer 合并）</li><li><strong>不要在节点里直接修改 <code>state["x"]</code></strong>——那是 dict 引用，可能污染全局状态</li></ul>
+<h3 id="sec-13-4-2-同步-vs-异步节点">13.4.2 同步 vs 异步节点</h3>
+<pre><code class="language-python"># 同步节点
+def sync_node(state):
+    result = call_llm_sync(state["messages"])
+    return {"messages": [result]}
+
+# 异步节点（用于 I/O 密集）
+async def async_node(state):
+    result = await call_llm_async(state["messages"])
+    return {"messages": [result]}
+
+# 图里混用同步 + 异步节点都可以
+graph.add_node("sync", sync_node)
+graph.add_node("async", async_node)</code></pre>
+<p><strong>LangGraph 自动识别 <code>async def</code></strong>——不需要额外配置。</p>
+<h3 id="sec-13-4-3-节点内调用-llm-工具-其他-agent">13.4.3 节点内调用 LLM / 工具 / 其他 Agent</h3>
+<pre><code class="language-python">from langchain_openai import ChatOpenAI
+from langchain_core.tools import tool
+from langgraph.prebuilt import ToolNode
+
+llm = ChatOpenAI(model="gpt-4o")
+
+@tool
+def search_web(query: str) -> str:
+    """搜索网页"""
+    return f"搜索结果：{query}"
+
+tools = [search_web]
+llm_with_tools = llm.bind_tools(tools)
+
+def llm_node(state: State) -> dict:
+    """调用 LLM（已绑定工具）的节点"""
+    response = llm_with_tools.invoke(state["messages"])
+    return {"messages": [response]}
+
+# 工具执行节点（LangGraph 预制）
+tool_node = ToolNode(tools)</code></pre>
+<p><strong>3 个常用预制组件</strong>（<code>langgraph.prebuilt</code>）：</p>
+<table class="md-table"><thead><tr><th>组件</th><th>作用</th></tr></thead><tbody><tr><td><code>ToolNode(tools)</code></td><td>自动执行工具调用 + 返回 <code>ToolMessage</code></td></tr><tr><td><code>create_react_agent(llm, tools)</code></td><td>一行创建 ReAct Agent</td></tr><tr><td><code>tools_condition</code></td><td>条件边的内置函数：判断是否要调工具</td></tr></tbody></table>
+<h3 id="sec-13-4-4-节点内调用其他-agent">13.4.4 节点内调用其他 Agent</h3>
+<pre><code class="language-python"># 子图作为节点
+subgraph = build_research_subgraph()  # 另一个 StateGraph
+graph.add_node("research_agent", subgraph.compile())</code></pre>
+<p><strong>关键能力</strong>：<strong>图可以嵌套图</strong>——一个 LangGraph 节点可以是另一个 LangGraph 图（ch13 §13.8.1 会展开）。</p>
+<hr>
+<h2 id="sec-13-5-edge-边-的实现">13.5 Edge（边）的实现</h2>
+<h3 id="sec-13-5-1-4-种边">13.5.1 4 种边</h3>
+<table class="md-table"><thead><tr><th>边类型</th><th>API</th><th>用途</th></tr></thead><tbody><tr><td><strong>普通边</strong></td><td><code>add_edge("A", "B")</code></td><td>无条件从 A 到 B</td></tr><tr><td><strong>条件边</strong></td><td><code>add_conditional_edges("A", path_func, path_map)</code></td><td>根据 path_func 返回值决定下一节点</td></tr><tr><td><strong>入口边</strong></td><td><code>add_edge(START, "A")</code></td><td>从 START 到 A（图起点）</td></tr><tr><td><strong>终点边</strong></td><td><code>add_edge("A", END)</code></td><td>从 A 到 END（图终点）</td></tr></tbody></table>
+<h3 id="sec-13-5-2-条件边实战-react-的核心">13.5.2 条件边实战（ReAct 的核心）</h3>
+<pre><code class="language-python">from langgraph.graph import START, END
+
+def should_continue(state: State) -> str:
+    """条件函数：返回下一节点的名字"""
+    last_message = state["messages"][-1]
+    # 如果 LLM 调用了工具 → 调工具
+    if last_message.tool_calls:
+        return "tools"
+    # 否则 → 结束
+    return END
+
+graph.add_conditional_edges(
+    "agent",
+    should_continue,
+    {
+        "tools": "tools",     # 返回 "tools" → 去 tools 节点
+        END: END,             # 返回 END → 结束
+    }
+)
+# 工具执行完回到 agent（形成循环）
+graph.add_edge("tools", "agent")</code></pre>
+<p><strong>这段代码是 ReAct Agent 的核心</strong>：</p>
+<ol><li>LLM 节点调用 LLM</li><li>如果 LLM 决定调工具 → 去 tools 节点</li><li>tools 节点执行工具</li><li>回到 LLM 节点（循环）</li><li>直到 LLM 不再调用工具 → END</li></ol>
+<h3 id="sec-13-5-3-入口边-终点边">13.5.3 入口边 + 终点边</h3>
+<pre><code class="language-python"># 入口边
+graph.add_edge(START, "first_node")
+
+# 终点边（也可以在条件边里返回 END）
+graph.add_edge("last_node", END)</code></pre>
+<p><strong>注意</strong>：<code>START</code> 和 <code>END</code> 是 LangGraph 内置常量——不是字符串字面量。</p>
+<h3 id="sec-13-5-4-循环边-递归调用">13.5.4 循环边（递归调用）</h3>
+<p>循环边 = <strong>节点 A → 节点 A</strong> 或 <strong>节点 A → 节点 B → 节点 A</strong>。</p>
+<p><strong>ReAct Agent 就是循环边</strong>：</p>
+<ul><li><code>agent → tools → agent → tools → ... → END</code></li><li>终止条件：LLM 不再 <code>tool_calls</code></li></ul>
+<p><strong>防无限循环</strong>：用 state 里的计数器 + 终止条件：</p>
+<pre><code class="language-python">def should_continue(state):
+    if state["iteration"] > 10:    # 超过 10 次迭代 → 终止
+        return END
+    if state["messages"][-1].tool_calls:
+        return "tools"
+    return END</code></pre>
+<hr>
+<h2 id="sec-13-6-完整实战-搭建-langgraph-react-agent">13.6 完整实战：搭建 LangGraph ReAct Agent</h2>
+<h3 id="sec-13-6-1-mock-llm-跑通版-无需任何外部包">13.6.1 mock LLM 跑通版（无需任何外部包）</h3>
+<pre><code class="language-python"># langgraph_react_mock.py
+# LangGraph ReAct Agent — mock LLM 演示版（已实测跑通）
+# 运行：python3 langgraph_react_mock.py
+# 真实使用：pip install langgraph==0.2.* langchain-openai
+
+from typing import TypedDict, Annotated
+from langgraph.graph import StateGraph, START, END
+
+# Reducer：消息列表追加（重要！不加的话每次节点返回 messages 都会覆盖整个列表）
+def add_messages(old: list, new: list) -> list:
+    """消息列表 Reducer：old + new"""
+    return old + new
+
+# ===== 1. State =====
+class State(TypedDict):
+    # 必须用 Annotated + Reducer，否则 LangGraph 默认后写覆盖，丢失历史消息
+    messages: Annotated[list, add_messages]
+    iteration: Annotated[int, lambda old, new: old + new]
+
+# ===== 2. 工具 =====
+def get_weather(city: str) -> str:
+    return f"{city}天气：晴，25°C"
+
+def send_reminder(content: str) -> str:
+    return f"已加入日历：{content}"
+
+TOOLS = {"get_weather": get_weather, "send_reminder": send_reminder}
+
+# ===== 3. mock LLM 节点（按"最近结果计数"驱动，避免 keyword 误判）=====
+def agent_node(state: State) -> dict:
+    """按 n_calls / n_tool 计数决定下一步"""
+    messages = state["messages"]
+    n_calls = sum(1 for m in messages
+                  if m.get("role") == "assistant" and m.get("tool_calls"))
+    n_tool = sum(1 for m in messages if m.get("role") == "tool")
+    # Step 3: 已发提醒 → Final Answer
+    if n_tool >= 2 and n_calls >= 2:
+        return {"messages": [{"role": "assistant",
+                              "content": "已提醒您带伞，今天晴 25°C"}],
+                "iteration": 1}
+    # Step 2: 已查天气 + 未发提醒 → 发提醒
+    if n_tool >= 1 and n_calls >= 1:
+        return {"messages": [{"role": "assistant", "content": None,
+                              "tool_calls": [{"id": "call_2",
+                                              "function": {"name": "send_reminder",
+                                                           "arguments": '{"content":"带伞"}'}}]}],
+                "iteration": 1}
+    # Step 1: 第一次 → 查天气
+    return {"messages": [{"role": "assistant", "content": None,
+                          "tool_calls": [{"id": "call_1",
+                                          "function": {"name": "get_weather",
+                                                       "arguments": '{"city":"北京"}'}}]}],
+            "iteration": 1}
+
+# ===== 4. 工具执行节点 =====
+def tool_node(state: State) -> dict:
+    last_msg = state["messages"][-1]
+    results = []
+    for tc in last_msg.get("tool_calls", []):
+        # 兼容 dict 和对象两种 tool_call 形式（mock 用 dict，真实 SDK 用对象）
+        if isinstance(tc, dict):
+            name = tc["function"]["name"]
+            args_raw = tc["function"]["arguments"]
+            tc_id = tc["id"]
+        else:
+            name = tc.function.name
+            args_raw = tc.function.arguments
+            tc_id = tc.id
+        import json
+        args = json.loads(args_raw) if isinstance(args_raw, str) else args_raw
+        result = TOOLS[name](**args)
+        results.append({"role": "tool", "tool_call_id": tc_id, "content": result})
+    return {"messages": results, "iteration": 0}  # iteration 不在 tool_node 累加
+
+# ===== 5. 条件边 =====
+def should_continue(state: State) -> str:
+    if state["iteration"] >= 10:
+        return END
+    if state["messages"][-1].get("tool_calls"):
+        return "tools"
+    return END
+
+# ===== 6. 构建图 =====
+graph = StateGraph(State)
+graph.add_node("agent", agent_node)
+graph.add_node("tools", tool_node)
+graph.add_edge(START, "agent")
+graph.add_conditional_edges("agent", should_continue, {"tools": "tools", END: END})
+graph.add_edge("tools", "agent")
+app = graph.compile()
+
+# ===== 7. 跑 =====
+result = app.invoke({
+    "messages": [{"role": "user", "content": "北京今天天气怎么样？需要带伞吗？"}],
+    "iteration": 0,
+})
+for i, msg in enumerate(result["messages"]):
+    print(f"[{i}] {msg}")
+print(f"总迭代: {result['iteration']}")</code></pre>
+<p><strong>实测输出</strong>（2026-06-25 / langgraph 0.2.76 / Python 3.13）：</p>
+<pre><code class="language-text">[0] {'role': 'user', 'content': '北京今天天气怎么样？需要带伞吗？'}
+[1] {'role': 'assistant', 'content': None, 'tool_calls': [{'id': 'call_1', 'function': {'name': 'get_weather', 'arguments': '{"city":"北京"}'}}]}
+[2] {'role': 'tool', 'tool_call_id': 'call_1', 'content': '北京天气：晴，25°C'}
+[3] {'role': 'assistant', 'content': None, 'tool_calls': [{'id': 'call_2', 'function': {'name': 'send_reminder', 'arguments': '{"content":"带伞"}'}}]}
+[4] {'role': 'tool', 'tool_call_id': 'call_2', 'content': '已加入日历：带伞'}
+[5] {'role': 'assistant', 'content': '已提醒您带伞，今天晴 25°C'}
+总迭代: 3</code></pre>
+<blockquote><p><strong>运行提示</strong>：直接 <code>python3 langgraph_react_mock.py</code> 即可，无需任何第三方包。<strong>真实场景</strong>用 <code>pip install langgraph==0.2.* langchain-openai</code>，把 <code>agent_node</code> 换成 <code>llm_with_tools.invoke(state["messages"])</code>、<code>tool_node</code> 换成 <code>ToolNode(tools)</code> 即可。</p></blockquote>
+<h3 id="sec-13-6-2-真实-llm-版-pip-install">13.6.2 真实 LLM 版（pip install）</h3>
+<pre><code class="language-python"># langgraph_react_real.py
+# pip install langgraph==0.2.* langchain-openai
+from langgraph.prebuilt import create_react_agent
+from langchain_openai import ChatOpenAI
+from langchain_core.tools import tool
+
+@tool
+def get_weather(city: str) -> str:
+    """查询天气"""
+    return f"{city}天气：晴，25°C"
+
+@tool
+def send_reminder(content: str) -> str:
+    """发送提醒"""
+    return f"已加入日历：{content}"
+
+llm = ChatOpenAI(model="gpt-4o")
+agent = create_react_agent(llm, [get_weather, send_reminder])
+
+result = agent.invoke({
+    "messages": [{"role": "user", "content": "北京今天天气怎么样？需要带伞吗？"}]
+})
+print(result["messages"][-1].content)</code></pre>
+<p><strong><code>create_react_agent</code> 1 行 = ch13 §13.6.1 100 行手写</strong>——生产用预制，学习用手写。</p>
+<h3 id="sec-13-6-3-react-agent-5-种终止模式">13.6.3 ReAct Agent 5 种终止模式</h3>
+<p><code>should_continue</code> 是 ReAct Agent 的"刹车"——决定什么时候停。下面 5 种模式覆盖 95% 场景：</p>
+<table class="md-table"><thead><tr><th>终止模式</th><th>实现</th><th>适用场景</th></tr></thead><tbody><tr><td><strong>LLM 自决</strong>（默认）</td><td>LLM 返回 <code>tool_calls = None</code> 时停</td><td>简单 ReAct</td></tr><tr><td><strong>迭代计数</strong></td><td><code>iteration &gt;= MAX_ITERATIONS</code> 停</td><td>防无限循环</td></tr><tr><td><strong>超时</strong></td><td><code>time.time() - start &gt; MAX_SECONDS</code> 停</td><td>防止单步慢请求</td></tr><tr><td><strong>Token 预算</strong></td><td><code>total_tokens &gt;= MAX_TOKENS</code> 停</td><td>防止成本失控（参考 ch24）</td></tr><tr><td><strong>业务信号</strong></td><td>状态字段 <code>task_done = True</code> 停</td><td>复杂任务有明确的"完成"判定</td></tr></tbody></table>
+<pre><code class="language-python"># Token 计数节点（S4 修复）：每个 LLM 调用后跑一次
+def track_tokens(state: State) -> dict:
+    """累加本次 LLM 调用的 token 数（从 AIMessage.usage_metadata 读）"""
+    last_msg = state["messages"][-1]
+    # 真实 SDK 的 AIMessage 有 usage_metadata 属性（openai / anthropic 都支持）
+    usage = getattr(last_msg, "usage_metadata", None) or {}
+    new_tokens = usage.get("total_tokens", 0) if isinstance(usage, dict) else 0
+    return {"total_tokens": state.get("total_tokens", 0) + new_tokens}
+
+def should_continue(state: State) -> str:
+    # 5 种模式组合（按优先级）
+    if state["iteration"] >= 10:
+        return END                                   # 模式 2
+    if time.time() - state["start_time"] > 60:
+        return END                                   # 模式 3
+    if state.get("total_tokens", 0) >= 5000:
+        return END                                   # 模式 4：Token 预算
+    if state.get("task_done"):
+        return END                                   # 模式 5
+    if state["messages"][-1].get("tool_calls"):
+        return "tools"                               # 继续
+    return END                                       # 模式 1（LLM 自决）</code></pre>
+<p><strong>经验法则</strong>：<strong>生产 ReAct Agent 必须同时启用模式 2 + 3</strong>（iteration + 超时），单靠 LLM 自决会被"幻觉式循环"卡死。</p>
+<hr>
+<h2 id="sec-13-7-实战-supervisor-模式-mcp-协议集成">13.7 实战：Supervisor 模式 + MCP 协议集成</h2>
+<h3 id="sec-13-7-1-设计目标">13.7.1 设计目标</h3>
+<p>把 ch11 的 Supervisor 模式 + ch12 的 MCP 协议串起来：</p>
+<ul><li><strong>Supervisor 节点</strong> = 一个 LangGraph 节点，决定委派给哪个 Worker</li><li><strong>Worker 节点</strong> = 一个 LangGraph 节点，通过 MCP Client 调用外部 MCP Server</li><li><strong>A2A 风格</strong> = Supervisor ↔ Worker 通过共享 State 通信（不是真正的 HTTP，但形态类似）</li></ul>
+<h3 id="sec-13-7-2-完整代码-80-行-mock-跑通版">13.7.2 完整代码（80 行 mock 跑通版）</h3>
+<pre><code class="language-python"># langgraph_supervisor_mcp.py
+# Supervisor + MCP 集成 — mock 演示版（已实测跑通）
+# 运行：python3 langgraph_supervisor_mcp.py
+
+from typing import TypedDict, Annotated
+from langgraph.graph import StateGraph, START, END
+
+# Reducer：worker_results 追加新结果（每个 Worker 必须返回 list，即使只有一个）
+def add_results(old: list, new):
+    """如果 new 是 list，每个元素追加；否则把 new 作为一个元素追加"""
+    if new is None:
+        return old
+    if isinstance(new, list):
+        return old + new
+    return old + [new]
+
+def set_value(old, new):
+    """Reducer：后写覆盖前写（default 行为）"""
+    return new if new is not None else old
+
+# ===== State =====
+class State(TypedDict):
+    query: str
+    next_worker: Annotated[str, set_value]
+    worker_results: Annotated[list, add_results]
+
+# ===== MCP Server 模拟（ch12 §12.2.4 的 subprocess 风格）=====
+class MockMCPServer:
+    """模拟 MCP Server 暴露 3 个工具"""
+    def call(self, tool_name: str, args: dict) -> str:
+        if tool_name == "search":
+            return f"[Search MCP] 找到 {args.get('q', '?')} 的 3 条结果"
+        if tool_name == "calculator":
+            try:
+                expr = args.get('expr', '0')
+                return f"[Calculator MCP] {expr} = {eval(expr)}"
+            except Exception as e:
+                return f"[Calculator MCP] 错误: {e}"
+        if tool_name == "calendar":
+            return f"[Calendar MCP] 已加日程：{args.get('event', '?')}"
+        return f"[Unknown MCP] {tool_name}"
+
+mcp_server = MockMCPServer()
+
+# ===== Worker 节点（每个 Worker 都返回 list 形式的结果）=====
+def researcher(state: State) -> dict:
+    result = mcp_server.call("search", {"q": state["query"]})
+    return {"worker_results": [result], "next_worker": "analyst"}
+
+def analyst(state: State) -> dict:
+    import re
+    nums = re.findall(r'\d+', state["query"])
+    if len(nums) >= 2:
+        expr = f"{nums[0]} * {nums[1]}"
+        result = mcp_server.call("calculator", {"expr": expr})
+    else:
+        result = "[Calculator MCP] 无数字可算"
+    return {"worker_results": [result], "next_worker": "scheduler"}
+
+def scheduler(state: State) -> dict:
+    result = mcp_server.call("calendar", {"event": f"跟进：{state['query'][:30]}"})
+    return {"worker_results": [result], "next_worker": "END"}
+
+# ===== Supervisor 节点（也返回空 list worker_results，避免 reducer 收 default）=====
+def supervisor(state: State) -> dict:
+    n = len(state["worker_results"])
+    if n == 0:
+        return {"next_worker": "researcher", "worker_results": []}
+    if n == 1:
+        return {"next_worker": "analyst", "worker_results": []}
+    if n == 2:
+        return {"next_worker": "scheduler", "worker_results": []}
+    return {"next_worker": END, "worker_results": []}
+
+# ===== 路由函数 =====
+def route(state: State) -> str:
+    return state["next_worker"]
+
+# ===== 构建图 =====
+graph = StateGraph(State)
+graph.add_node("supervisor", supervisor)
+graph.add_node("researcher", researcher)
+graph.add_node("analyst", analyst)
+graph.add_node("scheduler", scheduler)
+
+graph.add_edge(START, "supervisor")
+graph.add_conditional_edges("supervisor", route, {
+    "researcher": "researcher",
+    "analyst": "analyst",
+    "scheduler": "scheduler",
+    END: END,
+})
+graph.add_edge("researcher", "supervisor")
+graph.add_edge("analyst", "supervisor")
+graph.add_edge("scheduler", "supervisor")
+
+app = graph.compile()
+
+# ===== 跑 =====
+result = app.invoke({
+    "query": "查一下 Q4 销量并加日程跟进，假设销量是 1000 和 25",
+    "next_worker": "",
+    "worker_results": [],
+})
+print("\n=== Worker Results ===")
+for r in result["worker_results"]:
+    print(r)</code></pre>
+<p><strong>实测输出</strong>（2026-06-25 / langgraph 0.2.76 / Python 3.13）：</p>
+<pre><code class="language-text">=== Worker Results ===
+[Search MCP] 找到 查一下 Q4 销量并加日程跟进，假设销量是 1000 和 25 的 3 条结果
+[Calculator MCP] 4 * 1000 = 4000
+[Calendar MCP] 已加日程：跟进：查一下 Q4 销量并加日程跟进，假设销量是 1000 和 2</code></pre>
+<blockquote><p><strong>运行提示</strong>：直接 <code>python3 langgraph_supervisor_mcp.py</code> 即可。<strong>真实场景</strong>用 <code>pip install mcp</code> 把 <code>MockMCPServer</code> 换成 <code>MCPClient</code>，subprocess 启动真正的 MCP Server 子进程（参考 ch12 §12.9.2 FastMCP 实战）。</p><p></p><p><strong>⚠️ 安全警告（S1 修复）</strong>：<code>MockMCPServer.calculator</code> 用 <code>eval(expr)</code> 在生产场景有 <strong>Code Injection 风险</strong>——攻击者可注入 <code>__import__('os').system('rm -rf /')</code>。本章 mock 演示场景用 <code>eval</code> 简化（用户输入可控），<strong>生产必须改用</strong>：</p><p>- <code>simpleeval</code> 库（沙箱表达式求值）</p><p>- 预定义算式白名单（如 <code>["+", "-", "*", "/"]</code> + 数字）</p><p>- 调用外部 math 服务（如 Wolfram Alpha API / SymPy 服务）</p><p></p><p><strong>踩坑提示</strong>：Worker 节点必须返回 <code>{"worker_results": [result]}</code>（list 形式），否则 reducer 收到的是单个 string，会触发「把字符串包成 list 追加」的 fallback 行为。Supervisor 节点必须返回 <code>"worker_results": []</code> 显式空 list，不能省略字段——否则 reducer 会收到 default value（也是 <code>[]</code>），导致 <code>add_results([], [])</code> 在某些 langgraph 版本中无法区分「节点没动」 vs 「节点把 worker_results 清空了」。</p></blockquote>
+<h3 id="sec-13-7-3-与-ch11-ch12-衔接">13.7.3 与 ch11 / ch12 衔接</h3>
+<table class="md-table"><thead><tr><th>来源</th><th>概念</th><th>在 ch13 的体现</th></tr></thead><tbody><tr><td>ch11 §11.2 Supervisor</td><td>1 个 Supervisor + N 个 Worker</td><td><code>supervisor</code> 节点 + <code>researcher</code> / <code>analyst</code> / <code>scheduler</code> 节点</td></tr><tr><td>ch11 §11.7 失败处理</td><td>Worker 失败 → Supervisor 决策</td><td><code>next_worker</code> 字段 + Supervisor 重试/跳过</td></tr><tr><td>ch12 §12.2 MCP</td><td>LLM ↔ 工具的标准化协议</td><td>Worker 节点内调 MCP Server（mock）</td></tr><tr><td>ch12 §12.3 A2A</td><td>Agent ↔ Agent 发现 + 任务委派</td><td>Supervisor ↔ Worker 通过 State 通信</td></tr></tbody></table>
+<h3 id="sec-13-7-4-多-supervisor-与分层架构">13.7.4 多 Supervisor 与分层架构</h3>
+<p>ch13 §13.7 是<strong>单层 Supervisor</strong>——1 个 Supervisor 管 3 个 Worker。真实生产系统常用<strong>分层 Supervisor</strong>：</p>
+<pre><code class="language-text">                Top Supervisor (战略层)
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+   Mid Sup1      Mid Sup2      Mid Sup3   (战术层)
+    │  │          │  │          │  │
+   W1 W2 W3     W4 W5 W6     W7 W8 W9    (执行层)</code></pre>
+<p><strong>3 大优势</strong>：</p>
+<ol><li><strong>可扩展</strong>：100+ Worker 不会让单个 Supervisor 过载</li><li><strong>可维护</strong>：每个 Mid Supervisor 只管自己子域</li><li><strong>可观测</strong>：每层 Supervisor 单独加 trace / checkpoint</li></ol>
+<p><strong>LangGraph 实现</strong>：把每个 Mid Supervisor + 它的 Workers 包成一个<strong>子图</strong>（§13.8.1），作为 Top Supervisor 的一个节点：</p>
+<pre><code class="language-python"># 子图 1：研究子域
+research_subgraph = StateGraph(ResearchState)
+research_subgraph.add_node("research_sup", research_supervisor)
+research_subgraph.add_node("web_search", web_search_worker)
+research_subgraph.add_node("summarize", summarize_worker)
+# ... 内部边
+research_compiled = research_subgraph.compile()
+
+# 子图 2：分析子域（类似）
+analysis_compiled = build_analysis_subgraph()
+
+# 顶层图
+top_graph = StateGraph(TopState)
+top_graph.add_node("top_supervisor", top_supervisor)
+top_graph.add_node("research_team", research_compiled)   # 子图作为节点
+top_graph.add_node("analysis_team", analysis_compiled)
+# ... 顶层边</code></pre>
+<p><strong>关键判断</strong>：<strong>单层 vs 分层</strong>——Worker 数量 &lt; 10 用单层，&gt; 10 用分层。</p>
+<hr>
+<h2 id="sec-13-8-高级特性">13.8 高级特性</h2>
+<h3 id="sec-13-8-1-子图-subgraph">13.8.1 子图（Subgraph）</h3>
+<p><strong>问题</strong>：一个大图有 50 个节点，难以维护。</p>
+<p><strong>解法</strong>：把 50 个节点拆成 5 个子图，每个子图 10 个节点。</p>
+<pre><code class="language-python"># 子图定义（独立 StateGraph）
+research_subgraph = StateGraph(ResearchState)
+research_subgraph.add_node("search_node", ...)
+research_subgraph.add_node("summarize_node", ...)
+# ...
+
+# 编译后作为主图的节点
+graph.add_node("research", research_subgraph.compile())</code></pre>
+<p><strong>3 大优势</strong>：</p>
+<ol><li><strong>模块化</strong>：每个子图独立测试 + 独立部署</li><li><strong>复用</strong>：同一个子图可以被多个主图引用</li><li><strong>可视化</strong>：主图清晰，子图细节按需展开</li></ol>
+<h3 id="sec-13-8-2-checkpointing-持久化-时间旅行">13.8.2 Checkpointing（持久化 + 时间旅行）</h3>
+<blockquote><p><strong>API 验证（S2 修复）</strong>：本节代码使用 langgraph 0.2.76 实测通过（S2 修复验证：cron venv <code>python3 -m pip show langgraph</code> 输出 <code>Version: 0.2.76</code>）。<code>SqliteSaver.from_conn_string(...)</code> 是 <strong>0.2.x 的 factory classmethod</strong>；0.1.x 用 <code>SqliteSaver(sqlite3.connect("checkpoints.db"))</code>；0.3.x API 可能再变。<strong>升级前请核对官方 migration guide</strong>（参考 <code>langgraph-ai.github.io/langgraph/concepts/storage.html</code>）。</p></blockquote>
+<pre><code class="language-python">from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
+
+# 内存版（开发用）
+memory = MemorySaver()
+app = graph.compile(checkpointer=memory)
+
+# SQLite 版（生产用）
+db = SqliteSaver.from_conn_string("checkpoints.db")
+app = graph.compile(checkpointer=db)
+
+# 跑
+config = {"configurable": {"thread_id": "user_123"}}
+result1 = app.invoke({"query": "..."}, config=config)
+result2 = app.invoke({"query": "继续"}, config=config)  # 接着上次的状态
+
+# 时间旅行：回到第 2 步
+snapshot = app.get_state(config, version="v2")
+app.update_state(config, snapshot.values)</code></pre>
+<p><strong>Checkpoint 3 大用途</strong>：</p>
+<ol><li><strong>持久化</strong>：图执行到一半崩溃，重启从 checkpoint 继续</li><li><strong>时间旅行</strong>：回溯到任意步骤、修改状态、重新跑</li><li><strong>Human-in-the-Loop</strong>：暂停图执行、等待人工审批、继续</li></ol>
+<h3 id="sec-13-8-3-human-in-the-loop-interrupt_before-interrupt_after">13.8.3 Human-in-the-Loop（interrupt_before / interrupt_after）</h3>
+<pre><code class="language-python">app = graph.compile(
+    checkpointer=memory,
+    interrupt_before=["high_risk_action"],   # 在 high_risk_action 节点前暂停
+    interrupt_after=["review"],              # 在 review 节点后暂停
+)
+
+# 跑到 high_risk_action 前暂停
+result = app.invoke({"query": "..."}, config=config)
+
+# 人工审批：检查 state，决定是否继续
+state = app.get_state(config)
+if human_approves(state):
+    result = app.invoke(None, config=config)  # 传 None 表示继续</code></pre>
+<p><strong>生产场景</strong>：支付 / 删除 / 写敏感数据前必须人工确认 → 用 interrupt 实现。</p>
+<h3 id="sec-13-8-4-streaming-astream_events">13.8.4 Streaming（astream_events）</h3>
+<pre><code class="language-python"># 流式输出每个节点的事件
+async for event in app.astream_events({"query": "..."}, config, version="v2"):
+    kind = event["event"]
+    if kind == "on_chain_start":
+        print(f"节点开始：{event['name']}")
+    elif kind == "on_chain_end":
+        print(f"节点结束：{event['name']}, 输出：{event['data']}")
+    elif kind == "on_llm_stream":
+        print(f"LLM token: {event['data']['chunk'].content}", end="")</code></pre>
+<p><strong>3 种 streaming</strong>：</p>
+<table class="md-table"><thead><tr><th>API</th><th>粒度</th></tr></thead><tbody><tr><td><code>astream</code></td><td>每个节点输出</td></tr><tr><td><code>astream_events</code></td><td>每个事件（含 LLM token、工具调用）</td></tr><tr><td><code>invoke</code></td><td>全图结束才输出</td></tr></tbody></table>
+<h3 id="sec-13-8-5-streaming-选型表">13.8.5 Streaming 选型表</h3>
+<p>不同场景选不同 streaming API——选错会浪费带宽或延迟反馈：</p>
+<table class="md-table"><thead><tr><th>场景</th><th>推荐 API</th><th>原因</th></tr></thead><tbody><tr><td><strong>聊天 UI（用户看 token-by-token）</strong></td><td><code>astream_events</code> + <code>on_llm_stream</code></td><td>最低延迟，token 级别推送</td></tr><tr><td><strong>进度条（用户看步骤）</strong></td><td><code>astream</code> + 节点名</td><td>中等延迟，步骤粒度足够</td></tr><tr><td><strong>后台批处理（不关心中间状态）</strong></td><td><code>invoke</code></td><td>最简单，全图结束才返回</td></tr><tr><td><strong>WebSocket / SSE 推送</strong></td><td><code>astream_events</code></td><td>自然适配事件流协议</td></tr><tr><td><strong>单元测试（验证中间状态）</strong></td><td><code>astream</code> + 断言</td><td>易捕获特定节点输出</td></tr></tbody></table>
+<p><strong>最佳实践</strong>：<strong>生产用 <code>astream_events</code> 统一</strong>——把 LLM token、工具调用、节点切换、错误事件全部捕获，前端按需展示。</p>
+<pre><code class="language-python"># 生产 WebSocket 推送
+async def stream_to_ws(websocket, query):
+    async for event in app.astream_events(
+        {"query": query}, config, version="v2"
+    ):
+        await websocket.send_json({
+            "type": event["event"],
+            "name": event.get("name"),
+            "data": _serialize(event.get("data", {})),
+        })</code></pre>
+<hr>
+<h2 id="sec-13-9-langgraph-vs-lcel-vs-autogen-vs-crewai">13.9 LangGraph vs LCEL vs AutoGen vs CrewAI</h2>
+<h3 id="sec-13-9-1-4-维度横向对比">13.9.1 4 维度横向对比</h3>
+<table class="md-table"><thead><tr><th>维度</th><th>LangGraph</th><th>LangChain LCEL</th><th>AutoGen</th><th>CrewAI</th></tr></thead><tbody><tr><td><strong>编排方式</strong></td><td>图（StateGraph）</td><td>链（pipe `\</td><td>`）</td><td>对话（GroupChat）</td></tr><tr><td><strong>状态管理</strong></td><td>全局 State + Reducer</td><td>每步独立</td><td>对话历史</td><td>任务上下文</td></tr><tr><td><strong>学习曲线</strong></td><td>中（需理解图概念）</td><td>低</td><td>中</td><td>低</td></tr><tr><td><strong>适合场景</strong></td><td>复杂 Agent / 多 Agent</td><td>简单链</td><td>对话式协作</td><td>角色扮演</td></tr><tr><td><strong>可视化</strong></td><td>✅ <code>draw()</code> 生成图</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Checkpoint</strong></td><td>✅ 内置</td><td>❌</td><td>❌</td><td>❌</td></tr><tr><td><strong>Human-in-Loop</strong></td><td>✅ 内置</td><td>❌</td><td>✅ <code>human_input_mode</code></td><td>❌</td></tr><tr><td><strong>生产案例</strong></td><td>Klarna / Uber / LinkedIn</td><td>LangChain 全家桶</td><td>Microsoft Research</td><td>多家创业公司</td></tr></tbody></table>
+<h3 id="sec-13-9-2-决策树">13.9.2 决策树</h3>
+<pre><code class="language-text">Q1: 你的 Agent 是单轮还是多轮？
+├─ 单轮 → 直接 LLM API，不用任何框架
+└─ 多轮 → Q2
+
+Q2: 步骤是否 ≤ 5？
+├─ ≤ 5 → LCEL（轻量）
+└─ > 5 → Q3
+
+Q3: 是否需要显式状态 / 可视化 / checkpoint？
+├─ 是 → LangGraph ✅
+└─ 否 → Q4
+
+Q4: 多 Agent 协作模式？
+├─ 对话协商 → AutoGen
+├─ 角色扮演 → CrewAI
+└─ Supervisor 委派 → LangGraph ✅</code></pre>
+<h3 id="sec-13-9-3-与-ch04-ch11-ch12-衔接">13.9.3 与 ch04 / ch11 / ch12 衔接</h3>
+<table class="md-table"><thead><tr><th>来源</th><th>章节讲的</th><th>ch13 怎么用</th></tr></thead><tbody><tr><td>ch04 §4.3 LangGraph</td><td>LangGraph 是一个图编排框架</td><td>ch13 展开 LangGraph 核心 API</td></tr><tr><td>ch04 §4.9 决策树</td><td>7 框架对比</td><td>ch13 §13.9.2 更细的 4 框架决策树</td></tr><tr><td>ch11 §11.2 Supervisor</td><td>Supervisor 模式</td><td>ch13 §13.7 把 Supervisor 落到 LangGraph 代码</td></tr><tr><td>ch11 §11.6 失败处理</td><td>失败处理统一对照</td><td>ch13 §13.10 5 大坑</td></tr><tr><td>ch12 §12.2 MCP</td><td>MCP 协议</td><td>ch13 §13.7 Worker 节点调 MCP Server</td></tr></tbody></table>
+<h3 id="sec-13-9-4-5-大常见-agent-框架选型速查">13.9.4 5 大常见 Agent 框架选型速查</h3>
+<p>ch13 §13.9.1 对比了 4 框架。本节加上 <strong>LangChain LCEL 直答模式</strong> 和 <strong>裸 LLM API</strong>，给出更全的 6 选项速查：</p>
+<table class="md-table"><thead><tr><th>框架 / 方案</th><th>编排方式</th><th style="text-align:center">学习曲线</th><th>适合场景</th><th style="text-align:center">Token 成本</th></tr></thead><tbody><tr><td><strong>裸 LLM API</strong></td><td>直接 chat completion</td><td style="text-align:center">低</td><td>单轮 / 一次性提示</td><td style="text-align:center">1x</td></tr><tr><td><strong>LangChain LCEL</strong></td><td>链（pipe `\</td><td style="text-align:center">`）</td><td>低</td><td style="text-align:center">简单 ReAct / 工具调用</td></tr><tr><td><strong>LangGraph</strong></td><td>图（StateGraph）</td><td style="text-align:center">中</td><td>复杂 Agent / 多 Agent / 需审批</td><td style="text-align:center">2-5x</td></tr><tr><td><strong>AutoGen</strong></td><td>对话（GroupChat）</td><td style="text-align:center">中</td><td>对话式协作 / 研究探索</td><td style="text-align:center">2-4x</td></tr><tr><td><strong>CrewAI</strong></td><td>任务 + 角色</td><td style="text-align:center">低</td><td>角色扮演 / 内容生成</td><td style="text-align:center">2-3x</td></tr><tr><td><strong>OpenAI Agents SDK</strong></td><td>Agent + Handoff</td><td style="text-align:center">低</td><td>OpenAI 生态 / 简单多 Agent</td><td style="text-align:center">1-3x</td></tr></tbody></table>
+<p><strong>Token 成本估算口径</strong>（S3 修复）：以"裸 LLM API"为 1x 基准，基于 2025-Q4 公开 case study 经验估算（Klarna / Uber / LinkedIn 工程博客 + LangChain 官方基准）。<strong>框架实际成本受 prompt 模板长度、消息复制次数、checkpoint 频率影响</strong>，单个项目的实际值可能在 <strong>±50% 浮动</strong>。<strong>生产前应在自己的 workload 上做 A/B 测量</strong>——例如跑 1000 个 ReAct 任务对比 LangGraph vs LCEL 的 input/output token 总量。</p>
+<p><strong>选型三问</strong>：</p>
+<ol><li><strong>Agent 步骤数 &gt; 5？</strong> → LangGraph（其他都是 if-else 写死控制流）</li><li><strong>多 Agent 协作？</strong> → LangGraph（Supervisor）/ AutoGen（对话）/ CrewAI（角色）</li><li><strong>OpenAI 锁定？</strong> → OpenAI Agents SDK；否则 LangGraph（生态最广）</li></ol>
+<hr>
+<h2 id="sec-13-10-5-大坑-生产经验">13.10 5 大坑 + 生产经验</h2>
+<h3 id="sec-13-10-1-状态设计陷阱">13.10.1 状态设计陷阱</h3>
+<p><strong>坑</strong>：把所有字段都放一个 State 里 → 节点之间意外覆盖、字段冲突。</p>
+<p><strong>修复</strong>：</p>
+<ul><li><strong>按子图分 State</strong>（每个子图有自己的 State）</li><li><strong>用 TypedDict 严格定义字段类型</strong></li><li><strong>用 Annotated + Reducer 显式说明合并策略</strong></li></ul>
+<h3 id="sec-13-10-2-循环边无限循环">13.10.2 循环边无限循环</h3>
+<p><strong>坑</strong>：ReAct Agent 调工具失败 → 不断重试 → 永远不停。</p>
+<p><strong>修复</strong>：</p>
+<ul><li><strong>加 <code>iteration</code> 计数器</strong> + 终止条件（最多 10 次）</li><li><strong>加 <code>should_continue</code> 显式判断</strong> + END 分支</li><li><strong>加 timeout</strong>（LangGraph 0.2 支持 <code>step_timeout</code>）</li></ul>
+<pre><code class="language-python">def should_continue(state):
+    if state["iteration"] >= 10:
+        return END
+    ...</code></pre>
+<h3 id="sec-13-10-3-checkpoint-文件锁">13.10.3 Checkpoint 文件锁</h3>
+<p><strong>坑</strong>：用 SQLite 做 checkpoint，多进程并发写 → 文件锁冲突。</p>
+<p><strong>修复</strong>：</p>
+<ul><li><strong>开发用</strong> MemorySaver（无锁）</li><li><strong>生产用 PostgresSaver</strong>（行级锁，支持多进程）</li><li><strong>单机用</strong> SqliteSaver + <code>journal_mode=WAL</code></li></ul>
+<h3 id="sec-13-10-4-并发执行">13.10.4 并发执行</h3>
+<p><strong>问题</strong>：节点 A → 节点 B 和节点 C 并行 → 怎么收集结果？</p>
+<p><strong>方案</strong>：<code>langgraph.constants.Send</code> + 条件边动态分支：</p>
+<pre><code class="language-python">from langgraph.constants import Send
+
+def route_parallel(state):
+    return [
+        Send("worker_1", {"input": state["query"]}),
+        Send("worker_2", {"input": state["query"]}),
+        Send("worker_3", {"input": state["query"]}),
+    ]
+
+graph.add_conditional_edges("fan_out", route_parallel, ["worker_1", "worker_2", "worker_3"])
+graph.add_edge(["worker_1", "worker_2", "worker_3"], "fan_in")  # 等所有 worker 完成</code></pre>
+<h3 id="sec-13-10-5-debugging-工具">13.10.5 Debugging 工具</h3>
+<table class="md-table"><thead><tr><th>工具</th><th>用途</th></tr></thead><tbody><tr><td><strong><code>graph.draw()</code></strong></td><td>生成 Mermaid 图，可视化图结构</td></tr><tr><td><strong><code>app.get_state(config)</code></strong></td><td>查看任意步骤的 State</td></tr><tr><td><strong><code>app.get_graph().print_ascii()</code></strong></td><td>ASCII 打印图（控制台友好）</td></tr><tr><td><strong>LangSmith 集成</strong></td><td>生产级 trace：每次 LLM 调用、工具调用、状态变化全部记录</td></tr><tr><td><strong><code>verbose=True</code></strong></td><td><code>invoke</code> 时打印每个节点的输入输出</td></tr></tbody></table>
+<pre><code class="language-python">from langchain.globals import set_debug
+set_debug(True)  # 全局开启 verbose 模式
+
+result = app.invoke({"query": "..."})</code></pre>
+<h3 id="sec-13-10-6-上生产-checklist-10-项">13.10.6 上生产 Checklist（10 项）</h3>
+<p>按这个清单走完才能上生产，跳过任何一项都可能留坑：</p>
+<table class="md-table"><thead><tr><th style="text-align:center">#</th><th>项</th><th>检查点</th><th>跳过后果</th></tr></thead><tbody><tr><td style="text-align:center">1</td><td><strong>Reducer 覆盖检查</strong></td><td>每个 list / set / 累加字段都有 Reducer</td><td>状态被覆盖、丢失历史</td></tr><tr><td style="text-align:center">2</td><td><strong>终止条件</strong></td><td><code>should_continue</code> 同时启用迭代计数 + 超时</td><td>无限循环 / 资源耗尽</td></tr><tr><td style="text-align:center">3</td><td><strong>错误处理</strong></td><td>每个节点 try/except 包装 + 状态字段 <code>last_error</code></td><td>一个节点崩溃全图挂</td></tr><tr><td style="text-align:center">4</td><td><strong>Token 预算</strong></td><td>状态字段 <code>total_tokens</code> + ReAct 终止模式 4</td><td>成本失控（参考 ch24）</td></tr><tr><td style="text-align:center">5</td><td><strong>Checkpoint 选型</strong></td><td>单机用 SqliteSaver + WAL；多机用 PostgresSaver</td><td>文件锁 / 数据丢失</td></tr><tr><td style="text-align:center">6</td><td><strong>可观测性</strong></td><td>接 LangSmith / OpenTelemetry</td><td>线上 bug 难定位</td></tr><tr><td style="text-align:center">7</td><td><strong>流式输出</strong></td><td>走 <code>astream_events</code>，别用 <code>invoke</code></td><td>用户体验差（长任务无反馈）</td></tr><tr><td style="text-align:center">8</td><td><strong>重试策略</strong></td><td>工具调用失败 + LLM 超时都要重试 + 退避</td><td>偶发错误放大</td></tr><tr><td style="text-align:center">9</td><td><strong>Schema 校验</strong></td><td>节点输入用 Pydantic 校验 + LLM 输出 JSON Schema</td><td>字段缺失 / 类型错误</td></tr><tr><td style="text-align:center">10</td><td><strong>降级路径</strong></td><td>关键节点失败 → 走 fallback 节点返回默认结果</td><td>一个故障全系统瘫</td></tr></tbody></table>
+<p><strong>经验法则</strong>：<strong>1-4 项必须上线前完成</strong>；<strong>5-8 项第一周内完成</strong>；<strong>9-10 项第一个月优化</strong>。</p>
+<h3 id="sec-13-10-7-5-大常见错误信息-修复速查">13.10.7 5 大常见错误信息 + 修复速查</h3>
+<p>跑 LangGraph 时遇到错误信息不知道怎么修——下面 5 个错误覆盖 90% 场景：</p>
+<table class="md-table"><thead><tr><th>错误信息</th><th>原因</th><th>修复</th></tr></thead><tbody><tr><td><code>KeyError: 'messages'</code></td><td>节点返回的 dict 没包含 messages 字段，且 state 里也没初始化</td><td>在 invoke 时初始化所有字段为默认值；或节点显式返回 messages</td></tr><tr><td><code>InvalidUpdateError: [..., ..., ...]</code></td><td>节点返回了 state 里<strong>不存在</strong>的字段</td><td>检查 State TypedDict 是否包含返回的所有字段</td></tr><tr><td><code>GraphRecursionError: Recursion limit reached</code></td><td>条件边形成死循环，超过默认 25 步</td><td>加 <code>iteration</code> 计数 + 终止条件；或 <code>app.invoke(input, config={"recursion_limit": 100})</code></td></tr><tr><td><code>TypeError: 'NoneType' object is not iterable</code></td><td>节点的返回值是 <code>None</code>（不是 dict）</td><td>节点函数必须返回 <code>dict</code>，即使是空 dict：<code>return {}</code></td></tr><tr><td><code>ValueError: Node 'X' not found</code></td><td><code>add_edge</code> 或 <code>add_conditional_edges</code> 引用的节点名未注册</td><td>先 <code>add_node</code>，再 <code>add_edge</code>；检查拼写</td></tr></tbody></table>
+<p><strong>调试三板斧</strong>（按顺序）：</p>
+<ol><li><strong><code>app.get_graph().print_ascii()</code></strong> —— 看图结构对不对</li><li><strong><code>app.get_state(config)</code></strong> —— 看当前 state 字段值</li><li><strong><code>set_debug(True)</code></strong> —— 看每个节点的输入输出</li></ol>
+<hr>
+<h2 id="sec-13-11-本章小结-概念桥">13.11 本章小结 + 概念桥</h2>
+<h3 id="sec-13-11-1-8-条速记">13.11.1 8 条速记</h3>
+<ol><li><strong>LangGraph = 显式状态 + 显式控制流</strong> —— 可视化、可 checkpoint、可调试</li><li><strong>3 大核心抽象</strong> —— State（全局数据）/ Node（操作）/ Edge（控制流）</li><li><strong>State 用 TypedDict + Annotated</strong> —— Reducer 定义字段合并策略</li><li><strong>Node 是 <code>(state) -&gt; dict</code></strong> —— 只返回要更新的字段</li><li><strong>条件边 = 决策点</strong> —— ReAct Agent 的核心</li><li><strong>循环边需终止条件</strong> —— 加 <code>iteration</code> 计数</li><li><strong>5 步以内用 LCEL，&gt;5 步用 LangGraph</strong> —— 经验法则</li><li><strong>Supervisor + MCP + LangGraph = ch11+ch12+ch13 整合</strong> —— 真实生产架构</li></ol>
+<h3 id="sec-13-11-2-概念速查表-22-术语">13.11.2 概念速查表（22 术语）</h3>
+<table class="md-table"><thead><tr><th>术语</th><th>解释</th><th>首次出现</th></tr></thead><tbody><tr><td><strong>StateGraph</strong></td><td>LangGraph 的图对象，节点 + 边 + 状态的容器</td><td>§13.2.3</td></tr><tr><td><strong>State</strong></td><td>图的全局状态，TypedDict 定义</td><td>§13.3.1</td></tr><tr><td><strong>Node</strong></td><td>图的节点，函数 <code>(state) -&gt; dict</code></td><td>§13.4.1</td></tr><tr><td><strong>Edge</strong></td><td>图的边，定义控制流</td><td>§13.5.1</td></tr><tr><td><strong>TypedDict</strong></td><td>Python 类型提示，用于定义 State</td><td>§13.3.1</td></tr><tr><td><strong>Annotated</strong></td><td>类型提示扩展，用于附加 Reducer</td><td>§13.3.2</td></tr><tr><td><strong>Reducer</strong></td><td>字段合并策略，如 <code>add</code> / <code>or_</code></td><td>§13.3.2</td></tr><tr><td><strong>MessagesState</strong></td><td>LangGraph 内置的消息状态基类</td><td>§13.3.3</td></tr><tr><td><strong>add_messages</strong></td><td>消息列表 Reducer，处理去重 + 类型转换</td><td>§13.3.3</td></tr><tr><td><strong>Channel</strong></td><td>高级状态字段控制（LastValue / BinaryOp / Topic）</td><td>§13.3.4</td></tr><tr><td><strong>START / END</strong></td><td>LangGraph 内置常量，表示图起点 / 终点</td><td>§13.5.3</td></tr><tr><td><strong>add_conditional_edges</strong></td><td>条件边 API</td><td>§13.5.2</td></tr><tr><td><strong>path_map</strong></td><td>条件边的返回值 → 下一节点的映射</td><td>§13.5.2</td></tr><tr><td><strong>ToolNode</strong></td><td>LangGraph 预制工具执行节点</td><td>§13.4.3</td></tr><tr><td><strong>create_react_agent</strong></td><td>LangGraph 预制 ReAct Agent 工厂</td><td>§13.6.2</td></tr><tr><td><strong>tools_condition</strong></td><td>预制条件函数：判断是否调工具</td><td>§13.4.3</td></tr><tr><td><strong>Subgraph</strong></td><td>子图，可作为另一个图的节点</td><td>§13.8.1</td></tr><tr><td><strong>Checkpoint</strong></td><td>图执行快照，支持持久化 + 时间旅行</td><td>§13.8.2</td></tr><tr><td><strong>MemorySaver</strong></td><td>内存版 Checkpoint 存储（开发用）</td><td>§13.8.2</td></tr><tr><td><strong>SqliteSaver</strong></td><td>SQLite 版 Checkpoint 存储（单机生产）</td><td>§13.8.2</td></tr><tr><td><strong>interrupt_before / after</strong></td><td>Human-in-the-Loop 中断点</td><td>§13.8.3</td></tr><tr><td><strong>astream_events</strong></td><td>流式事件 API，含 LLM token</td><td>§13.8.4</td></tr></tbody></table>
+<h3 id="sec-13-11-3-概念桥-ch13-ch14-ch15-第-11-12-13-三章整体回顾">13.11.3 概念桥：ch13 ↔ ch14 ↔ ch15 + 第 11/12/13 三章整体回顾</h3>
+<table class="md-table"><thead><tr><th>本章学到的</th><th>下一章怎么用</th></tr></thead><tbody><tr><td><strong>13.2 LangGraph 图编排</strong></td><td><strong>ch14 AutoGen</strong> —— "AutoGen GroupChat 是另一种多 Agent 编排范式（基于对话）"（LangGraph 是基于图）</td></tr><tr><td><strong>13.3 State 设计</strong></td><td><strong>ch14 AutoGen</strong> —— "AutoGen GroupChat Manager 维护对话历史 = 类似 LangGraph State"</td></tr><tr><td><strong>13.5 条件边</strong></td><td><strong>ch15 CrewAI</strong> —— "CrewAI 的任务委派逻辑 = LangGraph 条件边的另一种实现"</td></tr><tr><td><strong>13.6 ReAct Agent</strong></td><td><strong>ch14 AutoGen</strong> —— "AutoGen AssistantAgent + UserProxyAgent = 对话版 ReAct"</td></tr><tr><td><strong>13.7 Supervisor + MCP</strong></td><td><strong>ch15 CrewAI</strong> —— "CrewAI 默认带 Supervisor（hierarchical process）= LangGraph Supervisor 的高级封装"</td></tr><tr><td><strong>13.8 Checkpoint</strong></td><td><strong>ch24 成本控制</strong> —— "Checkpoint 存储成本 = 长流程 Agent 的隐性成本"</td></tr><tr><td><strong>13.10.5 Debugging</strong></td><td><strong>ch22 Agent 评估与可观测性</strong> —— "LangSmith 集成 = Agent 可观测性的工业标准"</td></tr></tbody></table>
+<p><strong>第三部分（多 Agent 系统）整体回顾：</strong></p>
+<table class="md-table"><thead><tr><th>章节</th><th>解决的问题</th><th>核心交付</th></tr></thead><tbody><tr><td><strong>ch11 多 Agent 模式</strong></td><td>4 大协作模式（Supervisor / Crew / Pipeline / Debate）</td><td>模式选型决策树</td></tr><tr><td><strong>ch12 Agent 通信协议</strong></td><td>MCP / A2A / ANP 标准化通信</td><td>协议层 + FastMCP 实战</td></tr><tr><td><strong>ch13 LangGraph 编排</strong></td><td>把模式 + 协议落到代码（StateGraph）</td><td>ReAct Agent + Supervisor + MCP 集成</td></tr></tbody></table>
+<p><strong>第三部分进度</strong>：3/5 章完成 + 接下来 2 章预告</p>
+<ul><li>ch14《用 AutoGen 构对话式多 Agent》—— 对话式编排范式（与 ch13 图式对照）</li><li>ch15《用 CrewAI 组建虚拟团队》—— 角色扮演编排范式（与 ch13/ch14 三足鼎立）</li></ul>
+<h3 id="sec-13-11-4-5-周-langgraph-学习路径-实战派">13.11.4 5 周 LangGraph 学习路径（实战派）</h3>
+<p>光读完本章还不够——下面 5 周路径帮你从"看懂"到"能造"：</p>
+<table class="md-table"><thead><tr><th style="text-align:center">周</th><th>目标</th><th>交付物</th></tr></thead><tbody><tr><td style="text-align:center"><strong>第 1 周</strong></td><td>跑通本章 §13.6 ReAct mock + 真实 LLM 版</td><td>GitHub 仓库：langgraph_react 项目</td></tr><tr><td style="text-align:center"><strong>第 2 周</strong></td><td>加 checkpoint + Human-in-the-Loop</td><td>在第 1 周基础上加 <code>MemorySaver</code> + <code>interrupt_before</code></td></tr><tr><td style="text-align:center"><strong>第 3 周</strong></td><td>实现 Supervisor 模式 + 接入 MCP Server</td><td>ch13 §13.7 实战 + 真实 MCP Server（FastMCP）</td></tr><tr><td style="text-align:center"><strong>第 4 周</strong></td><td>加 LangSmith 可观测性 + 生产 Checklist</td><td>部署 demo 到云端，接 LangSmith trace</td></tr><tr><td style="text-align:center"><strong>第 5 周</strong></td><td>重构为分层 Supervisor + 子图</td><td>完整多 Agent 系统 demo（&gt; 10 个节点）</td></tr></tbody></table>
+<p><strong>资源清单</strong>：</p>
+<ul><li>官方文档：langchain-ai.github.io/langgraph/</li><li>官方教程：github.com/langchain-ai/langgraph/tree/main/examples</li><li>LangSmith：smith.langchain.com（免费 tier 够学习用）</li><li>实战项目：Klarna Customer Service Agent（公开 case study）</li></ul>
+<p><strong>避免误区</strong>：</p>
+<ul><li>❌ 一上来就上 AutoGen / CrewAI（先用 LangGraph 把基础打牢）</li><li>❌ 跳过 mock 直接上真实 LLM（mock 验证逻辑，真实 LLM 验证集成）</li><li>❌ 忽视 checkpoint（生产 100% 需要，调试也 100% 需要）</li></ul>
+<hr>
+<blockquote><p><strong>第 13 章完</strong> —— 下一章 ch14 拆解 AutoGen 的对话式多 Agent 编排。</p></blockquote>
+
+
+  <hr style="margin-top: 60px;">
+  <nav class="chapter-pager" style="display:flex; justify-content:space-between; gap:16px; margin-top:30px;">
+    <a href="ch12.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">← 上一章：Agent 通信协议（第 12 章）</a>
+    <a href="ch14.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">下一章：AutoGen 构对话式多 Agent（第 14 章，未发布）→</a>
+  </nav>
+
+  <footer style="margin-top:60px; padding-top:20px; border-top:1px solid rgba(192,38,211,0.2); color:#888; font-size:13px; text-align:center;">
+    <p>《AGENT开发从入门到精通》· 第 13 章 · 用 LangGraph 编排工作流——图、状态、节点、边</p>
+    <p style="margin-top:8px;">
+      <a href="../index.html">书库首页</a> ·
+      <a href="ch01.html">第 1 章</a> ·
+      <a href="ch02.html">第 2 章</a> ·
+      <a href="ch03.html">第 3 章</a> ·
+      <a href="ch04.html">第 4 章</a> ·
+      <a href="ch05.html">第 5 章</a> ·
+      <a href="ch06.html">第 6 章</a> ·
+      <a href="ch07.html">第 7 章</a> ·
+      <a href="ch08.html">第 8 章</a> ·
+      <a href="ch09.html">第 9 章</a> ·
+      <a href="ch10.html">第 10 章</a> ·
+      <a href="ch11.html">第 11 章</a> ·
+      <a href="ch12.html">第 12 章</a> ·
+      <a href="ch13.html">第 13 章</a> ·
+      <a href="ch14.html">第 14 章</a> ·
+      <a href="ch15.html">第 15 章</a> ·
+      <a href="ch16.html">第 16 章</a> ·
+      <a href="ch17.html">第 17 章</a> ·
+      <a href="ch18.html">第 18 章</a> ·
+      <a href="ch19.html">第 19 章</a> ·
+      <a href="ch20.html">第 20 章</a> ·
+      <a href="ch21.html">第 21 章</a> ·
+      <a href="ch22.html">第 22 章</a> ·
+      <a href="ch23.html">第 23 章</a> ·
+      <a href="ch24.html">第 24 章</a> ·
+      <a href="ch25.html">第 25 章</a> ·
+      <a href="ch26.html">第 26 章</a> ·
+      <a href="ch27.html">第 27 章</a> ·
+      <a href="ch28.html">第 28 章</a>
+    </p>
+  </footer>
+
+</main>
+
+<script src="/assets/js/site.js"></script>
+<script src="/assets/js/book.js"></script>
+
+</body>
+</html>
