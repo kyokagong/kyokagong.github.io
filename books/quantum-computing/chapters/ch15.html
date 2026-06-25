@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第15章：量子复杂性理论 (QCT) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第15章：量子复杂性理论 (QCT) | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第三部分 · 量子算法与复杂性 · Day 5</span>
+        <span class="chapter-day-tag">Day 17 · 2026-06-24</span>
+      </div>
+      <h1 class="chapter-title">第 15 章 量子复杂性理论 (QCT)</h1>
+      <p class="chapter-subtitle">量子算法的"理论边界"——P/NP/BQP/QMA 四大类 + 查询复杂性 + 5 种加速类型 + 第三部分完结</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,601 字</span>
+        <span class="stat">🔢 11 节 · 60+ 子节</span>
+        <span class="stat">📑 BQP / QMA / k-LH / Forrelation</span>
+        <span class="stat">⏱ ~55 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+          <h1>第 15 章 量子复杂性理论 (Quantum Complexity Theory)</h1>
+          <blockquote><strong>章节定位</strong>: 第三部分「量子算法与复杂性」 — 第 5 章(完结篇) <strong>核心问题</strong>: 量子计算机<strong>到底能算多快</strong>? 哪些问题<strong>量子加速</strong>,哪些<strong>没有</strong>? <strong>本章地位</strong>: <strong>量子算法的"理论边界"</strong> —— 把 ch11-ch14 的算法放回复杂性类的框架</blockquote>
+          <hr>
+          <h2 id="section-15.0">15.0 引言:为什么需要复杂性理论?</h2>
+          <h3>15.0.1 三个根本问题</h3>
+          <p>量子计算诞生 30 多年,我们已经<strong>看到了</strong>几个戏剧性的算法加速(Shor 分解, Grover 搜索, VQE 量子化学),但<strong>理论</strong>上<strong>仍不清楚</strong>它们的<strong>精确边界</strong>:</p>
+          <ol>
+            <li><strong>量子计算机到底能算多快?</strong> —— 加速 vs 限制</li>
+            <li><strong>哪些问题</strong>量子有加速? 哪些<strong>没有</strong>?</li>
+            <li><strong>量子硬件</strong>是否值得建造?</li>
+          </ol>
+          <p><strong>为什么这三个问题这么难</strong>? 因为<strong>量子算法的加速</strong>不像"2 倍"或"10 倍"那么简单,而是<strong>复杂度类级别</strong>的差异(从指数到多项式, 从 $O(N)$ 到 $O(\sqrt{N})$)。要回答这些,需要严格的<strong>计算复杂性理论</strong>。</p>
+          <h3>15.0.2 复杂性类的视角</h3>
+          <p>回答这三个问题,需要<strong>复杂性理论</strong>(Computational Complexity Theory):</p>
+          <table>
+            <thead><tr><th>类</th><th>全称</th><th>关键特征</th></tr></thead>
+            <tbody>
+              <tr><td><strong>P</strong></td><td>Deterministic Polynomial Time</td><td>经典计算机能多项式时间解</td></tr>
+              <tr><td><strong>NP</strong></td><td>Nondeterministic Polynomial Time</td><td>经典计算机能多项式时间<strong>验证</strong></td></tr>
+              <tr><td><strong>BQP</strong></td><td>Bounded-error Quantum Polynomial Time</td><td><strong>量子</strong>计算机多项式时间 + 误差 $\le 1/3$</td></tr>
+              <tr><td><strong>QMA</strong></td><td>Quantum Merlin-Arthur</td><td>量子版的 NP(量子证明 + 量子验证)</td></tr>
+              <tr><td><strong>PSPACE</strong></td><td>Polynomial Space</td><td>多项式空间(不限时间)</td></tr>
+            </tbody>
+          </table>
+          <p><strong>本书的第三部分</strong>(ch11-ch15)的<strong>理论收官</strong>就是回答: <strong>BQP 在哪个层级</strong>? <strong>哪些问题是 BQP-complete</strong>? 这正是本章的<strong>主线任务</strong>。</p>
+          <h3>15.0.3 复杂性理论的"地图"</h3>
+          <p>想象复杂性理论是一张<strong>地图</strong>,每个<strong>复杂性类</strong>是一片<strong>大陆</strong>:</p>
+          <ul>
+            <li><strong>P</strong>: 经典计算机的"基本版图"</li>
+            <li><strong>NP</strong>: 验证容易的"待解决问题版图"</li>
+            <li><strong>BQP</strong>: 量子计算机的"版图"</li>
+            <li><strong>QMA</strong>: 量子验证的"待解决问题版图"</li>
+            <li><strong>PSPACE</strong>: 用空间换时间的"巨大版图"</li>
+          </ul>
+          <p><strong>已知</strong>:</p>
+          <ul>
+            <li>P ⊆ NP ⊆ PSPACE</li>
+            <li>P ⊆ BQP ⊆ PSPACE</li>
+            <li>NP ⊆ QMA</li>
+          </ul>
+          <p><strong>未知</strong>:</p>
+          <ul>
+            <li>P = NP?</li>
+            <li>BQP = P? BQP ⊆ NP? NP ⊆ BQP?</li>
+            <li>QMA = NP? QMA = BQP?</li>
+          </ul>
+          <h3>15.0.4 先验知识清单</h3>
+          <p>本章<strong>不重复</strong>前 14 章的内容,直接引用:</p>
+          <ul>
+            <li><strong>ch02</strong> bra-ket 符号、内积、外积</li>
+            <li><strong>ch06</strong> qubit、Bloch 球</li>
+            <li><strong>ch07</strong> 量子门</li>
+            <li><strong>ch08</strong> 量子电路的数学模型</li>
+            <li><strong>ch09</strong> QFT</li>
+            <li><strong>ch10</strong> Grover 搜索</li>
+            <li><strong>ch11</strong> Shor 因式分解</li>
+            <li><strong>ch12</strong> QPE</li>
+            <li><strong>ch13</strong> VQE / QAOA</li>
+            <li><strong>ch14</strong> QML</li>
+          </ul>
+          <hr>
+          <h2 id="section-15.1">15.1 计算复杂性的基础概念</h2>
+          <h3>15.1.1 图灵机(简短回顾)</h3>
+          <p><strong>图灵机</strong>(Turing Machine, TM)是经典计算的<strong>理论模型</strong>,由 Alan Turing 1936 年提出:</p>
+          <ul>
+            <li><strong>状态</strong>: 有限状态集中的当前状态($q \in Q$)</li>
+            <li><strong>磁带</strong>: 无限长(左右可扩展)的格子, 每个格子存一个符号($\Gamma$ 中)</li>
+            <li><strong>读写头</strong>: 指向当前磁带格子, 可读可写</li>
+            <li><strong>转移函数</strong>: $\delta: Q \times \Gamma \to Q \times \Gamma \times \{L, R\}$(根据当前状态和读到的符号, 决定新状态、新符号、磁头移动方向)</li>
+          </ul>
+          <p>每一步: 读符号 → 改符号 + 移磁带 + 改状态, 重复直到进入接受/拒绝状态。</p>
+          <p><strong>通用图灵机</strong>(Universal TM): 一台 TM 模拟所有 TM(把"程序 + 数据"都编码在磁带上)。这是<strong>现代计算机的理论原型</strong>——软件可编程。</p>
+          <p><strong>Church-Turing 论题</strong>: 任何"可计算"函数都可用 TM 计算(物理可实现的计算<strong>不超过</strong> TM)。</p>
+          <p><strong>扩展 Church-Turing 论题</strong>(加强版): 任何物理可实现的计算都可用<strong>多项式时间</strong> TM 模拟(物理计算<strong>不超过</strong>多项式 TM)。</p>
+          <p><strong>量子计算违反扩展 Church-Turing</strong>: Shor 算法显示量子<strong>多项式时间</strong>能解<strong>经典超多项式</strong>的问题(因式分解 vs GNFS 亚指数), 所以<strong>扩展 Church-Turing 不成立</strong>——这是量子计算<strong>深刻</strong>的理论意义。</p>
+          <h3>15.1.2 时间复杂度</h3>
+          <p><strong>时间复杂度</strong> $T(n)$: 输入大小 $n$ 时, TM 停机前所需的<strong>步数</strong>。</p>
+          <p><strong>多项式时间</strong>: $T(n) = O(\text{poly}(n))$(可扩展)</p>
+          <ul>
+            <li>$O(1), O(\log n), O(n), O(n^2), O(n^{100})$ 等都算多项式</li>
+          </ul>
+          <p><strong>指数时间</strong>: $T(n) = O(2^n)$(不可扩展)</p>
+          <ul>
+            <li>$n = 100$ 时, $2^{100} \approx 10^{30}$, <strong>不可计算</strong></li>
+          </ul>
+          <p><strong>关键洞察</strong>:</p>
+          <ul>
+            <li>$n^{100}$ 是"理论可计算", $1.0001^n$ 是"实际不可计算"(常数基指数)</li>
+            <li>多项式 vs 指数是<strong>经典复杂性</strong>的核心划分</li>
+          </ul>
+          <h3>15.1.3 判定问题 vs 函数问题</h3>
+          <p><strong>判定问题</strong>(Decision): 输出 Yes/No(在 P / NP 里)</p>
+          <ul>
+            <li>例: "15 是 3 的倍数吗?"</li>
+            <li>例: "这个布尔公式可满足吗?" (SAT)</li>
+            <li>例: "图 G 是否有 Hamilton 路径?"</li>
+          </ul>
+          <p><strong>函数问题</strong>(Function): 输出任意值(不在 P/NP 里)</p>
+          <ul>
+            <li>例: "15 的因子是什么?" (因式分解)</li>
+            <li>例: "这个布尔公式的满足赋值是什么?"</li>
+            <li>例: "图 G 的最短 Hamilton 路径是什么?"</li>
+          </ul>
+          <p><strong>关系</strong>:</p>
+          <ul>
+            <li>函数问题<strong>至少</strong>和它对应的判定问题<strong>一样难</strong></li>
+            <li>例: 找因子 $\ge$ 判断合数(更难的函数)</li>
+            <li>本章<strong>主要关注</strong>判定问题, 但量子算法很多解决<strong>函数问题</strong></li>
+          </ul>
+          <h3>15.1.4 P 类(Deterministic Polynomial Time)</h3>
+          <p><strong>定义</strong>: P = 经典计算机<strong>多项式时间</strong>可解的所有判定问题的类。</p>
+          <p><strong>形式化</strong>: 一个判定问题 $L$ 在 P 中, 当且仅当存在 TM $M$ 和多项式 $p(n)$, 使得对每个输入 $x$, $M(x)$ 在 $p(|x|)$ 步内停机, 且 $M(x) = 1$ 当且仅当 $x \in L$。</p>
+          <p><strong>例子</strong>:</p>
+          <ul>
+            <li>整数加法、乘法(小学算法)</li>
+            <li>排序、搜索($O(n \log n)$)</li>
+            <li>最短路径(Dijkstra $O(m + n \log n)$)</li>
+            <li>线性规划(Khachiyan 1979, $O(n^4)$)</li>
+            <li><strong>合数检测</strong>(PRIMES is in P, Agrawal-Kayal-Saxena 2002)—— 注意是"合数"不是"素数"!</li>
+          </ul>
+          <p><strong>直觉</strong>: P = "<strong>容易</strong>"的判定问题。</p>
+          <h3>15.1.5 NP 类(Nondeterministic Polynomial Time)</h3>
+          <p><strong>定义</strong>(两种等价视角):</p>
+          <p><strong>验证视角</strong>: NP = 给定一个"证书" $w$, 经典计算机能<strong>多项式时间验证</strong> $x \in L$ 的判定问题 $L$。</p>
+          <ul>
+            <li>形式化: $L \in$ NP 当且仅当存在多项式时间 TM $V$ 和多项式 $q$, 使得 $x \in L$ 当且仅当存在 $w$ 满足 $|w| \le q(|x|)$ 且 $V(x, w) = 1$。</li>
+          </ul>
+          <p><strong>非确定性视角</strong>: NP = 非确定性 TM 多项式时间可解的判定问题。</p>
+          <ul>
+            <li>非确定性 TM = 每一步可以"分支"到多个可能</li>
+            <li>接受 if <strong>任一</strong>分支接受</li>
+          </ul>
+          <p><strong>等价性</strong>: 两种定义<strong>完全等价</strong>(证书 = 分支选择)。</p>
+          <p><strong>典型 NP 问题</strong>:</p>
+          <ul>
+            <li><strong>SAT</strong>(布尔可满足性): 给定布尔公式 $\phi$, 是否有满足赋值?</li>
+            <li><strong>3-SAT</strong>(每个子句 3 个文字): SAT 的限制版, <strong>NP-complete</strong></li>
+            <li><strong>Hamilton 路径</strong>: 给定图 $G$, 是否有访问所有顶点恰好一次的路径?</li>
+            <li><strong>子集和</strong>: 给定数集 $S$ 和目标 $T$, 是否有 $S$ 子集和为 $T$?</li>
+            <li><strong>图着色</strong>: 给定图 $G$ 和 $k$ 种颜色, 能否用 $\le k$ 种颜色给 $G$ 着色?</li>
+          </ul>
+          <p><strong>NP 问题的特征</strong>:</p>
+          <ul>
+            <li>答案<strong>容易验证</strong>(多项式时间)—— 给个证书即可</li>
+            <li>答案<strong>可能难找</strong>(指数时间)—— 不知道证书就只能穷举</li>
+          </ul>
+          <h3>15.1.6 P vs NP:Clay 千禧问题</h3>
+          <p><strong>P ⊆ NP</strong>: 显然(能找到答案 ⇒ 能验证答案, 用空证书)</p>
+          <p><strong>P = NP?</strong>: 经典复杂性<strong>最大未解问题</strong>之一, Clay 千禧问题(2000 年)悬赏 100 万美元。</p>
+          <p><strong>多数猜想</strong>: <strong>P ≠ NP</strong>(虽然无证明)</p>
+          <p><strong>物理直觉</strong>: 找数学证明比验证证明<strong>难得多</strong>(数学家每天的体验)</p>
+          <p><strong>应用含义</strong>:</p>
+          <ul>
+            <li>若 P = NP: 密码学崩盘(RSA 可破), AI 飞跃(机器学习 = 学习 = 找证)</li>
+            <li>若 P ≠ NP(更可能): 密码学安全, AI 受限</li>
+          </ul>
+          <p><strong>现状</strong>(2026): <strong>没有 P ≠ NP 的证明</strong>, 也<strong>没有</strong>反证, 是<strong>真正开放</strong>问题。</p>
+          <h3>15.1.7 其他复杂性类</h3>
+          <table>
+            <thead><tr><th>类</th><th>全称</th><th>关键</th><th>跟 P/NP 关系</th></tr></thead>
+            <tbody>
+              <tr><td><strong>co-NP</strong></td><td>Complement of NP</td><td>验证 No 的类</td><td>co-NP vs NP 关系未知</td></tr>
+              <tr><td><strong>#P</strong></td><td>Sharp-P</td><td><strong>计数</strong>(解的个数)</td><td>#P ⊇ NP(计数比判定难)</td></tr>
+              <tr><td><strong>PP</strong></td><td>Probabilistic Polynomial</td><td>概率图灵机多项式</td><td>PP ⊇ NP</td></tr>
+              <tr><td><strong>BPP</strong></td><td>Bounded-error Prob. Poly.</td><td>概率 + 误差 $\le 1/3$</td><td>BPP ⊇ P(已知), BPP vs NP 未知</td></tr>
+              <tr><td><strong>PH</strong></td><td>Polynomial Hierarchy</td><td>NP 的多层推广</td><td>PH ⊇ NP, P ⊆ NP ⊆ PH</td></tr>
+              <tr><td><strong>PSPACE</strong></td><td>Polynomial Space</td><td>多项式空间(不限时间)</td><td>PSPACE ⊇ PH ⊇ NP</td></tr>
+            </tbody>
+          </table>
+          <p><strong>PH 直观</strong>: $\Sigma_1^P =$ NP, $\Sigma_2^P =$ NP-NP, ..., PH = $\bigcup_k \Sigma_k^P$。PH collapse 意味着 $\exists k$ 使得 $\Sigma_k^P = \Pi_k^P$。</p>
+          <p><strong>BPP 的重要性</strong>: Sipser-Gács-Lautemann 定理(1983) <strong>BPP ⊆ $\Sigma_2^P$</strong>, 所以 BPP $\subseteq$ PH。BPP "几乎"等于 P(Sipser 猜想), 但<strong>尚未证明</strong>。</p>
+          <hr>
+          <h2 id="section-15.2">15.2 BQP 类</h2>
+          <h3>15.2.1 BQP 定义</h3>
+          <p><strong>BQP</strong>(Bounded-error Quantum Polynomial Time):</p>
+          <blockquote>一类判定问题, 存在多项式大小的<strong>量子电路</strong>, 输出正确 Yes/No 的概率 $\ge 2/3$(误差 $\le 1/3$)。</blockquote>
+          <p><strong>关键要素</strong>:</p>
+          <ol>
+            <li><strong>量子电路</strong>: 多项式大小的量子门 + qubit</li>
+            <li><strong>多项式大小</strong>: 电路大小 $T(n) = O(\text{poly}(n))$</li>
+            <li><strong>误差</strong>: 单次运行成功概率 $\ge 2/3$(通过重复放大到任意小)</li>
+          </ol>
+          <p><strong>形式化</strong>: 一个判定问题 $L$ 在 BQP 中, 当且仅当存在一致多项式大小的量子电路族 $\{C_n\}$, 使得对每个输入 $x \in \{0,1\}^n$, 测量第一个 qubit 得到 $|1\rangle$(代表 Yes)的概率:</p>
+          <ul>
+            <li>$\ge 2/3$ 当且仅当 $x \in L$</li>
+            <li>$\le 1/3$ 当且仅当 $x \notin L$</li>
+          </ul>
+          <p><strong>误差放大</strong>: 若某算法误差为 $1/2 - \epsilon$, 可通过 $O(\log(1/\delta))$ 次重复 + 多数投票, 让误差 $\le \delta$。</p>
+          <h3>15.2.2 BQP 跟 P 的关系</h3>
+          <p><strong>BQP ⊇ P</strong>: 经典多项式算法可直接用量子电路模拟(用 Toffoli + NOT 模拟经典门)。</p>
+          <p><strong>证明 sketch</strong>:</p>
+          <ul>
+            <li>经典电路 = AND, OR, NOT 门</li>
+            <li>AND = Toffoli($\cdot$ X 测量) = 量子门 ✅</li>
+            <li>OR = Toffoli(类似) ✅</li>
+            <li>NOT = X 门 ✅</li>
+            <li><strong>所以任何 P 算法可视为量子电路 → BQP ⊇ P</strong></li>
+          </ul>
+          <p><strong>具体构造</strong>:</p>
+          <ul>
+            <li><strong>NAND 门</strong>(通用经典门): Toffoli + $X$ 测量, 经典等价</li>
+            <li><strong>Toffoli 门</strong>(CCX): 量子门, 作用 $|a, b, c\rangle \to |a, b, c \oplus ab\rangle$</li>
+            <li>用 Toffoli + $X$ 可构造 NAND: $|a, b, 1\rangle \to |a, b, 1 \oplus \overline{ab}\rangle$</li>
+            <li>所以<strong>经典电路 = 量子电路的特例</strong></li>
+          </ul>
+          <h3>15.2.3 BQP 跟 NP 的关系</h3>
+          <p><strong>BQP vs NP</strong>:<strong>完全未知</strong>。</p>
+          <p>可能的<strong>三种情况</strong>:</p>
+          <ol>
+            <li>BQP ⊆ NP(量子<strong>不超越</strong>经典验证)</li>
+            <li>NP ⊆ BQP(量子<strong>能找到</strong>所有 NP 解)</li>
+            <li>不可比</li>
+          </ol>
+          <p><strong>已知</strong>:</p>
+          <ul>
+            <li>BQP ⊆ PSPACE(Bernstein-Vazirani 1993)</li>
+            <li>BQP 可能<strong>包含</strong>(Shor 隐子群) NP 中<strong>部分问题</strong></li>
+            <li>BQP <strong>可能不包含</strong> NP-complete 问题(否则量子解决 SAT)</li>
+          </ul>
+          <p><strong>多数猜想</strong>:</p>
+          <ul>
+            <li>BQP ⊈ NP-complete(否则量子太强大)</li>
+            <li>BQP ≠ NP(否则 SAT 可量子解)</li>
+          </ul>
+          <p><strong>直觉</strong>: NP-complete 像<strong>数学猜想</strong>(找证明难, 验证证明易);BQP 像<strong>物理实验</strong>(量子叠加 + 干涉)。两者<strong>正交</strong>。</p>
+          <h3>15.2.4 BQP 跟 PSPACE 的关系</h3>
+          <p><strong>BQP ⊆ PSPACE</strong>(Bernstein-Vazirani 1993):</p>
+          <ul>
+            <li>任何 BQP 算法可在<strong>多项式空间</strong>(不限时间)的经典计算机上模拟</li>
+            <li>思路: 模拟量子电路的振幅演化(指数时间但多项式空间)</li>
+          </ul>
+          <p><strong>证明 sketch</strong>:</p>
+          <ul>
+            <li>量子电路每步 = $2^n \times 2^n$ 矩阵乘以 $2^n$ 维向量</li>
+            <li>不用存整个矩阵(指数空间), 只需<strong>按需</strong>生成每行(多项式空间)</li>
+            <li>总时间 $O(2^n)$(指数), 但空间 $O(n^2)$(多项式)</li>
+          </ul>
+          <p><strong>含义</strong>: BQP ⊆ PSPACE(已被证明), 所以 PSPACE 是<strong>已知</strong>的 BQP 上界。</p>
+          <h3>15.2.5 BQP ⊇ P 的"经典模拟量子" 证明 sketch(Day 17 S1 修订)</h3>
+          <p><strong>为什么 P ⊆ BQP 是显然的</strong>:</p>
+          <pre><code class="language-python">经典算法 A(n)    ────编译────→   量子电路 Q(n)
+  ↓                                    ↓
+多项式步                      多项式门
+  ↓                                    ↓
+输出 y                         输出 y(确定性)</code></pre>
+          <p><strong>确定性 vs 概率性量子电路</strong>:</p>
+          <ul>
+            <li><strong>确定性</strong>: 测量后<strong>必然</strong>得到正确答案</li>
+            <li><strong>概率性</strong>: 测量后<strong>高概率</strong>得到正确答案(BQP 的标准)</li>
+          </ul>
+          <p><strong>经典算法 → 确定性量子电路</strong>: 直接翻译(AND, OR, NOT → Toffoli, Toffoli+辅助, X)。</p>
+          <p><strong>BQP 的概率性扩展</strong>: 经典概率算法(BPP)也可翻译成概率量子电路, 但<strong>真正</strong>量子优势来自<strong>叠加 + 干涉</strong>(不是概率)。</p>
+          <p><strong>关键区分</strong>:</p>
+          <ul>
+            <li><strong>经典概率</strong>: 用 $n$ bit 随机串, 期望运行时间 $T$</li>
+            <li><strong>量子叠加</strong>: 用 $n$ qubit 叠加态, 用 $\sqrt{T}$ 干涉提取信息</li>
+          </ul>
+          <h3>15.2.6 BQP-complete 问题</h3>
+          <p><strong>BQP-complete</strong>: BQP 类中<strong>最难</strong>的问题(其他 BQP 问题可归约到它)。</p>
+          <p><strong>定义</strong>: $L$ 是 BQP-hard 如果任何 BQP 问题可归约到 $L$;$L$ 是 BQP-complete 如果还 $L \in$ BQP。</p>
+          <table>
+            <thead><tr><th>BQP-complete 问题</th><th>难度来源</th></tr></thead>
+            <tbody>
+              <tr><td><strong>隐子群问题(ISG)</strong></td><td>Shor 1994 解决(可归约到 QFT)</td></tr>
+              <tr><td><strong>模拟 Hamiltonian 演化</strong></td><td>Lloyd 1996(量子化学核心)</td></tr>
+              <tr><td><strong>Forrelation</strong>(oracle)</td><td>Raz-Tal 2018(BQP ⊈ PH 证据)</td></tr>
+              <tr><td><strong>Hidden shift</strong></td><td>van Dam 2001</td></tr>
+              <tr><td><strong>Adiabatic / QAOA</strong></td><td>Childs-Cleve-Jordan-Yung 2010</td></tr>
+            </tbody>
+          </table>
+          <p><strong>BQP-complete 问题的意义</strong>:</p>
+          <ul>
+            <li><strong>证明</strong>量子优势(BQP 不在 P 内)</li>
+            <li><strong>连接</strong>算法(隐子群)、物理(模拟)、密码(Factoring)</li>
+          </ul>
+          <hr>
+          <h2 id="section-15.3">15.3 QMA 类</h2>
+          <h3>15.3.1 QMA 定义</h3>
+          <p><strong>QMA</strong>(Quantum Merlin-Arthur):</p>
+          <blockquote>一类判定问题, 存在<strong>量子证明</strong>(Merlin 发量子态), <strong>量子验证者</strong>(Arthur)能多项式时间验证 Yes 的概率 $\ge 2/3$。</blockquote>
+          <p><strong>类比 NP</strong>:</p>
+          <ul>
+            <li><strong>NP</strong>: 经典证书 + 经典验证</li>
+            <li><strong>QMA</strong>: 量子证书 + 量子验证</li>
+          </ul>
+          <p><strong>形式化</strong>: $L \in$ QMA 当且仅当存在多项式 $p$, 对每个输入 $x \in \{0,1\}^n$:</p>
+          <ul>
+            <li>如果 $x \in L$, 存在 $p(n)$-qubit 量子态 $|\psi\rangle$(Merlin 的"量子证书"), Arthur 用多项式时间量子电路验证 $|\psi\rangle$, 接受概率 $\ge 2/3$</li>
+            <li>如果 $x \notin L$, 对<strong>所有</strong> $p(n)$-qubit 量子态 $|\psi\rangle$, Arthur 接受概率 $\le 1/3$</li>
+          </ul>
+          <p><strong>命名来源</strong>: "Merlin" = 全能魔术师(能准备任何量子态),"Arthur" = 验证者(有限量子电路)。</p>
+          <h3>15.3.2 QMA 跟 NP 的关系</h3>
+          <p><strong>QMA ⊇ NP</strong>:</p>
+          <ul>
+            <li>NP 证书是经典比特串(也是量子态)</li>
+            <li>NP 验证是经典算法(也是量子算法)</li>
+            <li>所以 NP ⊆ QMA(证书直接当量子态)</li>
+          </ul>
+          <p><strong>证明 sketch</strong>: 给定 NP 验证 $V(x, w)$, 其中 $w$ 是经典证书, 构造 QMA 验证: Merlin 准备 $|w\rangle$, Arthur 用经典验证 $V$ 作为量子电路(用 Toffoli 翻译), 测量输出。</p>
+          <p><strong>QMA 跟 BQP 的关系</strong>:</p>
+          <ul>
+            <li>QMA ⊇ BQP? <strong>未知</strong>!(可能不真)</li>
+            <li>BQP 是"自己算", QMA 是"用别人给的证据"</li>
+            <li>QMA 可能<strong>严格</strong>比 BQP 大(因为 Merlin 给信息)</li>
+          </ul>
+          <p><strong>直觉</strong>: QMA 是"NP 的量子版", 但<strong>不一定</strong>只是"量子 NP"——可能<strong>更大</strong>。</p>
+          <h3>15.3.3 k-Local Hamiltonian (k-LH) 完整性</h3>
+          <p><strong>Local Hamiltonian 问题</strong>:</p>
+          <p><strong>输入</strong>: $n$ qubit, Hamiltonian $H = \sum_{i=1}^m H_i$(每个 $H_i$ 是<strong>至多</strong> $k$ 个 qubit 的 Hermitian 算符, $\|H_i\| \le 1$), 两个阈值 $a &lt; b$, 间隔 $\ge 1/\text{poly}(n)$。</p>
+          <p><strong>问题</strong>: $H$ 的最小特征值 $\lambda_{\min}(H) \le a$ 还是 $\ge b$?</p>
+          <p><strong>k-Local Hamiltonian 是 QMA-complete</strong>(Kitaev 2002):</p>
+          <ul>
+            <li><strong>QMA-hard</strong>: 任何 QMA 问题可归约到 k-LH(用相位估计 + Hamiltonian 模拟)</li>
+            <li><strong>在 QMA 中</strong>: 给定基态作为 Merlin 的量子态, Arthur 用相位估计验证能量 $\le a$(Yes) 或 $\ge b$(No)</li>
+          </ul>
+          <p><strong>QMA 验证的细节</strong>:</p>
+          <ul>
+            <li>$\ge b$: Arthur 用量子相位估计(见 ch12)拒绝</li>
+            <li>$\le a$: Arthur 接受(用 Merlin 发的基态, 验证 $\langle \psi_0 | H | \psi_0 \rangle \le a$)</li>
+          </ul>
+          <p><strong>Kitaev 证明核心</strong>: 把任意 QMA 问题"翻译"成 Hamiltonian 形式, Merlin 的量子证书 = 基态。</p>
+          <h3>15.3.4 k-LH 的物理意义</h3>
+          <p><strong>多体物理</strong>:</p>
+          <ul>
+            <li>$H = \sum_i H_i$ = 多体 Hamiltonian(相互作用局部)</li>
+            <li>$\lambda_{\min}(H)$ = <strong>基态能量</strong>(GS energy)</li>
+            <li><strong>问</strong>: 基态能量 $\le a$ 还是 $\ge b$?</li>
+          </ul>
+          <p><strong>量子化学</strong>(ch13 VQE 的物理来源):</p>
+          <ul>
+            <li>分子 Hamiltonian 是 $k$-local(2-body 或 3-body 相互作用)</li>
+            <li><strong>估计基态能量 = 分子稳定性 / 反应能</strong> = 量子化学的核心问题</li>
+          </ul>
+          <p><strong>凝聚态物理</strong>:</p>
+          <ul>
+            <li>Heisenberg 模型 / Hubbard 模型 = $k$-local</li>
+            <li><strong>超导 / 反磁 / 拓扑序</strong> 的基态 = 凝聚态研究的核心</li>
+          </ul>
+          <p><strong>因此</strong>: <strong>估计基态能量 $\approx$ QMA-complete</strong></p>
+          <p><strong>关键含义</strong>:</p>
+          <ul>
+            <li><strong>量子计算机也难精确解</strong>(QMA-complete, 不是 BQP)</li>
+            <li>ch13 VQE 用<strong>变分启发式</strong>(不严格), 不是<strong>精确算法</strong></li>
+            <li><strong>FTQC + 误差缓解</strong> 才能"接近"基态能量(但不保证精确)</li>
+          </ul>
+          <h3>15.3.5 k-Local Hamiltonian 完整定义(Day 17 S2 修订)</h3>
+          <p><strong>k-LH 的形式定义</strong>:</p>
+          <p>$H = \sum_{i=1}^m H_i$, 其中每个 $H_i$ 满足:</p>
+          <ul>
+            <li><strong>k-local</strong>: $H_i$ 作用在<strong>至多</strong> $k$ 个 qubit 上, 形式为 $H_i = h_i \otimes I_{\overline{S_i}}$(在子集 $S_i \subset \{1, \ldots, n\}$ 上, $|S_i| \le k$)</li>
+            <li><strong>有界范数</strong>: $\|H_i\| = \sup_{\|\psi\|=1} \|H_i \psi\| \le 1$(归一化)</li>
+            <li><strong>多项式数项</strong>: $m = O(\text{poly}(n)$(电路大小)</li>
+          </ul>
+          <p><strong>物理例子</strong>(2-local, $k=2$):</p>
+          <ul>
+            <li><strong>Heisenberg 模型</strong>: $H = \sum_{\langle i,j \rangle} J_{ij} (\sigma_i^x \sigma_j^x + \sigma_i^y \sigma_j^y + \sigma_i^z \sigma_j^z)$</li>
+            <li>每个 $\sigma_i^x \sigma_j^x$ 作用在 $\{i, j\}$ 上(2-local)</li>
+            <li><strong>基态能量估计</strong> = QMA-complete</li>
+          </ul>
+          <p><strong>例子</strong>($k=1$): 单 qubit 哈密顿量 = <strong>可解</strong>(经典), <strong>不是</strong> QMA-complete</p>
+          <p><strong>k-LH 的变种</strong>:</p>
+          <ul>
+            <li><strong>2-LH</strong>: $k=2$, 包含 Heisenberg, Hubbard 模型</li>
+            <li><strong>stoquastic LH</strong>: $H_i$ 在计算基下无非正元素(经典模拟更容易)</li>
+            <li><strong>frustration-free</strong>: 基态同时是每个 $H_i$ 的基态(特殊情况)</li>
+          </ul>
+          <hr>
+          <h2 id="section-15.4">15.4 量子查询复杂性(Quantum Query Complexity)</h2>
+          <h3>15.4.1 黑箱模型(Oracle Model)</h3>
+          <p><strong>黑箱</strong>(Oracle)是一个<strong>未知函数</strong> $f: \{0,1\}^n \to \{0,1\}$。</p>
+          <p><strong>经典查询</strong>: 给定 $x$, 我们"问" $f(x) = ?$, 每次查询代价 1。</p>
+          <p><strong>量子查询</strong>: 用 Oracle $O_f$ 作为量子门, 把 $|x\rangle|0\rangle \to |x\rangle|f(x)\rangle$。</p>
+          <p><strong>查询数</strong>: 用了<strong>多少次</strong> Oracle $O_f$。</p>
+          <p><strong>为什么研究查询复杂性</strong>?</p>
+          <ul>
+            <li>把算法<strong>抽象</strong>为黑箱调用, 屏蔽内部细节</li>
+            <li>区分<strong>信息论下界</strong> vs <strong>算法上界</strong></li>
+            <li>大多数量子加速<strong>本质</strong>上是查询加速(不是电路加速)</li>
+          </ul>
+          <p><strong>查询复杂性的核心问题</strong>:</p>
+          <ul>
+            <li>给定黑箱 $f$, 算法<strong>最少</strong>需要多少次查询?</li>
+            <li>量子能比经典<strong>少</strong>多少次?</li>
+          </ul>
+          <h3>15.4.2 Grover 搜索:$\sqrt{N}$ 查询</h3>
+          <p><strong>问题</strong>: 给定 $N$ 个元素的<strong>未排序</strong>数组, 找到满足 $f(x_0) = 1$ 的 $x_0$。</p>
+          <p><strong>经典查询</strong>: $O(N)$(逐个查, 最坏情况)</p>
+          <p><strong>量子查询</strong>: $O(\sqrt{N})$(Grover 1996, ch10 详谈)</p>
+          <p><strong>为什么 $\sqrt{N}$ 不是 $\log N$ 或 $N^{1/3}$?</strong> Bennett-Bernstein-Brassard-Vazirani 1997 证明:<strong>任何</strong>量子算法<strong>至少</strong>需要 $\Omega(\sqrt{N})$ 查询。</p>
+          <p><strong>结果</strong>: Grover 是<strong>最优</strong>的(常数因子内)。</p>
+          <p><strong>加速的本质</strong>: Grover 把 $N$ 次"试错"压缩到 $\sqrt{N}$ 次"振幅放大"。</p>
+          <p><strong>对密码学的影响</strong>:</p>
+          <ul>
+            <li>AES-128 经典 $2^{128}$, Grover 量子 $2^{64}$ → <strong>密钥长度要翻倍</strong>(AES-256)</li>
+            <li>SHA-256 经典 $2^{256}$, Grover 量子 $2^{128}$ → 仍然安全</li>
+            <li>RSA-2048(因式分解): Grover <strong>无加速</strong>(Shor 才是)</li>
+          </ul>
+          <h3>15.4.3 Shor:O(1) 查询</h3>
+          <p><strong>问题</strong>: 给定周期函数 $f(x + r) = f(x)$, 找周期 $r$。</p>
+          <p><strong>量子查询</strong>: $O(1)$(通过 QFT, 只需要<strong>一次</strong>量子求值)</p>
+          <p><strong>经典</strong>: $O(N)$(至少看 $N$ 个点才能推断周期, $N$ 是函数范围)</p>
+          <p><strong>加速</strong>: 实际是<strong>多项式</strong>(Shor 整个算法是 $O(n^3)$ 经典 + $O(n^2)$ 量子电路, 加上求值, 总加速 $O(n)$ 量级)</p>
+          <p><strong>关键</strong>:</p>
+          <ul>
+            <li><strong>求值复杂度</strong>: $O(1)$ 量子 vs $O(N)$ 经典(查询)</li>
+            <li><strong>总电路复杂度</strong>: $O(n^2)$ 量子 vs $O(n^{1/3})$ 经典(GNFS 亚指数)</li>
+            <li><strong>加速</strong>: 亚指数 → 多项式(对 RSA-2048 加速 ~$10^9$ 倍)</li>
+          </ul>
+          <h3>15.4.4 Beals et al. 1998:量子优势天花板</h3>
+          <p><strong>关键结果</strong>(Beals-Buhrman-Cleve-Mosca-de Wolf 1998):</p>
+          <blockquote><strong>任何</strong> $T$ 查询的量子算法<strong>等价于</strong> $O(T^6)$ 大小的经典确定性电路。</blockquote>
+          <p><strong>意义</strong>: 量子算法的<strong>总电路大小</strong>不会比经典<strong>指数大</strong>。</p>
+          <p><strong>证明 sketch</strong>:</p>
+          <ul>
+            <li>量子 Oracle $O_f$ 可被"展开"为 $O(T)$ 量子门(每次查询)</li>
+            <li>整个量子电路 = $O(T)$ 量子门</li>
+            <li>经典模拟 = $O(2^n)$ 时间(指数)</li>
+            <li>但<strong>已知</strong> $T$ 查询量子算法可被 $O(T^6)$ 经典电路<strong>精确</strong>模拟</li>
+          </ul>
+          <p><strong>含义</strong>:</p>
+          <ul>
+            <li>量子算法的<strong>量子部分</strong>(Oracle 之外)多项式于查询数</li>
+            <li>总加速<strong>最多</strong> $T^6$(经典比查询慢最多 $T^6$ 倍)</li>
+            <li><strong>Grover 的 $\sqrt{N}$ 是"刚刚好"的</strong>: 经典 $N$ vs 量子 $\sqrt{N}$ 平方加速</li>
+            <li>Shor 的 $O(1)$ 查询 + QFT: 经典 $N^6$ vs 量子 $N$, <strong>多项式</strong>加速(但 $N$ 是问题规模)</li>
+          </ul>
+          <p><strong>例外</strong>: Shor 类算法的<strong>周期结构</strong> + <strong>QFT</strong> 让总加速<strong>超过</strong> $T^6$ —— 因为 QFT 不是黑箱。</p>
+          <h3>15.4.5 查询复杂性的层级</h3>
+          <table>
+            <thead><tr><th>复杂度类</th><th>经典</th><th>量子</th></tr></thead>
+            <tbody>
+              <tr><td><strong>判定</strong>(Yes/No)</td><td>$D(f)$</td><td>$Q(f)$</td></tr>
+              <tr><td><strong>计算</strong>($f(x)$)</td><td>$R(f)$</td><td>$Q_2(f)$</td></tr>
+              <tr><td><strong>有界误差</strong></td><td>$R_\epsilon(f)$</td><td>$Q_\epsilon(f)$</td></tr>
+            </tbody>
+          </table>
+          <p><strong>关系</strong>: $D(f) \le R(f) \le O(Q(f)^2)$(Grover 类)</p>
+          <p><strong>已知</strong>:</p>
+          <ul>
+            <li>$Q(f) \le O(D(f))$(量子能模拟经典)</li>
+            <li>$Q(f) \le O(\sqrt{R(f)})$(Grover 加速)</li>
+            <li>$\sqrt{R(f)} \le Q(f) \le R(f)$(量子<strong>最多</strong>二次加速, 无更多)</li>
+          </ul>
+          <hr>
+          <h2 id="section-15.5">15.5 BQP 内部结构:已知关系</h2>
+          <h3>15.5.1 已证在 BQP 的问题</h3>
+          <table>
+            <thead><tr><th>问题</th><th>算法</th><th>加速</th><th>年份</th></tr></thead>
+            <tbody>
+              <tr><td><strong>整数分解</strong></td><td>Shor</td><td>指数(对 GNFS)</td><td>1994</td></tr>
+              <tr><td><strong>离散对数</strong></td><td>Shor</td><td>指数</td><td>1994</td></tr>
+              <tr><td><strong>隐子群(ISG)</strong></td><td>Ettinger-Høyer</td><td>指数(对一般 ISG)</td><td>2000</td></tr>
+              <tr><td><strong>Hidden shift</strong></td><td>van Dam</td><td>指数</td><td>2001</td></tr>
+              <tr><td><strong>模拟 Hamiltonian</strong></td><td>Lloyd</td><td>指数</td><td>1996</td></tr>
+              <tr><td><strong>Forrelation</strong>(oracle)</td><td>Raz-Tal</td><td>BQP ⊈ PH 证据</td><td>2018</td></tr>
+              <tr><td><strong>Adiabatic 算法</strong></td><td>Childs et al.</td><td>等价量子电路</td><td>2010</td></tr>
+            </tbody>
+          </table>
+          <h3>15.5.2 Forrelation(Day 17 S3 修订)</h3>
+          <p><strong>Forrelation 问题</strong>:</p>
+          <p>给定两个布尔函数 $f, g: \{0,1\}^n \to \{-1, +1\}$, 输出:</p>
+          <ul>
+            <li>Yes if $\hat{f}(g)$(Fourier 系数) &gt; 0</li>
+            <li>No if $\hat{f}(g)$ &lt; 0</li>
+          </ul>
+          <p>其中 $\hat{f}(g) = \frac{1}{2^n} \sum_x f(x) g(x)$(内积)。</p>
+          <p><strong>Oracle</strong>: 给定 $f$ 或 $g$ 作为黑箱, 查询函数值。</p>
+          <p><strong>Raz-Tal 2018</strong>:</p>
+          <ul>
+            <li>Forrelation <strong>需要</strong> $\Omega(n / \log n)$ <strong>量子</strong>查询</li>
+            <li>Forrelation <strong>只需</strong> $O(1)$ <strong>经典</strong>通信(1 bit 协议!)→ <strong>多对数</strong>经典通信</li>
+            <li><strong>BQP vs PH</strong>: BQP <strong>不包含于</strong> PH(多对一多项式层)</li>
+          </ul>
+          <p><strong>意义</strong>: Forrelation 是<strong>已知</strong>最强的"BQP 优势 vs 经典"证据, 比 Simon / Grover 更结构化。</p>
+          <h3>15.5.3 隐子群问题(ISG)</h3>
+          <p><strong>隐子群问题</strong>(Hidden Subgroup Problem, HSP):</p>
+          <p>给定群 $G$, 函数 $f: G \to X$, 承诺 $f$ 在 $H \le G$ 的陪集上<strong>恒定</strong>。找出 $H$。</p>
+          <p><strong>经典</strong>: 通常<strong>指数</strong>复杂度(对非阿贝尔群)</p>
+          <p><strong>量子</strong>: Shor / Ettinger-Høyer 给<strong>多项式</strong>算法(对阿贝尔群)</p>
+          <p><strong>例子</strong>:</p>
+          <ul>
+            <li>因式分解 = $\mathbb{Z}_N$ 上的 HSP</li>
+            <li>离散对数 = $\mathbb{Z}_N^\times$ 上的 HSP</li>
+          </ul>
+          <p><strong>局限</strong>:</p>
+          <ul>
+            <li><strong>非阿贝尔</strong> HSP(Sn, 一般群)<strong>未完全解</strong> —— 这是量子算法的<strong>前沿</strong></li>
+          </ul>
+          <hr>
+          <h2 id="section-15.6">15.6 量子优势 vs 量子霸权</h2>
+          <h3>15.6.1 术语澄清(Day 25 详谈)</h3>
+          <p>量子计算有两个<strong>容易混淆</strong>的术语:</p>
+          <table>
+            <thead><tr><th>术语</th><th>定义</th><th>例子</th><th>现实状态(2026)</th></tr></thead>
+            <tbody>
+              <tr><td><strong>量子优势</strong>(Quantum Advantage)</td><td><strong>常数因子</strong>加速(经典 + 量子都能算, 量子更便宜)</td><td>Grover $\sqrt{N}$ vs $N$</td><td>✅ 多个实验</td></tr>
+              <tr><td><strong>量子霸权</strong>(Quantum Supremacy)</td><td><strong>多项式时间不可</strong>算(经典<strong>不能</strong>算, 量子<strong>能</strong>算)</td><td>Boson Sampling, Random Circuit Sampling</td><td>✅ Google Sycamore 2019, Willow 2024</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Preskill 2012</strong> 提出 "Quantum Supremacy" 术语, 2019 年 Google Sycamore 53-qubit 首次实验性宣称<strong>霸权</strong>(被质疑, 但 2024 Willow 105-qubit 更强)。</p>
+          <p><strong>Quantum Advantage</strong> 更保守的术语, 强调<strong>实际</strong>加速(不一定"经典不能")。</p>
+          <h3>15.6.2 霸权的"具体门槛"</h3>
+          <p><strong>Google Sycamore 2019</strong>:</p>
+          <ul>
+            <li>53 qubit, 20 周期随机电路</li>
+            <li>量子: ~200 秒</li>
+            <li>经典(Summit 超算): ~10000 年</li>
+            <li><strong>声称</strong>: 首次霸权</li>
+          </ul>
+          <p><strong>争议</strong>: IBM 反驳说经典只需 2.5 天(用更优算法 + 磁盘存储)</p>
+          <p><strong>Google Willow 2024</strong>:</p>
+          <ul>
+            <li>105 qubit</li>
+            <li>加入错误纠正(已超过经典阈值)</li>
+            <li>更强霸权声明</li>
+          </ul>
+          <p><strong>Zuchongzhi 2.1 2021</strong>:</p>
+          <ul>
+            <li>66 qubit, 中国</li>
+            <li>独立验证霸权</li>
+          </ul>
+          <h3>15.6.3 采样问题为霸权服务</h3>
+          <p><strong>为什么采样问题能证明霸权</strong>?</p>
+          <p><strong>核心</strong>: 经典<strong>模拟</strong>量子电路输出分布<strong>指数难</strong>($2^n$ 维概率分布), 但量子硬件<strong>直接采样</strong>(多项式时间)。</p>
+          <p><strong>三个代表性霸权任务</strong>:</p>
+          <table>
+            <thead><tr><th>任务</th><th>物理</th><th>经典难度</th><th>量子</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Boson Sampling</strong></td><td>光子干涉</td><td>#P-hard(永久子)</td><td>多项式时间光子采样</td></tr>
+              <tr><td><strong>Random Circuit Sampling</strong></td><td>随机量子电路</td><td>经典模拟指数</td><td>多项式时间电路演化</td></tr>
+              <tr><td><strong>IQP</strong>(Instantaneous QP)</td><td>对角线电路</td><td>经典模拟难</td><td>多项式时间 IQP 电路</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Boson Sampling</strong>(Aaronson-Arkhipov 2011):</p>
+          <ul>
+            <li>光子在<strong>线性光学网络</strong>中干涉</li>
+            <li>输出<strong>光子数分布</strong></li>
+            <li>经典<strong>模拟</strong>需要<strong>永久子</strong>($\#P$ 难)</li>
+            <li>量子<strong>直接</strong>采样</li>
+          </ul>
+          <p><strong>Random Circuit Sampling</strong>(Google Sycamore 2019, Willow 2024):</p>
+          <ul>
+            <li>53-105 qubit <strong>随机量子电路</strong></li>
+            <li>输出<strong>比特串分布</strong></li>
+            <li>经典<strong>模拟</strong>指数难</li>
+            <li>量子<strong>直接</strong>采样</li>
+          </ul>
+          <p><strong>IQP</strong>(Instantaneous Quantum Polynomial):</p>
+          <ul>
+            <li>只有对角线 + Hadamard 的量子电路</li>
+            <li>输出分布<strong>经典模拟难</strong></li>
+          </ul>
+          <p><strong>批评意见</strong>:</p>
+          <ul>
+            <li>采样问题<strong>无实际应用</strong>(不像 Shor 用于密码)</li>
+            <li>经典算法<strong>不断改进</strong>(IBM 反驳 Sycamore)</li>
+            <li>噪声让"霸权"实验<strong>难以验证</strong></li>
+            <li>霸权 ≠ 实用加速(Grover 才是实用加速)</li>
+          </ul>
+          <hr>
+          <h2 id="section-15.7">15.7 量子复杂性中的重要未解问题</h2>
+          <h3>15.7.1 BQP vs P?</h3>
+          <p><strong>已知</strong>: P ⊆ BQP</p>
+          <p><strong>未知</strong>: BQP ⊆ P? 或 BQP ⊉ P?</p>
+          <p><strong>物理直觉</strong>(几乎肯定): <strong>BQP ⊉ P</strong></p>
+          <ul>
+            <li>否则<strong>所有</strong>量子算法<strong>经典多项式</strong>模拟, 量子计算<strong>没意义</strong></li>
+            <li>实验事实: 我们<strong>没找到</strong>任何经典多项式模拟 Shor 算法的证据</li>
+            <li>Grover 算法需要 $\Omega(\sqrt{N})$ 查询, 经典<strong>需要</strong> $N$ 查询(Bennett 1997 证明)</li>
+            <li>Forrelation 问题需要 $\Omega(n / \log n)$ 量子查询(Raz-Tal 2018)</li>
+          </ul>
+          <p><strong>证明现状</strong>: <strong>开放问题</strong>(无证明)</p>
+          <p><strong>为什么难证</strong>:</p>
+          <ul>
+            <li>经典<strong>不知道</strong>如何利用量子电路结构(只看到 $2^n$ 维向量)</li>
+            <li>时间-空间权衡: BQP ⊆ PSPACE 但 PSPACE 包含<strong>很多</strong>类</li>
+            <li>可能需要<strong>全新的</strong>复杂性工具(非相对化证明)</li>
+          </ul>
+          <h3>15.7.2 BQP vs NP?(Day 17 S4 修订)</h3>
+          <p><strong>三种可能性</strong>(都未排除):</p>
+          <ol>
+            <li><strong>BQP ⊆ NP</strong>: 量子<strong>不超越</strong>经典验证</li>
+            <li><strong>NP ⊆ BQP</strong>: 量子<strong>能找到</strong>所有 NP 解(包括 SAT)</li>
+            <li><strong>不可比</strong></li>
+          </ol>
+          <p><strong>已知</strong>:</p>
+          <ul>
+            <li><strong>BQP ⊆ PSPACE</strong>(已证)</li>
+            <li><strong>BQP 可能不包含 NP-complete</strong>(否则太强大)</li>
+          </ul>
+          <p><strong>多数猜想</strong>: BQP ⊈ NP-complete 且 NP ⊈ BQP</p>
+          <p><strong>直觉分析</strong>:</p>
+          <ul>
+            <li><strong>BQP ⊆ NP</strong>: 多项式大小量子电路输出可被"经典模拟 + 验证"?(类比 Grover 输出可验证但需要量子查询)</li>
+            <li><strong>NP ⊆ BQP</strong>: SAT 可量子解?(2018 年 Aaronson 猜 BQP ⊈ NP-complete)</li>
+            <li><strong>不可比</strong>: BQP 处理"物理"问题(NP 处理"组合"问题)</li>
+          </ul>
+          <p><strong>物理 vs 组合</strong>:</p>
+          <ul>
+            <li><strong>BQP</strong>: 擅长<strong>周期性 / 干涉 / 模拟</strong>问题</li>
+            <li><strong>NP</strong>: 擅长<strong>组合搜索 / 满足性</strong>问题</li>
+            <li><strong>直觉</strong>: 量子<strong>可能</strong>对 NP-complete 帮助有限(无已知算法)</li>
+          </ul>
+          <h3>15.7.3 QMA vs QMA1?</h3>
+          <p><strong>QMA1</strong>: QMA 的"1-1 完整性"变种(完全接受 vs 完全拒绝)</p>
+          <ul>
+            <li>区别: QMA 允许"小误差接受 / 小误差拒绝", QMA1 要求"完美接受 / 小误差拒绝"</li>
+          </ul>
+          <p><strong>问题</strong>: QMA = QMA1?</p>
+          <p><strong>现状</strong>: <strong>开放</strong>(但有部分证据 QMA1 ⊊ QMA)</p>
+          <p><strong>为什么重要</strong>: QMA1 更"对称"(没有"对偶"问题), 可能更容易证明 lower bound。</p>
+          <h3>15.7.4 PH collapse?</h3>
+          <p><strong>问题</strong>: BQP ⊆ PH 会<strong>导致</strong> PH collapse(多项式层叠加)</p>
+          <p><strong>Raz-Tal 2018</strong>:</p>
+          <ul>
+            <li>证明了 <strong>PH ≠ BQP</strong>(Forrelation oracle)</li>
+            <li>所以 PH <strong>不会</strong> collapse 到 BQP</li>
+          </ul>
+          <p><strong>意义</strong>: 即使 BQP 跟 PH 关系<strong>未知</strong>, 我们<strong>已知</strong> PH ≠ BQP(oracle 相对化)。</p>
+          <p><strong>未解</strong>: BQP ⊆ PH 是否成立? 这<strong>相对化</strong>意义下也不确定。</p>
+          <h3>15.7.5 量子 PCP 猜想</h3>
+          <p><strong>经典 PCP</strong>(Probabilistically Checkable Proofs):</p>
+          <ul>
+            <li>任何 NP 证明可被<strong>常数 bit</strong>验证(常数错误概率)</li>
+            <li>PCP 定理(1992, Arora-Safra, Arora-Lund-Motwani-Sudan-Szegedy)</li>
+            <li>应用: 近似算法的 hardness</li>
+          </ul>
+          <p><strong>量子版 PCP 猜想</strong>:</p>
+          <ul>
+            <li>任何 QMA 证明可被<strong>常数 qubit</strong>验证?</li>
+          </ul>
+          <p><strong>现状</strong>: <strong>开放</strong></p>
+          <p><strong>意义</strong>: 若证明, 可以<strong>证伪</strong>某些近似算法猜想(类似经典 PCP → UGC)。</p>
+          <h3>15.7.6 量子去随机化</h3>
+          <p><strong>经典去随机化</strong>: BPP = P?(猜随机性 = 真随机性, 在大多数情况下成立)</p>
+          <ul>
+            <li>Impagliazzo-Wigderson 1997: 若某些密码学假设成立, BPP = P</li>
+          </ul>
+          <p><strong>量子版</strong>: BQP = P?(去掉量子的"内在随机性")</p>
+          <ul>
+            <li>Aaronson 猜想 BQP ≠ P(否则量子算法的加速被"经典模拟")</li>
+          </ul>
+          <p><strong>现状</strong>: <strong>开放</strong></p>
+          <p><strong>物理意义</strong>: BQP = P 意味着<strong>所有</strong>量子算法<strong>经典模拟</strong>——量子计算<strong>死亡</strong>。</p>
+          <hr>
+          <h2 id="section-15.8">15.8 量子优势 vs 噪声:容错视角</h2>
+          <h3>15.8.1 NISQ 的限制</h3>
+          <p><strong>NISQ</strong>(Noisy Intermediate-Scale Quantum):</p>
+          <ul>
+            <li>~50-1000 qubit</li>
+            <li>错误率 ~10⁻³</li>
+            <li><strong>没有完全纠错</strong></li>
+          </ul>
+          <p><strong>限制</strong>:</p>
+          <ul>
+            <li>电路深度 ~100-10000 门</li>
+            <li>Shor 算法 RSA-2048(20 百万 qubits) <strong>不可行</strong></li>
+          </ul>
+          <h3>15.8.2 FTQC 的门槛</h3>
+          <p><strong>FTQC</strong>(Fault-Tolerant Quantum Computing):</p>
+          <ul>
+            <li>错误率 &lt; <strong>阈值</strong>(典型 ~10⁻⁶)</li>
+            <li>大量 qubit(逻辑 qubit = 数百物理 qubit)</li>
+            <li>容错阈值定理(见 ch19)</li>
+          </ul>
+          <h3>15.8.3 资源估算: RSA-2048</h3>
+          <p><strong>Shor 算法 RSA-2048</strong>(Gidney-Ekerå 2021):</p>
+          <table>
+            <thead><tr><th>资源</th><th>数量</th></tr></thead>
+            <tbody>
+              <tr><td><strong>逻辑 qubit</strong></td><td>~6000</td></tr>
+              <tr><td><strong>物理 qubit</strong>(表面码)</td><td>~<strong>2000 万</strong></td></tr>
+              <tr><td><strong>T 门</strong>(逻辑)</td><td>$\sim 10^{12}$</td></tr>
+              <tr><td><strong>运行时间</strong></td><td>~8 小时</td></tr>
+              <tr><td><strong>错误率阈值</strong></td><td>$\sim 10^{-3}$(表面码)</td></tr>
+            </tbody>
+          </table>
+          <p><strong>含义</strong>: RSA-2048 <strong>量子可破</strong>, 但<strong>硬件要求巨大</strong>(见 ch11.9)。</p>
+          <hr>
+          <h2 id="section-15.9">15.9 复杂性视角下的 QML(呼应 ch14)</h2>
+          <h3>15.9.1 QML 任务的复杂性类</h3>
+          <table>
+            <thead><tr><th>QML 任务</th><th>复杂性类</th><th>量子优势?</th></tr></thead>
+            <tbody>
+              <tr><td><strong>二分类(QSVM/VQC)</strong></td><td><strong>BQP</strong> 难 + 可能经典等价</td><td>⚠️ 争议</td></tr>
+              <tr><td><strong>量子模拟</strong>(VQE)</td><td><strong>BQP-complete</strong></td><td>✅ <strong>明确</strong>指数优势</td></tr>
+              <tr><td><strong>量子核 SVM</strong></td><td><strong>BQP</strong> 但可能经典可模拟</td><td>⚠️ 条件性</td></tr>
+              <tr><td><strong>生成模型</strong>(qGAN/QBM)</td><td><strong>BQP</strong>(数据分布依赖)</td><td>❌ 通常无优势</td></tr>
+              <tr><td><strong>k-Local Hamiltonian</strong></td><td><strong>QMA-complete</strong></td><td>❌ <strong>量子也难</strong></td></tr>
+            </tbody>
+          </table>
+          <h3>15.9.2 关键洞察</h3>
+          <ul>
+            <li><strong>唯一明确</strong> BQP 优势:<strong>量子模拟</strong>(化学/材料)</li>
+            <li><strong>QMA-complete</strong>(k-LH): <strong>量子也难</strong> —— VQE 是<strong>启发式</strong>而非精确</li>
+            <li><strong>监督 QML</strong>:<strong>理论边界模糊</strong> —— 量子核可能<strong>经典等价</strong>(Liu-Huang 2021)</li>
+          </ul>
+          <h3>15.9.3 可训练性问题</h3>
+          <p><strong>Barren plateau</strong>(ch13 已提): 梯度<strong>指数小</strong>, 无法训练</p>
+          <p><strong>复杂性视角</strong>: 某些 ansatz 类<strong>训练本身就是 QMA 难</strong></p>
+          <hr>
+          <h2 id="section-15.10">15.10 第三部分总结 + 第四部分铺路</h2>
+          <h3>15.10.1 第三部分回顾:ch11-ch15</h3>
+          <p>第三部分 5 章给出了量子算法 + 复杂性的<strong>完整图景</strong>:</p>
+          <table>
+            <thead><tr><th>章</th><th>算法</th><th>核心思想</th><th>加速类型</th><th>加速比</th><th>复杂性类</th></tr></thead>
+            <tbody>
+              <tr><td><strong>ch11</strong> Shor 因式分解</td><td>周期发现 + QFT</td><td>把 RSA 归约到周期发现</td><td>指数</td><td>$\sim e^{n^{1/3}}$ → 多项式</td><td>BQP (Shor 隐子群)</td></tr>
+              <tr><td><strong>ch12</strong> QPE 相位估计</td><td>量子相位估计</td><td>相位提取作为子程序</td><td>多种</td><td>子程序</td><td>BQP-complete 子程序</td></tr>
+              <tr><td><strong>ch13</strong> VQE / QAOA</td><td>变分优化</td><td>ansatz + 测量 + 经典优化</td><td>实用化</td><td>NISQ 友好</td><td>启发式(QMA-complete 难精确)</td></tr>
+              <tr><td><strong>ch14</strong> QML</td><td>量子 + ML</td><td>三种范式 + 数据编码 + 量子核</td><td>待证</td><td>争议</td><td>BQP(可能经典等价)</td></tr>
+              <tr><td><strong>ch15</strong> QCT</td><td>理论框架</td><td>P / NP / BQP / QMA</td><td>——</td><td>边界</td><td>BQP ⊆ PSPACE</td></tr>
+            </tbody>
+          </table>
+          <p><strong>第三部分的"旋律"</strong>:</p>
+          <ul>
+            <li><strong>ch11</strong>: 量子<strong>真的</strong>能指数加速(对隐子群)</li>
+            <li><strong>ch12</strong>: 量子子程序(QPE)是关键工具</li>
+            <li><strong>ch13</strong>: NISQ 时代的实用化路径(VQE)</li>
+            <li><strong>ch14</strong>: 量子 + ML 仍在探索</li>
+            <li><strong>ch15</strong>: 量子有边界, 但边界在哪仍争论</li>
+          </ul>
+          <h3>15.10.2 5 种量子加速类型(Day 17 S5 修订, 实用化时间线)</h3>
+          <table>
+            <thead><tr><th>#</th><th>类型</th><th>代表算法</th><th>加速</th><th>实用化时间</th><th>复杂度类</th></tr></thead>
+            <tbody>
+              <tr><td><strong>1</strong></td><td><strong>指数加速</strong></td><td>Shor(隐子群 + QFT)</td><td>指数</td><td>2030-2035(FTQC)</td><td>BQP-complete</td></tr>
+              <tr><td><strong>2</strong></td><td><strong>二次加速</strong></td><td>Grover(振幅放大)</td><td>$\sqrt{N}$</td><td>2027-2030(中规模 FTQC)</td><td>BQP</td></tr>
+              <tr><td><strong>3</strong></td><td><strong>采样优势</strong></td><td>Boson Sampling, IQP</td><td>指数采样</td><td>✅ 2019(霸权)</td><td>BQP ≠ P</td></tr>
+              <tr><td><strong>4</strong></td><td><strong>变分优势</strong></td><td>VQE/QAOA</td><td>启发式</td><td>✅ 2022(NISQ 实用)</td><td>NISQ(非严格)</td></tr>
+              <tr><td><strong>5</strong></td><td><strong>理论优势</strong></td><td>QML</td><td>待证</td><td>2030+(待验证)</td><td>BQP(可能经典)</td></tr>
+            </tbody>
+          </table>
+          <p><strong>实用化时间线</strong>(2026-2035):</p>
+          <ul>
+            <li><strong>现在(2026)</strong>: Boson Sampling, VQE/QAOA ✅ <strong>实用</strong></li>
+            <li><strong>近期(2027-2030)</strong>: Grover 风格算法(需要容错)</li>
+            <li><strong>中期(2030-2035)</strong>: Shor 实用化(需要数百万 qubit)</li>
+            <li><strong>长期(2035+)</strong>: QML 量子优势验证(可能永远不)</li>
+          </ul>
+          <h3>15.10.3 加速的本质分析</h3>
+          <p>5 种加速的<strong>物理本质</strong>:</p>
+          <table>
+            <thead><tr><th>类型</th><th>本质</th><th>关键机制</th></tr></thead>
+            <tbody>
+              <tr><td><strong>指数</strong></td><td>周期 / 隐子群 / 干涉</td><td>QFT 把周期提取成相位</td></tr>
+              <tr><td><strong>二次</strong></td><td>振幅放大 / 反射</td><td>Grover 迭代放大标记项</td></tr>
+              <tr><td><strong>采样</strong></td><td>物理过程不可逆模拟</td><td>光子 / 随机电路经典模拟难</td></tr>
+              <tr><td><strong>变分</strong></td><td>启发式 + 测量</td><td>用参数化电路接近最优</td></tr>
+              <tr><td><strong>理论</strong></td><td>量子 Hilbert 空间</td><td>特征映射到高维 Hilbert</td></tr>
+            </tbody>
+          </table>
+          <p><strong>共同的"量子杠杆"</strong>:</p>
+          <ul>
+            <li><strong>叠加</strong>: 量子态可同时表示多个数</li>
+            <li><strong>干涉</strong>: 通过相位使正确解放大、错误解抵消</li>
+            <li><strong>纠缠</strong>: 多 qubit 相关, 经典难以模拟</li>
+          </ul>
+          <h3>15.10.4 第四部分铺路:ch16-19 容错</h3>
+          <p><strong>问题</strong>: 第三部分算法(Shor, VQE)在<strong>真实噪声</strong>下能跑吗?</p>
+          <p><strong>第四部分回答</strong>(ch16-19):</p>
+          <ul>
+            <li><strong>ch16 量子噪声</strong>: T1/T2, 量子信道, Pauli 错误, 错误率</li>
+            <li><strong>ch17 量子纠错码</strong>: Shor 9-qubit, Steane 7-qubit, CSS 码</li>
+            <li><strong>ch18 表面码</strong>: 现代 FTQC 的工业标准, 二维拓扑码</li>
+            <li><strong>ch19 容错量子计算</strong>: 阈值定理, magic state distillation, 完整 FTQC 架构</li>
+          </ul>
+          <p><strong>第四部分 = 给 BQP 装"安全网"</strong> 🚧</p>
+          <p><strong>ch16 关键问题</strong>:</p>
+          <ul>
+            <li>真实硬件错误率 ~10⁻³, 不够用</li>
+            <li>容错阈值 ~10⁻⁶, 差 1000 倍</li>
+            <li><strong>怎么解决?</strong> ch17-19 给出答案</li>
+          </ul>
+          <h3>15.10.5 第四部分的"问题驱动"</h3>
+          <p>第四部分<strong>核心问题</strong>:</p>
+          <ul>
+            <li><strong>ch16 量子噪声</strong>: 噪声<strong>怎么</strong>刻画? T1/T2? Kraus?</li>
+            <li><strong>ch17 量子纠错码</strong>: 怎么用<strong>冗余 + 多数投票</strong>指数压低错误?</li>
+            <li><strong>ch18 表面码</strong>: 怎么用<strong>拓扑结构</strong>保护量子信息?</li>
+            <li><strong>ch19 容错量子计算</strong>: 阈值定理 + 完整 FTQC 架构</li>
+          </ul>
+          <p><strong>第四部分读完后的"飞跃"</strong>:</p>
+          <ul>
+            <li>从 ch15 的"BQP 理论存在" → ch19 的"BQP <strong>现实可实现</strong>"</li>
+            <li>理解容错的<strong>深刻原理</strong>(阈值定理)</li>
+            <li>看到 FTQC 的<strong>实际架构</strong>(表面码 + magic state)</li>
+          </ul>
+          <h3>15.10.6 第三部分 → 第四部分 衔接图</h3>
+          <pre><code class="language-python">第三部分(ch11-ch15): 量子算法的"理想世界"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Shor / QPE / VQE / QML / QCT
+  假定: 无噪声, 完美酉演化, 即时测量
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+              ↓ 现实约束
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+第四部分(ch16-ch19): 量子计算的"现实世界"
+  噪声 → 纠错码 → 表面码 → 容错
+  真实: T1/T2 ~μs-ms, 错误率 ~10⁻³
+  目标: 错误率 ~10⁻⁶(FTQC 阈值)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</code></pre>
+          <p><strong>衔接的"哲学"</strong>:</p>
+          <ul>
+            <li>第三部分 = "<strong>能</strong>算多快"(理论)</li>
+            <li>第四部分 = "<strong>真</strong>能算"(工程)</li>
+            <li><strong>两者不可分割</strong>: 没有容错, 再快的量子算法也无法实用</li>
+          </ul>
+          <hr>
+          <h2 id="section-15.11">15.11 总结</h2>
+          <h3>15.11.1 概念速查表</h3>
+          <table>
+            <thead><tr><th>概念</th><th>定义</th><th>章节</th></tr></thead>
+            <tbody>
+              <tr><td><strong>P</strong></td><td>Deterministic Polynomial Time</td><td>15.1.4</td></tr>
+              <tr><td><strong>NP</strong></td><td>Nondeterministic Polynomial Time</td><td>15.1.5</td></tr>
+              <tr><td><strong>BQP</strong></td><td>Bounded-error Quantum Polynomial</td><td>15.2.1</td></tr>
+              <tr><td><strong>QMA</strong></td><td>Quantum Merlin-Arthur</td><td>15.3.1</td></tr>
+              <tr><td><strong>k-LH</strong></td><td>k-Local Hamiltonian(QMA-complete)</td><td>15.3.3</td></tr>
+              <tr><td><strong>P vs NP</strong></td><td>经典最大未解问题</td><td>15.1.6</td></tr>
+              <tr><td><strong>查询复杂性</strong></td><td>黑箱模型查询数</td><td>15.4</td></tr>
+              <tr><td><strong>Grover</strong></td><td>$\sqrt{N}$ 查询</td><td>15.4.2</td></tr>
+              <tr><td><strong>Shor</strong></td><td>$O(1)$ 查询(周期)</td><td>15.4.3</td></tr>
+              <tr><td><strong>ISG</strong></td><td>Hidden Subgroup Problem</td><td>15.5.3</td></tr>
+              <tr><td><strong>Forrelation</strong></td><td>BQP ⊈ PH 证据</td><td>15.5.2</td></tr>
+              <tr><td><strong>量子优势</strong></td><td>常数因子加速</td><td>15.6.1</td></tr>
+              <tr><td><strong>量子霸权</strong></td><td>多项式时间不可</td><td>15.6.1</td></tr>
+              <tr><td><strong>Boson Sampling</strong></td><td>光子采样霸权</td><td>15.6.2</td></tr>
+              <tr><td><strong>FTQC</strong></td><td>Fault-Tolerant QC</td><td>15.8.2</td></tr>
+              <tr><td><strong>Beals 等式</strong></td><td>$T$ 查询 = $O(T^6)$ 经典大小</td><td>15.4.4</td></tr>
+              <tr><td><strong>PH collapse</strong></td><td>PH 叠加到单层</td><td>15.7.4</td></tr>
+              <tr><td><strong>量子 PCP</strong></td><td>QMA 的常数 qubit 验证</td><td>15.7.5</td></tr>
+            </tbody>
+          </table>
+          <h3>15.11.2 三层洞察</h3>
+          <p><strong>第一层(算法)</strong>:</p>
+          <ul>
+            <li><strong>指数加速</strong>: Shor 类型(隐子群 + QFT)</li>
+            <li><strong>二次加速</strong>: Grover 类型(振幅放大)</li>
+            <li><strong>采样优势</strong>: 经典模拟难的问题</li>
+            <li><strong>变分优势</strong>: 启发式 + NISQ 友好</li>
+          </ul>
+          <p><strong>第二层(类)</strong>:</p>
+          <ul>
+            <li>BQP 在 P 和 PSPACE 之间</li>
+            <li>QMA 在 NP 和 PSPACE 之间</li>
+            <li>BQP ≠ PH(已证)</li>
+            <li>BQP-complete / QMA-complete 任务清单</li>
+          </ul>
+          <p><strong>第三层(哲学)</strong>:</p>
+          <ul>
+            <li>量子计算<strong>有边界</strong>(BQP ≠ ALL)</li>
+            <li>量子<strong>不是万能</strong>(BQP ⊈ NP-complete 猜想)</li>
+            <li>量子<strong>仍在演化</strong>(未解问题众多)</li>
+            <li><strong>物理直觉 ≠ 数学证明</strong>(BQP ⊉ P 物理显然但无证明)</li>
+          </ul>
+          <h3>15.11.3 第三部分 5 章一句话总结</h3>
+          <ul>
+            <li><strong>ch11</strong> Shor 告诉我们:<strong>周期</strong>问题量子能指数加速</li>
+            <li><strong>ch12</strong> QPE 告诉我们:<strong>相位估计</strong>是量子子程序的核心</li>
+            <li><strong>ch13</strong> VQE/QAOA 告诉我们:<strong>变分</strong>是 NISQ 时代的实用路线</li>
+            <li><strong>ch14</strong> QML 告诉我们:<strong>量子 + ML</strong> 仍在<strong>探索期</strong></li>
+            <li><strong>ch15</strong> QCT 告诉我们:<strong>量子有边界, 但</strong>边界<strong>在哪里仍在争论</strong></li>
+          </ul>
+          <h3>15.11.4 推荐阅读</h3>
+          <p><strong>经典教材</strong>:</p>
+          <ul>
+            <li>Nielsen-Chuang《Quantum Computation and Quantum Information》ch 4 (Quantum complexity)</li>
+            <li>Arora-Barak《Computational Complexity: A Modern Approach》ch 10 (Quantum complexity)</li>
+            <li>de Wolf《A Brief Introduction to Fourier Analysis on the Boolean Cube》(2018)</li>
+          </ul>
+          <p><strong>关键论文</strong>:</p>
+          <ul>
+            <li>Bernstein-Vazirani 1993 (BQP ⊆ PSPACE)</li>
+            <li>Shor 1994 (Polynomial-time algorithms...)</li>
+            <li>Grover 1996 (Quantum search)</li>
+            <li>Kitaev 2002 (k-LH QMA-complete)</li>
+            <li>Aharonov-Ben-Or 1997 (FTQC threshold theorem)</li>
+            <li>Aaronson-Arkhipov 2011 (Boson Sampling)</li>
+            <li>Raz-Tal 2018 (Forrelation, BQP ⊈ PH)</li>
+          </ul>
+          <p><strong>2024-2026 最新进展</strong>:</p>
+          <ul>
+            <li>IBM Quantum roadmap(2024)</li>
+            <li>Google Willow 105-qubit(2024)</li>
+            <li>Quantinuum H2(2024)</li>
+            <li>Microsoft Majorana 1(2025)</li>
+          </ul>
+          <h3>15.11.5 关键人物</h3>
+          <p>本章涉及的关键人物(配合 ch01 时间线):</p>
+          <table>
+            <thead><tr><th>人物</th><th>贡献</th><th>年份</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Alan Turing</strong></td><td>图灵机 / Church-Turing 论题</td><td>1936</td></tr>
+              <tr><td><strong>Leonid Levin</strong></td><td>NP-complete / Cook-Levin 定理</td><td>1973</td></tr>
+              <tr><td><strong>Stephen Cook</strong></td><td>SAT 是 NP-complete(Cook 定理)</td><td>1971</td></tr>
+              <tr><td><strong>Richard Feynman</strong></td><td>量子计算概念 / "自然不是经典的"</td><td>1982</td></tr>
+              <tr><td><strong>David Deutsch</strong></td><td>通用量子图灵机 / Deutsch 算法</td><td>1985</td></tr>
+              <tr><td><strong>Peter Shor</strong></td><td>量子多项式时间算法 / Factoring / QFT</td><td>1994</td></tr>
+              <tr><td><strong>Lov Grover</strong></td><td>量子搜索 / 振幅放大</td><td>1996</td></tr>
+              <tr><td><strong>Alexei Kitaev</strong></td><td>k-Local Hamiltonian QMA-complete</td><td>2002</td></tr>
+              <tr><td><strong>Scott Aaronson</strong></td><td>Boson Sampling / Quantum supremacy 概念</td><td>2011</td></tr>
+              <tr><td><strong>Ran Raz / Avishay Tal</strong></td><td>Forrelation / BQP ⊈ PH</td><td>2018</td></tr>
+            </tbody>
+          </table>
+          <h3>15.11.6 与后续章节的衔接</h3>
+          <p>本章作为第三部分完结,直接连接:</p>
+          <ul>
+            <li><strong>ch16 量子噪声</strong>: T1/T2, Kraus 信道, Pauli 错误(噪声<strong>怎么</strong>刻画)</li>
+            <li><strong>ch17 量子纠错码</strong>: Shor 9-qubit, Steane 7-qubit(噪声<strong>怎么</strong>纠正)</li>
+            <li><strong>ch18 表面码</strong>: 二维拓扑码(现代 FTQC 的<strong>主流方案</strong>)</li>
+            <li><strong>ch19 容错量子计算</strong>: 阈值定理, magic state(完整的 <strong>FTQC 架构</strong>)</li>
+          </ul>
+          <p>读完 ch15-19 后, 读者将看到<strong>完整的量子计算图景</strong>: 从<strong>算法</strong>(ch11-14)到<strong>理论边界</strong>(ch15),再到<strong>现实约束</strong>(ch16-19)。</p>
+          <hr>
+          <p><strong>第 15 章结束。第三部分 5/5 章完成 (100%)。全书 15/28 章完成 (54%)。第三部分完结 🎯</strong></p>
+          <p><strong>下一部分: 第四部分「量子纠错与容错」—— ch16 量子噪声 + ch17-19 容错量子计算</strong></p>
+
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 720 460" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <defs>
+      <marker id="arr15" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 9 3, 0 6" fill="#10b981"/>
+      </marker>
+    </defs>
+    <text x="360" y="28" fill="#e5e7eb" font-size="17" font-weight="bold" text-anchor="middle">图 15.1: 复杂性类层级图 — P / NP / BQP / QMA / PSPACE</text>
+    <text x="360" y="48" fill="#9ca3af" font-size="10" text-anchor="middle">实线 = 已知包含;虚线 = 猜想;⚠️ = 未解</text>
+
+    <!-- Outermost: PSPACE -->
+    <rect x="20" y="60" width="680" height="380" rx="14" fill="#1e1b4b" stroke="#7c3aed" stroke-width="2.5"/>
+    <text x="360" y="85" fill="#a78bfa" font-size="15" font-weight="bold" text-anchor="middle">PSPACE(多项式空间)</text>
+
+    <!-- Inside: BQP and QMA boxes -->
+    <!-- BQP -->
+    <rect x="50" y="100" width="290" height="170" rx="10" fill="#0a0e27" stroke="#06b6d4" stroke-width="2"/>
+    <text x="195" y="125" fill="#67e8f9" font-size="14" font-weight="bold" text-anchor="middle">⚛ BQP(量子)</text>
+
+    <!-- P inside BQP -->
+    <rect x="80" y="135" width="100" height="55" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+    <text x="130" y="158" fill="#a7f3d0" font-size="13" font-weight="bold" text-anchor="middle">P</text>
+    <text x="130" y="176" fill="#9ca3af" font-size="9" text-anchor="middle">经典多项式</text>
+
+    <!-- BQP-complete -->
+    <rect x="200" y="135" width="125" height="55" rx="6" fill="#7c2d12" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="262" y="158" fill="#fed7aa" font-size="12" font-weight="bold" text-anchor="middle">BQP-complete</text>
+    <text x="262" y="173" fill="#9ca3af" font-size="9" text-anchor="middle">隐子群 / 模拟</text>
+    <text x="262" y="185" fill="#9ca3af" font-size="9" text-anchor="middle">Forrelation</text>
+
+    <!-- BQP extras -->
+    <text x="195" y="220" fill="#67e8f9" font-size="11" text-anchor="middle">Grover / Shor</text>
+    <text x="195" y="238" fill="#67e8f9" font-size="11" text-anchor="middle">+ 误差 ≤ 1/3</text>
+    <text x="195" y="256" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">BQP ⊆ PSPACE ✅</text>
+
+    <!-- QMA -->
+    <rect x="380" y="100" width="290" height="170" rx="10" fill="#0a0e27" stroke="#ec4899" stroke-width="2"/>
+    <text x="525" y="125" fill="#fbcfe8" font-size="14" font-weight="bold" text-anchor="middle">⚛ QMA(量子验证)</text>
+
+    <!-- NP inside QMA -->
+    <rect x="410" y="135" width="100" height="55" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+    <text x="460" y="158" fill="#a7f3d0" font-size="13" font-weight="bold" text-anchor="middle">NP</text>
+    <text x="460" y="176" fill="#9ca3af" font-size="9" text-anchor="middle">经典验证</text>
+
+    <!-- QMA-complete -->
+    <rect x="530" y="135" width="125" height="55" rx="6" fill="#7c2d12" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="592" y="158" fill="#fed7aa" font-size="12" font-weight="bold" text-anchor="middle">QMA-complete</text>
+    <text x="592" y="173" fill="#9ca3af" font-size="9" text-anchor="middle">k-Local</text>
+    <text x="592" y="185" fill="#9ca3af" font-size="9" text-anchor="middle">Hamiltonian</text>
+
+    <!-- QMA extras -->
+    <text x="525" y="220" fill="#fbcfe8" font-size="11" text-anchor="middle">NP ⊆ QMA ✅</text>
+    <text x="525" y="238" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">BQP ⊆ QMA? ⚠️</text>
+
+    <!-- BQP vs QMA relation (unknown) -->
+    <line x1="340" y1="295" x2="380" y2="295" stroke="#fbbf24" stroke-width="2" stroke-dasharray="5 3"/>
+    <text x="360" y="313" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">BQP vs QMA ⚠️</text>
+    <text x="360" y="328" fill="#9ca3af" font-size="9" text-anchor="middle">(未知包含关系)</text>
+
+    <!-- PH -->
+    <rect x="50" y="290" width="290" height="130" rx="10" fill="#0a0e27" stroke="#3b82f6" stroke-width="2"/>
+    <text x="195" y="313" fill="#93c5fd" font-size="14" font-weight="bold" text-anchor="middle">PH(多项式层)</text>
+    <rect x="80" y="325" width="80" height="45" rx="6" fill="#064e3b" stroke="#10b981" stroke-width="1.5"/>
+    <text x="120" y="352" fill="#a7f3d0" font-size="12" font-weight="bold" text-anchor="middle">NP</text>
+    <rect x="180" y="325" width="80" height="45" rx="6" fill="#1e3a8a" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="220" y="352" fill="#93c5fd" font-size="12" font-weight="bold" text-anchor="middle">BPP</text>
+    <text x="195" y="395" fill="#fbbf24" font-size="10" font-weight="bold" text-anchor="middle">BQP ⊈ PH ✅ (Raz-Tal 2018)</text>
+
+    <!-- Bottom: BQP ⊆ PSPACE -->
+    <text x="360" y="430" fill="#a78bfa" font-size="11" font-weight="bold" text-anchor="middle">📌 关键结论: P ⊆ BQP ⊆ PSPACE, NP ⊆ QMA ⊆ PSPACE, P ⊆ NP ⊆ PH ⊆ PSPACE</text>
+  </svg>
+  <figcaption>图 15.1: 复杂性类层级图。绿=经典类,黄=BQP-complete / QMA-complete 任务,粉=QMA,青=BQP,紫=PSPACE,蓝=PH/PH-extras。已知包含关系用实线,未解关系用虚线+⚠️标记。</figcaption>
+</figure>
+
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 720 380" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <text x="360" y="28" fill="#e5e7eb" font-size="17" font-weight="bold" text-anchor="middle">图 15.2: 5 种量子加速类型 — 加速比 vs 实用化时间</text>
+    <text x="360" y="48" fill="#9ca3af" font-size="10" text-anchor="middle">纵轴: 加速比(对数);横轴: 实用化时间(年)</text>
+
+    <!-- Axes -->
+    <line x1="80" y1="350" x2="700" y2="350" stroke="#6b7280" stroke-width="1.5"/>
+    <line x1="80" y1="80" x2="80" y2="350" stroke="#6b7280" stroke-width="1.5"/>
+    <text x="380" y="375" fill="#9ca3af" font-size="11" text-anchor="middle">→ 实用化时间</text>
+    <text x="40" y="200" fill="#9ca3af" font-size="11" text-anchor="middle" transform="rotate(-90 40 200)">加速比 ↑</text>
+
+    <!-- Y-axis ticks -->
+    <text x="70" y="354" fill="#9ca3af" font-size="9" text-anchor="end">1×</text>
+    <text x="70" y="290" fill="#9ca3af" font-size="9" text-anchor="end">√N</text>
+    <text x="70" y="200" fill="#9ca3af" font-size="9" text-anchor="end">N</text>
+    <text x="70" y="120" fill="#9ca3af" font-size="9" text-anchor="end">指数</text>
+
+    <!-- X-axis ticks -->
+    <text x="120" y="370" fill="#9ca3af" font-size="9" text-anchor="middle">2026</text>
+    <text x="280" y="370" fill="#9ca3af" font-size="9" text-anchor="middle">2028</text>
+    <text x="440" y="370" fill="#9ca3af" font-size="9" text-anchor="middle">2030</text>
+    <text x="600" y="370" fill="#9ca3af" font-size="9" text-anchor="middle">2033+</text>
+
+    <!-- 5 acceleration types as bubbles -->
+    <!-- 1. 采样优势(Boson Sampling) -->
+    <circle cx="120" cy="125" r="22" fill="#fbbf24" stroke="#fef3c7" stroke-width="2"/>
+    <text x="120" y="123" fill="#0a0e27" font-size="9" font-weight="bold" text-anchor="middle">3</text>
+    <text x="120" y="135" fill="#0a0e27" font-size="7" text-anchor="middle">采样</text>
+    <text x="120" y="105" fill="#fed7aa" font-size="9" text-anchor="middle">采样优势</text>
+
+    <!-- 2. 变分优势(VQE/QAOA) -->
+    <circle cx="180" cy="180" r="22" fill="#10b981" stroke="#a7f3d0" stroke-width="2"/>
+    <text x="180" y="178" fill="#0a0e27" font-size="9" font-weight="bold" text-anchor="middle">4</text>
+    <text x="180" y="190" fill="#0a0e27" font-size="7" text-anchor="middle">变分</text>
+    <text x="180" y="160" fill="#a7f3d0" font-size="9" text-anchor="middle">变分优势</text>
+
+    <!-- 3. 二次加速(Grover) -->
+    <circle cx="370" cy="290" r="22" fill="#06b6d4" stroke="#a5f3fc" stroke-width="2"/>
+    <text x="370" y="288" fill="#0a0e27" font-size="9" font-weight="bold" text-anchor="middle">2</text>
+    <text x="370" y="300" fill="#0a0e27" font-size="7" text-anchor="middle">√N</text>
+    <text x="370" y="270" fill="#a5f3fc" font-size="9" text-anchor="middle">二次加速</text>
+
+    <!-- 4. 指数加速(Shor) -->
+    <circle cx="560" cy="125" r="22" fill="#ef4444" stroke="#fecaca" stroke-width="2"/>
+    <text x="560" y="123" fill="#0a0e27" font-size="9" font-weight="bold" text-anchor="middle">1</text>
+    <text x="560" y="135" fill="#0a0e27" font-size="7" text-anchor="middle">指数</text>
+    <text x="560" y="105" fill="#fecaca" font-size="9" text-anchor="middle">指数加速</text>
+
+    <!-- 5. 理论优势(QML) -->
+    <circle cx="650" cy="200" r="22" fill="#a78bfa" stroke="#ddd6fe" stroke-width="2" stroke-dasharray="4 2"/>
+    <text x="650" y="198" fill="#0a0e27" font-size="9" font-weight="bold" text-anchor="middle">5</text>
+    <text x="650" y="210" fill="#0a0e27" font-size="7" text-anchor="middle">待证</text>
+    <text x="650" y="180" fill="#ddd6fe" font-size="9" text-anchor="middle">理论优势</text>
+
+    <!-- Status labels -->
+    <text x="120" y="200" fill="#10b981" font-size="9" text-anchor="middle">✅ 已实用</text>
+    <text x="180" y="240" fill="#10b981" font-size="9" text-anchor="middle">✅ 已实用</text>
+    <text x="370" y="335" fill="#fbbf24" font-size="9" text-anchor="middle">⚠️ 待容错</text>
+    <text x="560" y="200" fill="#fbbf24" font-size="9" text-anchor="middle">⚠️ 待 FTQC</text>
+    <text x="650" y="240" fill="#fbbf24" font-size="9" text-anchor="middle">❓ 待证明</text>
+
+    <!-- Legend bottom -->
+    <rect x="80" y="345" width="600" height="2" fill="#6b7280"/>
+    <text x="360" y="365" fill="#9ca3af" font-size="10" text-anchor="middle">实线 = 已实现;虚线 = 待证明</text>
+  </svg>
+  <figcaption>图 15.2: 5 种量子加速类型对比。横轴是实用化时间(2026-2033+),纵轴是加速比。黄色=Boson Sampling 霸权(已),绿色=VQE/QAOA 变分(已),青色=Grover 二次(待容错),红色=Shor 指数(待 FTQC),紫色=QML 理论(待证明)。</figcaption>
+</figure>
+
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch14.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 14 章 量子机器学习 (QML)</span>
+          </a>
+          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 16 章 量子噪声与退相干(即将推出)</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
