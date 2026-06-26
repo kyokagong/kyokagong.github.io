@@ -279,7 +279,19 @@
             <li>$\ge 2/3$ 当且仅当 $x \in L$</li>
             <li>$\le 1/3$ 当且仅当 $x \notin L$</li>
           </ul>
-          <p><strong>误差放大</strong>: 若某算法误差为 $1/2 - \epsilon$, 可通过 $O(\log(1/\delta))$ 次重复 + 多数投票, 让误差 $\le \delta$。</p>
+          <p><strong>误差放大</strong>(Day 19 S1 形式化): <strong>BQP 定义中 $2/3$ 是任意的</strong>——任何常数 $1/2 &lt; p \le 1$ 都<strong>等价</strong>:</p>
+          <blockquote>
+            <p><strong>误差放大引理</strong>(Error Amplification Lemma): 若量子算法对每个输入以概率 $\ge 2/3$ 给出正确答案, 则对任意 $\delta > 0$, 通过 $k = O(\log(1/\delta))$ 次<strong>独立重复</strong> + <strong>多数投票</strong>, 可得新算法正确概率 $\ge 1 - \delta$。</p>
+          </blockquote>
+          <ul>
+            <li><strong>重复</strong>: $k$ 次独立运行, 每次得到 Yes/No 答案</li>
+            <li><strong>多数投票</strong>: 取 $k$ 个答案的众数</li>
+            <li><strong>Chernoff 界</strong>: 单次错误率 $1/3$, $k$ 次多数投票错误率 $\le \exp(- \Omega(k))$</li>
+            <li>选 $k = O(\log(1/\delta))$ 让错误率 $\le \delta$</li>
+          </ul>
+          <blockquote>
+            <p>这意味着 <strong>BQP 的"$\ge 2/3$"常数是惯例</strong>——任何<strong>有界错误</strong>常数 $1/2 &lt; p \le 1$ 都给出<strong>同一个复杂性类</strong>。类似地, <strong>BPP / PP / ZPP</strong> 都有相同的"常数不重要性"性质。</p>
+          </blockquote>
           <h3>15.2.2 BQP 跟 P 的关系</h3>
           <p><strong>BQP ⊇ P</strong>: 经典多项式算法可直接用量子电路模拟(用 Toffoli + NOT 模拟经典门)。</p>
           <p><strong>证明 sketch</strong>:</p>
@@ -431,6 +443,21 @@
             <li><strong>超导 / 反磁 / 拓扑序</strong> 的基态 = 凝聚态研究的核心</li>
           </ul>
           <p><strong>因此</strong>: <strong>估计基态能量 $\approx$ QMA-complete</strong></p>
+          <p><strong>Day 19 S2 物理例子: 氢分子 H₂</strong>:</p>
+          <blockquote>
+            <p><strong>H₂ Hamiltonian</strong> 在 Bravyi-Kitaev 编码下(2 qubit):<br>
+            $$H_{\text{H}_2} = h_0 I + h_1 Z_1 + h_2 Z_2 + h_3 Z_1 Z_2 + h_4 X_1 X_2 + h_5 Y_1 Y_2$$<br>
+            系数 $h_i$ 依赖于<strong>核间距 $R$</strong>(键长)。所有项是 <strong>2-local</strong>(作用在 $\le 2$ qubit)。</p>
+          </blockquote>
+          <ul>
+            <li><strong>基态能量</strong> = 分子稳定能 + 零点能 = 化学反应热力学</li>
+            <li><strong>实验需求</strong>: 化学精度 $\sim 1$ kcal/mol $\approx 1.6 \times 10^{-3}$ eV, 对应 $\sim 10^{-6}$ <strong>相对</strong>精度</li>
+            <li><strong>VQE 启发式</strong> (ch13) 实际能达到 $\sim 10^{-3}$ 精度(化学<strong>有用</strong>, 但<strong>不精确</strong>)</li>
+            <li><strong>精确</strong>到 $\sim 10^{-6}$ = <strong>QMA-hard</strong> —— 量子计算机也<strong>难</strong></li>
+          </ul>
+          <blockquote>
+            <p><strong>物理含义</strong>: 即使<strong>未来</strong>容错量子计算机造出来, 估计 H₂ 基态能量到化学精度也<strong>极难</strong>。这就是为什么 VQE 走<strong>启发式 + 误差缓解</strong>路线, 而<strong>不</strong>走"精确解"路线。</p>
+          </blockquote>
           <p><strong>关键含义</strong>:</p>
           <ul>
             <li><strong>量子计算机也难精确解</strong>(QMA-complete, 不是 BQP)</li>
@@ -519,6 +546,16 @@
             <li>Shor 的 $O(1)$ 查询 + QFT: 经典 $N^6$ vs 量子 $N$, <strong>多项式</strong>加速(但 $N$ 是问题规模)</li>
           </ul>
           <p><strong>例外</strong>: Shor 类算法的<strong>周期结构</strong> + <strong>QFT</strong> 让总加速<strong>超过</strong> $T^6$ —— 因为 QFT 不是黑箱。</p>
+          <p><strong>Day 19 S3 精确 vs 近似</strong>: Beals 等式是<strong>精确模拟</strong>(<strong>不</strong>是概率近似), 所以 $T$ 查询量子算法<strong>总是</strong>可被 $O(T^6)$ 经典电路<strong>精确</strong>模拟。</p>
+          <ul>
+            <li><strong>精确模拟</strong>: 输出分布<strong>完全相同</strong>, 不是"接近"</li>
+            <li><strong>结果</strong>: 任何 $T$ 查询量子算法, 存在 $O(T^6)$ 大小的<strong>经典确定性</strong>电路, 计算<strong>完全一样</strong>的输出</li>
+            <li><strong>物理含义</strong>: 量子加速<strong>最多</strong>是<strong>查询复杂度差距</strong>——对<strong>黑箱问题</strong>, Grover 的 $\sqrt{N}$ 已是<strong>最优</strong>(Bennett 1997 证明)</li>
+            <li><strong>不意味着"量子没加速"</strong>: Beals 等式<strong>承认</strong>量子可能加速(否则 P = BQP), 只是<strong>限制</strong>加速类型——对黑箱<strong>最多二次</strong>, 对<strong>非黑箱</strong>可指数</li>
+          </ul>
+          <blockquote>
+            <p><strong>常见误解</strong>: 有人看到 "Beals $O(T^6)$" 误以为"量子没加速"。<strong>错</strong>——Beals 等式是<strong>上限</strong>, 说明<strong>经典模拟的可能</strong>, <strong>不</strong>说明<strong>经典模拟的实用</strong>。$T = 1000$ 时, $O(T^6) = 10^{18}$ 已<strong>远超</strong>实际计算能力。所以"量子<strong>没实用</strong>加速"和"量子<strong>有理论上限</strong>"是两个问题。</p>
+          </blockquote>
           <h3>15.4.5 查询复杂性的层级</h3>
           <table>
             <thead><tr><th>复杂度类</th><th>经典</th><th>量子</th></tr></thead>
@@ -670,6 +707,31 @@
             <li>时间-空间权衡: BQP ⊆ PSPACE 但 PSPACE 包含<strong>很多</strong>类</li>
             <li>可能需要<strong>全新的</strong>复杂性工具(非相对化证明)</li>
           </ul>
+          <p><strong>Day 19 S4 相对化障碍</strong>(Baker-Gill-Solovay 1975):</p>
+          <blockquote>
+            <p><strong>相对化障碍</strong>(Relativization Barrier): <strong>任何</strong>"P = NP" 或 "P ≠ NP" 的证明<strong>必须</strong>使用<strong>非相对化</strong>技术——因为存在<strong>两个 oracle</strong> 让结论<strong>相反</strong>。</p>
+          </blockquote>
+          <ul>
+            <li><strong>Oracle A</strong> 存在: $\text{P}^A = \text{NP}^A$ — 在 A 的"帮助"下, P = NP <strong>成立</strong></li>
+            <li><strong>Oracle B</strong> 存在: $\text{P}^B \ne \text{NP}^B$ — 在 B 的"帮助"下, P ≠ NP <strong>成立</strong></li>
+            <li>所以: <strong>任何</strong>用"对角化 / 模拟"等<strong>相对化</strong>方法证明 P = NP 或 P ≠ NP, 都<strong>不可能对所有 oracle 成立</strong>——必须<strong>非相对化</strong></li>
+          </ul>
+          <blockquote>
+            <p><strong>BQP vs P 的类似障碍</strong>:<br>
+            - 存在 oracle $C$ 使得 $\text{P}^C = \text{BQP}^C$ (量子无加速)<br>
+            - 存在 oracle $D$ 使得 $\text{P}^D \ne \text{BQP}^D$ (量子有加速)<br>
+            - 所以 <strong>BQP vs P 同样不能用相对化方法证</strong></p>
+          </blockquote>
+          <p><strong>已知的非相对化技术</strong>:</p>
+          <ul>
+            <li><strong>代数化</strong>(algebraization): 2010 突破, 但只解决部分问题</li>
+            <li><strong>多线性化</strong> / <strong>多变量多项式方法</strong>: 2013</li>
+            <li><strong>几何复杂度理论</strong>(GCT): 2009 至今, 试图解决 VP vs VNP</li>
+            <li><strong>QMA 复杂性</strong>: Aharonov-Regev 2013 给出<strong>第一个</strong>非相对化结果(QMA = QCMA 开放)</li>
+          </ul>
+          <blockquote>
+            <p><strong>结论</strong>: BQP vs P / BQP vs NP / QMA1 开放问题<strong>没有</strong>已知的攻击工具。需要<strong>新</strong>的复杂性理论突破(类似 1970s 引入"对角化"或 1990s 引入"PCP")。</p>
+          </blockquote>
           <h3>15.7.2 BQP vs NP?(Day 17 S4 修订)</h3>
           <p><strong>三种可能性</strong>(都未排除):</p>
           <ol>
@@ -850,6 +912,32 @@
             <li><strong>干涉</strong>: 通过相位使正确解放大、错误解抵消</li>
             <li><strong>纠缠</strong>: 多 qubit 相关, 经典难以模拟</li>
           </ul>
+          <p><strong>Day 19 S5 统一的"加速来源"框架</strong>:</p>
+          <blockquote>
+            <p><strong>量子加速的 5 种"杠杆"</strong> —— 用 ch02-ch10 概念统一解释:</p>
+          </blockquote>
+          <table>
+            <thead><tr><th>算法</th><th>关键量子性质</th><th>加速</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Shor</strong> (ch11)</td><td>叠加 + <strong>干涉 + QFT</strong></td><td>指数</td></tr>
+              <tr><td><strong>Grover</strong> (ch10)</td><td>干涉 + <strong>振幅放大</strong></td><td>二次</td></tr>
+              <tr><td><strong>Boson Sampling</strong></td><td>多光子 <strong>纠缠 + 干涉</strong></td><td>采样(可能指数)</td></tr>
+              <tr><td><strong>VQE</strong> (ch13)</td><td>变分参数化 + <strong>测量</strong></td><td>启发式(可证加速有限)</td></tr>
+              <tr><td><strong>QML</strong> (ch14)</td><td><strong>特征映射</strong> $\phi: x \mapsto \lvert\phi(x)\rangle$</td><td>待证(可能二次)</td></tr>
+            </tbody>
+          </table>
+          <p><strong>5 种"量子杠杆"机制</strong>:</p>
+          <ol>
+            <li><strong>叠加 $\lvert+\rangle^{\otimes n}$</strong> —— 同时表示 $2^n$ 个数(指数状态空间)</li>
+            <li><strong>干涉</strong> —— 相位 $\Rightarrow$ 正确解放大, 错误解抵消(精度提升)</li>
+            <li><strong>纠缠</strong> —— 多 qubit 相关, 经典难模拟(信息结构)</li>
+            <li><strong>QFT</strong> —— 把"周期"提取到"相位", 再测量(算法结构利用)</li>
+            <li><strong>测量坍缩</strong> —— 概率性输出, 配合振幅放大(信息提取)</li>
+          </ol>
+          <blockquote>
+            <p><strong>共同的"量子灵魂"</strong>: <strong>叠加 + 干涉</strong>(几乎所有算法都用) + <strong>纠缠</strong>(对结构利用) + <strong>QFT</strong>(对周期利用) + <strong>测量</strong>(对结果提取)。</p>
+            <p><strong>对</strong>不同问题<strong>用不同</strong>量子性质的<strong>组合</strong>——Shor 偏 QFT, Grover 偏干涉, Boson Sampling 偏纠缠, VQE 偏测量, QML 偏叠加+测量。这就像"音乐家"——钢琴、小提琴、鼓、贝斯各自有"声", 但都靠"空气振动+人耳"。</p>
+          </blockquote>
           <h3>15.10.4 第四部分铺路:ch16-19 容错</h3>
           <p><strong>问题</strong>: 第三部分算法(Shor, VQE)在<strong>真实噪声</strong>下能跑吗?</p>
           <p><strong>第四部分回答</strong>(ch16-19):</p>
@@ -1159,9 +1247,9 @@
             <span class="pager-label">← 上一章</span>
             <span class="pager-title">第 14 章 量子机器学习 (QML)</span>
           </a>
-          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <a href="ch16.html" class="pager-link pager-next">
             <span class="pager-label">下一章 →</span>
-            <span class="pager-title">第 16 章 量子噪声与退相干(即将推出)</span>
+            <span class="pager-title">第 16 章 量子噪声与退相干</span>
           </a>
         </nav>
 
@@ -1216,6 +1304,7 @@
           <li><a href="ch13.html">第 13 章</a></li>
           <li><a href="ch14.html">第 14 章</a></li>
           <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

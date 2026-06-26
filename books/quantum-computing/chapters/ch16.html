@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第16章：量子噪声与退相干 (Quantum Noise and Decoherence) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第16章：量子噪声与退相干 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第四部分 · 量子纠错与容错 · Day 1 🚀</span>
+        <span class="chapter-day-tag">Day 19 · 2026-06-26</span>
+      </div>
+      <h1 class="chapter-title">第 16 章 量子噪声与退相干 (Quantum Noise and Decoherence)</h1>
+      <p class="chapter-subtitle">NISQ 时代的"现实门槛"——T1/T2 + CPTP/Kraus + 5 种信道 + 5 平台错误率 + 第四部分开篇 🚀</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,553 字</span>
+        <span class="stat">🔢 12 节 · 30+ 子节</span>
+        <span class="stat">📑 T1/T2 / Kraus / Bloch 收缩 / EM vs QEC</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+          <h1>第 16 章 量子噪声与退相干(Quantum Noise and Decoherence)</h1>
+          <blockquote><strong>第四部分 · 量子纠错与容错</strong> — Day 1(开篇)🚀 <strong>目标</strong>: 刻画 NISQ 时代的"现实门槛"——为什么 ch11-ch15 的算法在真实硬件上跑不动 <strong>里程碑</strong>: 16/28 章 = 57% 🎯</blockquote>
+          <hr>
+          <h2 id="section-16.0">16.0 引言:NISQ 时代的"现实门槛"</h2>
+          <p><strong>想象一个场景</strong>:</p>
+          <blockquote>你刚在第 11 章学完 <strong>Shor 算法</strong>——理论上 200 万 qubit + 8 小时就能破解 RSA-2048。 你兴奋地打开 IBM Quantum, 想跑一个 $N = 15$ 的小例子。 输完电路, 点击"运行"。 5 秒后, 结果出来: <strong>完全错乱</strong>——每个 bit 都是 50/50 随机。</blockquote>
+          <p><strong>为什么?</strong> 真实硬件的<strong>噪声</strong>(noise)让量子态在计算过程中<strong>退相干</strong>(decoherence), 答案被<strong>淹没</strong>在噪声里。</p>
+          <blockquote><strong>这是 NISQ 时代的"现实门槛"</strong>: | 平台 | qubit 数 | 单门错误 | 双门错误 | 测量错误 | 状态准备 | |:---|:---|:---|:---|:---|:---| | <strong>NISQ(2024-2026)</strong> | $10^2 - 10^3$ | $10^{-3}$ | $10^{-2}$ | $10^{-2}$ | $10^{-2}$ | | <strong>FTQC(目标)</strong> | $10^6 - 10^9$ | $10^{-6}$ | $10^{-4}$ | $10^{-4}$ | $10^{-4}$ | | <strong>经典晶体管</strong> | - | - | - | - | $10^{-15}$ | 量子硬件跟<strong>经典硬件差 $10^3$ - $10^{12}$ 倍</strong>——这是<strong>最大的工程挑战</strong>。</blockquote>
+          <p><strong>ch11-15 的所有算法都假定"零噪声"</strong>——ch16-19 要回答:<strong>怎么在噪声下还能跑出正确结果?</strong></p>
+          <p><strong>第四部分的总目标</strong> 🚧: <strong>让 BQP 在噪声下可实现</strong> —— 把"零噪声 BQP"扩展为"噪声下 BQP"。</p>
+          <p><strong>四个关键问题</strong>:</p>
+          <ol>
+            <li><strong>怎么刻画噪声?</strong> → ch16(本章) — T1/T2, Kraus, Pauli 错误模型</li>
+            <li><strong>怎么用冗余 + 纠错压低错误?</strong> → ch17 — Shor 9-qubit, Steane 7-qubit, CSS 码</li>
+            <li><strong>怎么工业化?</strong> → ch18 — 表面码(Google/IBM 工业标准)</li>
+            <li><strong>阈值定理 + 完整 FTQC 架构?</strong> → ch19 — magic state distillation</li>
+          </ol>
+          <p><strong>本章路线图</strong>:</p>
+          <ul>
+            <li>16.1 噪声的 5 种分类</li>
+            <li>16.2 T1 + T2 退相干时间</li>
+            <li>16.3 量子信道(CPTP + Kraus)</li>
+            <li>16.4 Pauli 错误模型</li>
+            <li>16.5 错误率指标(NISQ vs FTQC)</li>
+            <li>16.6 退相干的几何图像(Bloch 球收缩)</li>
+            <li>16.7 错误率与算法失败</li>
+            <li>16.8 错误缓解(EM) vs 错误纠错(QEC)</li>
+            <li>16.9 真实硬件错误率(2024-2026 现状)</li>
+            <li>16.10 ch17-19 铺路</li>
+            <li>16.11 总结 + 概念速查表</li>
+          </ul>
+          <hr>
+          <h2 id="section-16.1">16.1 量子噪声的 5 种分类</h2>
+          <p><strong>真实硬件的噪声</strong>五花八门, 物理学家<strong>按错误来源</strong>分 5 类:</p>
+          <table>
+            <thead><tr><th>类型</th><th>物理来源</th><th>错误率(典型)</th><th>持续时间</th></tr></thead>
+            <tbody>
+              <tr><td><strong>态错误</strong>(State error)</td><td>自发辐射 / 热激发 / 退相干</td><td>$1 - e^{-t/T_1}$</td><td>持续</td></tr>
+              <tr><td><strong>门错误</strong>(Gate error)</td><td>脉冲失真 / 串扰(crosstalk)</td><td>$10^{-3}$ - $10^{-4}$</td><td>门时</td></tr>
+              <tr><td><strong>测量错误</strong>(Measurement error)</td><td>探测器效率 / 暗计数</td><td>$10^{-2}$ - $10^{-3}$</td><td>测量时</td></tr>
+              <tr><td><strong>退相干</strong>(Decoherence)</td><td>环境纠缠</td><td>$T_2$ 指数衰减</td><td>持续</td></tr>
+              <tr><td><strong>泄漏</strong>(Leakage)</td><td>量子态泄漏到非计算空间</td><td>$10^{-3}$ - $10^{-4}$</td><td>持续</td></tr>
+            </tbody>
+          </table>
+          <p><strong>详细解释</strong>:</p>
+          <h3>16.1.1 态错误(State Preparation And Measurement, SPAM)</h3>
+          <p><strong>态准备错误</strong>:</p>
+          <ul>
+            <li>想要 $\lvert 0\rangle$, 实际准备成 $\lvert 0\rangle^{\otimes n}$ ——<strong>纯态</strong></li>
+            <li>但真实系统: $\rho = (1 - p) \lvert 0\rangle\langle 0\rvert + p \cdot I/2$ (混合)</li>
+            <li>错误率 $p \sim 10^{-2}$ (NISQ 2024)</li>
+          </ul>
+          <p><strong>测量错误</strong>:</p>
+          <ul>
+            <li>想要测量 $\lvert 0\rangle$, 实际误判为 $\lvert 1\rangle$(或反之)</li>
+            <li>错误率 $\sim 10^{-2}$ (NISQ 2024)</li>
+            <li><strong>缓解</strong>: 用 readout error mitigation (REM) + calibration matrix 修正</li>
+          </ul>
+          <h3>16.1.2 门错误(Gate Error)</h3>
+          <p><strong>单 qubit 门</strong>:</p>
+          <ul>
+            <li>想要 $R_x(\theta) = e^{-i \theta X/2}$, 实际 $R_x(\theta') \cdot R_z(\delta)$ (有 $\theta$ 误差 + $Z$ 串扰)</li>
+            <li>错误率 $\sim 10^{-4}$ (NISQ 2024) — 比较好控制</li>
+          </ul>
+          <p><strong>双 qubit 门</strong>(CNOT, CZ, iSWAP):</p>
+          <ul>
+            <li>两 qubit 相互作用不完美</li>
+            <li>错误率 $\sim 10^{-2}$ (NISQ 2024) — <strong>比单 qubit 门差 100 倍</strong></li>
+          </ul>
+          <p><strong>根本原因</strong>: 两 qubit 门需要<strong>强耦合</strong>, 但强耦合导致<strong>泄漏 + 串扰</strong>。</p>
+          <h3>16.1.3 退相干(Decoherence)</h3>
+          <blockquote><strong>退相干 = 量子系统跟环境不可控地纠缠</strong> —— 量子性丢失</blockquote>
+          <p><strong>两类</strong>:</p>
+          <ul>
+            <li><strong>能量弛豫</strong>(T1): $\lvert 1\rangle \to \lvert 0\rangle$(放能到环境)</li>
+            <li><strong>相位退相干</strong>(T2): $\lvert +\rangle = (\lvert 0\rangle + \lvert 1\rangle)/\sqrt{2}$ 失去相对相位</li>
+          </ul>
+          <p><strong>T1 + T2 详见 16.2 节</strong>。</p>
+          <h3>16.1.4 串扰(Crosstalk)</h3>
+          <p><strong>两 qubit 同时门</strong>(CNOT)会<strong>串扰</strong>邻近 qubit:</p>
+          <ul>
+            <li>CNOT(q0, q1) 影响 q2, q3, ...</li>
+            <li>错误率 $\sim 10^{-3}$ (NISQ 2024)</li>
+          </ul>
+          <p><strong>缓解</strong>: 重新调度 + 隔离(q0, q1 周围 1-2 qubit 闲置)</p>
+          <h3>16.1.5 泄漏(Leakage)</h3>
+          <blockquote><strong>泄漏 = 量子态从计算子空间逃到非计算能级</strong></blockquote>
+          <p><strong>例</strong>: 超导 qubit 有 $\lvert 0\rangle, \lvert 1\rangle, \lvert 2\rangle$ 三能级</p>
+          <ul>
+            <li>计算子空间: $\text{span}\{\lvert 0\rangle, \lvert 1\rangle\}$</li>
+            <li>泄漏态: $\lvert 2\rangle$(非计算)</li>
+            <li>错误率 $\sim 10^{-3}$ (NISQ 2024)</li>
+          </ul>
+          <p><strong>特殊</strong>: 泄漏<strong>不</strong>能被标准 QEC 纠正(因为它<strong>不在</strong>计算子空间)。需要<strong>泄漏抑制</strong> + <strong>泄漏恢复</strong>操作。</p>
+          <h3>16.1.6 噪声的"时间相关性"(Markovian vs Non-Markovian)</h3>
+          <p><strong>关键区分</strong>: 噪声是否"忘记历史"?</p>
+          <p><strong>Markov 噪声</strong>(无记忆):</p>
+          <ul>
+            <li>错误<strong>独立</strong>于过去</li>
+            <li>经典概率论适用</li>
+            <li>例: 泊松过程, 散粒噪声</li>
+            <li>公式: $P(\text{error at } t) = $ 常数</li>
+          </ul>
+          <p><strong>Non-Markov 噪声</strong>(有记忆):</p>
+          <ul>
+            <li>错误<strong>依赖</strong>于过去(环境有"惯性")</li>
+            <li>例: 1/f 噪声, 准静态频差</li>
+            <li>公式: $P(\text{error at } t | \text{history}) \ne $ 常数</li>
+          </ul>
+          <p><strong>真实硬件</strong>:</p>
+          <ul>
+            <li><strong>超导</strong>: 主要是 Markov(散粒噪声 + cosmic ray)</li>
+            <li><strong>离子阱</strong>: 接近 Markov(高质量环境)</li>
+            <li><strong>中性原子</strong>: 准 Markov(原子重新排列是离散的)</li>
+          </ul>
+          <p><strong>Non-Markov 噪声的影响</strong>:</p>
+          <ul>
+            <li><strong>EM 失效</strong>: PEC, ZNE 都假设 Markov</li>
+            <li><strong>QEC 复杂化</strong>: 错误可能"成串"</li>
+            <li><strong>新工具</strong>: Process tensor, 量子隐 Markov 模型</li>
+          </ul>
+          <blockquote><strong>理论工具</strong>: Lindblad 主方程描述 Markov;非 Markov 用更复杂的记忆核(kernel)描述。本章<strong>不</strong>深入数学, 但<strong>指出</strong>这是 ch17 之后的活跃研究领域。</blockquote>
+          <hr>
+          <h2 id="section-16.2">16.2 T1 和 T2:退相干时间</h2>
+          <blockquote><strong>T1, T2 是量子硬件的"两个核心数字"</strong>——决定 qubit 能"活"多久</blockquote>
+          <h3>16.2.1 T1:能量弛豫(Energy Relaxation)</h3>
+          <p><strong>定义</strong>: $\lvert 1\rangle$ 态指数衰减到 $\lvert 0\rangle$ 的<strong>时间常数</strong>: $$P_{\lvert 1\rangle}(t) = e^{-t/T_1}$$</p>
+          <p><strong>物理</strong>: qubit 跟环境(电磁场、声子)耦合, $\lvert 1\rangle$ 释放能量 $\hbar \omega$ 到环境, 变成 $\lvert 0\rangle$。</p>
+          <p><strong>典型值</strong>(2024):</p>
+          <table>
+            <thead><tr><th>平台</th><th>T1</th></tr></thead>
+            <tbody>
+              <tr><td>超导(IBM Heron)</td><td>$100 - 300 \, \mu s$</td></tr>
+              <tr><td>超导(Google Willow)</td><td>$50 - 100 \, \mu s$</td></tr>
+              <tr><td>离子阱(IonQ)</td><td>$10^4 - 10^6 \, \mu s$</td></tr>
+              <tr><td>中性原子(QuEra)</td><td>$1 - 10 \, s$</td></tr>
+              <tr><td>光量子(Xanadu)</td><td>N/A(无 T1 概念)</td></tr>
+            </tbody>
+          </table>
+          <p><strong>单位</strong>: $1 \, \mu s$ = $10^{-6}$ s = 1000 ns</p>
+          <h3>16.2.2 T2:相位退相干(Phase Decoherence)</h3>
+          <p><strong>定义</strong>: $\lvert +\rangle = (\lvert 0\rangle + \lvert 1\rangle)/\sqrt{2}$ 失去相位的<strong>时间常数</strong>: $$\langle \sigma_x \rangle(t) = e^{-t/T_2}$$</p>
+          <p><strong>物理</strong>: qubit 经历<strong>随机相位扰动</strong> $\delta \phi(t)$, 累积后 $\lvert +\rangle$ 退化为 $\rho = I/2$(完全混合态)。</p>
+          <h3>16.2.3 T2 ≤ 2T1 的关系</h3>
+          <blockquote><strong>关键不等式</strong>: $T_2 \le 2 T_1$</blockquote>
+          <p><strong>直觉</strong>:</p>
+          <ul>
+            <li><strong>T1 过程</strong>也贡献<strong>相位退相干</strong>(因为 $\lvert 1\rangle \to \lvert 0\rangle$ 必然丢失相位信息)</li>
+            <li>所以 $T_2^* = 1 / (1/(2T_1) + 1/T_\phi)$, 其中 $T_\phi$ 是"纯退相干时间"</li>
+            <li>$T_2 \le 2T_1$ 当 $T_\phi \to \infty$ 极限</li>
+          </ul>
+          <p><strong>两类 T2</strong>:</p>
+          <ul>
+            <li><strong>$T_2$</strong>: 总退相干时间(包括 T1 贡献)</li>
+            <li>**$T_2^*$**: 不均匀退相干时间(qubit 间频率差导致)</li>
+            <li>$T_2 \le T_2^*$(因为后者还受不均匀性影响)</li>
+          </ul>
+          <h3>16.2.4 实际意义</h3>
+          <p><strong>算法深度</strong> = 电路总运行时间 = 门数 × 门时</p>
+          <p><strong>有效错误率</strong>: $$p_{\text{eff}} = 1 - e^{-T_{\text{circuit}} / T_2}$$</p>
+          <p><strong>例</strong>: 100 门, 门时 100 ns, 电路时间 10 $\mu s$, $T_2 = 100 \, \mu s$ $$p_{\text{eff}} = 1 - e^{-0.1} \approx 0.095 = 9.5\%$$</p>
+          <p><strong>太糟糕</strong>! 这种电路<strong>完全无法</strong>跑 ch11 Shor(需要 $10^6$ 门, 错误率指数爆炸)。</p>
+          <p><strong>解法</strong>:</p>
+          <ul>
+            <li><strong>硬件</strong>: 增大 T1, T2(超导 ~1 ms 目标)</li>
+            <li><strong>算法</strong>: 用 QEC 把 T2 转换为<strong>逻辑 T2</strong> ~秒(详见 ch17-19)</li>
+          </ul>
+          <h3>16.2.5 T1/T2 的物理来源</h3>
+          <p><strong>T1 的物理来源</strong>(能量弛豫):</p>
+          <ul>
+            <li><strong>电磁辐射</strong>: 偶极辐射($\sim \omega^3$ 依赖)</li>
+            <li><strong>声子耦合</strong>: 晶格振动吸收能量</li>
+            <li><strong>准粒子</strong>: Cooper 对破裂产生准粒子, 吸收能量</li>
+            <li><strong>二能级系统</strong>(TLS): 表面缺陷 → 隧穿态</li>
+          </ul>
+          <p><strong>T2 的物理来源</strong>(相位退相干):</p>
+          <ul>
+            <li><strong>纯退相干</strong> $T_\phi$: 准静态频差(qubit 间频率不均匀)</li>
+            <li><strong>能量弛豫</strong> $T_1$: 也贡献相位退相干</li>
+            <li><strong>磁场噪声</strong>: 1/f 噪声, 来自材料缺陷</li>
+            <li><strong>电荷噪声</strong>: 杂散电荷跳变</li>
+          </ul>
+          <p><strong>总 T2 公式</strong>: $$\frac{1}{T_2} = \frac{1}{2 T_1} + \frac{1}{T_\phi}$$</p>
+          <blockquote><strong>工程现实</strong>: T1 主要受材料纯度 + 电路设计限制; T2 还受 qubit 间均匀性限制。所以 T2 经常 &lt; 2T1。</blockquote>
+          <h3>16.2.6 测量 T1/T2 的实验方法</h3>
+          <p><strong>T1 测量</strong>(反转恢复法, inversion recovery):</p>
+          <ol>
+            <li>准备 $\lvert 1\rangle$ (用 $X$ 门)</li>
+            <li>等时间 $t$</li>
+            <li>测量 $\langle \sigma_z \rangle$</li>
+            <li>重复不同 $t$, 拟合 $e^{-t/T_1}$</li>
+          </ol>
+          <p><strong>T2 测量</strong>:</p>
+          <ul>
+            <li><strong>Hahn echo</strong>: 准备 $\lvert +\rangle$, 180° 脉冲, 测 $\langle \sigma_x \rangle$, 拟合 $e^{-t/T_2}$</li>
+            <li><strong>Ramsey</strong>: 准备 $\lvert +\rangle$, 等 $t$, 测 $\langle \sigma_x \rangle$, 拟合 $e^{-t/T_2^*} \cos(\Delta \omega t)$</li>
+            <li>$T_2^*$ = 包含不均匀频差的退相干</li>
+            <li>$T_2$ = Hahn echo 移除不均匀性后的"真"退相干</li>
+          </ul>
+          <p><strong>T2 ≤ T2</strong>* 因为 Hahn echo 抹掉了<strong>准静态</strong>频差。</p>
+          <blockquote><strong>实验数据</strong>: - IBM Heron: $T_1 \sim 150 \, \mu s$, $T_2 \sim 130 \, \mu s$, $T_2^* \sim 80 \, \mu s$(典型) - $T_2 / (2T_1) \sim 0.43$ — 离上限 1 还很远, 说明 T1 主导</blockquote>
+          <hr>
+          <h2 id="section-16.3">16.3 量子信道(Quantum Channels)</h2>
+          <blockquote><strong>量子信道 = 量子系统 + 环境的联合演化</strong> —— 描述"开放量子系统"</blockquote>
+          <h3>16.3.1 CPTP 映射</h3>
+          <p><strong>完全正映射</strong>(Completely Positive, CP) + <strong>保迹映射</strong>(Trace Preserving, TP) = <strong>CPTP 映射</strong></p>
+          <p><strong>数学</strong>: $\mathcal{E}: \mathcal{L}(\mathcal{H}_{\text{sys}}) \to \mathcal{L}(\mathcal{H}_{\text{sys}})$ 是 CPTP iff</p>
+          <ol>
+            <li>完全正: 对任何附属系统 $R$, $\mathcal{E} \otimes I_R$ 仍正</li>
+            <li>保迹: $\text{tr}(\mathcal{E}(\rho)) = 1$</li>
+          </ol>
+          <p><strong>为什么 CPTP</strong>:</p>
+          <ul>
+            <li><strong>保迹</strong>: 概率守恒</li>
+            <li><strong>完全正</strong>: 不引入"负概率"(附属系统 $R$ 也必须正)</li>
+          </ul>
+          <h3>16.3.2 Kraus 表示定理</h3>
+          <p><strong>Kraus 表示定理</strong>(Kraus 1971):</p>
+          <blockquote><strong>任何 CPTP 映射</strong> $\mathcal{E}$ 都可写成 $\mathcal{E}(\rho) = \sum_k E_k \rho E_k^\dagger$, 其中 $\sum_k E_k^\dagger E_k = I$(归一化)</blockquote>
+          <p><strong>Kraus 算子</strong> $\{E_k\}$:</p>
+          <ul>
+            <li>描述系统<strong>跟环境耦合</strong>的不同"路径"</li>
+            <li>物理意义: $E_k$ 把 $\rho$ 变到"环境态 $k$"对应部分</li>
+            <li>求和归一化: $\sum_k E_k^\dagger E_k = I$</li>
+          </ul>
+          <p><strong>例: 单 qubit 位翻转</strong>(bit flip): $$E_0 = \sqrt{1-p} \, I, \quad E_1 = \sqrt{p} \, X$$ $$\mathcal{E}(\rho) = (1-p) \rho + p X \rho X$$</p>
+          <p><strong>验证</strong>: $E_0^\dagger E_0 + E_1^\dagger E_1 = (1-p) I + p I = I$ ✅</p>
+          <h3>16.3.3 5 种常见量子信道</h3>
+          <table>
+            <thead><tr><th>信道</th><th>Kraus 算子</th><th>物理</th><th>错误率</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Bit flip</strong></td><td>$E_0 = \sqrt{1-p} I$, $E_1 = \sqrt{p} X$</td><td>$\lvert 0\rangle \leftrightarrow \lvert 1\rangle$</td><td>$p$</td></tr>
+              <tr><td><strong>Phase flip</strong></td><td>$E_0 = \sqrt{1-p} I$, $E_1 = \sqrt{p} Z$</td><td>$\lvert +\rangle \leftrightarrow \lvert -\rangle$</td><td>$p$</td></tr>
+              <tr><td><strong>Bit-Phase flip</strong></td><td>$E_0 = \sqrt{1-p} I$, $E_1 = \sqrt{p} Y$</td><td>同时翻转</td><td>$p$</td></tr>
+              <tr><td><strong>Depolarizing</strong></td><td>$E_k = \sqrt{p/3} \sigma_k$ ($k = 1,2,3$), $E_0 = \sqrt{1-p} I$</td><td>随机 Pauli</td><td>$p$</td></tr>
+              <tr><td><strong>Amplitude damping</strong></td><td>$E_0 = \lvert 0\rangle\langle 0\rvert + \sqrt{1-\gamma}\lvert 1\rangle\langle 1\rvert$, $E_1 = \sqrt{\gamma}\lvert 0\rangle\langle 1\rvert$</td><td>T1 弛豫</td><td>$\gamma$</td></tr>
+              <tr><td><strong>Phase damping</strong></td><td>$E_0 = \lvert 0\rangle\langle 0\rvert + \sqrt{1-\lambda}\lvert 1\rangle\langle 1\rvert$, $E_1 = \sqrt{\lambda}\lvert 1\rangle\langle 1\rvert$</td><td>T2 退相干</td><td>$\lambda$</td></tr>
+            </tbody>
+          </table>
+          <h3>16.3.4 Depolarizing 信道详细推导</h3>
+          <p><strong>物理</strong>: 以概率 $p$, 量子态被随机地应用 $X, Y, Z$ 之一; 以概率 $1-p$, 保持不变: $$\mathcal{E}(\rho) = (1-p) \rho + \frac{p}{3}(X \rho X + Y \rho Y + Z \rho Z)$$</p>
+          <p><strong>简化公式</strong>: $$\mathcal{E}(\rho) = (1 - \frac{4p}{3}) \rho + \frac{p}{3} I$$</p>
+          <blockquote><strong>直觉</strong>: 高概率 $1 - 4p/3$ 保持原态, 加 $\frac{p}{3} I$ 是"完全混合"贡献($I/2$ 是 Bloch 球中心)。</blockquote>
+          <p><strong>Kraus 形式</strong>:</p>
+          <ul>
+            <li>$E_0 = \sqrt{1-p} I$</li>
+            <li>$E_k = \sqrt{p/3} \sigma_k$ (k=1,2,3 即 X, Y, Z)</li>
+            <li>$\sum E_k^\dagger E_k = (1-p) I + p/3 \cdot 3 I = I$ ✅</li>
+          </ul>
+          <h3>16.3.5 Amplitude Damping(T1 过程)</h3>
+          <p><strong>物理</strong>: $\lvert 1\rangle$ 自发辐射, 衰减到 $\lvert 0\rangle$: $$\mathcal{E}(\rho) = E_0 \rho E_0^\dagger + E_1 \rho E_1^\dagger$$</p>
+          <ul>
+            <li>$E_0 = \lvert 0\rangle\langle 0\rvert + \sqrt{1-\gamma}\lvert 1\rangle\langle 1\rvert$(没衰减)</li>
+            <li>$E_1 = \sqrt{\gamma}\lvert 0\rangle\langle 1\rvert$(衰减 + 触发"光子探测")</li>
+          </ul>
+          <p><strong>对 $\lvert 1\rangle$ 的效果</strong>: $$\mathcal{E}(\lvert 1\rangle\langle 1\rvert) = (1-\gamma) \lvert 1\rangle\langle 1\rvert + \gamma \lvert 0\rangle\langle 0\rvert$$</p>
+          <ul>
+            <li>概率 $\gamma$ 已衰减到 $\lvert 0\rangle$</li>
+            <li>概率 $1-\gamma$ 还在 $\lvert 1\rangle$</li>
+          </ul>
+          <p><strong>对 $\lvert +\rangle$ 的效果</strong>: $$\mathcal{E}(\lvert +\rangle\langle +\rvert) = \frac{1}{2} \begin{pmatrix} 1 + \gamma &amp; \sqrt{1-\gamma} \\ \sqrt{1-\gamma} &amp; 1 - \gamma \end{pmatrix}$$</p>
+          <p><strong>非酉</strong>: $\mathcal{E}(\lvert +\rangle)$ 的 $\sigma_x$ 期望值 = $\sqrt{1-\gamma} &lt; 1$, <strong>不像</strong>酉演化(保内积)。</p>
+          <h3>16.3.6 退相干的几何 + 算子-和表示</h3>
+          <p><strong>算子-和表示</strong>(Operator-Sum Representation) = Kraus 表示的另一个名字: $$\mathcal{E}(\rho) = \sum_k E_k \rho E_k^\dagger$$</p>
+          <p><strong>Kraus 算子数 $\le d^2$</strong>(对 $d$ 维 Hilbert 空间):</p>
+          <ul>
+            <li>单 qubit: $\le 4$ 个 Kraus 算子($I, X, Y, Z$)</li>
+            <li>2 qubit: $\le 16$ 个 Kraus 算子</li>
+          </ul>
+          <p><strong>Choi 矩阵</strong>(Choi 1975): 等价表示 $$C_{\mathcal{E}} = \sum_{i,j} \lvert i\rangle\langle j\rvert \otimes \mathcal{E}(\lvert i\rangle\langle j\rvert)$$</p>
+          <p><strong>$\mathcal{E}$ 是 CPTP</strong> iff $C_{\mathcal{E}} \ge 0$ 且 $\text{tr}_2(C_{\mathcal{E}}) = I$。这是<strong>数值验证</strong> CPTP 的标准方法。</p>
+          <h3>16.3.7 量子信道的复合</h3>
+          <p><strong>两个信道可串接</strong>(composition): $$\mathcal{E}_2 \circ \mathcal{E}_1 (\rho) = \sum_{k} E_k^{(2)} \left(\sum_j E_j^{(1)} \rho E_j^{(1)\dagger}\right) E_k^{(2)\dagger}$$</p>
+          <p><strong>两个信道可张量积</strong>(tensor product): $$\mathcal{E}_1 \otimes \mathcal{E}_2 (\rho_A \otimes \rho_B) = \mathcal{E}_1(\rho_A) \otimes \mathcal{E}_2(\rho_B)$$</p>
+          <p><strong>Stinespring 膨胀</strong>: 任何 CPTP $\mathcal{E}$ 可写成 $$\mathcal{E}(\rho) = \text{tr}_E (U (\rho \otimes \lvert 0\rangle_E\langle 0\rvert) U^\dagger)$$ 其中 $U$ 是系统 + 环境的<strong>酉</strong>演化。</p>
+          <blockquote><strong>物理图像</strong>: 噪声 = 系统跟环境<strong>联合酉演化</strong>, 然后<strong>部分迹</strong>丢掉环境信息。</blockquote>
+          <p><strong>例: Amplitude damping 的 Stinespring</strong>:</p>
+          <ul>
+            <li>系统 + 1 个环境 qubit</li>
+            <li>$U = $ "CNOT 旋转": $U \lvert 1\rangle_S \lvert 0\rangle_E = \cos\theta \lvert 1\rangle_S \lvert 0\rangle_E + \sin\theta \lvert 0\rangle_S \lvert 1\rangle_E$</li>
+            <li>$\gamma = \sin^2\theta$</li>
+            <li>迹掉环境 = Amplitude damping 公式</li>
+          </ul>
+          <blockquote><strong>统一性</strong>: 所有噪声 = 跟环境的酉演化 + 部分迹。<strong>T1, T2, depolarizing</strong> 都是这个框架的特例。</blockquote>
+          <hr>
+          <h2 id="section-16.4">16.4 Pauli 错误模型:真实硬件的近似</h2>
+          <blockquote><strong>Pauli 错误模型</strong> = 真实硬件噪声的<strong>最简单的"足够好"近似</strong></blockquote>
+          <h3>16.4.1 模型假设</h3>
+          <p><strong>假设</strong>: 每次门后, 系统<strong>独立</strong>地经历 Pauli 错误 $I, X, Y, Z$ 之一(随机): $$\mathcal{E}(\rho) = (1 - p_x - p_y - p_z) \rho + p_x X \rho X + p_y Y \rho Y + p_z Z \rho Z$$</p>
+          <p><strong>总错误率</strong>: $p = p_x + p_y + p_z$</p>
+          <h3>16.4.2 为什么"足够好"</h3>
+          <p><strong>3 个理由</strong>:</p>
+          <ol>
+            <li><strong>物理上</strong>: 大多数真实噪声(bit flip, phase flip, depolarizing)都<strong>可写</strong>为 Pauli 组合</li>
+            <li><strong>数学上</strong>: Pauli 算子构成 2-qubit Hilbert 空间的<strong>完整基</strong>(类似 Fourier 基)</li>
+            <li><strong>工程上</strong>: Pauli 错误<strong>可</strong>用 stabilizer 码纠正(详见 ch17)</li>
+          </ol>
+          <h3>16.4.3 局限</h3>
+          <ul>
+            <li><strong>不完美</strong>对<strong>非 Markovian</strong> 噪声: 真实硬件<strong>常</strong>有记忆效应</li>
+            <li><strong>不完美</strong>对<strong>泄漏</strong>: Pauli 错误<strong>不</strong>覆盖泄漏</li>
+            <li><strong>不完美</strong>对<strong>相关噪声</strong>: 两 qubit 同时门<strong>常</strong>有相关错误(qubit 间不独立)</li>
+          </ul>
+          <p><strong>改进模型</strong>:</p>
+          <ul>
+            <li><strong>非 Markovian Pauli 模型</strong>(有时间关联)</li>
+            <li><strong>Leakage-aware Pauli 模型</strong>(加泄漏算子)</li>
+            <li><strong>Correlated Pauli 模型</strong>(qubit 间相关)</li>
+          </ul>
+          <p><strong>本章用 Pauli 模型</strong>——简单且够用, ch18 表面码再用更精确模型。</p>
+          <hr>
+          <h2 id="section-16.5">16.5 错误率指标:NISQ vs FTQC</h2>
+          <h3>16.5.1 NISQ 时代(2024-2026)</h3>
+          <table>
+            <thead><tr><th>指标</th><th>典型值</th><th>来源</th></tr></thead>
+            <tbody>
+              <tr><td>单 qubit 门错误</td><td>$10^{-3}$</td><td>IBM Heron, Google Willow</td></tr>
+              <tr><td>双 qubit 门错误</td><td>$10^{-2}$</td><td>同上</td></tr>
+              <tr><td>测量错误</td><td>$10^{-2}$</td><td>同上</td></tr>
+              <tr><td>状态准备错误</td><td>$10^{-2}$</td><td>同上</td></tr>
+              <tr><td>电路深度</td><td>$10^2$ - $10^3$</td><td>受 T2 限制</td></tr>
+              <tr><td>qubit 数</td><td>$10^2$ - $10^3$</td><td>IBM Condor 1121</td></tr>
+            </tbody>
+          </table>
+          <h3>16.5.2 容错(FTQC)目标(2030+ 估计)</h3>
+          <table>
+            <thead><tr><th>指标</th><th>目标值</th></tr></thead>
+            <tbody>
+              <tr><td>单 qubit 门错误</td><td>$10^{-5}$ - $10^{-6}$</td></tr>
+              <tr><td>双 qubit 门错误</td><td>$10^{-4}$ - $10^{-5}$</td></tr>
+              <tr><td>测量错误</td><td>$10^{-4}$</td></tr>
+              <tr><td>状态准备错误</td><td>$10^{-4}$</td></tr>
+              <tr><td>电路深度</td><td>$10^6$ - $10^{10}$</td></tr>
+              <tr><td>物理 qubit 数</td><td>$10^6$ - $10^9$</td></tr>
+              <tr><td><strong>逻辑 qubit 数</strong></td><td>$10^3$ - $10^6$</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>关键</strong>: 物理 qubit 数比逻辑 qubit 数大 $10^3$ - $10^4$ 倍(QEC 开销, 详见 ch18)</blockquote>
+          <h3>16.5.3 差距(Gap)</h3>
+          <p><strong>单 qubit 门</strong>: $10^{-3} \to 10^{-5}$ —— 差 <strong>100 倍</strong> <strong>双 qubit 门</strong>: $10^{-2} \to 10^{-4}$ —— 差 <strong>100 倍</strong> <strong>qubit 数</strong>: $10^3 \to 10^6$ —— 差 <strong>1000 倍</strong></p>
+          <p><strong>总难度</strong>: $100 \times 100 \times 1000 = 10^7$ —— <strong>千万倍</strong> 改进。</p>
+          <p><strong>为什么?</strong></p>
+          <ul>
+            <li><strong>双 qubit 门</strong>最<strong>难</strong>——需要<strong>强耦合</strong>但<strong>低串扰</strong></li>
+            <li><strong>qubit 数</strong>受<strong>芯片尺寸 + 控制线</strong>限制</li>
+            <li><strong>错误率</strong>受<strong>材料纯度 + 控制精度</strong>限制</li>
+          </ul>
+          <h3>16.5.4 5 种平台的 2024-2026 现状</h3>
+          <table>
+            <thead><tr><th>平台</th><th>物理 qubit</th><th>双门错误</th><th>T1</th><th>T2</th><th>主要挑战</th></tr></thead>
+            <tbody>
+              <tr><td><strong>超导</strong>(IBM/Google)</td><td>$10^3$</td><td>$10^{-2}$</td><td>$100 \, \mu s$</td><td>$50 \, \mu s$</td><td>串扰, 泄漏</td></tr>
+              <tr><td><strong>离子阱</strong>(IonQ/Quantinuum)</td><td>$10^2$</td><td>$10^{-3}$</td><td>$10^5 \, \mu s$</td><td>$10^4 \, \mu s$</td><td>门慢, 串门难</td></tr>
+              <tr><td><strong>中性原子</strong>(QuEra/Pasqal)</td><td>$10^3$</td><td>$10^{-2}$</td><td>$1 \, s$</td><td>$1 \, s$</td><td>重新排列慢</td></tr>
+              <tr><td><strong>光量子</strong>(Xanadu/PsiQuantum)</td><td>$10^2$</td><td>$10^{-2}$</td><td>N/A</td><td>N/A</td><td>无 T1/T2 概念</td></tr>
+              <tr><td><strong>拓扑</strong>(Microsoft Majorana 1)</td><td>$&lt; 10$</td><td>N/A</td><td>N/A</td><td>N/A</td><td>未工程化</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>总结</strong>: <strong>超导 + 离子阱 + 中性原子</strong> 是 2024-2026 三大主流;<strong>光量子</strong>无 T1/T2 概念(光不被退相干)但<strong>双门难</strong>;<strong>拓扑</strong>仍在科学验证。</blockquote>
+          <h3>16.5.5 "1 qubit 错误率"的两种测度</h3>
+          <p><strong>注意</strong>: 量子硬件常用<strong>两个</strong>不同的"1 qubit 错误率"——容易混淆。</p>
+          <p><strong>1. 门错误率</strong>(Gate Error Rate):</p>
+          <ul>
+            <li>测度: randomized benchmarking(RB)</li>
+            <li>物理: 跑随机 Clifford 序列, 测保真度指数衰减</li>
+            <li>公式: $F(n) = A \cdot p^n + B$, 其中 $p$ = <strong>门错误率</strong></li>
+            <li>例: IBM Heron 单门 RB = $2 \times 10^{-4}$</li>
+          </ul>
+          <p><strong>2. 态错误率</strong>(State Error Rate):</p>
+          <ul>
+            <li>测度: 测 $\lvert 0\rangle$ 或 $\lvert 1\rangle$ 的"漂移"概率</li>
+            <li>例: IBM Heron 测量错误 = $1.5 \times 10^{-2}$</li>
+            <li>这是 <strong>SPAM</strong> 错误, <strong>不</strong>是门错误</li>
+          </ul>
+          <blockquote><strong>关键</strong>: 媒体常把"qubit 错误率" = 门错误率, <strong>忽略</strong>测量错误和 SPAM 错误。实际跑算法要 <strong>同时</strong> 关注所有错误源。</blockquote>
+          <h3>16.5.5.1 Randomized Benchmarking (RB) 详解</h3>
+          <p><strong>RB 步骤</strong>(Knill et al. 2008, Magesan et al. 2011):</p>
+          <ol>
+            <li>选 Clifford 序列长度 $m$ (e.g. 1, 2, 4, ..., 100)</li>
+            <li>随机生成 $m$ 个 Clifford 门 $C_1, ..., C_m$</li>
+            <li>计算"逆门" $C_{m+1} = (C_m \cdots C_1)^{-1}$(让理论输出 = $\lvert 0\rangle$)</li>
+            <li>跑 $C_1, C_2, ..., C_m, C_{m+1}$, 测 $P(0)$ (测到 $\lvert 0\rangle$ 的概率)</li>
+            <li>对每个 $m$ 重复 ~30 次取平均</li>
+            <li>拟合 $P(0) = A \cdot p^m + B$ → $p$ = 单门错误率</li>
+          </ol>
+          <p><strong>RB 的优势</strong>:</p>
+          <ul>
+            <li><strong>状态无关</strong>: 不依赖初态制备精度</li>
+            <li><strong>测量无关</strong>: 不受 SPAM 错误影响</li>
+            <li><strong>可扩展</strong>: 对 $n$ qubit 也适用(只是 Clifford 群变大)</li>
+          </ul>
+          <p><strong>RB 的局限</strong>:</p>
+          <ul>
+            <li>只测 <strong>Clifford 门</strong> 错误(不是所有门)</li>
+            <li>假设<strong>马尔可夫</strong>(非马尔可夫时不准)</li>
+            <li>不<strong>直接</strong>测相关错误(qubit 间耦合)</li>
+          </ul>
+          <p><strong>Interleaved RB</strong>(Magesan et al. 2012): 测<strong>特定</strong>门 $G$ 的错误率</p>
+          <ul>
+            <li>序列 $C_1, G, C_2, G, ..., G, C_{m+1}$ (其中 $C$ 跟 $G$ 间隔)</li>
+            <li>跟普通 RB 比, 拟合出 $G$ 的错误率</li>
+          </ul>
+          <p><strong>RB 在工业界的应用</strong>:</p>
+          <ul>
+            <li>IBM, Google, Rigetti <strong>每个</strong>发布的硬件都附 RB 数据</li>
+            <li>学术上, RB 是"工业标准"——发论文前必跑</li>
+          </ul>
+          <p><strong>RB 数值例</strong>(IBM Heron 2024):</p>
+          <ul>
+            <li>单 qubit RB: $p = 2 \times 10^{-4}$(1 门错误率)</li>
+            <li>双 qubit RB: $p = 7 \times 10^{-3}$(1 门错误率)</li>
+            <li>2 qubit gate = CNOT 或 ECR</li>
+          </ul>
+          <blockquote><strong>RB 的"金标准"地位</strong>: 即使有更先进的标定方法(cyclical benchmarking, gate set tomography), RB 仍是"最基本"的报告指标。</blockquote>
+          <h3>16.5.6 错误率与算法类型的"匹配表"</h3>
+          <table>
+            <thead><tr><th>算法</th><th>所需错误率</th><th>现实错误率</th><th>差距</th></tr></thead>
+            <tbody>
+              <tr><td><strong>VQE</strong>(启发式)</td><td>$10^{-2}$</td><td>$10^{-3}$</td><td>✅ 可跑(但仍需 EM)</td></tr>
+              <tr><td><strong>QAOA</strong></td><td>$10^{-3}$</td><td>$10^{-3}$</td><td>⚠️ 临界, 需 EM</td></tr>
+              <tr><td><strong>Grover 浅</strong>(1000 qubit)</td><td>$10^{-3}$</td><td>$10^{-3}$</td><td>⚠️ 临界</td></tr>
+              <tr><td><strong>量子模拟</strong>(小分子)</td><td>$10^{-3}$</td><td>$10^{-3}$</td><td>⚠️ 临界</td></tr>
+              <tr><td><strong>Shor</strong>(100 qubit demo)</td><td>$10^{-4}$</td><td>$10^{-3}$</td><td>❌ 差 10 倍</td></tr>
+              <tr><td><strong>Shor</strong>(RSA-2048)</td><td>$10^{-6}$</td><td>$10^{-3}$</td><td>❌ 差 1000 倍</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>结论</strong>: <strong>NISQ 2026 时代</strong>可跑 VQE/QAOA/小模拟;<strong>Shor(密码学)</strong> 必须等 FTQC。</blockquote>
+          <hr>
+          <h2 id="section-16.6">16.6 退相干的几何图像:Bloch 球收缩</h2>
+          <blockquote><strong>用 Bloch 球(见 ch06)看噪声 = "收缩 + 旋转"</strong> —— 几何直觉</blockquote>
+          <h3>16.6.1 单 qubit 噪声的 Bloch 球表示</h3>
+          <p><strong>回忆 ch06</strong>: 单 qubit 纯态 $\lvert \psi\rangle = \cos(\theta/2) \lvert 0\rangle + e^{i\phi} \sin(\theta/2) \lvert 1\rangle$ 对应 Bloch 球单位球面点 $(\sin\theta\cos\phi, \sin\theta\sin\phi, \cos\theta)$。</p>
+          <p><strong>混合态</strong>(有退相干)对<strong>应球内点</strong> $\vec{r} = (r_x, r_y, r_z)$, $|\vec{r}| &lt; 1$。</p>
+          <p><strong>关系</strong>:</p>
+          <ul>
+            <li>纯态: $|\vec{r}| = 1$ (球面)</li>
+            <li>混合态: $|\vec{r}| &lt; 1$ (球内)</li>
+            <li><strong>完全混合</strong>: $\vec{r} = 0$ (球心)</li>
+          </ul>
+          <h3>16.6.2 退相干 = 球收缩</h3>
+          <p><strong>关键观察</strong>: 退相干过程把 Bloch 球<strong>收缩</strong>到<strong>更小</strong>的球。</p>
+          <p><strong>例: 振幅阻尼</strong>(Amplitude Damping) on $\lvert +\rangle$:</p>
+          <ul>
+            <li>初态: $\vec{r}_0 = (1, 0, 0)$(球面)</li>
+            <li>演化: $\vec{r}(t) = (e^{-t/T_1} \cdot e^{-t/T_\phi}, 0, 0)$</li>
+            <li>$t \to \infty$: $\vec{r} \to (0, 0, 0)$(球心)</li>
+          </ul>
+          <blockquote><strong>几何直觉</strong>: <strong>退相干 = Bloch 球收缩</strong>;<strong>完全退相干 = 球心</strong>(完全混合态)</blockquote>
+          <p><strong>例: Depolarizing</strong>:</p>
+          <ul>
+            <li>初态: $\vec{r}_0$</li>
+            <li>演化: $\vec{r}(t) = e^{-t/T_2} \vec{r}_0$</li>
+            <li>$t \to \infty$: $\vec{r} \to 0$</li>
+          </ul>
+          <p><strong>两类效果</strong>:</p>
+          <ol>
+            <li><strong>球收缩</strong>(缩短)—— 退相干</li>
+            <li><strong>球旋转</strong>(改变方向)—— 酉错误</li>
+          </ol>
+          <h3>16.6.3 保真度(Fidelity)</h3>
+          <p><strong>保真度</strong> $F(\rho, \sigma)$ 衡量两个量子态<strong>多接近</strong>: $$F(\rho, \sigma) = \left(\text{tr} \sqrt{\sqrt{\rho} \sigma \sqrt{\rho}}\right)^2$$</p>
+          <p><strong>对纯态 $\sigma = \lvert \psi\rangle\langle \psi\rvert$</strong>: $$F(\rho, \sigma) = \langle \psi \rvert \rho \lvert \psi \rangle$$</p>
+          <p><strong>例: 振幅阻尼 on $\lvert +\rangle$ at time $t$</strong>: $$F = \frac{1}{2} (1 + e^{-t/T_2})$$</p>
+          <ul>
+            <li>$t = 0$: $F = 1$(完全保真)</li>
+            <li>$t = T_2 \ln 2$: $F = 3/4$(75%)</li>
+            <li>$t = T_2 \ln 3$: $F = 2/3$ ≈ 67% (经典极限)</li>
+            <li>$t \to \infty$: $F = 1/2$(完全混合, 50% 匹配, 因为有 50% 概率"猜对")</li>
+          </ul>
+          <p><strong>保真度阈值</strong>(经验):</p>
+          <ul>
+            <li>$F &gt; 0.99$: 算法<strong>基本无影响</strong></li>
+            <li>$F &gt; 0.95$: 算法<strong>轻微影响</strong>, 可用 EM 修正</li>
+            <li>$F &gt; 0.9$: 算法<strong>显著影响</strong>, 需要 QEC</li>
+            <li>$F &lt; 0.9$: 算法<strong>基本失败</strong></li>
+          </ul>
+          <h3>16.6.4 错误率的"几何总结"</h3>
+          <p><strong>Bloch 球视角下的 4 类错误</strong>:</p>
+          <ol>
+            <li><strong>球收缩</strong>(shrinking): 退相干 — 任何方向均匀缩短</li>
+          </ol>
+          <ul>
+            <li>例: T1, T2, depolarizing</li>
+          </ul>
+          <ol>
+            <li><strong>球旋转</strong>(rotation): 酉错误 — 球整体旋转</li>
+          </ol>
+          <ul>
+            <li>例: 校准错误, 串扰</li>
+          </ul>
+          <ol>
+            <li><strong>球抖动</strong>(jitter): 准静态偏差 — 球不动, 但中心抖动</li>
+          </ol>
+          <ul>
+            <li>例: 磁场不均匀</li>
+          </ul>
+          <ol>
+            <li><strong>球泄漏</strong>(leakage): 状态逃出球 — 不在 Bloch 球内</li>
+          </ol>
+          <ul>
+            <li>例: 三能级泄漏</li>
+          </ul>
+          <p><strong>4 类错误的"修复难度"</strong>:</p>
+          <ul>
+            <li>球收缩: 容易(QEC 专门针对)</li>
+            <li>球旋转: 中等(校准可修)</li>
+            <li>球抖动: 困难(需自旋回波)</li>
+            <li>球泄漏: 极难(需特殊协议)</li>
+          </ul>
+          <h3>16.6.5 量子信道"距离"(Diamond Norm)</h3>
+          <p><strong>问题</strong>: 怎么比较"两个量子信道多接近"?</p>
+          <p><strong>答</strong>: 用 <strong>Diamond norm distance</strong> $D_\diamond$: $$D_\diamond(\mathcal{E}_1, \mathcal{E}_2) = \frac{1}{2} \max_{\rho_{AR}} \| (\mathcal{E}_1 \otimes I_R)(\rho_{AR}) - (\mathcal{E}_2 \otimes I_R)(\rho_{AR}) \|_1$$</p>
+          <p><strong>物理意义</strong>: 考虑最坏输入(可能纠缠附属系统 $R$), 两个信道输出<strong>多不同</strong>。</p>
+          <p><strong>应用</strong>:</p>
+          <ul>
+            <li><strong>门保真度</strong>: $F_{\text{gate}} = 1 - D_\diamond(\mathcal{E}_{\text{ideal}}, \mathcal{E}_{\text{real}})$</li>
+            <li><strong>QEC 码距离</strong>: 码的"纠错能力" = 它能容忍的 $D_\diamond$ 大小</li>
+            <li><strong>EM 性能评估</strong>: EM 修正前后 $\mathcal{E}_{\text{est}}$ 跟 $\mathcal{I}$ 的距离</li>
+          </ul>
+          <blockquote><strong>ch17 预告</strong>: 量子码的"距离" $d$ 意味着能纠正<strong>任意</strong> $D_\diamond &lt; (d-1)/2d$ 的错误。</blockquote>
+          <hr>
+          <h2 id="section-16.7">16.7 错误率与算法失败:浅电路 vs 深电路</h2>
+          <h3>16.7.1 错误累积公式</h3>
+          <p><strong>假设</strong> $n$ 个独立门, 每个错误率 $p$。<strong>累积成功概率</strong>: $$P_{\text{success}} = (1-p)^n \approx e^{-np} \quad (p \ll 1)$$</p>
+          <p><strong>例</strong>: $n = 1000, p = 10^{-3}$: $$P_{\text{success}} = (1-10^{-3})^{1000} \approx e^{-1} \approx 0.37 = 37\%$$</p>
+          <p><strong>糟糕</strong>! 1000 门 NISQ 电路成功率仅 37%。</p>
+          <p><strong>对比</strong>: $n = 10^6, p = 10^{-3}$: $$P_{\text{success}} = e^{-1000} \approx 0$$</p>
+          <p><strong>完全失败</strong>——Shor 类深电路<strong>完全无法</strong>在 NISQ 跑。</p>
+          <h3>16.7.2 浅电路 vs 深电路</h3>
+          <table>
+            <thead><tr><th>电路</th><th>门数</th><th>$p = 10^{-3}$</th><th>$p = 10^{-6}$</th></tr></thead>
+            <tbody>
+              <tr><td><strong>浅</strong>(NISQ 友好)</td><td>100</td><td>90% ✅</td><td>99.99% ✅</td></tr>
+              <tr><td><strong>中</strong>(VQE 典型)</td><td>$10^4$</td><td>0.005% ❌</td><td>99% ✅</td></tr>
+              <tr><td><strong>深</strong>(Shor 典型)</td><td>$10^6$</td><td>$e^{-1000} \approx 0$ ❌</td><td>37% ⚠️</td></tr>
+              <tr><td><strong>超深</strong>(FTQC Shor)</td><td>$10^9$</td><td>0 ❌</td><td>$e^{-1000} \approx 0$ ❌</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>核心问题</strong>: 错误率 $p$ 必须<strong>随</strong>电路深度<strong>指数</strong>降低才能让算法跑。</blockquote>
+          <p><strong>解法</strong>(将在 ch17-19 详述):</p>
+          <ul>
+            <li><strong>QEC</strong>: 用 $k$ 个物理 qubit 编码 1 个逻辑 qubit, 错误率从 $p$ 降为 $p^{(k-1)/2}$</li>
+            <li><strong>阈值定理</strong>: 当 $p &lt; p_{\text{th}}$ 时, <strong>任意深</strong>电路都能跑(代价: 物理 qubit 数)</li>
+          </ul>
+          <h3>16.7.3 电路深度的"门槛"</h3>
+          <p><strong>对</strong>单 qubit 门错误率 $p$ 和目标算法深度 $n$:</p>
+          <ul>
+            <li><strong>可跑</strong> iff $np \ll 1$ (更严格: $np &lt; 0.1$)</li>
+            <li><strong>NISQ 算法</strong>: $n \le 10^3, p \le 10^{-3}$ → 临界</li>
+            <li><strong>VQE</strong>: $n \sim 10^4$ + 测量<strong>很</strong>多 → 需要 EM 或简化 ansatz</li>
+            <li><strong>Shor RSA-2048</strong>: $n \sim 10^9$ → 必须 QEC(下章)</li>
+          </ul>
+          <p><strong>类比</strong>: 经典计算中, 错误率 $10^{-15}$ + 电路 $10^9$ → $np = 10^{-6}$ 完全 OK。量子<strong>没</strong>这个奢侈。</p>
+          <h3>16.7.4 "对数深度"vs"多项式深度"算法</h3>
+          <p><strong>深度分类</strong>(电路深度 $n$ 随输入 $N$ 怎么增长):</p>
+          <table>
+            <thead><tr><th>类型</th><th>深度</th><th>代表算法</th><th>NISQ 可跑?</th></tr></thead>
+            <tbody>
+              <tr><td><strong>常数</strong></td><td>$O(1)$</td><td>简单态制备</td><td>✅</td></tr>
+              <tr><td><strong>对数</strong></td><td>$O(\log N)$</td><td>Grover 浅</td><td>✅</td></tr>
+              <tr><td><strong>多项式</strong></td><td>$O(N)$</td><td>量子模拟(简单)</td><td>⚠️</td></tr>
+              <tr><td><strong>超多项式</strong></td><td>$O(N^k)$</td><td>Shor</td><td>❌</td></tr>
+              <tr><td><strong>指数</strong></td><td>$O(2^N)$</td><td>一般量子算法</td><td>❌</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>核心</strong>: 错误率 $p$ <strong>决定</strong>能跑多深。<strong>容错</strong>(ch17-19)把 $p$ 转换为 $p_{\text{logical}} \ll p$, 让超多项式深度也可跑。</blockquote>
+          <h3>16.7.5 错误"聚集"(Error Bursts)现象</h3>
+          <p><strong>真实硬件</strong>的错误<strong>不</strong>是独立泊松过程——有<strong>聚集</strong>现象:</p>
+          <ul>
+            <li><strong>Cosmic ray</strong> 高能粒子撞击 → 突发错误($\sim 10^{-3}$ per ms)</li>
+            <li><strong>TLS</strong>(two-level systems)跳跃 → 准静态相干错误</li>
+            <li><strong>Calibration drift</strong> → 缓慢漂移错误</li>
+          </ul>
+          <p><strong>影响</strong>: 错误率 $p$ 不是"常数", 而是有<strong>长尾分布</strong>。<strong>EM / QEC</strong> 都要考虑这种<strong>非平稳</strong>错误。</p>
+          <blockquote><strong>NISQ 实战经验</strong>: 错误聚集是 2024-2026 量子硬件的主要"惊喜源"——许多"莫名其妙"的失败其实是 cosmic ray 引起, 而不是"算法有 bug"。</blockquote>
+          <hr>
+          <h2 id="section-16.8">16.8 错误缓解(EM) vs 错误纠错(QEC)</h2>
+          <blockquote><strong>两套</strong>应对噪声的策略——EM 是 NISQ 时代的"补丁", QEC 是 FTQC 时代的"根治"</blockquote>
+          <h3>16.8.1 错误缓解(Error Mitigation, EM)</h3>
+          <p><strong>思想</strong>: <strong>接受噪声</strong>, 但<strong>事后</strong>用软件<strong>减少</strong>错误。</p>
+          <p><strong>3 个主要方法</strong>:</p>
+          <ol>
+            <li><strong>零噪声外推</strong>(Zero Noise Extrapolation, ZNE):</li>
+          </ol>
+          <ul>
+            <li>故意<strong>增大</strong>噪声(例如脉冲拉伸), 跑多个噪声强度</li>
+            <li>外推到"零噪声"极限</li>
+            <li><strong>代价</strong>: 多跑 $O(1/\epsilon^2)$ 次电路</li>
+          </ul>
+          <ol>
+            <li><strong>概率错误消除</strong>(Probabilistic Error Cancellation, PEC):</li>
+          </ol>
+          <ul>
+            <li>测量错误<strong>统计</strong> + 用"反噪声"算子修正</li>
+            <li>给出<strong>无偏</strong>估计</li>
+            <li><strong>代价</strong>: 多跑 $O(1/p^2)$ 次电路(随 $p$ 恶化)</li>
+          </ul>
+          <ol>
+            <li><strong>测量错误缓解</strong>(Readout Error Mitigation, REM):</li>
+          </ol>
+          <ul>
+            <li>标定测量错误矩阵 $M$(混淆矩阵)</li>
+            <li>求 $M^{-1}$ 修正测量分布</li>
+            <li><strong>代价</strong>: 标定时间 + 矩阵条件数</li>
+          </ul>
+          <p><strong>EM 的局限</strong>:</p>
+          <ul>
+            <li><strong>采样开销</strong>: 随深度 $n$ <strong>指数</strong>增长(所以 EM 只对<strong>浅-中</strong>电路有效)</li>
+            <li><strong>不根治</strong>: 噪声仍存在, 只是<strong>估计</strong>更准</li>
+            <li><strong>不通用</strong>: 一些电路<strong>不能</strong>用 EM(如 deep Shor)</li>
+          </ul>
+          <h3>16.8.4 ZNE 的详细算法</h3>
+          <p><strong>ZNE 步骤</strong>(Temme et al. 2017, Kandala et al. 2019):</p>
+          <ol>
+            <li><strong>选择噪声标度因子</strong> $c \in \{1, 3, 5\}$(等): 跑 3 个噪声强度</li>
+            <li><strong>人为放大噪声</strong>:</li>
+          </ol>
+          <ul>
+            <li><strong>方法 A</strong>: 拉伸脉冲(stretch 脉冲 $\times c$)</li>
+            <li><strong>方法 B</strong>: 插入"identity"门(增 0 门, 等于拉长电路)</li>
+          </ul>
+          <ol>
+            <li><strong>测量期望值</strong> $\langle O \rangle_c$ at each $c$</li>
+            <li><strong>外推到 $c = 0$</strong>:</li>
+          </ol>
+          <ul>
+            <li><strong>Richards 拟合</strong>: $\langle O \rangle_c = a + b \cdot c$(线性)</li>
+            <li><strong>指数拟合</strong>: $\langle O \rangle_c = a + b \cdot e^{-c/p}$(指数)</li>
+            <li>选最优拟合 → 给出 $\langle O \rangle_0$</li>
+          </ul>
+          <p><strong>ZNE 的局限</strong>:</p>
+          <ul>
+            <li>假设噪声<strong>单调</strong>放大</li>
+            <li>外推<strong>可能不稳定</strong>(拟合有误差)</li>
+            <li>不适用于<strong>非马尔可夫</strong>噪声</li>
+          </ul>
+          <p><strong>实战经验</strong>(IBM 2024):</p>
+          <ul>
+            <li>ZNE 在 $\sim 100$ qubit + 100 门电路<strong>显著</strong>改进结果</li>
+            <li>在 $\sim 1000$ 门电路<strong>采样开销爆炸</strong>——不可行</li>
+          </ul>
+          <h3>16.8.5 PEC 的详细算法</h3>
+          <p><strong>PEC 步骤</strong>(van den Berg et al. 2023):</p>
+          <ol>
+            <li><strong>标定噪声模型</strong>: 用 RB 测每种门的错误 Kraus 算子</li>
+            <li><strong>构造"反噪声"算子</strong>: $\mathcal{E}^{-1}$(形式上), 满足 $\mathcal{E}^{-1} \circ \mathcal{E} = \mathcal{I}$</li>
+            <li><strong>展开</strong>: $\mathcal{E}^{-1} = \sum_k c_k \mathcal{B}_k$ (Pauli 基)</li>
+            <li><strong>蒙特卡洛采样</strong>: 概率 $|c_k| / \sum |c_k|$ 选 $\mathcal{B}_k$, 符号 $\text{sign}(c_k)$</li>
+            <li><strong>累加</strong>: 期望值 $\langle O \rangle = \sum_k c_k \langle O \rangle_k$</li>
+          </ol>
+          <p><strong>PEC 的优势</strong>:</p>
+          <ul>
+            <li><strong>无偏</strong>: 数学上 $\mathbb{E}[O_{\text{est}}] = O_{\text{true}}$</li>
+            <li><strong>可证</strong>: 给出<strong>严格</strong>误差界</li>
+          </ul>
+          <p><strong>PEC 的劣势</strong>:</p>
+          <ul>
+            <li><strong>采样开销</strong> $\sim 1/p^2$: $p = 10^{-3}$ → $10^6$ 次采样</li>
+            <li><strong>不</strong>对<strong>深</strong>电路实用(超指数)</li>
+          </ul>
+          <p><strong>IBM PEC demo 2023</strong>: 127 qubit + 60 层 Trotter + PEC, 估算 $\text{HeH}^+$ 能量 <strong>接近</strong>化学精度。<strong>首例</strong> PEC 工业级 demo。</p>
+          <h3>16.8.6 REM 的详细算法</h3>
+          <p><strong>REM 步骤</strong>(IBM qiskit-runtime 2023+):</p>
+          <ol>
+            <li><strong>标定混淆矩阵</strong> $M$:</li>
+          </ol>
+          <ul>
+            <li>准备 $\lvert 0\rangle^{\otimes n}$, 测 → 第一列 $M[:, 0]$</li>
+            <li>准备 $\lvert 1\rangle^{\otimes n}$, 测 → 第二列 $M[:, 1]$</li>
+            <li>$M_{ij}$ = "实际准备 $\lvert j\rangle$ 测到 $\lvert i\rangle$" 的概率</li>
+          </ul>
+          <ol>
+            <li><strong>解线性方程</strong>: $M^{-1} \vec{p}_{\text{obs}} = \vec{p}_{\text{corrected}}$</li>
+            <li><strong>或用 M3 改进</strong>(Nation et al. 2021): 矩阵-自由, 处理大系统</li>
+          </ol>
+          <p><strong>REM 的优势</strong>:</p>
+          <ul>
+            <li>简单, 便宜</li>
+            <li><strong>非常</strong>有效(测量错误是主要错误源之一)</li>
+          </ul>
+          <p><strong>REM 的劣势</strong>:</p>
+          <ul>
+            <li><strong>SPAM only</strong>: 修不了门错误</li>
+            <li>标定矩阵<strong>受</strong> qubit 数限制($2^n$ 状态, $n = 20$ 已很难标定)</li>
+            <li>条件数<strong>可能</strong>很大 → 修正分布有负值 → 需归一化</li>
+          </ul>
+          <blockquote><strong>实战</strong>: REM + ZNE 是 2024-2026 NISQ 算法的<strong>标配</strong>——IBM Qiskit Runtime 默认开 REM。</blockquote>
+          <h3>16.8.7 EM 的 5 大局限</h3>
+          <table>
+            <thead><tr><th>局限</th><th>描述</th><th>影响</th></tr></thead>
+            <tbody>
+              <tr><td><strong>采样开销</strong></td><td>随深度 $n$ 指数</td><td>NISQ 可, FTQC 不可</td></tr>
+              <tr><td><strong>不根治</strong></td><td>噪声仍在, 仅修正</td><td>不保证正确</td></tr>
+              <tr><td><strong>不通用</strong></td><td>一些电路无法 EM</td><td>算法受限</td></tr>
+              <tr><td><strong>外推不稳</strong></td><td>拟合有误差</td><td>误差界 $\pm 5\%$</td></tr>
+              <tr><td><strong>冷启动假设</strong></td><td>需已知噪声模型</td><td>自适应难</td></tr>
+            </tbody>
+          </table>
+          <p><strong>结论</strong>: EM 是 NISQ 时代的<strong>有效</strong>工具, 但<strong>不是</strong>最终答案。<strong>QEC</strong>(下章)才是。</p>
+          <h3>16.8.2 错误纠错(Quantum Error Correction, QEC)</h3>
+          <p><strong>思想</strong>: 用<strong>冗余</strong>编码 + <strong>多数投票</strong> 压低错误。</p>
+          <p><strong>基本原理</strong>:</p>
+          <ul>
+            <li>1 个<strong>逻辑</strong> qubit 用 $k$ 个<strong>物理</strong> qubit 编码</li>
+            <li>错误只影响<strong>少数</strong>物理 qubit</li>
+            <li>测量"错误症状"(stabilizers) 检测错误</li>
+            <li>经典计算定位 + 翻转</li>
+          </ul>
+          <p><strong>3 个主要码</strong>(ch17-18 详述):</p>
+          <table>
+            <thead><tr><th>码</th><th>物理/逻辑</th><th>距离</th><th>阈值</th><th>时代</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Shor 9-qubit</strong></td><td>9</td><td>3</td><td>$10^{-5}$ (理论)</td><td>1995</td></tr>
+              <tr><td><strong>Steane 7-qubit</strong></td><td>7</td><td>3</td><td>$10^{-5}$</td><td>1996</td></tr>
+              <tr><td><strong>Surface code</strong></td><td>$d^2$</td><td>$d$</td><td>$10^{-2}$</td><td>1995+</td></tr>
+            </tbody>
+          </table>
+          <p><strong>QEC 的优势</strong>:</p>
+          <ul>
+            <li><strong>根治</strong>: 错误率可<strong>任意</strong>压低(随 $d$ 指数)</li>
+            <li><strong>不</strong>随深度<strong>指数</strong>增加采样数</li>
+            <li><strong>容错阈值</strong>: 当 $p &lt; p_{\text{th}}$ 时, 任意深度电路<strong>可</strong>容错</li>
+          </ul>
+          <p><strong>QEC 的代价</strong>:</p>
+          <ul>
+            <li><strong>物理 qubit 开销</strong>: 1 逻辑 = $O(d^2)$ 物理</li>
+            <li><strong>辅助操作</strong>: syndrome 测量, 经典反馈</li>
+            <li><strong>码距离</strong>: 必须 $d \ge 3$ 才能纠正 1 个错误</li>
+          </ul>
+          <h3>16.8.3 EM vs QEC 对比</h3>
+          <table>
+            <thead><tr><th>维度</th><th>EM</th><th>QEC</th></tr></thead>
+            <tbody>
+              <tr><td><strong>错误</strong></td><td>接受, 估计修正</td><td>主动检测 + 纠正</td></tr>
+              <tr><td><strong>开销</strong></td><td>采样数<strong>指数</strong>增长</td><td>物理 qubit <strong>多项式</strong>增长</td></tr>
+              <tr><td><strong>适用深度</strong></td><td>浅-中电路($\le 10^4$ 门)</td><td>深电路($\ge 10^4$ 门)</td></tr>
+              <tr><td><strong>时代</strong></td><td>NISQ(2024-2026)</td><td>FTQC(2030+)</td></tr>
+              <tr><td><strong>代表</strong></td><td>ZNE, PEC, REM</td><td>Shor, Steane, Surface</td></tr>
+              <tr><td><strong>是否根治</strong></td><td>❌ 否</td><td>✅ 是</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>直觉</strong>: <strong>EM = 给损坏照片"P 图"</strong>(后期修正);<strong>QEC = 给照片"加滤镜"</strong>(从源头保护)。</blockquote>
+          <p><strong>今天(2024-2026)</strong>: 主流是 <strong>EM</strong> + <strong>小规模 QEC demo</strong> <strong>明天(2030+)</strong>: 主流是 <strong>完整 QEC + FTQC</strong></p>
+          <hr>
+          <h2 id="section-16.9">16.9 真实硬件错误率(2024-2026 现状)</h2>
+          <blockquote><strong>这一节</strong>给出<strong>最新</strong>硬件数据 + 来源 —— 让读者有<strong>真实</strong>数字感</blockquote>
+          <blockquote><strong>数据时效性免责</strong>: 量子硬件<strong>快速</strong>迭代, 以下数据是 2024-2026 公开报告。详细最新数据见 <a href="https://quantumcomputingreport.com/" target="_blank" rel="noopener">Quantum Computing Report</a> 等。</blockquote>
+          <h3>16.9.1 超导量子比特(IBM, Google, Rigetti)</h3>
+          <p><strong>IBM Heron(2024)</strong>:</p>
+          <ul>
+            <li>156 qubit, 2D 重六角格子</li>
+            <li>单门错误: $2 \times 10^{-4}$</li>
+            <li>双门(CZ)错误: $7 \times 10^{-3}$</li>
+            <li>测量错误: $1.5 \times 10^{-2}$</li>
+            <li>T1: $150 \, \mu s$, T2: $130 \, \mu s$</li>
+          </ul>
+          <p><strong>Google Willow(2024)</strong>:</p>
+          <ul>
+            <li>105 qubit, 2D 棋盘格子</li>
+            <li>单门错误: $6 \times 10^{-4}$</li>
+            <li>双门(CZ)错误: $5 \times 10^{-3}$</li>
+            <li>测量错误: $8 \times 10^{-3}$</li>
+            <li>T1: $68 \, \mu s$, T2: $89 \, \mu s$</li>
+            <li><strong>里程碑</strong>: 首次<strong>表面码实验</strong>(5 比特码, 距离 3)✅</li>
+          </ul>
+          <p><strong>Rigetti Ankaa-3(2024)</strong>:</p>
+          <ul>
+            <li>84 qubit</li>
+            <li>单门错误: $10^{-3}$</li>
+            <li>双门错误: $10^{-2}$</li>
+          </ul>
+          <h3>16.9.2 离子阱(IonQ, Quantinuum)</h3>
+          <p><strong>IonQ Forte(2024)</strong>:</p>
+          <ul>
+            <li>36 qubit(全连接)</li>
+            <li>单门错误: $3 \times 10^{-4}$</li>
+            <li>双门(MS)错误: $5 \times 10^{-3}$</li>
+            <li>T1: $10^4 \, \mu s$, T2: $10^3 \, \mu s$</li>
+            <li><strong>优势</strong>: 全连接, 长 T1/T2</li>
+            <li><strong>劣势</strong>: 门慢(~200 $\mu s$ 双门, vs 超导 50 ns)</li>
+          </ul>
+          <p><strong>Quantinuum H2(2024)</strong>:</p>
+          <ul>
+            <li>56 qubit(全连接, QCCD 架构)</li>
+            <li>单门错误: $2 \times 10^{-5}$</li>
+            <li>双门错误: $5 \times 10^{-3}$</li>
+            <li>测量错误: $1.2 \times 10^{-3}$</li>
+            <li>T1: $10^5 \, \mu s$</li>
+            <li><strong>里程碑</strong>: 2023 量子优势 demo(可以"模拟"经典 10²⁴ 操作)</li>
+          </ul>
+          <h3>16.9.3 中性原子(QuEra, Pasqal, Atom Computing)</h3>
+          <p><strong>QuEra Aquila(2024)</strong>:</p>
+          <ul>
+            <li>256 qubit(2D 阵列)</li>
+            <li>单门错误: $8 \times 10^{-3}$</li>
+            <li>双门(CZ)错误: $5 \times 10^{-2}$(<strong>比超导差</strong>)</li>
+            <li>T1, T2: $1 - 10 \, s$(<strong>超长</strong>)</li>
+            <li><strong>优势</strong>: 物理 T1/T2 极长, 可扩展到 1000+ qubit</li>
+            <li><strong>劣势</strong>: 重新排列慢, 门错误高</li>
+          </ul>
+          <p><strong>Atom Computing Phoenix(2023)</strong>:</p>
+          <ul>
+            <li>1180 qubit(2D 阵列, 中性原子)<strong>最大</strong>qubit 数</li>
+            <li>2023 演示 1180 原子纠缠 ✅</li>
+          </ul>
+          <h3>16.9.4 光量子(Xanadu, PsiQuantum, Jiuzhang)</h3>
+          <p><strong>Xanadu Borealis(2022)</strong>:</p>
+          <ul>
+            <li>216 模式(mode)</li>
+            <li>高斯玻色采样(GBS)</li>
+            <li><strong>优势</strong>: 无 T1/T2(光不被退相干)</li>
+            <li><strong>劣势</strong>: 双门(光子-光子)难, 主要跑<strong>采样</strong>而非通用计算</li>
+          </ul>
+          <p><strong>PsiQuantum</strong>(2026 计划):</p>
+          <ul>
+            <li>1M 物理 qubit(目标)</li>
+            <li>光子 + 模块化架构</li>
+            <li><strong>未</strong>公开错误率</li>
+          </ul>
+          <p><strong>中国九章</strong>(2024):</p>
+          <ul>
+            <li>255 光子</li>
+            <li>玻色采样</li>
+          </ul>
+          <h3>16.9.5 拓扑量子计算(Microsoft Majorana 1)</h3>
+          <p><strong>Microsoft Majorana 1(2025)</strong>:</p>
+          <ul>
+            <li>8 拓扑 qubit</li>
+            <li>基于 Majorana 零模</li>
+            <li><strong>状态</strong>: 仍在<strong>科学验证</strong>(2025 公开 demo, 业界<strong>有争议</strong>)</li>
+            <li><strong>目标</strong>: 错误率<strong>极低</strong>(拓扑保护)</li>
+          </ul>
+          <h3>16.9.5.1 拓扑保护的"梦想"vs 现实</h3>
+          <p><strong>理论上的优势</strong>:</p>
+          <ul>
+            <li>Majorana 零模是<strong>拓扑</strong>保护的, 局部扰动<strong>不</strong>改变量子信息</li>
+            <li><strong>自然</strong>免疫退相干(信息存在"全局", 不在"局部")</li>
+            <li><strong>不</strong>需要主动 QEC</li>
+          </ul>
+          <p><strong>现实的挑战</strong>:</p>
+          <ul>
+            <li>Majorana 零模的<strong>实验确认</strong>仍有争议(2024 物理界辩论)</li>
+            <li><strong>难以</strong>实现"非阿贝尔统计"——编织操作(braiding) 工程化</li>
+            <li><strong>未</strong>达到 5+ 拓扑 qubit 的"逻辑 qubit" 编码</li>
+          </ul>
+          <blockquote><strong>行业观点</strong>: 拓扑量子计算是"10-20 年后的答案"——<strong>短期不实用</strong>, 但<strong>长期最有潜力</strong>。</blockquote>
+          <h3>16.9.6 总结:2024-2026 硬件对比</h3>
+          <table>
+            <thead><tr><th>平台</th><th>顶尖 qubit</th><th>双门错误</th><th>优势</th><th>劣势</th></tr></thead>
+            <tbody>
+              <tr><td>超导</td><td>1121 (Condor)</td><td>$5 \times 10^{-3}$</td><td>工程化, 量产</td><td>T1/T2 短</td></tr>
+              <tr><td>离子阱</td><td>56</td><td>$5 \times 10^{-3}$</td><td>全连接, 长 T1/T2</td><td>门慢, 难扩</td></tr>
+              <tr><td>中性原子</td><td>1180</td><td>$5 \times 10^{-2}$</td><td>T1/T2 长, 扩到 1000+</td><td>门错误高</td></tr>
+              <tr><td>光量子</td><td>216 模式</td><td>N/A</td><td>无退相干</td><td>无通用门</td></tr>
+              <tr><td>拓扑</td><td>&lt; 10</td><td>N/A</td><td>拓扑保护</td><td>未工程化</td></tr>
+            </tbody>
+          </table>
+          <p><strong>2024-2026 共识</strong>: <strong>超导 + 离子阱</strong>是<strong>短期</strong>主流;<strong>中性原子 + 光量子</strong>是<strong>中期</strong>潜力;<strong>拓扑</strong>是<strong>长期</strong>希望。</p>
+          <h3>16.9.7 "qubit 质量"的综合指标</h3>
+          <p><strong>单 qubit 质量</strong>可用<strong>品质因子</strong> $Q$ 衡量: $$Q = 2\pi \cdot \frac{\text{相干时间}}{\text{门时间}}$$</p>
+          <p><strong>意义</strong>: 门时间越短, 相干时间越长, $Q$ 越高, qubit 越"好"。</p>
+          <p><strong>各平台 $Q$</strong>(2024-2026):</p>
+          <table>
+            <thead><tr><th>平台</th><th>T2</th><th>门时间</th><th>$Q$</th></tr></thead>
+            <tbody>
+              <tr><td>超导</td><td>$50 - 150 \, \mu s$</td><td>$20 - 50 \, ns$</td><td>$\sim 10^4$</td></tr>
+              <tr><td>离子阱</td><td>$10^4 \, \mu s$</td><td>$100 - 200 \, \mu s$</td><td>$\sim 10^3$</td></tr>
+              <tr><td>中性原子</td><td>$1 - 10 \, s$</td><td>$1 - 10 \, \mu s$</td><td>$\sim 10^6$</td></tr>
+              <tr><td>光量子</td><td>N/A</td><td>$1 - 10 \, ps$</td><td>N/A</td></tr>
+            </tbody>
+          </table>
+          <blockquote><strong>观察</strong>: <strong>中性原子</strong> $Q$ 最高(~$10^6$);<strong>超导</strong> $Q$ 中等;<strong>离子阱</strong> $Q$ 较低(门慢拖累)。</blockquote>
+          <p><strong>但</strong> $Q$ <strong>不</strong>是唯一指标:</p>
+          <ul>
+            <li>还要看 <strong>qubit 数</strong>(中性原子 ✅, 离子阱 ❌)</li>
+            <li>还要看 <strong>门速度</strong>(超导 ✅, 离子阱 ❌)</li>
+            <li>还要看 <strong>全连接性</strong>(离子阱 ✅, 超导 ❌)</li>
+          </ul>
+          <p><strong>没有"最好"的平台</strong>——只有<strong>最适合某任务</strong>的平台。</p>
+          <h3>16.9.8 错误率的"时间稳定性"</h3>
+          <p><strong>真实硬件</strong>的错误率<strong>不</strong>是常数——<strong>随时间漂移</strong>:</p>
+          <ul>
+            <li><strong>短期漂移</strong>($\sim$ 分钟): 脉冲参数抖动</li>
+            <li><strong>中期漂移</strong>($\sim$ 小时): 温度漂移, 激光强度漂移</li>
+            <li><strong>长期漂移</strong>($\sim$ 天): 校准漂移, 材料老化</li>
+          </ul>
+          <p><strong>影响</strong>: 算法需要<strong>实时</strong>重新校准, 增加了<strong>实际运行成本</strong>。</p>
+          <p><strong>IBM 2024 报告</strong>: 56-qubit 系统的错误率<strong>每天</strong>漂移 $\pm 10\%$。需要<strong>自动</strong>重校准。</p>
+          <blockquote><strong>现实警告</strong>: 媒体上"错误率 $10^{-3}$" 是<strong>瞬时</strong>数字——<strong>长期平均</strong>可能差 2-3 倍。<strong>真实</strong>算法成功率<strong>往往低于</strong>理论值。</blockquote>
+          <hr>
+          <h2 id="section-16.10">16.10 ch17-19 铺路:容错的三个阶梯</h2>
+          <blockquote><strong>ch16 给出"问题"</strong>——噪声刻画;<strong>ch17-19 给出"答案"</strong>——怎么让算法在噪声下跑</blockquote>
+          <h3>16.10.1 ch17 量子纠错码(QEC Codes)</h3>
+          <p><strong>目标</strong>: 介绍<strong>通用</strong>的 QEC 框架</p>
+          <p><strong>主要内容</strong>:</p>
+          <ul>
+            <li>17.1 Shor 9-qubit 码(1995 第一个 QEC 码)</li>
+            <li>17.2 Steane 7-qubit 码(CSS 构造)</li>
+            <li>17.3 Stabilizer 形式(测量 syndromes)</li>
+            <li>17.4 经典码视角(线性码 + 辛几何)</li>
+            <li>17.5 量子 Hamming 界 + 量子 Singleton 界</li>
+            <li>17.6 5-qubit 完美码(distance 3, rate 1/5)</li>
+            <li>17.7 ch18 铺路</li>
+          </ul>
+          <p><strong>为什么需要 QEC</strong>: ch16 已说明 NISQ 错误率<strong>不够</strong>——ch17 给<strong>第一个</strong>解决方案。</p>
+          <h3>16.10.2 ch18 表面码(Surface Codes)</h3>
+          <p><strong>目标</strong>: 介绍<strong>现代 FTQC 工业标准</strong> —— 表面码</p>
+          <p><strong>主要内容</strong>:</p>
+          <ul>
+            <li>18.1 表面码的 2D 几何</li>
+            <li>18.2 Stabilizer 测量 + 缺陷</li>
+            <li>18.3 阈值 ~1%(所有码中<strong>最高</strong>之一)</li>
+            <li>18.4 逻辑操作 + 编织(braiding)</li>
+            <li>18.5 Google Willow 2024 表面码实验</li>
+            <li>18.6 资源估算(1 逻辑 qubit = $d^2$ 物理)</li>
+            <li>18.7 ch19 铺路</li>
+          </ul>
+          <p><strong>为什么表面码是工业标准</strong>:</p>
+          <ul>
+            <li><strong>2D 几何</strong>(适合超导芯片)</li>
+            <li><strong>高阈值</strong> ~1%(容错 1000x 容易)</li>
+            <li><strong>最近邻</strong>门(物理实现简单)</li>
+            <li><strong>Google + IBM + Microsoft</strong> 都用</li>
+          </ul>
+          <h3>16.10.3 ch19 容错量子计算(FTQC)</h3>
+          <p><strong>目标</strong>: 介绍<strong>完整</strong> FTQC 架构</p>
+          <p><strong>主要内容</strong>:</p>
+          <ul>
+            <li>19.1 阈值定理(Threshold Theorem)</li>
+            <li>19.2 通用容错门集(GCC)</li>
+            <li>19.3 Magic state distillation</li>
+            <li>19.4 资源估算(RSA-2048: 20M qubits, 8h)</li>
+            <li>19.5 5 种 FTQC 架构对比</li>
+            <li>19.6 2025-2035 实用化时间线</li>
+          </ul>
+          <p><strong>ch19 的核心</strong>:<strong>阈值定理</strong>——只要<strong>单门错误</strong> &lt; <strong>阈值</strong> $\sim 10^{-2}$, <strong>任意</strong>深电路都可容错。<strong>这是 FTQC 的"理论保障"</strong>。</p>
+          <h3>16.10.4 第四部分的总图</h3>
+          <pre><code class="language-python">ch16(本章)         噪声刻画
+   ↓
+ch17 QEC codes     单错误纠正
+   ↓
+ch18 Surface code  工业化 QEC
+   ↓
+ch19 FTQC          阈值定理 + 完整架构
+   ↓
+第四部分 = "在噪声下实现 BQP" 🚧</code></pre>
+          <p><strong>第四部分的"问题驱动"</strong>:</p>
+          <ul>
+            <li>ch16: <strong>怎么</strong>刻画噪声?(T1/T2/Kraus)</li>
+            <li>ch17: <strong>怎么</strong>用冗余纠错?(stabilizer)</li>
+            <li>ch18: <strong>怎么</strong>工业化?(2D 表面码)</li>
+            <li>ch19: <strong>怎么</strong>完整容错?(阈值 + magic state)</li>
+          </ul>
+          <hr>
+          <h2 id="section-16.11">16.11 总结:噪声的"全景图" + ch17-19 路线</h2>
+          <h3>📋 概念速查表</h3>
+          <table>
+            <thead><tr><th>概念</th><th>定义</th><th>关键数字</th></tr></thead>
+            <tbody>
+              <tr><td><strong>T1</strong></td><td>能量弛豫时间 $\lvert 1\rangle \to \lvert 0\rangle$</td><td>超导 $100 \, \mu s$, 离子 $10^5 \, \mu s$</td></tr>
+              <tr><td><strong>T2</strong></td><td>相位退相干时间</td><td>$T_2 \le 2 T_1$</td></tr>
+              <tr><td><strong>CPTP 映射</strong></td><td>完全正 + 保迹的量子操作</td><td>任何物理上可实现的演化</td></tr>
+              <tr><td><strong>Kraus 算子</strong></td><td>$\mathcal{E}(\rho) = \sum_k E_k \rho E_k^\dagger$</td><td>$\sum E_k^\dagger E_k = I$</td></tr>
+              <tr><td><strong>Depolarizing 信道</strong></td><td>$\mathcal{E}(\rho) = (1-p)\rho + (p/3)(X\rho X + Y\rho Y + Z\rho Z)$</td><td>错误率 $p$</td></tr>
+              <tr><td><strong>Amplitude damping</strong></td><td>T1 过程的 Kraus 形式</td><td>$\gamma = 1 - e^{-t/T_1}$</td></tr>
+              <tr><td><strong>Pauli 错误模型</strong></td><td>错误 = 随机应用 $I, X, Y, Z$</td><td>真实硬件的近似</td></tr>
+              <tr><td><strong>NISQ 错误率</strong></td><td>单门 $10^{-3}$, 双门 $10^{-2}$</td><td>2024-2026</td></tr>
+              <tr><td><strong>FTQC 目标</strong></td><td>单门 $10^{-6}$, 双门 $10^{-4}$</td><td>2030+</td></tr>
+              <tr><td><strong>保真度</strong> $F$</td><td>$F(\rho, \sigma) = (\text{tr}\sqrt{\sqrt{\rho}\sigma\sqrt{\rho}})^2$</td><td>$F &gt; 0.99$ 算法无影响</td></tr>
+              <tr><td><strong>电路深度极限</strong></td><td>$n \cdot p \ll 1$</td><td>$n = 100, p = 10^{-3}$ 临界</td></tr>
+              <tr><td><strong>EM</strong>(错误缓解)</td><td>接受噪声, 事后修正</td><td>ZNE / PEC / REM</td></tr>
+              <tr><td><strong>QEC</strong>(错误纠错)</td><td>用冗余编码 + 多数投票</td><td>Shor / Steane / Surface</td></tr>
+              <tr><td><strong>5 种平台</strong></td><td>超导 / 离子阱 / 中性原子 / 光量子 / 拓扑</td><td>各有优劣</td></tr>
+            </tbody>
+          </table>
+          <h3>三层洞察</h3>
+          <ol>
+            <li><strong>物理层</strong>: 噪声<strong>不可消除</strong>——T1, T2 是<strong>物理常数</strong>。只能"工程上减小"或"算法上绕过"。</li>
+            <li><strong>数学层</strong>: CPTP + Kraus 给出<strong>统一</strong>的数学框架; Pauli 错误模型给出<strong>工程上够用</strong>的近似。</li>
+            <li><strong>算法层</strong>: <strong>EM 适合浅-中</strong>电路(NISQ);<strong>QEC 适合深</strong>电路(FTQC)。<strong>两者不冲突</strong>——FTQC 也用 EM。</li>
+          </ol>
+          <h3>关键"心智模型"</h3>
+          <blockquote><strong>"噪声是量子计算的'地心引力'"</strong> —— 永远在, 必须对抗。 经典计算可以"建摩天大楼"(10⁹ 晶体管, 错误率 10⁻¹⁵) 量子计算在"地震带"上建高楼(10³ qubit, 错误率 10⁻²) <strong>EM = 抗震设计</strong>(事后补丁) <strong>QEC = 全新建筑材料</strong>(从源头保护) <strong>FTQC = 找到地震不活跃的板块</strong>(拓扑保护——理想)</blockquote>
+          <h3>关键人物(8 位)</h3>
+          <ul>
+            <li><strong>Peter Shor</strong>(1959-): 1995 提出第一个 QEC 码(9-qubit 码);1994 提出 Shor 算法</li>
+            <li><strong>Andrew Steane</strong>(1965-): 1996 提出 7-qubit 码(CSS 构造)</li>
+            <li><strong>Daniel Gottesman</strong>(1976-): 1996 stabilizer 形式, QEC 理论化</li>
+            <li><strong>Barbara Terhal</strong>: 量子阈值定理证明</li>
+            <li><strong>Alexei Kitaev</strong>(1963-): 表面码(1995, 俄罗斯文); toric code</li>
+            <li><strong>Sergey Bravyi</strong>(1975-): magic state distillation(2005)</li>
+            <li><strong>Jay Gambetta</strong>(1974-): IBM Quantum 主管</li>
+            <li><strong>Hartmut Neven</strong>(1965-): Google Quantum AI 主管</li>
+          </ul>
+          <h3>一句话总结</h3>
+          <blockquote><strong>量子噪声 = 量子计算"地心引力"——T1/T2 刻画, Kraus 描述, Pauli 近似;EM 是 NISQ 时代的"抗震补丁", QEC 是 FTQC 时代的"新建筑材料"——第四部分(本章 + ch17-19)教你"怎么在地震带上建高楼"。</strong></blockquote>
+          <h3>ch17-19 衔接</h3>
+          <ul>
+            <li><strong>ch16</strong>(本章)已给: <strong>噪声是什么 + 怎么描述 + 怎么测</strong></li>
+            <li><strong>ch17</strong>: 怎么<strong>用冗余</strong>纠错(Shor/Steane/CSS)</li>
+            <li><strong>ch18</strong>: 怎么<strong>工业化</strong>(表面码)</li>
+            <li><strong>ch19</strong>: <strong>完整容错</strong>(阈值 + magic state + 资源估算)</li>
+          </ul>
+          <h3>推荐阅读</h3>
+          <p><strong>经典</strong>:</p>
+          <ul>
+            <li>Nielsen &amp; Chuang《Quantum Computation and Quantum Information》第 8 章</li>
+            <li>Preskill《Lecture Notes on Quantum Computation》第 7 章(开放)</li>
+          </ul>
+          <p><strong>现代综述</strong>:</p>
+          <ul>
+            <li>Campbell, Terhal, Vuillot (2017) "Roads towards fault-tolerant universal quantum computation"</li>
+            <li>Google Quantum AI (2024) "Quantum error correction below the surface code threshold"(Willow 表面码)</li>
+          </ul>
+          <p><strong>数据集</strong>:</p>
+          <ul>
+            <li><a href="https://quantumcomputingreport.com/" target="_blank" rel="noopener">Quantum Computing Report</a>: 实时硬件数据</li>
+            <li><a href="https://quantum.ibm.com/" target="_blank" rel="noopener">IBM Quantum</a>: 公开硬件 + 数据</li>
+            <li>[QuEra / IonQ / Quantinuum]: 各家技术报告</li>
+          </ul>
+          <h3>思考题(4 道)</h3>
+          <ol>
+            <li><strong>(概念)</strong> 解释 $T_2 \le 2 T_1$ 的物理原因。如果 T1 过程<strong>只</strong>导致能量弛豫(无相位退相干), $T_2 = 2T_1$ 吗?</li>
+            <li><strong>(数学)</strong> 验证 Depolarizing 信道的 Kraus 算子满足 $\sum E_k^\dagger E_k = I$。证明 $\mathcal{E}(\rho) = (1 - 4p/3)\rho + (p/3) I$ 等价于 Kraus 形式。</li>
+            <li><strong>(工程)</strong> 假设 1 量子比特 $T_1 = 100 \, \mu s$, $T_2 = 80 \, \mu s$。运行 500 门的电路(单门 20 ns, 双门 50 ns, 占比 20%)。估计电路结束时 $\lvert +\rangle$ 的保真度。</li>
+            <li><strong>(战略)</strong> 在 2024-2026 平台中, <strong>哪两个</strong>最适合<strong>短期</strong>(3 年内)实现 100+ qubit 的 QEC demo?为什么?(提示: 看错误率 + qubit 数 + 工业投入)</li>
+          </ol>
+          <h3>思考题提示(便于自学)</h3>
+          <p><strong>T1</strong>: $T_1 = 100 \, \mu s$, 电路时间 = $500 \times 20 \text{ ns} \times 0.8 + 500 \times 50 \text{ ns} \times 0.2 = 8000 + 5000 = 13000 \text{ ns} = 13 \, \mu s$ <strong>T2</strong>: $T_2 = 80 \, \mu s$, 退相位 = $1 - e^{-13/80} \approx 0.15 = 15\%$ <strong>F</strong>: $F \approx 0.5 (1 + 0.85) = 0.925$ (考虑 T1 贡献的修正)</p>
+          <p><strong>结论</strong>: 电路结束保真度约 92.5%, <strong>勉强可用</strong>但<strong>不优秀</strong>。</p>
+          <hr>
+          <p><strong>第四部分开篇 🚀 — ch16 完</strong></p>
+
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 720 460" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <defs>
+      <radialGradient id="blochGrad" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#1e3a8a" stop-opacity="0.4"/>
+        <stop offset="60%" stop-color="#0a0e27" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#0a0e27" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <text x="360" y="28" fill="#e5e7eb" font-size="17" font-weight="bold" text-anchor="middle">图 16.1: Bloch 球收缩 — 退相干的几何图像</text>
+    <text x="360" y="48" fill="#9ca3af" font-size="10" text-anchor="middle">T1 = 能量弛豫(球面→中心);T2 = 相位退相干(球面→球内)</text>
+
+    <!-- Left: Initial pure state on sphere -->
+    <g transform="translate(180, 250)">
+      <circle cx="0" cy="0" r="120" fill="url(#blochGrad)" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+      <circle cx="0" cy="0" r="120" fill="none" stroke="#06b6d4" stroke-width="2"/>
+      <!-- Axes -->
+      <line x1="-130" y1="0" x2="130" y2="0" stroke="#6b7280" stroke-width="1"/>
+      <line x1="0" y1="-130" x2="0" y2="130" stroke="#6b7280" stroke-width="1"/>
+      <text x="140" y="5" fill="#9ca3af" font-size="11">x</text>
+      <text x="-5" y="-135" fill="#9ca3af" font-size="11">y</text>
+      <text x="5" y="145" fill="#9ca3af" font-size="11">z</text>
+      <!-- Initial state on equator (|+&gt;) -->
+      <circle cx="100" cy="0" r="6" fill="#10b981"/>
+      <text x="115" y="20" fill="#a7f3d0" font-size="10">|+⟩ (初始)</text>
+      <text x="0" y="160" fill="#10b981" font-size="11" font-weight="bold" text-anchor="middle">|r| = 1.0 (纯态)</text>
+    </g>
+
+    <!-- Middle arrow -->
+    <text x="360" y="200" fill="#fbbf24" font-size="22" font-weight="bold" text-anchor="middle">→</text>
+    <text x="360" y="225" fill="#fbbf24" font-size="10" text-anchor="middle">退相干</text>
+    <text x="360" y="240" fill="#9ca3af" font-size="9" text-anchor="middle">t &gt; 0</text>
+
+    <!-- Right: Contracted state inside ball -->
+    <g transform="translate(540, 250)">
+      <circle cx="0" cy="0" r="120" fill="url(#blochGrad)" stroke="#06b6d4" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.6"/>
+      <circle cx="0" cy="0" r="120" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.5"/>
+      <circle cx="0" cy="0" r="60" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="4 2"/>
+      <!-- Axes -->
+      <line x1="-130" y1="0" x2="130" y2="0" stroke="#6b7280" stroke-width="1"/>
+      <line x1="0" y1="-130" x2="0" y2="130" stroke="#6b7280" stroke-width="1"/>
+      <text x="140" y="5" fill="#9ca3af" font-size="11">x</text>
+      <text x="-5" y="-135" fill="#9ca3af" font-size="11">y</text>
+      <text x="5" y="145" fill="#9ca3af" font-size="11">z</text>
+      <!-- Contracted state (smaller radius) -->
+      <circle cx="50" cy="0" r="6" fill="#ec4899"/>
+      <text x="65" y="20" fill="#fbcfe8" font-size="10">ρ (混合)</text>
+      <!-- Center: fully mixed -->
+      <circle cx="0" cy="0" r="3" fill="#6b7280"/>
+      <text x="15" y="3" fill="#9ca3af" font-size="9">I/2</text>
+      <text x="0" y="160" fill="#ec4899" font-size="11" font-weight="bold" text-anchor="middle">|r| &lt; 1 (混合态)</text>
+    </g>
+
+    <!-- Legend -->
+    <rect x="40" y="380" width="640" height="60" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1" rx="6"/>
+    <text x="60" y="402" fill="#e5e7eb" font-size="12" font-weight="bold">几何意义:</text>
+    <text x="60" y="422" fill="#a7f3d0" font-size="11">• 纯态 = 球面 (|r|=1) | 退相干 = 球收缩 (|r|&lt;1) | 完全混合 = 球心 (I/2)</text>
+  </svg>
+  <figcaption>图 16.1: Bloch 球收缩图示。绿色 = 纯态 |+⟩ (在球面, |r|=1);粉色 = 退相干后的混合态 ρ (球内, |r|&lt;1);灰色 = 完全混合态 I/2 (球心)。这是退相干的"几何图像"——任何噪声 = 球收缩 + (可能的)球旋转。</figcaption>
+</figure>
+
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg" style="max-width:760px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <text x="380" y="28" fill="#e5e7eb" font-size="17" font-weight="bold" text-anchor="middle">图 16.2: 5 种量子信道对比</text>
+    <text x="380" y="48" fill="#9ca3af" font-size="10" text-anchor="middle">Kraus 算子 + 物理 + 错误率</text>
+
+    <!-- Headers -->
+    <text x="40" y="80" fill="#67e8f9" font-size="11" font-weight="bold">信道</text>
+    <text x="200" y="80" fill="#67e8f9" font-size="11" font-weight="bold">Kraus 算子</text>
+    <text x="460" y="80" fill="#67e8f9" font-size="11" font-weight="bold">物理</text>
+    <text x="640" y="80" fill="#67e8f9" font-size="11" font-weight="bold">错误率</text>
+    <line x1="20" y1="90" x2="740" y2="90" stroke="#06b6d4" stroke-width="1"/>
+
+    <!-- Row 1: Bit flip -->
+    <text x="40" y="115" fill="#a7f3d0" font-size="12" font-weight="bold">Bit flip</text>
+    <text x="200" y="110" fill="#e5e7eb" font-size="10">E₀ = √(1-p) I</text>
+    <text x="200" y="124" fill="#e5e7eb" font-size="10">E₁ = √p X</text>
+    <text x="460" y="118" fill="#e5e7eb" font-size="10">|0⟩↔|1⟩ 翻转</text>
+    <text x="640" y="118" fill="#fbbf24" font-size="10">p</text>
+
+    <!-- Row 2: Phase flip -->
+    <text x="40" y="155" fill="#a7f3d0" font-size="12" font-weight="bold">Phase flip</text>
+    <text x="200" y="150" fill="#e5e7eb" font-size="10">E₀ = √(1-p) I</text>
+    <text x="200" y="164" fill="#e5e7eb" font-size="10">E₁ = √p Z</text>
+    <text x="460" y="158" fill="#e5e7eb" font-size="10">|+⟩↔|−⟩ 翻转</text>
+    <text x="640" y="158" fill="#fbbf24" font-size="10">p</text>
+
+    <!-- Row 3: Depolarizing -->
+    <text x="40" y="195" fill="#a7f3d0" font-size="12" font-weight="bold">Depolarizing</text>
+    <text x="200" y="190" fill="#e5e7eb" font-size="10">E₀ = √(1-p) I</text>
+    <text x="200" y="204" fill="#e5e7eb" font-size="10">Eₖ = √(p/3) σₖ (X,Y,Z)</text>
+    <text x="460" y="198" fill="#e5e7eb" font-size="10">随机 Pauli 错误</text>
+    <text x="640" y="198" fill="#fbbf24" font-size="10">p</text>
+
+    <!-- Row 4: Amplitude damping -->
+    <text x="40" y="245" fill="#a7f3d0" font-size="12" font-weight="bold">Amp. damping</text>
+    <text x="200" y="235" fill="#e5e7eb" font-size="10">E₀ = |0⟩⟨0| + √(1-γ)|1⟩⟨1|</text>
+    <text x="200" y="249" fill="#e5e7eb" font-size="10">E₁ = √γ |0⟩⟨1|</text>
+    <text x="460" y="243" fill="#e5e7eb" font-size="10">T1 能量弛豫</text>
+    <text x="640" y="243" fill="#fbbf24" font-size="10">γ = 1-e^(-t/T1)</text>
+
+    <!-- Row 5: Phase damping -->
+    <text x="40" y="295" fill="#a7f3d0" font-size="12" font-weight="bold">Phase damping</text>
+    <text x="200" y="285" fill="#e5e7eb" font-size="10">E₀ = |0⟩⟨0| + √(1-λ)|1⟩⟨1|</text>
+    <text x="200" y="299" fill="#e5e7eb" font-size="10">E₁ = √λ |1⟩⟨1|</text>
+    <text x="460" y="293" fill="#e5e7eb" font-size="10">T2 相位退相干</text>
+    <text x="640" y="293" fill="#fbbf24" font-size="10">λ = 1-e^(-t/T2)</text>
+
+    <line x1="20" y1="320" x2="740" y2="320" stroke="#06b6d4" stroke-width="1" opacity="0.5"/>
+
+    <!-- Block: hierarchy -->
+    <rect x="20" y="340" width="720" height="170" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5" rx="8"/>
+    <text x="380" y="365" fill="#a78bfa" font-size="13" font-weight="bold" text-anchor="middle">📌 信道之间的关系</text>
+
+    <text x="40" y="395" fill="#e5e7eb" font-size="11">• <tspan fill="#10b981" font-weight="bold">Bit/Phase flip</tspan> = 单 Pauli 错误模型(独立错误)</text>
+    <text x="40" y="415" fill="#e5e7eb" font-size="11">• <tspan fill="#10b981" font-weight="bold">Depolarizing</tspan> = 三 Pauli 等概率混合(最简单"全错"模型)</text>
+    <text x="40" y="435" fill="#e5e7eb" font-size="11">• <tspan fill="#ec4899" font-weight="bold">Amp. damping</tspan> = T1 过程的 Kraus 形式(物理真实)</text>
+    <text x="40" y="455" fill="#e5e7eb" font-size="11">• <tspan fill="#ec4899" font-weight="bold">Phase damping</tspan> = T2 过程的 Kraus 形式(无能量损失)</text>
+    <text x="40" y="475" fill="#e5e7eb" font-size="11">• <tspan fill="#fbbf24" font-weight="bold">关系</tspan>: Depolarizing ≈ Bit + Phase + Bit-Phase 的 1/3 混合</text>
+    <text x="40" y="495" fill="#e5e7eb" font-size="11">• <tspan fill="#a78bfa" font-weight="bold">Stinespring 统一</tspan>: 所有信道 = 系统⊗环境酉演化 + 部分迹</text>
+  </svg>
+  <figcaption>图 16.2: 5 种常见量子信道对比表。包括 Bit flip、Phase flip、Depolarizing、Amplitude damping(T1 过程)、Phase damping(T2 过程)。每种信道的 Kraus 算子、物理意义、错误率都列出。底部"信道关系"给出 5 种信道的层级和统一框架(Stinespring 膨胀)。</figcaption>
+</figure>
+
+<!-- 章节 pager -->
+        <nav class="chapter-pager" aria-label="章节导航">
+          <a href="ch15.html" class="pager-link pager-prev">
+            <span class="pager-label">← 上一章</span>
+            <span class="pager-title">第 15 章 量子复杂性理论 (QCT)</span>
+          </a>
+          <a href="#" class="pager-link pager-next pager-disabled" aria-disabled="true">
+            <span class="pager-label">下一章 →</span>
+            <span class="pager-title">第 17 章 量子纠错码(即将推出)</span>
+          </a>
+        </nav>
+
+        </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
