@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第17章：量子纠错码 (Quantum Error Correction Codes) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第17章：量子纠错码 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第四部分 · 量子纠错与容错 · Day 2</span>
+        <span class="chapter-day-tag">Day 20 · 2026-06-27</span>
+      </div>
+      <h1 class="chapter-title">第 17 章 量子纠错码 (Quantum Error Correction Codes)</h1>
+      <p class="chapter-subtitle">三大障碍 + 三大创新 + Shor 9-qubit + Steane 7-qubit + 5-qubit 完美码 + Stabilizer + 量子界 + 第四部分 Day 2</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,550 字</span>
+        <span class="stat">🔢 11 节 · 7 附录 · 50+ 子节</span>
+        <span class="stat">📑 Shor 9 / Steane 7 / 5-qubit / Stabilizer / CSS / Hamming 界</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+      <article class="chapter-content">
+          <h1>第 17 章 量子纠错码 (Quantum Error Correction Codes)</h1>
+          <blockquote><strong>第四部分 · 量子纠错与容错</strong> — Day 2 <strong>目标</strong>: QEC 的原理基础 —— 三个奠基性量子码 + stabilizer 形式 + 量子界 <strong>里程碑</strong>: 17/28 章 = 61%</blockquote>
+          <hr>
+          <h1>第 17 章 量子纠错码</h1>
+<blockquote><p>**章节定位**: 第四部分「量子纠错与容错」**Day 2** —— ch16 给出"问题"（噪声刻画),本章给出第一个"答案"——**冗余编码**让错误可被检测和纠正</p></blockquote>
+<p>></p>
+<blockquote><p>**章节目标**: 1. 理解量子纠错的**三大障碍**(不可克隆 / 连续错误 / 测量破坏) 2. 掌握三个**奠基性量子码**: Shor 9-qubit / Steane 7-qubit / 5-qubit 完美码 3. 学会**stabilizer 形式**——现代 QEC 的统一语言 4. 了解**经典码视角**——CSS 构造的数学基础 5. 理解**量子界**(Hamming 界 + Singleton 界)</p></blockquote>
+<p>></p>
+<blockquote><p>**承上(ch16)**: 上一章讲了"噪声不可消除"——T1, T2 刻画 + Kraus 描述 + Pauli 近似 + 5 平台错误率。本章问:**既然噪声不可避免, 怎么保护信息?**</p></blockquote>
+<p>></p>
+<blockquote><p>**启下(ch18-19)**: 本章是**通用**QEC 框架(ch18 工业化表面码, ch19 完整容错 + 阈值定理)</p></blockquote>
+<hr>
+<h2 id="section-17.0">17.0 引言:三大障碍与三大创新</h2>
+<blockquote><p>**一句话总结**: 经典纠错**不能直接**移植到量子——需要三个**量子特有的创新**。</p></blockquote>
+<h3>17.0.1 经典纠错的"传统智慧"</h3>
+<p>**经典重复码**(bit-flip code)的核心思想:**冗余 + 多数投票**。</p>
+<ul>
+<li>1 逻辑 bit → 3 物理 bit</li>
+<li>编码: $0 \to 000$, $1 \to 111$</li>
+<li>错误检测: 测 $\text{parity}(b_1 \oplus b_2, b_2 \oplus b_3)$</li>
+<li>错误纠正: 多数投票</li>
+</ul>
+<p>**核心假设**:</p>
+<ol>
+<li>可以**复制** bit (没有不可克隆问题)</li>
+<li>错误空间**离散**($b_i$ 是 0/1)</li>
+<li>可以**测量** bit 而不破坏信息(经典测量不改变经典态)</li>
+</ol>
+<h3>17.0.2 量子世界的三大障碍</h3>
+<p>**障碍 1: 不可克隆定理**(ch06 详述)</p>
+<ul>
+<li>Shor 1982 + Wootters-Zurek 1982</li>
+<li>任意未知量子态**不能**完美复制</li>
+<li>**后果**: 经典"复制"思路**不能**直接用</li>
+</ul>
+<p>**障碍 2: 连续错误空间**</p>
+<ul>
+<li>经典: bit 错误**只有 1 种**($0 \leftrightarrow 1$)</li>
+<li>量子: 单 qubit 错误**连续无限种**(Bloch 球上**任意**旋转)</li>
+<li>**例**: $|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$, 错误后变 $\alpha'|0\rangle + \beta'|1\rangle$ with $\alpha', \beta'$ 任意</li>
+<li>**后果**: 经典"查表"**行不通**(表是无限的)</li>
+</ul>
+<p>**障碍 3: 测量破坏量子态**(ch05 详述)</p>
+<ul>
+<li>量子测量**不可逆**地改变态</li>
+<li>**直接**测 $\alpha, \beta$ 拿不到信息(只拿到一次结果)</li>
+<li>**后果**: 经典"读出 + 投票"**不能**用</li>
+</ul>
+<h3>17.0.3 三个量子特有的创新</h3>
+<p>**创新 1: 冗余编码**(不复制, **纠缠**)</p>
+<ul>
+<li>**不**复制 $|\psi\rangle$ 到 3 份</li>
+<li>**而是**用 9 个物理 qubit **纠缠地**编码 1 个逻辑 qubit</li>
+<li>$|\psi\rangle = \alpha|0\rangle + \beta|1\rangle \to |\psi\rangle_L = \alpha|0\rangle_L + \beta|1\rangle_L$</li>
+<li>$|0\rangle_L, |1\rangle_L$ 是 9-qubit Hilbert 空间的**两个正交子空间**</li>
+<li>**例 (Shor 9-qubit)**: $|0\rangle_L = (|000\rangle + |111\rangle)(|000\rangle + |111\rangle)(|000\rangle + |111\rangle)/2\sqrt{2}$(详见 17.1)</li>
+</ul>
+<p>**创新 2: 离散化**(连续 → 离散)</p>
+<ul>
+<li>任意单 qubit 错误 $E$ 可展开为 $E = e_0 I + e_1 X + e_2 Y + e_3 Z$</li>
+<li>**只需**纠正 $I, X, Y, Z$ 4 种**离散** Pauli 错误</li>
+<li>**4 种足够**: $I$ 没问题, $X$ bit-flip, $Z$ phase-flip, $Y = iXZ$ 组合</li>
+<li>**无穷**种错误 → **4 种**Pauli 错误(连续 → 离散)</li>
+<li>**Knill-Laflamme 1997** 形式化证明</li>
+</ul>
+<p>**创新 3: syndrome 测量**(不破坏态地"偷看"错误)</p>
+<ul>
+<li>**不**直接测量物理 qubit(那会破坏编码)</li>
+<li>**而是**测量 **stabilizer 算子**(详见 17.3)</li>
+<li>测量结果(syndrome)**只**告诉你**哪种**错误发生</li>
+<li>**不**告诉你 $|\psi\rangle$ 的 $\alpha, \beta$ 信息</li>
+<li>**不**破坏 $|\psi\rangle$ 的逻辑内容</li>
+</ul>
+<h3>17.0.4 ch17 的逻辑线</h3>
+<pre><code>
+经典纠错 (重复码) 
+    ↓ 三大障碍
+    ↓ 三大创新(冗余纠缠 / 离散化 / syndrome)
+    ↓
+Shor 9-qubit 码 (17.1, 1995, 第一个)
+    ↓
+Steane 7-qubit 码 (17.2, 1996, CSS 构造)
+    ↓
+Stabilizer 形式 (17.3, 1996, Gottesman 统一)
+    ↓
+CSS 经典码视角 (17.4, 1996, 数学基础)
+    ↓
+量子 Hamming 界 + Singleton 界 (17.5, 码的存在性边界)
+    ↓
+5-qubit 完美码 (17.6, 1996, 最小码)
+    ↓
+错误检测 vs 纠正 (17.7, 详细对比)
+    ↓
+量子 vs 经典码 5 大区别 (17.8, 总结)
+    ↓
+ch18 表面码铺路 (17.9)
+    ↓
+总结 (17.10)
+</code></pre>
+<blockquote><p>**类比**: 经典纠错是"复印"——复印 3 份, 投票修复。量子纠错是"全息"——把 1 个 qubit 的信息**分布**到 9 个 qubit 的**纠缠**中, 让**任何**单 qubit 错误变成"局部失真", 可被**整体**的 syndrome 检测。</p></blockquote>
+<h3>17.0.5 三个"先验"问题</h3>
+<p>**Q1**: 为什么**单** qubit 错误?(不是 2 个、3 个错误?)</p>
+<ul>
+<li>**A**: 错误率 $p \ll 1$ (典型 $10^{-3} - 10^{-4}$)</li>
+<li>1 个错误概率 $\sim np$, 2 个错误概率 $\sim \binom{n}{2}p^2$</li>
+<li>$n = 100, p = 10^{-3}$: 1 错误 $\sim 10\%$, 2 错误 $\sim 0.5\%$</li>
+<li>**设计码只处理 1 错误** 是**实际工程权衡**</li>
+</ul>
+<p>**Q2**: 纠正 1 个错误 = 距离 3 码, 这意味着什么?</p>
+<ul>
+<li>**A**: Hamming 距离 $d$: 任意两个**合法**码字至少差 $d$ 个 qubit</li>
+<li>$d = 1$: 距离 1(无保护, 例 0 跟 1 距离 1)</li>
+<li>$d = 2$: 距离 2(可**检测** 1 错误, 例 00 跟 11)</li>
+<li>$d = 3$: 距离 3(可**纠正** 1 错误, **同时检测** 2 错误)</li>
+<li>**QEC 码通常 $d = 3$** 起步(ch18 表面码 $d = 5, 7, ...$ 工业级)</li>
+</ul>
+<p>**Q3**: Shor 9-qubit, Steane 7-qubit, 5-qubit — 哪个"最好"?</p>
+<ul>
+<li>**A**: 取决于评价标准</li>
+<li>**5-qubit**: 物理 qubit **最少**, **最经济**, 实际工程首选</li>
+<li>**Steane 7-qubit**: CSS 构造, **易分析**, 教学首选</li>
+<li>**Shor 9-qubit**: 历史**第一个**, 演示原理</li>
+</ul>
+<h3>17.0.6 QEC 的"应用光谱"</h3>
+<p>**3 个不同的应用场景**:</p>
+<table class="chapter-table">
+<tr><td>场景</td><td>需求</td><td>推荐码</td></tr>
+<tr><td>**小规模 demo**(NISQ)</td><td>1 logical qubit 保护</td><td>5-qubit / Steane 7</td></tr>
+<tr><td>**中等规模**(early FTQC)</td><td>~10-100 logical</td><td>表面码 $d = 3, 5$</td></tr>
+<tr><td>**大规模算法**(Shor)</td><td>~$10^3$-$10^6$ logical</td><td>表面码 $d = 5-15$ + magic state</td></tr>
+</table>
+<p>**资源消耗**:</p>
+<ul>
+<li>1 logical qubit (5-qubit 码, $d = 3$): 5 物理</li>
+<li>1 logical qubit (Steane, $d = 3$): 7 物理</li>
+<li>1 logical qubit (表面码, $d = 5$): $5^2 = 25$ 物理</li>
+<li>1 logical qubit (表面码, $d = 7$): $7^2 = 49$ 物理</li>
+<li>1 logical qubit (Shor RSA-2048): ~$10^3$ 物理</li>
+</ul>
+<p>**关键观察**: **距离 $d$ 越大, 物理 qubit 数 $\sim d^2$ 增长**(表面码); 5-qubit 码"性价比"在 $d=3$ 段最强, 但 $d > 3$ 不如表面码。</p>
+<h3>17.0.7 经典 vs 量子 QEC 资源对比</h3>
+<table class="chapter-table">
+<tr><td>错误率</td><td>经典(磁盘)</td><td>量子(QEC)</td></tr>
+<tr><td>$10^{-9}$</td><td>1 bit 直接用</td><td>~5 qubit 即可</td></tr>
+<tr><td>$10^{-6}$</td><td>1 bit 直接用</td><td>~$5^2$ qubit</td></tr>
+<tr><td>$10^{-3}$</td><td>1 bit 直接用</td><td>~$10^3$ qubit(表面码 $d=15$)</td></tr>
+</table>
+<p>**关键差异**: 经典 $p$ 极低, **不必**纠错。量子 $p$ 高 ~$10^{6}$ 倍, QEC 必需。**这**是量子计算"看起来不可能"的根本原因。</p>
+<hr>
+<h2 id="section-17.1">17.1 Shor 9-qubit 码:第一个量子纠错码</h2>
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 760 540" xmlns="http://www.w3.org/2000/svg" style="max-width:760px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <text x="380" y="28" fill="#e5e7eb" font-size="17" font-weight="bold" text-anchor="middle">图 17.1: Shor 9-qubit 码的编码电路 (两阶段)</text>
+    <text x="380" y="48" fill="#9ca3af" font-size="10" text-anchor="middle">Phase-flip 编码 (1→3) → Bit-flip 编码 (3→9)</text>
+
+    <!-- Phase-flip encoding (1 -> 3) -->
+    <text x="20" y="80" fill="#67e8f9" font-size="12" font-weight="bold">阶段 1: Phase-flip 编码 (1 qubit → 3 qubit cat 态)</text>
+    <rect x="20" y="90" width="360" height="120" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1" rx="6"/>
+
+    <!-- Qubit 0 (input) -->
+    <text x="35" y="115" fill="#a7f3d0" font-size="10">q₀ (逻辑):</text>
+    <line x1="35" y1="125" x2="180" y2="125" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="100" y="118" fill="#fbbf24" font-size="10">|ψ⟩</text>
+    <circle cx="35" cy="125" r="3" fill="#10b981"/>
+    <text x="35" y="145" fill="#9ca3af" font-size="8">α|0⟩+β|1⟩</text>
+
+    <!-- CNOT to ancillas -->
+    <circle cx="180" cy="125" r="14" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="180" y="129" fill="#06b6d4" font-size="9" text-anchor="middle">●</text>
+    <line x1="194" y1="125" x2="220" y2="125" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="115" x2="260" y2="115" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="135" x2="260" y2="135" stroke="#06b6d4" stroke-width="1.5"/>
+    <circle cx="260" cy="115" r="3" fill="#10b981"/>
+    <circle cx="260" cy="135" r="3" fill="#10b981"/>
+    <text x="35" y="180" fill="#a7f3d0" font-size="9">→ 1 阶段后:</text>
+    <text x="130" y="180" fill="#a7f3d0" font-size="9">α|+++⟩ + β|---⟩</text>
+
+    <!-- Bit-flip encoding (3 -> 9) -->
+    <text x="20" y="240" fill="#67e8f9" font-size="12" font-weight="bold">阶段 2: Bit-flip 编码 (每个 cat qubit → 3 qubit 重复码)</text>
+    <rect x="20" y="250" width="720" height="200" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1" rx="6"/>
+
+    <!-- 3 input qubits (cat state qubits) -->
+    <text x="35" y="280" fill="#a7f3d0" font-size="10">q₁ (cat₁):</text>
+    <line x1="35" y1="290" x2="180" y2="290" stroke="#06b6d4" stroke-width="1.5"/>
+    <circle cx="35" cy="290" r="3" fill="#10b981"/>
+    <text x="35" y="320" fill="#a7f3d0" font-size="10">q₂ (cat₂):</text>
+    <line x1="35" y1="330" x2="180" y2="330" stroke="#06b6d4" stroke-width="1.5"/>
+    <circle cx="35" cy="330" r="3" fill="#10b981"/>
+    <text x="35" y="360" fill="#a7f3d0" font-size="10">q₃ (cat₃):</text>
+    <line x1="35" y1="370" x2="180" y2="370" stroke="#06b6d4" stroke-width="1.5"/>
+    <circle cx="35" cy="370" r="3" fill="#10b981"/>
+
+    <!-- CNOT 1: q1 -> ancillas a1, a2 -->
+    <circle cx="180" cy="290" r="14" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="180" y="294" fill="#06b6d4" font-size="9" text-anchor="middle">●</text>
+    <line x1="194" y1="290" x2="220" y2="290" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="290" x2="320" y2="320" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="290" x2="320" y2="350" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="240" y="285" fill="#fbbf24" font-size="8">⊕</text>
+    <circle cx="320" cy="320" r="3" fill="#10b981"/>
+    <circle cx="320" cy="350" r="3" fill="#10b981"/>
+
+    <!-- CNOT 2: q2 -> ancillas a3, a4 -->
+    <circle cx="180" cy="330" r="14" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="180" y="334" fill="#06b6d4" font-size="9" text-anchor="middle">●</text>
+    <line x1="194" y1="330" x2="220" y2="330" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="330" x2="320" y2="360" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="330" x2="320" y2="390" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="240" y="325" fill="#fbbf24" font-size="8">⊕</text>
+    <circle cx="320" cy="360" r="3" fill="#10b981"/>
+    <circle cx="320" cy="390" r="3" fill="#10b981"/>
+
+    <!-- CNOT 3: q3 -> ancillas a5, a6 -->
+    <circle cx="180" cy="370" r="14" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="180" y="374" fill="#06b6d4" font-size="9" text-anchor="middle">●</text>
+    <line x1="194" y1="370" x2="220" y2="370" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="370" x2="320" y2="400" stroke="#06b6d4" stroke-width="1.5"/>
+    <line x1="220" y1="370" x2="320" y2="430" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="240" y="365" fill="#fbbf24" font-size="8">⊕</text>
+    <circle cx="320" cy="400" r="3" fill="#10b981"/>
+    <circle cx="320" cy="430" r="3" fill="#10b981"/>
+
+    <!-- Final labels -->
+    <text x="360" y="320" fill="#a7f3d0" font-size="9">a₁</text>
+    <text x="360" y="350" fill="#a7f3d0" font-size="9">a₂</text>
+    <text x="360" y="360" fill="#a7f3d0" font-size="9">a₃</text>
+    <text x="360" y="390" fill="#a7f3d0" font-size="9">a₄</text>
+    <text x="360" y="400" fill="#a7f3d0" font-size="9">a₅</text>
+    <text x="360" y="430" fill="#a7f3d0" font-size="9">a₆</text>
+
+    <text x="35" y="430" fill="#a7f3d0" font-size="9">→ 最终 9 qubit 编码:</text>
+    <text x="180" y="430" fill="#10b981" font-size="9" font-weight="bold">|ψ⟩_L (Shor 9-qubit 码)</text>
+
+    <!-- Legend -->
+    <rect x="500" y="270" width="220" height="170" fill="#1e1b4b" stroke="#06b6d4" stroke-width="1" rx="6"/>
+    <text x="520" y="290" fill="#67e8f9" font-size="11" font-weight="bold">图例:</text>
+    <circle cx="525" cy="310" r="3" fill="#10b981"/>
+    <text x="540" y="314" fill="#e5e7eb" font-size="10">qubit (物理)</text>
+    <circle cx="180" cy="320" r="10" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+    <text x="525" y="334" fill="#e5e7eb" font-size="10">CNOT 控制位</text>
+    <text x="600" y="334" fill="#fbbf24" font-size="10">⊕ 靶位</text>
+    <text x="525" y="360" fill="#a7f3d0" font-size="10">9 物理 qubit 编码 1 逻辑 qubit</text>
+    <text x="525" y="380" fill="#a7f3d0" font-size="10">总电路深度: ~9 CNOT</text>
+    <text x="525" y="400" fill="#a7f3d0" font-size="10">+ 8 ancilla 测 syndrome</text>
+    <text x="525" y="420" fill="#a7f3d0" font-size="10">总资源: 17 qubit</text>
+
+    <text x="380" y="500" fill="#a7f3d0" font-size="10" text-anchor="middle">Shor 9-qubit 码 = 1 逻辑 qubit 编码成 9 物理 qubit 纠缠态 (1995)</text>
+    <text x="380" y="520" fill="#9ca3af" font-size="9" text-anchor="middle">$|0\rangle_L = \frac{1}{2\sqrt{2}}(|000\rangle+|111\rangle)^{\otimes 3}$, $|1\rangle_L = \frac{1}{2\sqrt{2}}(|000\rangle-|111\rangle)^{\otimes 3}$</text>
+  </svg>
+  <figcaption>图 17.1: Shor 9-qubit 码的两阶段编码电路。阶段 1: phase-flip 编码 1→3 qubit 猫态;阶段 2: 对每个 cat qubit 做经典 3-qubit bit-flip 重复码 3→9 qubit。总计 9 物理 qubit 编码 1 逻辑 qubit,需 8 个 ancilla 测 syndrome,共 17 qubit 资源。</figcaption>
+</figure>
+
+<blockquote><p>**历史地位**: 1995 年 Peter Shor 提出,**第一个**量子纠错码, 证明**量子纠错在原理上可行**。</p></blockquote>
+<h3>17.1.1 码参数: $[[9, 1, 3]]$</h3>
+<ul>
+<li>**9** 物理 qubit</li>
+<li>**1** 逻辑 qubit(编码 1 个 $|\psi\rangle$)</li>
+<li>**3** 距离(纠正 1 错误)</li>
+<li>**码率** $k/n = 1/9$ (很低, **实用**用 ch18 表面码)</li>
+</ul>
+<h3>17.1.2 编码: 3 个"3-qubit 重复码"级联</h3>
+<p>**Step 1: 3-qubit 重复码(bit-flip 码)**</p>
+<ul>
+<li>编码 $|0\rangle \to |000\rangle$, $|1\rangle \to |111\rangle$</li>
+<li>**纠正** bit-flip ($X$ 错误)</li>
+<li>**不**纠正 phase-flip ($Z$ 错误)</li>
+</ul>
+<p>**Step 2: 3-qubit 重复码(phase-flip 码 / "猫态码")**</p>
+<ul>
+<li>把 $|+\rangle, |-\rangle$ 看作"经典 bit"再编码</li>
+<li>$|+\rangle = (|0\rangle + |1\rangle)/\sqrt{2} \to |{+}{+}{+}\rangle$</li>
+<li>$|-\rangle = (|0\rangle - |1\rangle)/\sqrt{2} \to |{-}{-}{-}\rangle$</li>
+<li>**纠正** phase-flip ($Z$ 错误)</li>
+<li>**不**纠正 bit-flip ($X$ 错误)</li>
+</ul>
+<p>**Step 3: Shor 的 9-qubit 码(级联)**</p>
+<ul>
+<li>先把 1 qubit 用 phase-flip 码扩到 3 qubit</li>
+<li>再把每个 qubit 用 bit-flip 码扩到 3 qubit</li>
+<li>总: 1 → 3 → 9 qubit</li>
+<li>**同时**纠正 $X$ 和 $Z$ 错误(从而 $Y = iXZ$)</li>
+</ul>
+<p>**编码公式**:</p>
+<p>$$|0\rangle_L = \frac{1}{2\sqrt{2}}(|000\rangle + |111\rangle)(|000\rangle + |111\rangle)(|000\rangle + |111\rangle)$$</p>
+<p>$$|1\rangle_L = \frac{1}{2\sqrt{2}}(|000\rangle - |111\rangle)(|000\rangle - |111\rangle)(|000\rangle - |111\rangle)$$</p>
+<p>**观察**:</p>
+<ul>
+<li>$|0\rangle_L, |1\rangle_L$ 都是 9-qubit 态(每个 512 维 Hilbert 空间里**两个**特殊态)</li>
+<li>$\langle 0_L | 1_L \rangle = 0$ (正交)</li>
+<li>**包含** 9 个 $|000\rangle + |111\rangle$ 的"积"(乘起来)</li>
+</ul>
+<h3>17.1.3 Shor 9-qubit 码的完整数学描述</h3>
+<p>**$[[9, 1, 3]]$ 码的 8 个 stabilizer 生成元** (Shor 原始论文):</p>
+<p>X-stabilizer (3 个, 检测 X 错误):</p>
+<ul>
+<li>$g_{X1} = Z_1 Z_2$ (检查第 1 块的两个 qubit 一致)</li>
+<li>$g_{X2} = Z_2 Z_3$ (检查第 1 块的另两个 qubit)</li>
+<li>$g_{X3} = Z_4 Z_5$ (检查第 2 块)</li>
+<li>$g_{X4} = Z_5 Z_6$ (检查第 2 块)</li>
+<li>$g_{X5} = Z_7 Z_8$ (检查第 3 块)</li>
+<li>$g_{X6} = Z_8 Z_9$ (检查第 3 块)</li>
+</ul>
+<p>Z-stabilizer (2 个, 检测 Z 错误):</p>
+<ul>
+<li>$g_{Z1} = X_1 X_2 X_3$ (检查第 1 块比特翻转的整体)</li>
+<li>$g_{Z2} = X_4 X_5 X_6$ (检查第 2 块)</li>
+<li>$g_{Z3} = X_7 X_8 X_9$ (检查第 3 块)</li>
+</ul>
+<p>**注**: Shor 码**不**是标准 CSS 码(因为 $H$ 跟 $G$ **不**是同结构), 所以编码方式**特殊**。</p>
+<p>**逻辑算子**:</p>
+<ul>
+<li>$\bar{X} = X_1 X_2 X_3 X_4 X_5 X_6 X_7 X_8 X_9$ (9 个 $X$ 一起翻)</li>
+<li>$\bar{Z} = Z_1 Z_2 Z_3 Z_4 Z_5 Z_6 Z_7 Z_8 Z_9$ (9 个 $Z$ 一起)</li>
+</ul>
+<h3>17.1.4 错误纠正: 8 种 syndrome</h3>
+<p>**4 种 Pauli 错误 × 3 块 × 3 位置 = 36 种可能, 但 stabilizer 限制下只 8 种独立**</p>
+<table class="chapter-table">
+<tr><td>错误</td><td>位置</td><td>syndrome (二进)</td></tr>
+<tr><td>无错</td><td>-</td><td>000</td></tr>
+<tr><td>$X$ on qubit 1</td><td>第 1 块</td><td>001</td></tr>
+<tr><td>$X$ on qubit 2</td><td>第 1 块</td><td>010</td></tr>
+<tr><td>$X$ on qubit 3</td><td>第 1 块</td><td>100</td></tr>
+<tr><td>$Z$ on qubit 1</td><td>第 1 块 (or 2 or 3?)</td><td>$\dots$</td></tr>
+<tr><td>$\dots$</td><td>$\dots$</td><td>$\dots$</td></tr>
+</table>
+<p>**完整 8 syndromes**: 通过测 8 个 stabilizer 算子(详见 17.3)得到。</p>
+<h3>17.1.5 电路实现: Shor 编码 + syndrome 测量</h3>
+<p>**编码电路**: 1 qubit + 8 ancilla → 9 qubit 编码态</p>
+<p>**Syndrome 测量电路**: 用 8 ancilla 测 8 stabilizer, 得到 8-bit 经典 syndrome</p>
+<p>**恢复电路**: 根据 syndrome 应用 8 种纠正操作之一(identity / $X$ / $Y$ / $Z$ 之一)</p>
+<p>**完整 Shor 编码电路的步骤分解**:</p>
+<p>**Step 1: Phase-flip 编码(1 → 3 qubit)**:</p>
+<ul>
+<li>输入: $|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$</li>
+<li>用 2 个 CNOT 把它扩展成 cat 态</li>
+<li>$|\psi\rangle \to \alpha|{+}{+}{+}\rangle + \beta|{-}{-}{-}\rangle$</li>
+</ul>
+<p>**Step 2: Bit-flip 编码(3 → 9 qubit)**:</p>
+<ul>
+<li>把每个 cat 态 qubit 用经典 3-qubit 重复码</li>
+<li>$\alpha|{+}{+}{+}\rangle \to \alpha \cdot \text{三重}|{+}{+}{+}\rangle$ 的 9 qubit</li>
+<li>类似对 $\beta$ 部分</li>
+</ul>
+<p>**总电路深度**: ~9 个 CNOT + 一些单 qubit 门 + 8 ancilla 测量</p>
+<p>**Syndrome 测量**: 8 次 ancilla-CNOT 测量, 总深度 ~16 个 CNOT</p>
+<p>**恢复**: 经典计算 + 1-2 个条件 $X/Y/Z$ 门</p>
+<blockquote><p>**工程现实**: 实际硬件实现 Shor 码**不简单**——9 qubit + 8 ancilla = **17 qubit 资源**, 测量错误反馈 + 纠正门 + 电路深度 + 退相干 = **挑战**。这是 ch18 表面码"工业级"的动机。</p></blockquote>
+<h3>17.1.6 Shor 9-qubit 码的评价</h3>
+<p>**优点**:</p>
+<ul>
+<li>**第一个** QEC 码, 历史意义</li>
+<li>概念**简单**: 两个 3-qubit 码级联, 容易理解</li>
+<li>**纠错能力完整**: 任意单 qubit 错误</li>
+</ul>
+<p>**缺点**:</p>
+<ul>
+<li>**9** qubit 编码 **1** logical qubit(码率 1/9, **低**)</li>
+<li>**不**是 CSS 码(数学上不易分析)</li>
+<li>**实际**已经被 Steane 7-qubit / 5-qubit 取代</li>
+</ul>
+<blockquote><p>**历史地位**: 1995 年, "量子纠错**可能**吗?"是开放问题。Shor 9-qubit 码**给出肯定答案**——从此 QEC 理论**正式**诞生。</p></blockquote>
+<hr>
+<h2 id="section-17.2">17.2 Steane 7-qubit 码:CSS 构造的典范</h2>
+<blockquote><p>**历史地位**: 1996 年 Andrew Steane 提出,**第一个 CSS 码**, 展示了"经典码 + 量子化" 的强大。</p></blockquote>
+<h3>17.2.1 码参数: $[[7, 1, 3]]$</h3>
+<ul>
+<li>**7** 物理 qubit</li>
+<li>**1** 逻辑 qubit</li>
+<li>**3** 距离</li>
+<li>**码率** $k/n = 1/7$ (略好于 Shor)</li>
+</ul>
+<h3>17.2.2 来自经典 Hamming 码</h3>
+<p>**经典 Hamming $[7, 4, 3]$ 码**(1950):</p>
+<ul>
+<li>4 数据 bit + 3 校验 bit = 7 bit</li>
+<li>纠正 1 bit 错误</li>
+<li>校验矩阵 $H$: $7 \times 3$ 矩阵</li>
+</ul>
+<p>$$H = \begin{pmatrix} 0 & 0 & 0 \\ 0 & 1 & 1 \\ 1 & 0 & 1 \\ 1 & 1 & 0 \\ 1 & 1 & 1 \\ 1 & 0 & 0 \\ 0 & 1 & 0 \end{pmatrix}$$</p>
+<p>**Steane 的洞察**: 同一个 $H$ 既定义 X-stabilizer 又定义 Z-stabilizer!</p>
+<h3>17.2.3 编码公式</h3>
+<p>**逻辑 0**($|0\rangle_L$): 7 个 qubit 的**均匀叠加**, 权重 $\pm 1$ 对应经典码字</p>
+<p>$$|0\rangle_L = \frac{1}{\sqrt{8}} \sum_{c \in C} |c\rangle$$</p>
+<p>其中 $C$ 是经典 Hamming $[7,4,3]$ 码的码字(8 个, 因 $2^4 = 16$ 个里**一半**是码字)</p>
+<p>**逻辑 1**($|1\rangle_L$): 类似, 但对**非码字** $C^\perp$</p>
+<p>$$|1\rangle_L = \frac{1}{\sqrt{8}} \sum_{c \in C^\perp \setminus C} |c\rangle$$</p>
+<blockquote><p>**几何**: $|0\rangle_L$ 和 $|1\rangle_L$ 是 128 维 Hilbert 空间里的**两个**正交子空间, 维度各 8。</p></blockquote>
+<h3>17.2.4 7 + 7 = 14 个 Stabilizer</h3>
+<p>**X-stabilizer**(7 个, 测 $X$ 错误):</p>
+<p>$X_1 X_2 X_3 X_4 X_5 X_6 X_7$ (在满足 $Hc = 0$ 的 $c$ 上)</p>
+<p>**Z-stabilizer**(7 个, 测 $Z$ 错误):</p>
+<p>$Z_1 Z_2 Z_3 Z_4 Z_5 Z_6 Z_7$ (类似)</p>
+<p>**逻辑算子**:</p>
+<ul>
+<li>$\bar{X} = X^{\otimes 7}$(逻辑 $X$)</li>
+<li>$\bar{Z} = Z^{\otimes 7}$(逻辑 $Z$)</li>
+<li>$\bar{X}, \bar{Z}$ 跟所有 stabilizer 对易, 但 $\bar{X}\bar{Z} = -\bar{Z}\bar{X}$ ✓</li>
+</ul>
+<h3>17.2.5 错误纠正</h3>
+<p>**单 qubit 错误** $X_i$ 或 $Z_i$ 或 $Y_i$:</p>
+<ul>
+<li>测 7 个 X-stabilizer → 7-bit syndrome → 定位 $X$ 错误</li>
+<li>测 7 个 Z-stabilizer → 7-bit syndrome → 定位 $Z$ 错误</li>
+<li>$Y_i = i X_i Z_i$ 通过 2 个 syndrome 联合定位</li>
+</ul>
+<p>**恢复**: 应用对应的纠正算子($I, X_i, Y_i, Z_i$)</p>
+<h3>17.2.6 跟 Shor 9-qubit 码的对比</h3>
+<table class="chapter-table">
+<tr><td>维度</td><td>Shor 9-qubit</td><td>Steane 7-qubit</td></tr>
+<tr><td>物理 qubit</td><td>9</td><td>7</td></tr>
+<tr><td>码率 $k/n$</td><td>1/9 (0.11)</td><td>1/7 (0.14)</td></tr>
+<tr><td>CSS 构造</td><td>❌</td><td>✅</td></tr>
+<tr><td>数学分析</td><td>较难</td><td>容易</td></tr>
+<tr><td>历史地位</td><td>第一个 QEC 码</td><td>第一个 CSS 码</td></tr>
+<tr><td>实际应用</td><td>历史</td><td>仍在某些场景用</td></tr>
+</table>
+<blockquote><p>**CSS = Calderbank-Shor-Steane 构造**(1995-1996): 用**两个**经典线性码 $C_1, C_2$ 构造 QEC 码(详见 17.4)。</p></blockquote>
+<h3>17.2.7 几何直觉:Steane 码的"两层结构"</h3>
+<p>**层 1: 经典码字(8 个)的等权叠加**</p>
+<ul>
+<li>$|0\rangle_L$ 是 8 个经典码字的均匀叠加</li>
+<li>$|1\rangle_L$ 是 8 个**正交补**码字的均匀叠加</li>
+<li>每个分量 $|c\rangle$ 7 个 qubit 处于**确定**的经典态</li>
+</ul>
+<p>**层 2: 量子叠加**</p>
+<ul>
+<li>$|0\rangle_L$ 和 $|1\rangle_L$ 之间的**相对相位**承载 $\alpha, \beta$</li>
+<li>测 $|0\rangle_L$ 跟 $|1\rangle_L$ 的"parity" → 经典纠错</li>
+<li>**不**直接测 $\alpha, \beta$ → 保持量子性</li>
+</ul>
+<blockquote><p>**可视化**: 把 7-qubit Hilbert 空间画成**两层**: 8 维子空间(码字)$\oplus$ 8 维子空间(非码字但正交)$\oplus$ 112 维"垃圾"空间。**逻辑 qubit 活在**前两个 8 维子空间里。</p></blockquote>
+<hr>
+<h2 id="section-17.3">17.3 Stabilizer 形式:现代 QEC 的统一语言</h2>
+
+<figure class="chapter-figure">
+  <svg viewBox="0 0 760 580" xmlns="http://www.w3.org/2000/svg" style="max-width:760px;width:100%;height:auto;background:#0a0e27;border-radius:8px;">
+    <text x="380" y="28" fill="#e5e7eb" font-size="17" font-weight="bold" text-anchor="middle">图 17.2: 5 个奠基性 QEC 码对比 (1995-1996)</text>
+    <text x="380" y="48" fill="#9ca3af" font-size="10" text-anchor="middle">$[[n, k, d]]$ 参数 + 码率 + 历史 + 性质</text>
+
+    <!-- Headers -->
+    <text x="30" y="85" fill="#67e8f9" font-size="11" font-weight="bold">码名</text>
+    <text x="180" y="85" fill="#67e8f9" font-size="11" font-weight="bold">$[[n, k, d]]$</text>
+    <text x="300" y="85" fill="#67e8f9" font-size="11" font-weight="bold">码率 $k/n$</text>
+    <text x="400" y="85" fill="#67e8f9" font-size="11" font-weight="bold">历史</text>
+    <text x="530" y="85" fill="#67e8f9" font-size="11" font-weight="bold">性质</text>
+    <line x1="20" y1="95" x2="740" y2="95" stroke="#06b6d4" stroke-width="1"/>
+
+    <!-- Row 1: 3-qubit bit-flip -->
+    <text x="30" y="120" fill="#a7f3d0" font-size="11" font-weight="bold">3-qubit bit-flip</text>
+    <text x="180" y="120" fill="#e5e7eb" font-size="11">$[[3, 1, 1]]$</text>
+    <text x="300" y="120" fill="#fbbf24" font-size="11">1/3 (0.33)</text>
+    <text x="400" y="120" fill="#e5e7eb" font-size="11">1996 (教学)</text>
+    <text x="530" y="120" fill="#9ca3af" font-size="10">只检测, $d=1$</text>
+
+    <!-- Row 2: Shor 9-qubit -->
+    <text x="30" y="160" fill="#a7f3d0" font-size="11" font-weight="bold">Shor 9-qubit</text>
+    <text x="180" y="160" fill="#e5e7eb" font-size="11">$[[9, 1, 3]]$</text>
+    <text x="300" y="160" fill="#fbbf24" font-size="11">1/9 (0.11)</text>
+    <text x="400" y="160" fill="#e5e7eb" font-size="11">1995 (Shor)</text>
+    <text x="530" y="160" fill="#9ca3af" font-size="10">第一个 QEC 码</text>
+
+    <!-- Row 3: Steane 7-qubit -->
+    <text x="30" y="200" fill="#a7f3d0" font-size="11" font-weight="bold">Steane 7-qubit</text>
+    <text x="180" y="200" fill="#e5e7eb" font-size="11">$[[7, 1, 3]]$</text>
+    <text x="300" y="200" fill="#fbbf24" font-size="11">1/7 (0.14)</text>
+    <text x="400" y="200" fill="#e5e7eb" font-size="11">1996 (Steane)</text>
+    <text x="530" y="200" fill="#9ca3af" font-size="10">第一个 CSS 码</text>
+
+    <!-- Row 4: 5-qubit perfect -->
+    <text x="30" y="240" fill="#a7f3d0" font-size="11" font-weight="bold">5-qubit 完美码</text>
+    <text x="180" y="240" fill="#e5e7eb" font-size="11" font-weight="bold" fill="#10b981">$[[5, 1, 3]]$</text>
+    <text x="300" y="240" fill="#10b981" font-size="11" font-weight="bold">1/5 (0.20) 最高</text>
+    <text x="400" y="240" fill="#e5e7eb" font-size="11">1996 (Laflamme)</text>
+    <text x="530" y="240" fill="#10b981" font-size="10">饱和 Hamming 界</text>
+
+    <!-- Row 5: 4-qubit -->
+    <text x="30" y="280" fill="#a7f3d0" font-size="11" font-weight="bold">4-qubit</text>
+    <text x="180" y="280" fill="#e5e7eb" font-size="11">$[[4, 2, 2]]$</text>
+    <text x="300" y="280" fill="#fbbf24" font-size="11">1/2 (0.50) 最高</text>
+    <text x="400" y="280" fill="#e5e7eb" font-size="11">1996 (Leung)</text>
+    <text x="530" y="280" fill="#9ca3af" font-size="10">2 logical, $d=2$</text>
+
+    <line x1="20" y1="305" x2="740" y2="305" stroke="#06b6d4" stroke-width="1" opacity="0.5"/>
+
+    <!-- Hamming bound visualization -->
+    <text x="380" y="330" fill="#67e8f9" font-size="12" font-weight="bold" text-anchor="middle">Hamming 界可视化: $2^{n-k} \ge \sum 3^j \binom{n}{j}$</text>
+
+    <!-- 5-qubit point: ON the bound -->
+    <g transform="translate(380, 450)">
+      <line x1="-280" y1="80" x2="280" y2="-80" stroke="#7c3aed" stroke-width="2" stroke-dasharray="4 2"/>
+      <text x="200" y="-65" fill="#a78bfa" font-size="10">Hamming 界</text>
+
+      <!-- n axis -->
+      <line x1="-300" y1="80" x2="300" y2="80" stroke="#6b7280" stroke-width="1"/>
+      <text x="310" y="84" fill="#9ca3af" font-size="10">n</text>
+
+      <!-- 5-qubit (on bound) -->
+      <circle cx="-100" cy="0" r="8" fill="#10b981"/>
+      <text x="-100" y="105" fill="#10b981" font-size="10" text-anchor="middle" font-weight="bold">5-qubit</text>
+      <text x="-100" y="118" fill="#10b981" font-size="9" text-anchor="middle">饱和</text>
+
+      <!-- 7-qubit (below bound) -->
+      <circle cx="50" cy="40" r="8" fill="#06b6d4"/>
+      <text x="50" y="105" fill="#06b6d4" font-size="10" text-anchor="middle">Steane 7</text>
+      <text x="50" y="118" fill="#06b6d4" font-size="9" text-anchor="middle">未饱和</text>
+
+      <!-- 9-qubit (below bound) -->
+      <circle cx="200" cy="50" r="8" fill="#06b6d4"/>
+      <text x="200" y="105" fill="#06b6d4" font-size="10" text-anchor="middle">Shor 9</text>
+      <text x="200" y="118" fill="#06b6d4" font-size="9" text-anchor="middle">未饱和</text>
+    </g>
+
+    <text x="380" y="565" fill="#a7f3d0" font-size="9" text-anchor="middle">5-qubit 完美码是唯一饱和 Hamming 界的 $k=1$ QEC 码 — 1996 年 Grassl 2002 证明</text>
+  </svg>
+  <figcaption>图 17.2: 5 个奠基性 QEC 码(1995-1996)对比表。5-qubit 完美码饱和 Hamming 界(绿色),是最小且码率最高($1/5$)的 $d=3$ QEC 码;Steane/Shor 码不饱和但仍有效;4-qubit 码 $d=2$ 码率最高($1/2$)但只能检测不能纠正。</figcaption>
+</figure>
+
+<blockquote><p>**核心思想**: Gottesman 1996 年提出——**不用**直接描述码空间, **只用**描述哪些 Pauli 算子**稳定**码空间。</p></blockquote>
+<h3>17.3.1 Pauli 群 $G_n$</h3>
+<p>**单 qubit Pauli 群** $G_1 = \{\pm I, \pm iI, \pm X, \pm iX, \pm Y, \pm iY, \pm Z, \pm iZ\}$, 16 个元素。</p>
+<p>**$n$-qubit Pauli 群** $G_n$: $4^n \times 4 = 4^{n+1}$ 个元素($4^n$ 个"无相位" Pauli 串, 4 个全局相位)。</p>
+<p>**例**: $G_2$ 含 $4^3 = 64$ 个元素, 如 $II, IX, IY, IZ, XI, XX, YZ, ZZ$ 等。</p>
+<h3>17.3.2 Stabilizer 群 $S$</h3>
+<p>**定义**: 码空间 $V$ 的 stabilizer 群 $S \subset G_n$ 满足:</p>
+<ol>
+<li>$S$ 是 $G_n$ 的 **Abel 子群** (任意两个 stabilizer 对易)</li>
+<li>$-I \notin S$(否则 $V$ 是 0 维)</li>
+<li>$V = \{|\psi\rangle : g|\psi\rangle = |\psi\rangle, \forall g \in S\}$</li>
+</ol>
+<p>**维度关系**: $|S| = 2^{n-k}$ 给出码空间维度 $2^k$。</p>
+<p>**例 (Steane 7-qubit)**:</p>
+<ul>
+<li>6 个独立 stabilizer (4 个 Z + 2 个 X 略, 详见文献)</li>
+<li>$|S| = 2^{7-1} = 64$</li>
+<li>码空间维度 $2^1 = 2$ ✓</li>
+</ul>
+<h3>17.3.3 通用 QEC 码参数 $[[n, k, d]]$</h3>
+<table class="chapter-table">
+<tr><td>符号</td><td>含义</td><td>例</td></tr>
+<tr><td>$n$</td><td>物理 qubit 数</td><td>7 (Steane)</td></tr>
+<tr><td>$k$</td><td>逻辑 qubit 数</td><td>1 (Steane)</td></tr>
+<tr><td>$d$</td><td>距离(最小权重算子)</td><td>3 (Steane)</td></tr>
+<tr><td>$[[\cdot]]$</td><td>量子(双括号)</td><td>区别于经典 $[n, k, d]$</td></tr>
+</table>
+<p>**距离定义**: $d$ = 最小权重 Pauli 算子 $P$ 满足 $P \bar{V} \neq 0$ 但 $P \notin S$ 的最小权重。</p>
+<p>**直观**: $d = 2t + 1$ → 可纠正**所有** $t$ qubit 错误。</p>
+<h3>17.3.4 4 类算子:stabilizer / 逻辑 / 错误 / 垃圾</h3>
+<table class="chapter-table">
+<tr><td>类别</td><td>来源</td><td>作用</td></tr>
+<tr><td>**Stabilizer** $g \in S$</td><td>固定 $V$ 的子集</td><td>$g</td><td>\psi\rangle =</td><td>\psi\rangle$</td></tr>
+<tr><td>**逻辑算子** $\bar{X}_i, \bar{Z}_i$</td><td>码空间的"门"</td><td>改变 $V$ 内的态</td></tr>
+<tr><td>**错误** $E \in G_n$</td><td>物理噪声</td><td>把态推出 $V$</td></tr>
+<tr><td>**垃圾** $P \in G_n$</td><td>跟 $S$ 反对易</td><td>测 syndrome 可检测</td></tr>
+</table>
+<h3>17.3.5 中心化子(Centralizer)和对易</h3>
+<p>**中心化子** $C(S) = \{P \in G_n : [P, g] = 0, \forall g \in S\}$</p>
+<ul>
+<li>$C(S)$ 包含 stabilizer $S$ 和**逻辑**算子</li>
+<li>逻辑算子 $L$ 跟 $S$ 对易, 但**不**在 $S$ 里(否则 $L|\psi\rangle = |\psi\rangle$ 平凡)</li>
+<li>**错误** $E$ 必须**不**跟 $S$ 对易(否则测 syndrome 检测不到)</li>
+</ul>
+<h3>17.3.6 标准化子(Normalizer) = 中心化子 (在 Pauli 群)</h3>
+<p>**定义**: Pauli 群的 normalizer = centralizer, 因为 $\pm 1$ 中心</p>
+<p>**Normalizer 商** $N(S)/S$: 维度 $2^{2k}$, 包含所有逻辑 Pauli 算子(对 $k$ 个 logical qubit)。</p>
+<h3>17.3.7 Stabilizer 形式的"工作流"</h3>
+<p>**给定 stabilizer 群 $S$**:</p>
+<ol>
+<li>求 $V$ 的维度 = $2^{n - \log_2|S|}$ = $2^k$</li>
+<li>求逻辑算子 $L_i$ = $N(S) \setminus S$ 的代表</li>
+<li>求 $L_i$ 的对易子(给出 $\bar{X}_i, \bar{Z}_i$ 配对)</li>
+<li>测 syndrome: 测 $S$ 的所有生成元, 得 $|S|-1$ bit syndrome</li>
+</ol>
+<p>**测 syndrome 的关键**:</p>
+<ul>
+<li>测 $g \in S$ (Hermitian) 给 $\pm 1$ 结果</li>
+<li>测 $|S| - 1 = n - k$ 个独立生成元得 $n - k$ bit syndrome</li>
+<li>syndrome **不**告诉你 $|\psi\rangle$ 是什么(只告诉你是否还在码空间)</li>
+</ul>
+<h3>17.3.8 表格: 5 个奠基性 QEC 码</h3>
+<table class="chapter-table">
+<tr><td>码</td><td>$[[n, k, d]]$</td><td>物理/逻辑</td><td>码率</td><td>历史</td></tr>
+<tr><td>**3-qubit bit-flip**</td><td>$[[3, 1, 1]]$</td><td>3</td><td>1/3</td><td>1996(教学)</td></tr>
+<tr><td>**Shor 9-qubit**</td><td>$[[9, 1, 3]]$</td><td>9</td><td>1/9</td><td>1995(第一个)</td></tr>
+<tr><td>**Steane 7-qubit**</td><td>$[[7, 1, 3]]$</td><td>7</td><td>1/7</td><td>1996(第一个 CSS)</td></tr>
+<tr><td>**5-qubit 完美码**</td><td>$[[5, 1, 3]]$</td><td>5</td><td>1/5</td><td>1996(最小)</td></tr>
+<tr><td>**4-qubit 码**</td><td>$[[4, 2, 2]]$</td><td>4</td><td>1/2</td><td>1996(2 个逻辑)</td></tr>
+</table>
+<blockquote><p>**注**: $[[4, 2, 2]]$ 是**最高码率** $d=2$ 码, 但只能**检测** 1 错误不能**纠正**。</p></blockquote>
+<hr>
+<h2 id="section-17.4">17.4 CSS 构造:经典码视角</h2>
+<blockquote><p>**核心思想**: Calderbank-Shor-Steane 1995-1996——**两个**经典线性码 $C_1 \supset C_2$ 构成一个 QEC 码。</p></blockquote>
+<h3>17.4.1 经典线性码回顾</h3>
+<p>**经典 $[n, k, d]$ 线性码** $C$: $n$ bit, $k$ 信息 bit, 距离 $d$</p>
+<ul>
+<li>码字集 $C$: $2^k$ 个 $n$-bit 串</li>
+<li>校验矩阵 $H$: $C = \{c : Hc = 0\}$</li>
+<li>对偶码 $C^\perp$: $C^\perp = \{c' : c' \cdot c = 0, \forall c \in C\}$</li>
+</ul>
+<h3>17.4.2 CSS 构造定理</h3>
+<p>**定理** (CSS 1995-1996): 给定两个经典码 $C_1, C_2 \subseteq \mathbb{F}_2^n$, 满足 $C_2^\perp \subset C_1$, 可以构造 QEC 码 $\text{CSS}(C_1, C_2)$, 满足:</p>
+<ul>
+<li>物理 qubit: $n$</li>
+<li>逻辑 qubit: $k_1 + k_2 - n$(由 $\dim C_1 + \dim C_2 = k_1 + k_2$ 减去 $n$)</li>
+<li>距离: $\ge \min(d_1, d_2)$</li>
+</ul>
+<p>**简化**: 选 $C_2^\perp \subset C_1$(典型 $C_2 = C_1^\perp$, 自对偶), 得 $k = k_1 + k_2 - n$。</p>
+<h3>17.4.3 编码公式</h3>
+<p>**给定 $C_1, C_2$ 满足 $C_2^\perp \subset C_1$**:</p>
+<p>$$|x\rangle_L = \frac{1}{\sqrt{|C_2|}} \sum_{y \in C_2} |x + y\rangle$$</p>
+<p>其中 $x \in C_1$ 是**信息**(维度 $\dim C_1$), $y \in C_2$ 是**冗余**(添加 $|C_2|$ 个副本)。</p>
+<p>**例 (Steane 7-qubit)**: $C_1 = C_2^\perp = $ 经典 $[7, 4, 3]$ Hamming 码, $C_2 = $ 自对偶 $[7, 3, 4]$? **实际** Steane 用 $C_1 = $ Hamming $[7, 4]$, $C_2 = $ Hamming $[7, 3]$(扩展)。</p>
+<h3>17.4.4 X 错误由 $C_1$ 检测, Z 错误由 $C_2^\perp$ 检测</h3>
+<p>**关键洞察**: CSS 码把 X 和 Z 错误**解耦**:</p>
+<ul>
+<li>**X 错误** $X^{c}$ 翻转某些 qubit → 测 $C_1$ 的 syndrome(类似经典码)</li>
+<li>**Z 错误** $Z^{c'}$ 加相位 → 测 $C_2^\perp$ 的 syndrome</li>
+<li>**Y 错误** = $iXZ$ 组合 → X + Z 联合测</li>
+</ul>
+<p>**经典类比**: CSS 码 = "两个**独立**的经典码"。</p>
+<h3>17.4.5 辛几何( symplectic geometry)</h3>
+<p>**Pauli 串** $P = i^k X^{a_1} Z^{b_1} \otimes X^{a_2} Z^{b_2} \otimes \dots \otimes X^{a_n} Z^{b_n}$, 由 $(a, b) \in \mathbb{F}_2^{2n}$ 描述。</p>
+<p>**辛内积** $\langle (a, b), (a', b') \rangle = a \cdot b' + a' \cdot b \mod 2$</p>
+<ul>
+<li>辛内积 = 0 ↔ $P, P'$ **对易**</li>
+<li>辛内积 = 1 ↔ $P, P'$ **反对易**</li>
+</ul>
+<p>**CSS 码的数学描述**: 选 $V \subset \mathbb{F}_2^{2n}$ 是**辛自正交子空间**($V \subset V^\perp$):</p>
+<ul>
+<li>$V$ 的辛维 = $n - k$</li>
+<li>$V^\perp / V$ 的辛维 = $k$(逻辑算子所在)</li>
+</ul>
+<h3>17.4.6 例子: Steane 7-qubit 是自对偶 CSS</h3>
+<p>**Hamming $[7, 4, 3]$ 码** $C$ 满足 $C = C^\perp$? 实际**不是**, 但 Steane 用**扩展** Hamming $[8, 4, 4]$ + 删除 1 bit 的技巧。</p>
+<p>**简化**: 7-qubit Steane 码 = CSS(Hamming $[7, 4]$, 偶校验 $[7, 3]$)?</p>
+<blockquote><p>**细节**对理解**不**关键, 关键是: **CSS 提供 QEC 码的统一数学语言**, 跟经典纠错码**直接**联系。</p></blockquote>
+<h3>17.4.7 CSS 码的"几何图像"</h3>
+<p>**两个正交子空间**:</p>
+<ul>
+<li>经典码 $C_1$ 的 8 个码字 → **2^n 维 Hilbert 空间**的**一个 2^k 维子空间**</li>
+<li>$C_2$ 的 $|C_2|$ 个副本 → **加** $|C_2|$ 个维度, 形成"超立方体"</li>
+<li>CSS 码空间 = $C_1$ 跟 $C_2$ 的"乘积"= 2^{k_1 + k_2 - n} 维</li>
+</ul>
+<p>**X 错误** = 翻 qubit → 走出 $C_1$ 子空间</p>
+<p>**Z 错误** = 加相位 → 走出 $C_2^\perp$ 子空间</p>
+<p>**syndrome** = "走出子空间**多远**"的 2 个数字</p>
+<blockquote><p>**类比**: 经典纠错是"在一条直线上"检测错误; CSS 码是"在 2D 平面"上检测错误——X 错误是横轴, Z 错误是纵轴, 任何错误 = 2D 向量。</p></blockquote>
+<h3>17.4.8 CSS 构造的"优点 vs 局限"</h3>
+<p>**优点**:</p>
+<ol>
+<li>**可设计**: 从经典码**直接**构造 QEC 码</li>
+<li>**易分析**: 经典码工具(Hamming 界, Singleton, MacWilliams 恒等式)**全部**可用</li>
+<li>**常见**: 实际工程中 ~$50\%$ QEC 码是 CSS 码</li>
+</ol>
+<p>**局限**:</p>
+<ol>
+<li>**不**是**所有** QEC 码都是 CSS(5-qubit 码**不是**)</li>
+<li>CSS 码的 $k$ 受 $C_1, C_2$ 维度限制: $k = k_1 + k_2 - n$</li>
+<li>CSS 码的 $d \ge \min(d_1, d_2)$, **不**总能达到 Singleton 界</li>
+</ol>
+<blockquote><p>**例**: Shor 9-qubit 码**不是** CSS(因为 $H$ 跟 $G$ 结构**不**同); Steane 7-qubit **是** CSS; 5-qubit **不**是 CSS。</p></blockquote>
+<hr>
+<h2 id="section-17.5">17.5 量子 Hamming 界 + 量子 Singleton 界</h2>
+<blockquote><p>**目标**: 给出 QEC 码**存在性**的边界——什么样的 $[[n, k, d]]$ 是**可能**的?</p></blockquote>
+<h3>17.5.1 量子 Hamming 界</h3>
+<p>**经典 Hamming 界**: $2^{n-k} \ge \sum_{j=0}^{t} \binom{n}{j}$(球填充 bound)</p>
+<p>**量子 Hamming 界** (Knill-Laflamme 1997):</p>
+<p>$$2^{n-k} \ge \sum_{j=0}^{t} 3^j \binom{n}{j}$$</p>
+<p>其中 $t = \lfloor (d-1)/2 \rfloor$ 是纠正错误数。</p>
+<p>**直观**: 因子 3 = "量子错误的" 方向数(每个 qubit 错误有 3 种 Pauli 方向, 而不是经典 1 种)。</p>
+<p>**饱和**: **5-qubit 码** $[[5, 1, 3]]$ 满足: $2^{5-1} = 16$, 右边 = $1 + 3 \cdot 5 = 16$ ✓ (**完美码**)。</p>
+<h3>17.5.2 量子 Singleton 界</h3>
+<p>**经典 Singleton 界**: $n - k \ge d - 1$</p>
+<p>**量子 Singleton 界** (Knill-Laflamme 1997):</p>
+<p>$$n - k \ge 2(d-1)$$</p>
+<p>**直观**: 量子码需要**纠 X + 纠 Z 错误**, 所以"约束"是经典 2 倍。</p>
+<p>**饱和**: **量子 MDS 码** (Maximum Distance Separable): $n - k = 2(d-1)$。**例**: 5-qubit 码 $5 - 1 = 4 = 2(3-1)$ ✓ (但 5-qubit 饱和 Hamming, **不**是 MDS, 因为 $k > 1$ 不满足)。</p>
+<h3>17.5.3 两个界的几何意义</h3>
+<p>**$[[n, k, d]]$ 空间**:</p>
+<pre><code>
+    n (qubit 数) →
+   ↑
+   |  *
+   |   *
+   |    *
+   |     * ← 5-qubit 完美码 (Hamming 饱和)
+   |      *
+   |       *  ← ch18 表面码 (高 d, 中 k)
+   |        *
+   |         *
+   |__________→ d (距离)
+</code></pre>
+<ul>
+<li>**左上**(大 n 小 d): 工业级(ch18 表面码)</li>
+<li>**右下**(小 n 大 d): 不可能(Singleton 界)</li>
+<li>**曲线边界**: Hamming 界</li>
+</ul>
+<h3>17.5.4 表:经典界 vs 量子界</h3>
+<table class="chapter-table">
+<tr><td>界</td><td>经典</td><td>量子</td><td>差异</td></tr>
+<tr><td>**Singleton**</td><td>$n - k \ge d - 1$</td><td>$n - k \ge 2(d-1)$</td><td>因子 2</td></tr>
+<tr><td>**Hamming**</td><td>$2^{n-k} \ge \sum \binom{n}{j}$</td><td>$2^{n-k} \ge \sum 3^j \binom{n}{j}$</td><td>$\binom{n}{j} \to 3^j \binom{n}{j}$</td></tr>
+<tr><td>**Plotkin**</td><td>$d \le n/2$</td><td>$d \le n/2$</td><td>(类似)</td></tr>
+<tr><td>**Hamming 饱和**</td><td>Hamming 码</td><td>5-qubit 码</td><td>极少</td></tr>
+</table>
+<h3>17.5.5 "完美" QEC 码的稀有性</h3>
+<p>**完美码** = 同时**饱和** Singleton + Hamming 界 + $d = 2t + 1$。</p>
+<p>**5-qubit 码** $[[5, 1, 3]]$ 饱和 Hamming(不饱和 Singleton, 因为 $k = 1$)。</p>
+<p>**理论** (Grassl 2002): 完美 QEC 码**极少**:</p>
+<ul>
+<li>1-qubit $[[5, 1, 3]]$ 完美</li>
+<li>2-qubit $[[6, 2, 3]]$? **不**完美(违反 Hamming)</li>
+<li>$k \ge 2$ 完美码: **不存在**(已证明)</li>
+</ul>
+<blockquote><p>**意义**: 大部分"实际"QEC 码**不**完美, 是"Hamming 界附近"或"Singleton 界附近"的**工业级**折中(ch18 表面码)。</p></blockquote>
+<hr>
+<h2 id="section-17.6">17.6 5-qubit 完美码:最小的 QEC 码</h2>
+<blockquote><p>**历史地位**: 1996 年 Laflamme 等独立提出, Bennett 等简化, **最小**纠正任意单 qubit 错误的 QEC 码。</p></blockquote>
+<h3>17.6.1 码参数: $[[5, 1, 3]]$</h3>
+<ul>
+<li>**5** 物理 qubit</li>
+<li>**1** 逻辑 qubit</li>
+<li>**3** 距离</li>
+<li>**码率** $k/n = 1/5 = 0.2$(**最高** $d=3$ 码率)</li>
+<li>**饱和** Hamming 界 → 完美码</li>
+</ul>
+<h3>17.6.2 4 个 Stabilizer 生成元</h3>
+<p>$$g_1 = X \otimes Z \otimes Z \otimes X \otimes I$$</p>
+<p>$$g_2 = I \otimes X \otimes Z \otimes Z \otimes X$$</p>
+<p>$$g_3 = X \otimes I \otimes X \otimes Z \otimes Z$$</p>
+<p>$$g_4 = Z \otimes X \otimes I \otimes X \otimes Z$$</p>
+<p>**4 个生成元** → stabilizer 群 $|S| = 2^4 = 16$ → 码空间维度 $2^{5-4} = 2$ ✓</p>
+<p>**性质**:</p>
+<ul>
+<li>$g_i^2 = I$</li>
+<li>$[g_i, g_j] = 0$ (任意两个对易)</li>
+<li>$\prod_i g_i = I$(对易 + 群结构约束)</li>
+</ul>
+<h3>17.6.3 16 个 syndrome 测 16 种错误</h3>
+<p>**4 个 stabilizer 测 4 bit syndrome** → $2^4 = 16$ 种可能:</p>
+<table class="chapter-table">
+<tr><td>syndrome</td><td>错误</td></tr>
+<tr><td>0000</td><td>无错 ($I$)</td></tr>
+<tr><td>1000</td><td>$X_1$</td></tr>
+<tr><td>0100</td><td>$X_2$</td></tr>
+<tr><td>0010</td><td>$X_3$</td></tr>
+<tr><td>0001</td><td>$X_4$</td></tr>
+<tr><td>1100</td><td>$X_5$</td></tr>
+<tr><td>$\dots$</td><td>$\dots$ (其他 10 种)</td></tr>
+<tr><td>1111</td><td>$Y_1 X_2 X_3 Y_4 Z_5$?</td></tr>
+</table>
+<p>**具体**: 每个 syndrome 对应**唯一**的"最可能"Pauli 错误(假设单错误假设)。</p>
+<h3>17.6.4 编码公式</h3>
+<p>**逻辑 0**: $\frac{1}{4}$ 乘 5-qubit "猫态"和</p>
+<p>$$|0\rangle_L = \frac{1}{4}(|00000\rangle + |10010\rangle + |01001\rangle + |10100\rangle + |01010\rangle - |11011\rangle - |00110\rangle - |11000\rangle - |11101\rangle - |00011\rangle - |11110\rangle - |01111\rangle - |10001\rangle - |01100\rangle - |10111\rangle + |00101\rangle)$$</p>
+<p>(具体系数**很多**, 详见 Nielsen-Chuang 10.5.4)</p>
+<p>**关键**: $|0\rangle_L$ 和 $|1\rangle_L$ 形式**对称**, 只差 $X \leftrightarrow Y$。</p>
+<h3>17.6.5 评价 5-qubit 码</h3>
+<p>**优点**:</p>
+<ul>
+<li>**物理 qubit 最少**(5 qubit 编码 1 logical)</li>
+<li>**码率最高** $1/5$($d=3$ 码中)</li>
+<li>**稳定** Hamming 界(完美)</li>
+<li>**工程友好**: 5 qubit 容易在多种硬件实现(IBM 5-qubit, IonQ 11-qubit 子集)</li>
+</ul>
+<p>**缺点**:</p>
+<ul>
+<li>**4 个 stabilizer** → 4 ancilla + 4 测量 → 测量开销**不低**</li>
+<li>**不**饱和 Singleton 界(因 $k = 1$)</li>
+<li>**比** Steane 7-qubit **不**易分析(无 CSS 结构)</li>
+</ul>
+<blockquote><p>**实际**: IBM Quantum 早期实验常用 5-qubit 码做"小规模 QEC demo"(2017-2019)。</p></blockquote>
+<h3>17.6.6 5-qubit 码在硬件上的实验</h3>
+<p>**2017-2024 实验里程碑**:</p>
+<table class="chapter-table">
+<tr><td>时间</td><td>团队</td><td>平台</td><td>结果</td></tr>
+<tr><td>2017</td><td>IBM</td><td>5-qubit superconducting</td><td>**首次**实验演示</td></tr>
+<tr><td>2019</td><td>IonQ</td><td>11-qubit trapped ion</td><td>$d = 3$ 5-qubit 子集</td></tr>
+<tr><td>2020</td><td>Google</td><td>5-qubit Sycamore</td><td>与理想码比较</td></tr>
+<tr><td>2024</td><td>IBM</td><td>156-qubit (Heron r2)</td><td>多 5-qubit 块**并行**</td></tr>
+</table>
+<p>**关键发现**:</p>
+<ul>
+<li>实验**确实**显示 $P_L < p$(逻辑错误率**低于**物理)</li>
+<li>但 $P_L$ **不**是简单 $p^2$——有**常数因子** $C \sim 10-100$(测量错误, 串扰, 门不完美)</li>
+<li>**实际** $P_L \sim 10^{-4} - 10^{-5}$ 对 $p = 10^{-3}$, 比理论 $10^{-5}$ **差 1-2 个数量级**</li>
+</ul>
+<blockquote><p>**结论**: 5-qubit 码**原理**上**可行**, **工程**上**需要**表面码等"工业级" QEC。</p></blockquote>
+<hr>
+<h2 id="section-17.7">17.7 错误检测 vs 错误纠正</h2>
+<blockquote><p>**核心问题**: 测 syndrome → **是只检测, 还是还要纠正**?</p></blockquote>
+<h3>17.7.1 错误检测(QED)</h3>
+<p>**流程**:</p>
+<ol>
+<li>测 $n - k$ 个 stabilizer, 得 $(n-k)$-bit syndrome</li>
+<li>syndrome = 0 → **通过**(没错误或错误在 stabilizer 里)</li>
+<li>syndrome ≠ 0 → **拒绝**(有错误, **不**恢复)</li>
+</ol>
+<p>**应用**:</p>
+<ul>
+<li>检测**恶意**对手(quantum cryptography)</li>
+<li>**不**需要保持量子相干性</li>
+<li>**不**需要 active 恢复</li>
+</ul>
+<p>**例**: 简单 $[[4, 2, 2]]$ 检测码: $2$ 个 stabilizer, **只检测** 1 错误。</p>
+<h3>17.7.2 错误纠正(QEC)</h3>
+<p>**流程**:</p>
+<ol>
+<li>测 $n - k$ 个 stabilizer, 得 syndrome</li>
+<li>**查表**: syndrome → 推断错误 $E$(假设单错误)</li>
+<li>**主动**应用纠正算子 $E^\dagger$ → 恢复</li>
+</ol>
+<p>**应用**:</p>
+<ul>
+<li>**计算**过程(需要保持逻辑态)</li>
+<li>需要**实时**反馈电路</li>
+<li>测量 + 经典处理 + 条件门 → 复杂电路</li>
+</ul>
+<p>**例**: Shor / Steane / 5-qubit 都是**纠错**码。</p>
+<h3>17.7.3 测 syndrome = "投影" 到码空间</h3>
+<p>**关键洞察**: 测 stabilizer 等价于把态**投影**到码空间 + 测错误分量。</p>
+<ul>
+<li>测前: $|\psi\rangle = \sum_E c_E E|\psi_L\rangle$(可能**多个** $E$ 叠加)</li>
+<li>测后(测到 syndrome $s$): 投影到 syndrome = $s$ 的子空间</li>
+<li>**不**测到 $|\psi_L\rangle$ 本身</li>
+<li>**不**破坏 $|\psi_L\rangle$ 的逻辑内容($\alpha, \beta$)</li>
+</ul>
+<h3>17.7.4 检测 vs 纠正 4 维度对比</h3>
+<table class="chapter-table">
+<tr><td>维度</td><td>检测 (QED)</td><td>纠正 (QEC)</td></tr>
+<tr><td>测 stabilizer</td><td>✅</td><td>✅</td></tr>
+<tr><td>主动恢复</td><td>❌</td><td>✅</td></tr>
+<tr><td>反馈电路</td><td>不需要</td><td>需要</td></tr>
+<tr><td>测量开销</td><td>$n - k$ 次</td><td>$n - k$ 次</td></tr>
+<tr><td>适用</td><td>加密, 协议</td><td>计算</td></tr>
+</table>
+<h3>17.7.5 测 syndrome 的"物理图像"</h3>
+<p>**关键问题**: 为什么测 stabilizer 测**不**破坏 $|\psi\rangle$?</p>
+<p>**答**: stabilizer $g$ 是**厄米**(Hermitian)算子, 满足 $g^2 = I$。测 $g$ 的本征值只能是 $\pm 1$。</p>
+<p>**测前**: $|\psi\rangle = \alpha |0_L\rangle + \beta |1_L\rangle$(在码空间)</p>
+<p>**测后(对 stabilizer $g$ 的本征值)**:</p>
+<ul>
+<li>测到 $+1$: $|\psi\rangle$ 投影到 $g$ 的 $+1$ 本征空间 → $|\psi\rangle$ **不变**(因为码空间是 $g$ 的 $+1$ 本征空间)</li>
+<li>测到 $-1$: $|\psi\rangle$ 投影到 $-1$ 本征空间 → 态被"推出"码空间</li>
+</ul>
+<p>**关键**: 测到 $+1$ 时, **不**测到 $\alpha, \beta$ 的任何信息——只测到"是 $+$ 还是 $-$"。</p>
+<p>**类比**: 经典 syndrome 测**告诉**你"哪个 bit 错了", **不**告诉**"原 bit 是什么"。</p>
+<h3>17.7.6 测 syndrome 的电路细节</h3>
+<p>**基本电路**(测 $g = Z_1 Z_2$):</p>
+<ol>
+<li>准备 ancilla $|0\rangle_A$</li>
+<li>CNOT: qubit 1 → ancilla, qubit 2 → ancilla</li>
+<li>测 ancilla: 0 = $g$ 的 $+1$ 本征值(无 parity error), 1 = $-1$(有 parity error)</li>
+</ol>
+<p>**对 $g = X_1 X_2$**:</p>
+<ul>
+<li>把 CNOT 换为"X-controlled-Z"门</li>
+<li>或等价: H-CNOT-H(把 X 基变到 Z 基)</li>
+</ul>
+<p>**对 $g = Y_1 Y_2$**:</p>
+<ul>
+<li>需 "Y-controlled-Y" 门</li>
+<li>或: $R_x(\pi/2)$-CNOT-$R_x(-\pi/2)$ + 测量</li>
+</ul>
+<p>**实际工程**:</p>
+<ul>
+<li>测 1 个 stabilizer = 1 测 + 1 经典后处理</li>
+<li>测 $k$ 个 stabilizer = $k$ 个独立 ancilla(可**并行**)</li>
+<li>总时间 $\sim$ 1 个 ancilla 测量时间(可**忽略**vs 电路运行时间)</li>
+</ul>
+<h3>17.7.7 测量错误的"自举"问题</h3>
+<p>**问题**: 测 ancilla **本身**有错误($10^{-2}$ 量级)! syndrome 错的概率 $p_s \sim 10^{-2}$。</p>
+<p>**自举 (bootstrapping) 思想**:</p>
+<ul>
+<li>测 1 次: $p_s$ 错误</li>
+<li>测 $N$ 次(重复): 错误率 $\sim p_s^N$ 指数下降</li>
+<li>**代价**: 电路**慢** $N$ 倍</li>
+</ul>
+<p>**trade-off**:</p>
+<ul>
+<li>短 syndrome(测 1 次): 错误率高</li>
+<li>长 syndrome(测 $N$ 次): 时间慢</li>
+<li>**平衡**: $N$ 使得总错误率 $p_s^N$ < 物理错误 $p$, 通常 $N \sim 3-5$</li>
+</ul>
+<blockquote><p>**现代 QEC**(表面码) **不**用单纯自举——用**多轮测量 + 实时解码**避免单点错误。</p></blockquote>
+<hr>
+<h2 id="section-17.8">17.8 量子码 vs 经典码:5 大区别</h2>
+<blockquote><p>**核心总结**: 量子码**不**是经典码的"量子化"——有**根本**区别。</p></blockquote>
+<h3>17.8.1 区别 1: 不可克隆</h3>
+<ul>
+<li>**经典**: bit $0 \to 000$(复制)</li>
+<li>**量子**: 任意 $|\psi\rangle$ **不可**复制(不可克隆定理)</li>
+<li>**量子做法**: 不用复制, 用**纠缠**编码</li>
+</ul>
+<h3>17.8.2 区别 2: 连续错误空间</h3>
+<ul>
+<li>**经典**: 错误**只**有 1 种(0↔1)</li>
+<li>**量子**: 错误**连续**无限种(Bloch 球任意旋转)</li>
+<li>**量子做法**: Pauli 离散化(连续 → 4 种 Pauli 错误)</li>
+</ul>
+<h3>17.8.3 区别 3: 测量破坏态</h3>
+<ul>
+<li>**经典**: 测 bit **不**改变 bit</li>
+<li>**量子**: 测 $|\psi\rangle$ **破坏** $|\psi\rangle$</li>
+<li>**量子做法**: 测 stabilizer(测错误**不**破坏**逻辑**)</li>
+</ul>
+<h3>17.8.4 区别 4: 错误空间 2D (Pauli 群)</h3>
+<ul>
+<li>**经典**: 错误空间 $\mathbb{F}_2$ (1 维)</li>
+<li>**量子**: 错误空间 $\mathbb{F}_2^{2n}$ (辛空间, $2n$ 维)</li>
+<li>**后果**: 量子 Hamming 界是 $\sum 3^j \binom{n}{j}$ 不是 $\sum \binom{n}{j}$</li>
+</ul>
+<h3>17.8.5 区别 5: Stabilizer 必 Abelian</h3>
+<ul>
+<li>**经典**: 校验矩阵 $H$ 行**不必**对易</li>
+<li>**量子**: Stabilizer $S$ 必**Abelian** (对易)</li>
+<li>**原因**: $g|\psi\rangle = |\psi\rangle$ + $g'|\psi\rangle = |\psi\rangle$ → $gg' = g'g$(对易)</li>
+</ul>
+<h3>17.8.6 总结表</h3>
+<table class="chapter-table">
+<tr><td>维度</td><td>经典码</td><td>量子码</td></tr>
+<tr><td>冗余方式</td><td>复制</td><td>纠缠</td></tr>
+<tr><td>错误空间</td><td>离散 1 种</td><td>连续 → 离散 4 种</td></tr>
+<tr><td>测 syndrome</td><td>测 bit</td><td>测 stabilizer</td></tr>
+<tr><td>纠错公式</td><td>$2^{n-k} \ge \sum \binom{n}{j}$</td><td>$2^{n-k} \ge \sum 3^j \binom{n}{j}$</td></tr>
+<tr><td>Stabilizer</td><td>必存在</td><td>必对易</td></tr>
+<tr><td>例</td><td>Hamming $[7,4,3]$</td><td>Steane $[[7,1,3]]$</td></tr>
+<tr><td>距离 $d$</td><td>任意</td><td>$\ge 3$(纠错)或 $\ge 2$(检测)</td></tr>
+</table>
+<h3>17.8.7 "为什么 QEC 是可能的?" 的根本原因</h3>
+<p>**Naive 思考**: 错误空间**连续** + 测 syndrome **破坏**态 → QEC 看起来**不可能**。</p>
+<p>**实际**: 4 个 insight 联合让 QEC **可行**:</p>
+<ol>
+<li>**Pauli 离散化** (Knill-Laflamme 1997): 任意**连续**错误可写为 $E = \sum_{P \in \{I, X, Y, Z\}} c_P P$ 形式。**纠正 4 种** Pauli 错误 → **自动**纠正所有**连续**错误。</li>
+</ol>
+<ol>
+<li>**离散子集充分性** (Nielsen-Chuang 10.5.4): 量子码**只需**纠正 4 种 Pauli 错误的**离散子集**, 错误**连续性**不增加难度。</li>
+</ol>
+<ol>
+<li>**Syndrome 不破坏逻辑** (ch17.7.5): 测 stabilizer 测**只**告诉你**错误是否发生**, **不**告诉你 $|\psi\rangle = \alpha|0_L\rangle + \beta|1_L\rangle$ 的 $\alpha, \beta$。**逻辑**信息**不**泄漏。</li>
+</ol>
+<ol>
+<li>**Stabilizer 形式** (Gottesman 1996): 用 Pauli 群 $G_n$ 的**Abelian** 子群**统一**描述所有现代 QEC 码, 把 QEC 变成**代数**问题。</li>
+</ol>
+<p>**总结**: **离散化** + **逻辑保护** + **代数结构** = QEC **可行**。</p>
+<h3>17.8.8 "QEC 是哪种科学突破?"</h3>
+<p>**类比 1**: **数学** — 群论 (Galois) 让五次方程**不可解**得到证明 → **抽象代数**揭示**结构**。</p>
+<p>**类比 2**: **物理** — 麦克斯韦电磁理论统一电、磁、光 → 揭示**统一场**。</p>
+<p>**类比 3**: **计算理论** — Turing 1936 证明停机问题**不可判** → 计算**边界**。</p>
+<p>**QEC 1995-1997** 的意义:</p>
+<ul>
+<li>揭示"量子噪声**不**是量子计算的**根本障碍**"</li>
+<li>提供**代数**框架(stabilizer, CSS, symplectic)把 QEC 变成**可设计**的对象</li>
+<li>为**容错量子计算**(FTQC) 开辟道路</li>
+</ul>
+<blockquote><p>**历史地位**: 1995-1997 的 2 年里, QEC 理论**从无到有**——这是**奇迹**般的速度。Shor, Steane, Laflamme, Bennett, Gottesman, Calderbank, Knill, Terhal 在短短 2 年内**奠定**整个 QEC 理论的基础。</p></blockquote>
+<hr>
+<h2 id="section-17.9">17.9 ch18 表面码铺路</h2>
+<blockquote><p>**本章**是 QEC 的**原理基础**——ch18 给出**工业级**QEC。</p></blockquote>
+<h3>17.9.1 本章的局限</h3>
+<p>**Shor / Steane / 5-qubit** 都是**小规模 demo**:</p>
+<ul>
+<li>9, 7, 5 qubit 编码 1 logical qubit</li>
+<li>码率 $1/n \le 0.2$</li>
+<li>**不**适合大规模算法(Shor RSA-2048 需要 ~$10^3$ logical qubits → ~$10^4$ 物理 qubits)</li>
+</ul>
+<p>**实际工程**需要:</p>
+<ul>
+<li>**高码率** QEC 码</li>
+<li>**远距离** $d$(纠 1 错误**不**够)</li>
+<li>**局部** stabilizer(便于硬件实现)</li>
+</ul>
+<h3>17.9.2 ch18 表面码:工业级 QEC</h3>
+<p>**Surface code**(Bravyi-Kitaev 1998, Fowler 2012):</p>
+<ul>
+<li>2D 网格 $d \times d$ 物理 qubits</li>
+<li>码率 $k = 1$(单 logical qubit)</li>
+<li>距离 $d = $ 网格边长</li>
+<li>阈值 $p_{\text{th}} \approx 10^{-2}$(**最宽松**阈值)</li>
+<li>稳定器**局域**(2D 邻近)</li>
+</ul>
+<p>**例**: Google Willow 2024 用 $d = 5, 7$ 表面码, 首次**实验**显示"低于阈值"。</p>
+<h3>17.9.3 ch19 FTQC 铺路</h3>
+<p>**ch19** 主题:</p>
+<ul>
+<li>**阈值定理**(Aharonov-Ben-Or 1997, Knill-Laflamme 1997)</li>
+<li>任意**多项式**大小电路在 $p < p_{\text{th}}$ 下**可**容错</li>
+<li>**Magic state distillation**(Bravyi-Kitaev 2005)——非 Clifford 门的容错实现</li>
+<li>资源估算: 1 logical qubit → ~$10^3$ 物理 qubits(表面码)</li>
+</ul>
+<h3>17.9.4 第四部分总图</h3>
+<pre><code>
+ch16 噪声 (问题)
+   ↓
+ch17 量子码 (原理) ← 本章
+   ↓
+ch18 表面码 (工业)
+   ↓
+ch19 FTQC (完整)
+</code></pre>
+<hr>
+<h2 id="section-17.10">17.10 总结:QEC 的"原理全景"</h2>
+<h3>📋 概念速查表</h3>
+<table class="chapter-table">
+<tr><td>概念</td><td>定义</td><td>关键数字</td></tr>
+<tr><td>**Shor 9-qubit 码**</td><td>$[[9, 1, 3]]$ QEC 码, 1995</td><td>第一个 QEC 码</td></tr>
+<tr><td>**Steane 7-qubit 码**</td><td>$[[7, 1, 3]]$ CSS 码, 1996</td><td>第一个 CSS 码</td></tr>
+<tr><td>**5-qubit 完美码**</td><td>$[[5, 1, 3]]$ 饱和 Hamming, 1996</td><td>最小 QEC 码</td></tr>
+<tr><td>**$[[n, k, d]]$ 码**</td><td>$n$ 物理, $k$ 逻辑, $d$ 距离</td><td>$d = 2t + 1$ 纠 $t$ 错</td></tr>
+<tr><td>**CSS 构造**</td><td>从 2 个经典码 $C_1 \supset C_2^\perp$ 构造 QEC</td><td>1995-1996</td></tr>
+<tr><td>**Stabilizer 群**</td><td>稳定码空间的 Pauli 子群</td><td>Abelian + $-I \notin$</td></tr>
+<tr><td>**Syndrome**</td><td>stabilizer 测量的 $(n-k)$ bit 结果</td><td>0 = 无错</td></tr>
+<tr><td>**Pauli 离散化**</td><td>任意错误 → $I/X/Y/Z$ 4 种</td><td>连续 → 离散</td></tr>
+<tr><td>**Hamming 界**</td><td>$2^{n-k} \ge \sum 3^j \binom{n}{j}$</td><td>5-qubit 饱和</td></tr>
+<tr><td>**Singleton 界**</td><td>$n - k \ge 2(d-1)$</td><td>量子是经典 2 倍</td></tr>
+<tr><td>**完美码**</td><td>饱和 Hamming + $d = 2t + 1$</td><td>5-qubit 唯一 $k=1$</td></tr>
+<tr><td>**不可克隆**</td><td>任意未知态**不可**完美复制</td><td>1982 Shor/Wootters</td></tr>
+<tr><td>**3 大障碍**</td><td>不可克隆 + 连续错误 + 测量破坏</td><td>量子特有</td></tr>
+<tr><td>**3 大创新**</td><td>纠缠冗余 + Pauli 离散 + syndrome 测</td><td>对应解决</td></tr>
+<tr><td>**Knill-Laflamme 条件**</td><td>$E_a^\dagger E_b$ 在码空间**对角**</td><td>1997 充分必要</td></tr>
+<tr><td>**CSS 几何**</td><td>2D 平面(X 错误 vs Z 错误)</td><td>经典码 + 量子化</td></tr>
+<tr><td>**测 syndrome**</td><td>测 stabilizer 得 $\pm 1$</td><td>**不**破坏逻辑态</td></tr>
+<tr><td>**自举 (bootstrapping)**</td><td>重复 $N$ 次测降低 $p_s$</td><td>慢 $N$ 倍</td></tr>
+<tr><td>**应用光谱**</td><td>5/7 码(NISQ) → 表面码(FTQC)</td><td>距离 $d$ 决定</td></tr>
+<tr><td>**5-qubit 码实验**</td><td>2017-2024 多平台</td><td>$P_L \sim 10^{-4}$</td></tr>
+</table>
+<h3>三个关键洞察</h3>
+<ol>
+<li>**原理可能**: Shor 9-qubit 码 1995 证明 QEC **原理上**可行, 解决了"量子计算实用化"的根本疑虑</li>
+<li>**stabilizer 形式**: Gottesman 1996 提供**统一**的数学语言, 几乎所有现代 QEC 码都是 stabilizer 码</li>
+<li>**小码饱和界**: 5-qubit 码**饱和** Hamming 界, 是 $d = 3$ 码的"理论极限"——更小不行</li>
+</ol>
+<h3>心智模型</h3>
+<blockquote><p>**"QEC = 量子版的'防火系统'"** —— 火灾(错误)不可避免, 但**冗余 + 早期检测 + 主动灭火**可以让建筑(算法)存活</p></blockquote>
+<p>></p>
+<blockquote><p>- **Shor 9-qubit** = 1995 年的"原型烟雾报警器" - **Steane 7-qubit** = 1996 年的"分区报警系统" - **5-qubit** = 1996 年的"完美最小系统" - **ch18 表面码** = 现代的"工业级消防系统" - **ch19 FTQC** = "整栋大楼的完整防火设计"</p></blockquote>
+<h3>关键人物(7 位)</h3>
+<ul>
+<li>**Peter Shor** (1959-): 1994 Shor 算法 + 1995 第一个 QEC 码(9-qubit)</li>
+<li>**Andrew Steane** (1965-): 1996 Steane 7-qubit 码(CSS 构造)</li>
+<li>**Daniel Gottesman** (1976-): 1996 stabilizer 形式</li>
+<li>**Raymond Laflamme** (1960-): 1996 5-qubit 完美码(独立发现)</li>
+<li>**Charles Bennett** (1943-): 1996 5-qubit 完美码(独立简化)</li>
+<li>**A. R. Calderbank** (1950-): 1995 CSS 构造</li>
+<li>**Barbara Terhal** (1968-): 量子阈值定理 + 综述</li>
+</ul>
+<h3>一句话总结</h3>
+<blockquote><p>**量子纠错码** = 三个量子特有的创新(纠缠冗余 + Pauli 离散化 + syndrome 测量)解决了三个障碍(不可克隆 + 连续错误 + 测量破坏);Shor 9-qubit, Steane 7-qubit, 5-qubit 完美码是三个奠基性 $[[n, 1, 3]]$ 码, Gottesman 1996 stabilizer 形式给出**统一**数学语言;**原理上**可行 → ch18 表面码工业化 → ch19 FTQC 完整容错。</p></blockquote>
+<h3>衔接 ch18</h3>
+<ul>
+<li>**ch17** 已给: QEC 的**原理**——为什么可行, 哪些码</li>
+<li>**ch18**: QEC 的**工业**——表面码, Google Willow 2024 demo</li>
+<li>**ch19**: QEC 的**完整**——阈值定理 + 资源估算 + magic state distillation</li>
+</ul>
+<h3>推荐阅读</h3>
+<p>**经典**:</p>
+<ul>
+<li>Nielsen & Chuang《Quantum Computation and Quantum Information》第 10 章</li>
+<li>Gottesman 1997 stabilizer 综述论文</li>
+<li>Preskill Lecture Notes 第 7 章</li>
+</ul>
+<p>**现代综述**:</p>
+<ul>
+<li>Campbell, Terhal, Vuillot (2017) "Roads towards fault-tolerant universal quantum computation"</li>
+<li>Google Quantum AI (2024) "Quantum error correction below the surface code threshold"(Willow)</li>
+</ul>
+<p>**关键论文**:</p>
+<ul>
+<li>Shor 1995 "Scheme for reducing decoherence in quantum computer memory"</li>
+<li>Steane 1996 "Error correcting codes in quantum theory"</li>
+<li>Laflamme et al. 1996 "Perfect quantum error correction code"</li>
+<li>Gottesman 1996 "Class of error-correcting codes saturating the quantum Hamming bound"</li>
+</ul>
+<h3>思考题(4 道)</h3>
+<ol>
+<li>**(概念)** 解释为什么 5-qubit 码 $[[5, 1, 3]]$ 是**完美码**——它**饱和**了哪些界? 为什么 $k \ge 2$ 完美码**不存在**?</li>
+<li>**(数学)** 验证 Steane 7-qubit 码的 6 个 stabilizer 生成元 (3 X + 3 Z) 互相**对易**, 并证明 $|S| = 2^6 = 64$ 给出码空间维度 $2^{7-6} = 2$。</li>
+<li>**(工程)** 假设 1 物理 qubit 错误率 $p = 10^{-3}$(典型超导)。用 5-qubit 码 $[[5, 1, 3]]$ 保护 1 logical qubit。</li>
+</ol>
+<p>- (a) **逻辑错误率** 是多少?(用 $P_L \sim C p^{(d+1)/2} = C p^2$, $C$ 是码依赖常数 ~$10$)</p>
+<p>- (b) 需要**多少** 5-qubit 块才能让 $P_L < 10^{-10}$?(Shor 算法的目标)</p>
+<p>- (c) **物理 qubit 总数** 估算</p>
+<ol>
+<li>**(历史)** 为什么 Shor 选择 **9** qubit(不是 7, 不是 5)? 提示: 思考"两个 3-qubit 码"级联的历史直觉。</li>
+</ol>
+<hr>
+<h2 id="section-17.A">17.A 附录:量子 Hamming 界的证明</h2>
+<p>**定理**: $[[n, k, d]]$ 码必须满足 $2^{n-k} \ge \sum_{j=0}^{t} 3^j \binom{n}{j}$, $t = \lfloor (d-1)/2 \rfloor$。</p>
+<p>**证明思路**(Knill-Laflamme 1997):</p>
+<ol>
+<li>**球定义**: 对 $\rho \in \mathcal{H}$, $S(\rho, t) = \{E\rho E^\dagger : E \in G_n, \text{wt}(E) \le t\}$。</li>
+<li>**球大小**: $|S| = \sum_{j=0}^{t} 3^j \binom{n}{j}$(每个权重 $j$ 的 Pauli 串有 $3^j$ 种——除 $I$ 外的 $3$ 个 Pauli 算子的 $j$ 元积)。</li>
+<li>**球不交性**: 两个**不同**码字 $\rho_i, \rho_j$ 的球**不**相交(因为码能纠正 $\le t$ 错)。</li>
+<li>**维度计数**: 全部球在 $\mathcal{H}$ 里, 总维度 = $2^{2n}$。但 $\sum_i |S_i| \le 2^{2n}$, 给出 $2^k \cdot |S| \le 2^{2n}$。</li>
+<li>**化简**: $|S| \le 2^{2n-k}$, 即 $2^{n-k} \ge \sum 3^j \binom{n}{j}$。</li>
+</ol>
+<p>**5-qubit 码的验证**: $t = 1$, $2^{5-1} = 16$, 右边 $= 1 + 3 \cdot 5 = 16$ ✓ 饱和。</p>
+<hr>
+<h2 id="section-17.B">17.B 附录:量子 Singleton 界的证明</h2>
+<p>**定理**: $[[n, k, d]]$ 码必须满足 $n - k \ge 2(d-1)$。</p>
+<p>**证明思路**(用经典 Singleton 界推广):</p>
+<ol>
+<li>**CSS 分解**: 任何 stabilizer 码都**可以**(不唯一)写为 CSS 形式(用 symplectic 变换)。</li>
+<li>**CSS 码参数**: $k = k_1 + k_2 - n$, $d \ge \min(d_1, d_2)$。</li>
+<li>**经典 Singleton**: $n - k_1 \ge d_1 - 1$ 和 $n - k_2 \ge d_2 - 1$。</li>
+<li>**加**: $(n - k_1) + (n - k_2) \ge (d_1 - 1) + (d_2 - 1)$, 即 $2n - (k_1 + k_2) \ge d_1 + d_2 - 2 \ge 2d - 2$。</li>
+<li>**化简**: $2n - 2n + k \ge 2 - 2d$, 即 $k \le 2 - 2d + 2n$, 即 $n - k \ge 2(d-1)$。</li>
+</ol>
+<blockquote><p>**注**: 量子 Singleton 界**严格**比经典强(因子 2)——因为 QEC 必须纠正 X + Z。</p></blockquote>
+<hr>
+<h2 id="section-17.C">17.C 附录:5-qubit 码的完整 stabilizer 推导</h2>
+<p>**构造思路**(Laflamme et al. 1996):</p>
+<p>我们想找 4 个独立对易的 stabilizer $g_1, g_2, g_3, g_4$, 满足:</p>
+<ol>
+<li>$g_i^2 = I$</li>
+<li>$[g_i, g_j] = 0$ (对易)</li>
+<li>$\prod_i g_i = I$ (整体相容性)</li>
+<li>每个 $g_i$ 是 5-qubit Pauli 串, 重量偶数</li>
+<li>任意单 qubit 错误 $E$ 跟**至少**一个 $g_i$ **反对易**(可检测)</li>
+</ol>
+<p>**显式构造**:</p>
+<p>$$g_1 = XZZXI$$</p>
+<p>$$g_2 = IXZZX$$</p>
+<p>$$g_3 = XIXZZ$$</p>
+<p>$$g_4 = ZXIXZ$$</p>
+<p>**验证**:</p>
+<ul>
+<li>$g_i^2 = I$ ✓(每个字母平方 = $I$)</li>
+<li>互相**对易**(辛内积为零)</li>
+<li>乘积 $g_1 g_2 g_3 g_4 = I$(每位置 $X, Z$ 出现 2 次)</li>
+<li>**不**同构于 Steane / Shor</li>
+</ul>
+<p>**逻辑算子**:</p>
+<ul>
+<li>$\bar{X} = XXXXX$(5 个 $X$)</li>
+<li>$\bar{Z} = ZZZZZ$(5 个 $Z$)</li>
+<li>$\bar{X}\bar{Z} = -\bar{Z}\bar{X}$ ✓</li>
+</ul>
+<blockquote><p>**注**: 5-qubit 码是**唯一**(up to equivalence)$k = 1, d = 3$ QEC 完美码。</p></blockquote>
+<hr>
+<h2 id="section-17.D">17.D 附录:Knill-Laflamme 量子纠错条件</h2>
+<p>**定理** (Knill-Laflamme 1997): 码空间 $V = \text{span}\{|\bar{0}\rangle, |\bar{1}\rangle\}$ 能纠正错误集 $\{E_a\}$ **当且仅当**对所有 $a, b$ 和 $i, j \in \{0, 1\}$:</p>
+<p>$$\langle \bar{i} | E_a^\dagger E_b | \bar{j} \rangle = C_{ab} \delta_{ij}$$</p>
+<p>**解释**:</p>
+<ul>
+<li>对角 $\delta_{ij}$: 错误**不**改变逻辑态($|\bar{0}\rangle$ 不会被错误变成 $|\bar{1}\rangle$ 的某种叠加)</li>
+<li>**通用** $C_{ab}$: 错误对**所有**逻辑态的作用**相同**(可"全局"纠正)</li>
+</ul>
+<p>**物理意义**: 错误**只**对码空间产生"全局相似变换", 不"局部"扰动。</p>
+<p>**例 (5-qubit 码)**: 对单 qubit 错误 $E_1 = X_1$, 验证:</p>
+<p>$$\langle \bar{0} | X_1^\dagger X_1 | \bar{0} \rangle = \langle \bar{0} | \bar{0} \rangle = 1$$</p>
+<p>$$\langle \bar{0} | X_1^\dagger X_1 | \bar{1} \rangle = \langle \bar{0} | \bar{1} \rangle = 0$$ ✓</p>
+<blockquote><p>**历史**: Knill-Laflamme 1997 给出**第一个**通用的 QEC **充分必要条件**——之前 Shor/Steane/Laflamme 是 ad hoc 构造, 1997 后变成"系统理论"。</p></blockquote>
+<hr>
+<h2 id="section-17.E">17.E 附录:从 QEC 到 FTQC 的"半步"</h2>
+<p>**QEC** (本章) 给"纠正**单**错误"的能力。</p>
+<p>**FTQC** (ch19) 要求"任意**多项式**大小电路在 $p < p_{\text{th}}$ 下**可**容错"。</p>
+<p>**从 QEC 到 FTQC 的关键**:</p>
+<ol>
+<li>**递归纠错** (concatenated codes):</li>
+</ol>
+<p>- 把 QEC 码的"逻辑 qubit"**再**用 QEC 码保护</p>
+<p>- 1 → 5 → 25 → 125 ... 物理 qubit</p>
+<p>- 错误指数下降: $P_L \sim (p/p_{\text{th}})^{2^L}$, $L$ = 递归层数</p>
+<p>- **Aharonov-Ben-Or 1997** 证明: 任意电路在 $p < p_{\text{th}}$ 下可容错</p>
+<ol>
+<li>**表面码的"连续"版本** (ch18):</li>
+</ol>
+<p>- 不用递归, 改用 2D 网格 + 局部 stabilizer</p>
+<p>- 阈值 $p_{\text{th}} \approx 10^{-2}$(**最宽松**)</p>
+<p>- 1 logical qubit → $d^2$ 物理 qubit</p>
+<ol>
+<li>**Magic state distillation** (Bravyi-Kitaev 2005):</li>
+</ol>
+<p>- 容错 Clifford 门**容易**(Stabilizer 操作)</p>
+<p>- 容错 $T$ 门**难**(需要 magic state)</p>
+<p>- **蒸馏**: 多 noisy magic state → 1 clean magic state</p>
+<p>- 代价: 100-1000x 物理 qubit</p>
+<ol>
+<li>**资源估算** (Surface code + Magic state):</li>
+</ol>
+<p>- 1 logical qubit ≈ 1000-3000 物理 qubit</p>
+<p>- 1 Toffoli gate ≈ 100-1000 physical gates</p>
+<p>- Shor RSA-2048 ≈ 20 million physical qubits + 几小时</p>
+<blockquote><p>**ch18-19 预告**: 本章学的 Shor/Steane/5-qubit 是**原理**, ch18 学**工业级**表面码, ch19 学**完整**FTQC + 阈值定理 + 资源估算。</p></blockquote>
+<hr>
+<h2 id="section-17.F">17.F 附录:常见误解 (Day 20 修订单独补充)</h2>
+<blockquote><p>**误解 1**: "QEC 跟 EM 是一回事"</p></blockquote>
+<p>></p>
+<blockquote><p>- **错**: QEC = 编码 + syndrome 测 + 主动恢复(本章) - EM = 接受噪声 + 统计修正(ch16) - **关系**: QEC 用物理冗余;EM 用统计冗余 - **互补**: FTQC 也用 EM, NISQ 主要用 EM</p></blockquote>
+<blockquote><p>**误解 2**: "QEC 一定要 many qubit"</p></blockquote>
+<p>></p>
+<blockquote><p>- **不一定**: 5-qubit 码就是**最小**($k = 1, d = 3$) - $[[n, 1, 3]]$ 完美码**只有** 5-qubit **一种**</p></blockquote>
+<blockquote><p>**误解 3**: "QEC 码率越高越好"</p></blockquote>
+<p>></p>
+<blockquote><p>- **错**: 码率 vs 距离是**权衡** - 高码率($k/n \to 1$)→ 低距离(保护弱) - 低码率($k/n \to 0$)→ 高距离(保护强) - **工业**(表面码)选 $k/n \sim 1/d^2$ 折中</p></blockquote>
+<blockquote><p>**误解 4**: "QEC 一定能消除所有错误"</p></blockquote>
+<p>></p>
+<blockquote><p>- **错**: QEC 只能**降低**逻辑错误率 - $P_L \sim C p^{(d+1)/2}$, 永远 > 0 - **QEC 失败** = 多于 $t$ 个物理错误同时发生 - FTQC 用足够 $d$ + 阈值定理保证**渐进**任意低</p></blockquote>
+<blockquote><p>**误解 5**: "Stabilizer 码就等于 QEC 码"</p></blockquote>
+<p>></p>
+<blockquote><p>- **不完全**: Stabilizer 码 ⊂ QEC 码(子集) - 例: 错误避免码 (error avoiding codes) 不测 syndrome, 用**避免**错误发生 - 例: Subsystem 码 (Bacon-Shor 2006) 是 stabilizer 的推广 - **本章** 主要讲 stabilizer, 因为**最常用**</p></blockquote>
+<hr>
+<h2 id="section-17.G">17.G 附录:思考题答案(简要)</h2>
+<p>**T1 答案**: 5-qubit 码 $[[5, 1, 3]]$ 饱和 Hamming 界: $2^{5-1} = 16 = 1 + 3 \cdot 5$ ✓。$k \ge 2$ 完美码不存在因为: $k = 2$ 需要 $2^{n-2} \ge 1 + 3n$, $n = 5$ 给出 $8 < 16$ 矛盾, $n \ge 7$ 给出 $32 \ge 22$ ✓ 但需同时满足 Singleton 界 $n - 2 \ge 4$, $n \ge 6$。Grassl 2002 证明: 唯一完美 QEC 码是 $[[5, 1, 3]]$。</p>
+<p>**T2 答案**: Steane 7-qubit 码的 stabilizer 群 $S$ 由 6 个独立对易的生成元生成。$|S| = 2^6 = 64$。码空间维度 = $2^{7-6} = 2$, 即 1 logical qubit ✓。</p>
+<p>**T3 答案**: (a) $P_L \sim 10 \cdot (10^{-3})^2 = 10^{-5}$。(b) Shor RSA-2048 要 $P_L < 10^{-10}$, 需 $\sqrt{10}$ 个 5-qubit 块, 实际**用表面码更经济**。(c) 物理 qubit 总数 ≈ 1 logical × 5/块 × 4 块 = 20。</p>
+<p>**T4 答案**: Shor 选择 9 qubit 是因为: (1) 1995 年时 5-qubit 完美码**尚未发现**; (2) Shor 用**经典 3-qubit 重复码**两次级联(phase-flip + bit-flip), 自然得到 $3 \times 3 = 9$; (3) 概念**直观**——两个熟悉的经典码组合。Steane 5 个月后发现 7-qubit CSS, Laflamme 同期发现 5-qubit 完美码。**历史**显示: 第一个 QEC 码**不**是最优的, 但**原理上**已经足够。</p>
+        
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
