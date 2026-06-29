@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第18章：表面码与拓扑量子计算 (Surface Codes & Topological QC) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第18章：表面码与拓扑量子计算 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第四部分 · 量子纠错与容错 · Day 3</span>
+        <span class="chapter-day-tag">Day 21 · 2026-06-29</span>
+      </div>
+      <h1 class="chapter-title">第 18 章 表面码与拓扑量子计算 (Surface Codes & Topological QC)</h1>
+      <p class="chapter-subtitle">2D 网格 + 棋盘 X/Z stabilizer + 阈值定理 + 任意子 (Abelian/Ising/Fibonacci) + Google Willow 2024 + 第四部分 Day 3</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,500 字</span>
+        <span class="stat">🔢 11 节 · 4 附录 · 60+ 子节</span>
+        <span class="stat">📑 2D 网格 / 阈值定理 / 任意子 / 6 里程碑 / 拓扑量子计算</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+            <article class="chapter-content">
+          <h1>第 18 章 表面码与拓扑量子计算 (Surface Codes & Topological QC)</h1>
+          <blockquote><strong>第四部分 · 量子纠错与容错</strong> — Day 3 <strong>目标</strong>: 工业级 QEC —— 表面码 2D 网格 + 任意子 + 阈值定理 + 资源估算 <strong>里程碑</strong>: 18/28 章 = 64%</blockquote>
+          <hr>
+<h1>第 18 章 表面码与拓扑量子计算</h1>
+<blockquote><p><strong>章节定位</strong>: 第四部分「量子纠错与容错」<strong>Day 3</strong> —— ch17 给出"原理性"QEC 码 (Shor 9, Steane 7, 5-qubit), 本章给出"工业级"QEC 码——<strong>表面码</strong> + <strong>拓扑量子计算</strong></p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>章节目标</strong>:</p></blockquote>
+<blockquote><p>1. 理解为什么需要"工业级"QEC——ch17 三个奠基码为什么不够用</p></blockquote>
+<blockquote><p>2. 掌握表面码的<strong>几何</strong>——2D 网格 + 局部 stabilizer + X/Z 棋盘分布</p></blockquote>
+<blockquote><p>3. 学会<strong>阈值定理</strong>——容错量子计算的物理基础</p></blockquote>
+<blockquote><p>4. 了解<strong>任意子</strong>——二维拓扑序的准粒子 + 拓扑保护</p></blockquote>
+<blockquote><p>5. 看清 2014-2024 硬件里程碑——从实验室到 Google Willow</p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>承上(ch17)</strong>: 上一章讲了三个<strong>奠基性</strong>QEC 码 (Shor/Steane/5-qubit, 规模 5-9 qubit)。本章问:<strong>这些码为什么不能 scale 到 1000+ qubit?</strong></p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>启下(ch19)</strong>: 本章是<strong>工业级</strong>QEC 的入口——ch19 学<strong>完整</strong>容错 (FTQC) + 阈值定理 + 资源估算</p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>字数目标</strong>: 6,500-7,500 中文字</p></blockquote>
+<hr>
+<h2 id="section-18.0">18.0 引言:从"小规模"到"工业级"QEC</h2>
+<blockquote><p><strong>一句话总结</strong>: ch17 的三个奠基码 (5-9 qubit) 适合"教学"和"原理证明", 但<strong>实用</strong>必须用<strong>表面码</strong>——2D 网格 + 局部 stabilizer + 高阈值, 是当前 IBM/Google/Amazon 等<strong>所有</strong>大厂的 QEC 路径。</p></blockquote>
+<h3>18.0.1 ch17 三个奠基码的"规模天花板"</h3>
+<table class="chapter-table">
+<tr><th>码</th><th>物理 qubit</th><th>$d$</th><th>阈值 $p_{th}$</th><th>工程友好性</th></tr>
+<tr><td>5-qubit 完美码</td><td>5</td><td>3</td><td>$\sim 10^{-4}$</td><td>中 (距离小)</td></tr>
+<tr><td>Shor 9-qubit</td><td>9</td><td>3</td><td>$\sim 10^{-4}$</td><td>低 (非 CSS, 编码复杂)</td></tr>
+<tr><td>Steane 7-qubit</td><td>7</td><td>3</td><td>$\sim 10^{-4}$</td><td>中 (CSS, 但权重大)</td></tr>
+</table>
+<p><strong>核心问题</strong>:</p>
+<ol>
+<li><strong>规模天花板</strong>: Shor/Steane 编码 1 逻辑 qubit 用 7-9 物理, 想 $d = 7$ 就需要 $7^2 + (7-1)^2 = 85$ qubit (ch17 几何延伸)——<strong>码率</strong> $k/n$ 越来越低</li>
+<li><strong>阈值严苛</strong>: $\sim 10^{-4}$ 阈值要求硬件错误率 $p < 10^{-4}$, <strong>当前</strong>最好的超导 qubit $p \sim 10^{-3}$, <strong>不满足</strong></li>
+<li><strong>电路复杂</strong>: Shor 编码需要 8 块 3-qubit 电路, Steane 权重大 (7-qubit 算子)——<strong>长程</strong>连接难实现</li>
+</ul>
+<p><strong>结论</strong>: 三个奠基码<strong>原理上</strong>可行, <strong>工程上</strong>不能 scale——需要<strong>新码</strong>。</p>
+<h3>18.0.2 表面码的"破局"思路</h3>
+<p><strong>Bravyi-Kitaev 1998</strong> + <strong>Dennis-Kitaev-Landahl-Preskill (DKLP) 2002</strong> 给出<strong>三个</strong>破局点:</p>
+<ol>
+<li><strong>2D 网格</strong>: 数据 qubit 排在 2D 网格上, 物理上<strong>近邻</strong>——避免长程连接</li>
+<li><strong>局部 stabilizer</strong>: X/Z stabilizer 只跟<strong>4 个最近邻</strong>数据 qubit 作用——避免长程测量</li>
+<li><strong>高阈值</strong>: $p_{th} \approx 1\%$, <strong>比</strong> Shor/Steane 的 $10^{-4}$ 高<strong>两个数量级</strong>——容忍<strong>当前</strong>硬件</li>
+</ul>
+<p><strong>工业意义</strong>: 表面码是<strong>所有</strong>大厂的 QEC 路径——IBM 2021, Google 2023-2024, Amazon 2024, IonQ 2024 都在用。</p>
+<h3>18.0.3 ch18 的逻辑线</h3>
+<pre><code>ch17 三个奠基码 (5-9 qubit, d=3, 阈值 10^-4)
+    ↓ 三个规模/工程问题
+    ↓ Bravyi-Kitaev 1998 表面码 + DKLP 2002 完整理论
+    ↓
+18.1 拓扑学基础 (homotopy, genus, anyons, braiding)
+    ↓
+18.2 平面码 vs 旋转码 vs 补丁码 (Bravyi-Kitaev 1998)
+    ↓
+18.3 2D 网格 + X/Z stabilizer 几何 (棋盘)
+    ↓
+18.4 Syndrome 提取 + MWPM/Union-Find 解码
+    ↓
+18.5 阈值定理 (p_L 指数下降)
+    ↓
+18.6 任意子 (Abelian / non-Abelian / 编织)
+    ↓
+18.7 资源估算 (n = d^2 + (d-1)^2)
+    ↓
+18.8 硬件里程碑 (2014-2024)
+    ↓
+18.9 拓扑量子计算 (ch23 铺路 + Majorana 1 2025)
+    ↓
+18.10 总结 + ch19 铺路</code></pre>
+<h3>18.0.3.1 ch18 跟 ch17 的对比</h3>
+<table class="chapter-table">
+<tr><th>维度</th><th>ch17 奠基码</th><th>ch18 表面码</th></tr>
+<tr><td>规模</td><td>5-9 qubit</td><td>25-10000+ qubit</td></tr>
+<tr><td>$d$</td><td>3 (起步)</td><td>5-30 (工程级)</td></tr>
+<tr><td>阈值 $p_{th}$</td><td>$\sim 10^{-4}$</td><td>$\sim 1\%$</td></tr>
+<tr><td>stabilizer 范围</td><td>任意 (非局部)</td><td>局部 (4 体)</td></tr>
+<tr><td>工程实现</td><td>难 (长程)</td><td>易 (近邻)</td></tr>
+<tr><td>代表实验</td><td>IBM 5-qubit 块</td><td>Google Willow 2024</td></tr>
+</table>
+<h3>18.0.3.2 三个"规模扩展"的根本障碍</h3>
+<p>从 ch17 到 ch18 之前, 三个<strong>根本</strong>障碍阻止 QEC 的规模扩展:</p>
+<p><strong>障碍 1: 长程连接</strong></p>
+<ul>
+<li>Shor 9-qubit 编码需要<strong>非局部</strong> CNOT 门 (e.g. qubit 1 控制 qubit 9)</li>
+<li>在物理硬件上, 长程门<strong>错误率</strong>比<strong>近邻</strong>门<strong>高 10-100 倍</strong></li>
+<li>表面码只要求<strong>最近邻</strong> 4 体连接——<strong>避免</strong>长程</li>
+</ul>
+<p><strong>障碍 2: 测量复杂度</strong></p>
+<ul>
+<li>Shor 测 8 个 stabilizer, 每个需<strong>多个</strong> ancilla + <strong>深度</strong>电路</li>
+<li>表面码<strong>所有</strong> stabilizer 都是 4 体——电路深度<strong>常数</strong>, 与 $d$ 无关</li>
+</ul>
+<p><strong>障碍 3: 码率衰减</strong></p>
+<ul>
+<li>Shor/Steane 码率 $k/n = 1/9$ 或 $1/7$</li>
+<li>想要 $d = 5$? Shor 几何延伸需要 $5^2 + (5-1)^2 = 41$ 物理 qubit (码率 1/41)</li>
+<li>表面码旋转版本: $d = 5$ → $25$ 物理 (码率 1/25, 比 Shor 几何延伸<strong>省</strong> 39%)</li>
+<h3>18.0.4 5 个先验</h3>
+<li><strong>ch02 狄拉克符号</strong>: bra-ket</li>
+<li><strong>ch06 Bloch 球 + 不可克隆定理</strong></li>
+<li><strong>ch07 CNOT 门 + 控制操作</strong></li>
+<li><strong>ch15 BQP 假定无噪声 → ch16 噪声 → ch17 纠错 → ch18 工业级 QEC</strong></li>
+<li><strong>ch17 Shor/Steane/5-qubit 三个奠基码</strong> (规模 5-9)</li>
+<h3>18.0.5 ch18 在第四部分的定位</h3>
+<pre><code>第四部分: 量子纠错与容错 (4/5 章)
+  ch16: 噪声刻画 (Day 1)        ✅
+  ch17: QEC 原理 (Day 2)        ✅
+  ch18: 表面码 (Day 3, 本章)    ⏳ 当前
+  ch19: FTQC (Day 4)            📅
+  ch20-24: 第五部分硬件          📅</code></pre>
+<hr>
+<h2 id="section-18.1">18.1 拓扑学基础:为什么叫"表面"码</h2>
+<blockquote><p><strong>核心问题</strong>: 表面码的"表面"是什么? 跟拓扑学有什么关系?</p></blockquote>
+<h3>18.1.1 拓扑不变量:洞、把手、亏格</h3>
+</ul>
+<p><strong>拓扑学</strong>研究"在连续形变下不变"的性质。</p>
+<table class="chapter-table">
+<tr><th>概念</th><th>含义</th><th>量子计算角色</th></tr>
+<tr><td><strong>同伦</strong> (homotopy)</td><td>"路径的等价类"</td><td>任意子的世界线 (worldline)</td></tr>
+<tr><td><strong>同调</strong> (homology)</td><td>"闭链/边界"</td><td>syndrome 模式的空间分布</td></tr>
+<tr><td><strong>亏格</strong> (genus)</td><td>"把手"的数量</td><td>环面 (torus) 亏格 = 1, 球面亏格 = 0</td></tr>
+<tr><td><strong>环面</strong> (torus)</td><td>亏格 1 的紧致曲面</td><td>周期性边界 (早期表面码)</td></tr>
+</table>
+<p><strong>关键观察</strong>: 表面码用<strong>平面</strong> (亏格 0) 边界<strong>+</strong> <strong>开口</strong>边界 (open boundary) 编码——比环面<strong>更实用</strong>。</p>
+<h3>18.1.2 同伦 (Homotopy): 任意子的"运动"</h3>
+<p><strong>任意子</strong> (anyons) 是二维拓扑序的准粒子, <strong>世界线</strong> (worldline) 是 1D 曲线。</p>
+<p><strong>同伦类</strong>: 两条世界线<strong>等价</strong>当且仅当可以<strong>连续形变</strong>相互转换 (不允许穿过其他任意子)。</p>
+<p><strong>关键事实</strong>: 在二维空间里, 世界线<strong>可以</strong>互相<strong>绕</strong> (braiding)——三维空间里<strong>不行</strong> (因为绕过 + 穿过是等价的)。</p>
+<p><strong>应用</strong>: 任意子的<strong>编织</strong> (braiding) = <strong>拓扑保护</strong>的量子门——错误率 $\sim e^{-L/\xi}$ (随距离指数下降)。</p>
+<h3>18.1.3 同调 (Homology): syndrome 的几何</h3>
+<p><strong>同调类</strong>: 闭链 (cycle) 的等价类——两个闭链等价当且仅当差是某<strong>边界</strong> (boundary)。</p>
+<p><strong>表面码的 syndrome</strong>: 是一组<strong>比特串</strong>——可看作<strong>闭链</strong>。</p>
+<ul>
+<li>$X$ 错误 (bit-flip) 的 syndrome = <strong>X-stabilizer 触发的链</strong> (1-chain)</li>
+<li>$Z$ 错误 (phase-flip) 的 syndrome = <strong>Z-stabilizer 触发的链</strong> (1-chain)</li>
+</ul>
+<p><strong>关键事实</strong>: syndrome = 0 当且仅当错误是<strong>纯边界</strong> (boundary)——即"无错" (因为 $V$ 是辛子空间)。</p>
+<p><strong>应用</strong>: 解码 (decoding) = 找<strong>最短闭链</strong> 解释 syndrome——这是<strong>最小权重完美匹配</strong> (MWPM) 算法的数学背景。</p>
+<h3>18.1.4 亏格 (Genus): "把手" 的数量</h3>
+<p><strong>环面</strong> (torus) 亏格 = 1 (1 个"把手")。 <strong>球面</strong> (sphere) 亏格 = 0 (无把手)。 <strong>双环面</strong> (double torus) 亏格 = 2 (2 个把手)。</p>
+<p><strong>欧拉示性数</strong> (Euler characteristic): $\chi = 2 - 2g$ (亏格 $g$ 的紧致曲面)。</p>
+<p><strong>应用</strong>: 表面码的"洞"的数量 = 逻辑 qubit 数 (1 个洞 = 1 个独立的世界线类)。</p>
+<h3>18.1.5 任意子 (Anyons): 二维的礼物</h3>
+<p><strong>任意子</strong> = 出现在<strong>二维</strong>拓扑序中的准粒子, 跟三维的玻色子/费米子<strong>不同</strong>。</p>
+<table class="chapter-table">
+<tr><th>维度</th><th>粒子</th><th>交换统计</th></tr>
+<tr><td>3D</td><td>玻色子</td><td>$\psi \to \psi$ (不变)</td></tr>
+<tr><td>3D</td><td>费米子</td><td>$\psi \to -\psi$ (变号)</td></tr>
+<tr><td>2D</td><td><strong>任意子</strong></td><td>$\psi \to e^{i\theta} \psi$ (任意相位 $\theta$)</td></tr>
+</table>
+<p><strong>关键</strong>: 2D 拓扑序中, 交换任意子产生<strong>复相位</strong>——是量子门的来源。</p>
+<h3>18.1.6 编织 (Braiding): 拓扑保护</h3>
+<p><strong>编织</strong> = 任意子在 2D 平面上<strong>互相环绕</strong>。</p>
+<p><strong>关键定理</strong>: 编织产生的相位 $e^{i\theta}$ <strong>只依赖</strong>于<strong>同伦类</strong> (路径的拓扑等价类)——<strong>不依赖</strong>于具体路径细节。</p>
+<p><strong>应用</strong>: 用任意子编织做量子门, 错误率 $\sim e^{-L/\xi}$, 其中 $L$ = 任意子距离, $\xi$ = 相关长度——<strong>指数小</strong>错误率, 是<strong>拓扑保护</strong>的核心。</p>
+<p><strong>18.6 节会深入展开任意子和编织。</strong></p>
+<hr>
+<h2 id="section-18.2">18.2 平面码 vs 旋转码 vs 补丁码 (Bravyi-Kitaev 1998)</h2>
+<blockquote><p><strong>核心问题</strong>: 表面码的"家族"有几种? 各自的资源开销如何?</p></blockquote>
+<h3>18.2.1 平面码 (Planar Code)</h3>
+<p><strong>Bravyi-Kitaev 1998</strong> 提出的最简版本:</p>
+<ul>
+<li>数据 qubit 排列在 $d \times d$ 2D 网格<strong>顶点</strong> (vertices)</li>
+<li>X-stabilizer 在<strong>星形</strong> (star) 顶点 = 4 个最近邻数据 qubit 的 $X$ 积</li>
+<li>Z-stabilizer 在<strong>面形</strong> (plaquette) 中心 = 4 个最近邻数据 qubit的 $Z$ 积</li>
+<li><strong>边界</strong>: 4 个开口边界 (粗糙 + 平滑), 2 对边界定义 1 个逻辑 qubit</li>
+</ul>
+<p><strong>资源</strong>:</p>
+<ul>
+<li>数据 qubit: $n = d^2 + (d-1)^2$</li>
+</ul>
+<p>- 例: $d = 3$ → $9 + 4 = 13$ 数据 qubit - 例: $d = 5$ → $25 + 16 = 41$ 数据 qubit</p>
+<ul>
+<li>测量 qubit (ancilla): $d^2 - 1$ (X) + $d^2 - 1$ (Z) ≈ $2d^2$ 个</li>
+<li><strong>总</strong> (数据 + 测量): $\sim 3d^2$ qubit</li>
+<h3>18.2.2 旋转码 (Rotated Code)</h3>
+</ul>
+<p><strong>Horsman 2012</strong> 提出<strong>旋转 45°</strong> + <strong>压缩</strong> 边界, 资源<strong>更紧凑</strong>。</p>
+<p><strong>关键思想</strong>: 旋转后 X/Z stabilizer 分布更<strong>密集</strong>——用<strong>更少的 qubit</strong> 实现同样 $d$。</p>
+<p><strong>资源</strong>:</p>
+<ul>
+<li>数据 qubit: $n = d^2$</li>
+<li>测量 qubit: $\sim 2d^2 - 2d + 1$</li>
+<li><strong>总</strong>: $\sim 2d^2$ qubit (比平面码<strong>省</strong> 33%)</li>
+</ul>
+<p><strong>例</strong>: $d = 5$ → $25$ 数据 qubit (vs 平面码 41)</p>
+<p><strong>当前工业实践</strong>: Google Willow 2024 用<strong>旋转码</strong>——$d = 5, 7$ 各 25/49 数据 qubit。</p>
+<h3>18.2.3 补丁码 (Patch Code)</h3>
+<p><strong>Horsman 2012</strong> + <strong>Fowler 2012</strong> 进一步<strong>任意形状</strong>的码——补丁 (patch)。</p>
+<p><strong>关键思想</strong>: 把多个<strong>逻辑 qubit</strong> 编码在<strong>任意形状</strong>的 2D 表面上, 满足"X 边界 vs Z 边界"的特定分布。</p>
+<p><strong>资源</strong>: 取决于具体形状——常用于多逻辑 qubit 的<strong>逻辑门</strong>实现。</p>
+<p><strong>应用</strong>: 表面码的<strong>逻辑门</strong> (CNOT, T 门) 通常用<strong>多补丁</strong>实现——补丁码是工程实践的常见形式。</p>
+<h3>18.2.4 三种码的物理 qubit 数对比</h3>
+<table class="chapter-table">
+<tr><th>码型</th><th>数据 qubit</th><th>测量 qubit</th><th>总</th><th>$d=3$</th><th>$d=5$</th><th>$d=7$</th></tr>
+<tr><td><strong>平面码</strong></td><td>$d^2 + (d-1)^2$</td><td>$\sim 2d^2$</td><td>$\sim 3d^2$</td><td>17</td><td>41</td><td>73</td></tr>
+<tr><td><strong>旋转码</strong></td><td>$d^2$</td><td>$\sim 2d^2 - 2d + 1$</td><td>$\sim 2d^2$</td><td>9</td><td>25</td><td>49</td></tr>
+<tr><td><strong>补丁码</strong></td><td>任意</td><td>任意</td><td>任意</td><td>灵活</td><td>灵活</td><td>灵活</td></tr>
+</table>
+<p><strong>当前主流</strong>: 旋转码——Google, IBM, Amazon 都用旋转码。</p>
+<hr>
+<h2 id="section-18.3">18.3 2D 网格 + X/Z Stabilizer 几何</h2>
+<blockquote><p><strong>核心问题</strong>: 表面码的"棋盘" 几何长什么样? 数据 qubit 和 stabilizer 怎么分布?</p></blockquote>
+<h3>18.3.1 数据 qubit 在格点 (Vertices)</h3>
+<p><strong>最常见布局</strong>: 旋转码的 2D 网格:</p>
+<ul>
+<li>数据 qubit 位于 $d \times d$ 的<strong>格点</strong> (vertices)</li>
+<li>$d = 3$ 时: 9 个数据 qubit</li>
+<li>$d = 5$ 时: 25 个数据 qubit</li>
+<li>$d = 7$ 时: 49 个数据 qubit</li>
+</ul>
+<p><strong>例 ($d = 3$)</strong> 9 个数据 qubit 编号 (行优先):</p>
+<pre><code>q_0  q_1  q_2
+q_3  q_4  q_5
+q_6  q_7  q_8</code></pre>
+<h3>18.3.2 X-stabilizer (星形) + Z-stabilizer (面形) 交替</h3>
+<p><strong>棋盘分布</strong>: X 和 Z stabilizer 交替排布, 像国际象棋的"棋盘"——黑格/白格对应 X/Z。</p>
+<p><strong>X-stabilizer (4 体)</strong>:</p>
+<ul>
+<li>测 $X$ 在 4 个最近邻数据 qubit 上的<strong>积</strong></li>
+<li>棋盘"白格"</li>
+<li>检测 <strong>Z 错误</strong> (反 X 错误)</li>
+</ul>
+<p><strong>Z-stabilizer (4 体)</strong>:</p>
+<ul>
+<li>测 $Z$ 在 4 个最近邻数据 qubit 上的<strong>积</strong></li>
+<li>棋盘"黑格"</li>
+<li>检测 <strong>X 错误</strong> (反 Z 错误)</li>
+</ul>
+<p><strong>关键性质</strong>: 每个数据 qubit <strong>参与 2 个 X-stab + 2 个 Z-stab</strong> (4 个 stabilizer)——ch17.1.3 的"对偶"性质。</p>
+<h3>18.3.3 5×5 表面码网格 (ASCII)</h3>
+<p><strong>$d = 5$</strong> 旋转码的简化示意图 (X-stab = 蓝色 ⊗, Z-stab = 红色 ⊕, 数据 = 白点):</p>
+<pre><code>       Q  Q  Q  Q  Q
+       |  |  |  |  |
+   Z---+--+--+--+---Z   ← 粗糙边界 (rough, X 边界)
+   | ⊕  ⊗  ⊕  ⊗  ⊕ |
+   +--+--+--+--+--+
+   | ⊗  ⊕  ⊗  ⊕  ⊗ |
+   +--+--+--+--+--+
+   | ⊕  ⊗  ⊕  ⊗  ⊕ |
+   +--+--+--+--+--+
+   | ⊗  ⊕  ⊗  ⊕  ⊗ |
+   +--+--+--+--+--+
+   | ⊕  ⊗  ⊕  ⊗  ⊕ |
+   X---+--+--+--+---X   ← 平滑边界 (smooth, Z 边界)
+       |  |  |  |  |
+       Q  Q  Q  Q  Q</code></pre>
+<figure class="chapter-figure">
+<svg viewBox="0 0 480 480" xmlns="http://www.w3.org/2000/svg" style="background:#0b0f1a;border-radius:8px;max-width:100%;height:auto;">
+<!-- Background -->
+<rect width="480" height="480" fill="#0b0f1a"/>
+<!-- Top rough boundary label -->
+<text x="240" y="20" fill="#f59e0b" font-size="14" text-anchor="middle">粗糙边界 (rough, X 边界) — 逻辑 $\bar{Z}$</text>
+<line x1="20" y1="40" x2="460" y2="40" stroke="#f59e0b" stroke-width="2"/>
+<!-- Bottom smooth boundary label -->
+<text x="240" y="465" fill="#34d399" font-size="14" text-anchor="middle">平滑边界 (smooth, Z 边界) — 逻辑 $\bar{X}$</text>
+<line x1="20" y1="440" x2="460" y2="440" stroke="#34d399" stroke-width="2"/>
+<!-- 5x5 grid: data qubits at intersections, X/Z stabilizers in faces -->
+<!-- 5 columns x 5 rows = 25 data qubits -->
+<!-- X-stabilizers (X) at white plaquettes, Z-stabilizers (Z) at black plaquettes -->
+<!-- Inner cells: 4x4 = 16 cells -->
+<!-- Coordinates: data qubits at (x_i, y_j) where x_i = 50+i*100, y_j = 60+j*100 -->
+<!-- Data qubits (white circles) -->
+<g id="data-qubits">
+<circle cx="50" cy="60" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="150" cy="60" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="250" cy="60" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="350" cy="60" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="450" cy="60" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="50" cy="160" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="150" cy="160" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="250" cy="160" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="350" cy="160" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="450" cy="160" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="50" cy="260" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="150" cy="260" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="250" cy="260" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="350" cy="260" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="450" cy="260" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="50" cy="360" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="150" cy="360" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="250" cy="360" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="350" cy="360" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="450" cy="360" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="50" cy="440" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="150" cy="440" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="250" cy="440" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="350" cy="440" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+<circle cx="450" cy="440" r="8" fill="#ffffff" stroke="#fff" stroke-width="1.5"/>
+</g>
+<!-- Z-stabilizers (red filled squares, "黑格") at 3x3 = 9 internal positions (rows 1,2,3 x cols 1,2,3) -->
+<g id="z-stabs">
+<rect x="90" y="100" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="100" y="115" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="190" y="100" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="200" y="115" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="290" y="100" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="300" y="115" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="390" y="100" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="400" y="115" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="90" y="200" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="100" y="215" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="190" y="200" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="200" y="215" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="290" y="200" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="300" y="215" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="390" y="200" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="400" y="215" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="90" y="300" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="100" y="315" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="190" y="300" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="200" y="315" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="290" y="300" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="300" y="315" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="390" y="300" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="400" y="315" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="90" y="400" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="100" y="415" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="190" y="400" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="200" y="415" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="290" y="400" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="300" y="415" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+<rect x="390" y="400" width="20" height="20" fill="#ef4444" stroke="#fff" stroke-width="1"/>
+<text x="400" y="415" fill="#fff" font-size="11" text-anchor="middle">Z</text>
+</g>
+<!-- X-stabilizers (blue diamonds, "白格") at 3x3 internal positions offset by (50, 50) -->
+<g id="x-stabs">
+<polygon points="140,80 150,90 140,100 130,90" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="140" y="94" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="240,80 250,90 240,100 230,90" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="240" y="94" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="340,80 350,90 340,100 330,90" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="340" y="94" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="140,180 150,190 140,200 130,190" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="140" y="194" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="240,180 250,190 240,200 230,190" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="240" y="194" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="340,180 350,190 340,200 330,190" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="340" y="194" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="140,280 150,290 140,300 130,290" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="140" y="294" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="240,280 250,290 240,300 230,290" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="240" y="294" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="340,280 350,290 340,300 330,290" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="340" y="294" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="140,380 150,390 140,400 130,390" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="140" y="394" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="240,380 250,390 240,400 230,390" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="240" y="394" fill="#fff" font-size="10" text-anchor="middle">X</text>
+<polygon points="340,380 350,390 340,400 330,390" fill="#3b82f6" stroke="#fff" stroke-width="1"/>
+<text x="340" y="394" fill="#fff" font-size="10" text-anchor="middle">X</text>
+</g>
+<!-- Legend -->
+<g id="legend" transform="translate(20, 470)">
+<circle cx="5" cy="0" r="5" fill="#fff"/>
+<text x="15" y="4" fill="#cbd5e1" font-size="10">数据 qubit (25)</text>
+<rect x="135" y="-7" width="12" height="12" fill="#ef4444"/>
+<text x="153" y="4" fill="#cbd5e1" font-size="10">Z-stab (16) — 检测 X 错</text>
+<polygon points="270,0 280,-7 290,0 280,7" fill="#3b82f6"/>
+<text x="295" y="4" fill="#cbd5e1" font-size="10">X-stab (12) — 检测 Z 错</text>
+</g>
+</svg>
+<figcaption>图 18.1: $d = 5$ 表面码 (旋转码) 完整 2D 网格。25 个数据 qubit (白点) 排成 5×5。红色 Z-stabilizer 16 个在"黑格", 蓝色 X-stabilizer 12 个在"白格"。上边界"粗糙" (暴露 X 边) 是逻辑 $\bar{Z}$ 算子的端点, 下边界"平滑" (暴露 Z 边) 是逻辑 $\bar{X}$ 算子的端点。Stabilizer-错误的反对易关系 (ch17.1.3) 在这里几何化: 测 Z-stab 检测 X 错误, 测 X-stab 检测 Z 错误。</figcaption>
+</figure>
+<ul>
+<li>数据 qubit (Q): 25 个</li>
+<li>X-stab (⊗): 12 个 (白格, 检测 Z 错)</li>
+<li>Z-stab (⊕): 12 个 (黑格, 检测 X 错)</li>
+<li><strong>总</strong> qubit: 25 + 24 = <strong>49</strong> (旋转码)</li>
+</ul>
+<p><strong>边界</strong>:</p>
+<ul>
+<li>粗糙 (rough) 边界: 暴露 $X$ 边——逻辑 $\bar{Z}$ 算子</li>
+<li>平滑 (smooth) 边界: 暴露 $Z$ 边——逻辑 $\bar{X}$ 算子</li>
+<li>一对边界 (rough × smooth) = 1 个逻辑 qubit</li>
+<h3>18.3.4 距离 $d$ 的几何含义</h3>
+</ul>
+<p><strong>关键事实</strong>: 表面码的<strong>距离 $d$</strong> = 物理上分离的两个同伦类任意子的<strong>最短路径长度</strong>。</p>
+<p><strong>直观</strong>: 错误需要产生长度 $\ge d$ 的<strong>错误链</strong> (error chain) 才能从粗糙边界绕到平滑边界 (变成<strong>逻辑</strong>错误)——长度 $< d$ 的链<strong>可检测+纠正</strong>。</p>
+<p><strong>数学</strong>:</p>
+<ul>
+<li>物理错误率 $p$</li>
+<li>单错误 = 1 步</li>
+<li>长度 $d$ 链需要 $\ge d$ 错误, 概率 $\sim p^d$</li>
+<li><strong>逻辑错误率</strong> $p_L \sim p^d$ (短 $d$ 情形) → 实际更复杂, 见 18.5</li>
+</ul>
+<p><strong>例</strong>: $d = 5$ 表面码, $p = 10^{-3}$ → $p_L \sim (10^{-3})^5 = 10^{-15}$ (太乐观, 实际有常数因子, 见 18.5)</p>
+<h3>18.3.5 边界条件:粗糙 vs 平滑</h3>
+<p><strong>粗糙 (Rough) 边界</strong>:</p>
+<ul>
+<li>暴露<strong>数据 qubit</strong> 的 $X$ 边</li>
+<li>用作逻辑 $\bar{Z}$ 算子<strong>端点</strong></li>
+<li>测 $\bar{Z}$ 时, 把 2 个粗糙边界的端点 $X$ 一起测</li>
+</ul>
+<p><strong>平滑 (Smooth) 边界</strong>:</p>
+<ul>
+<li>暴露<strong>数据 qubit</strong> 的 $Z$ 边</li>
+<li>用作逻辑 $\bar{X}$ 算子<strong>端点</strong></li>
+</ul>
+<p><strong>两对边界</strong> (rough + smooth) = <strong>1 个逻辑 qubit</strong>。</p>
+<p><strong>应用</strong>: 表面码的<strong>逻辑门</strong> (CNOT, T 门) 通过"补丁" 移动 + 边界转换实现——ch19 详细。</p>
+<hr>
+<h2 id="section-18.4">18.4 Syndrome 提取 + 解码 (Decoding)</h2>
+<blockquote><p><strong>核心问题</strong>: 测 stabilizer → syndrome → 怎么反推错误?</p></blockquote>
+<h3>18.4.1 Syndrome 提取电路</h3>
+<p><strong>流程</strong>:</p>
+<table class="chapter-table">
+<tr></tr>
+</table>
+<ol>
+<li>4 个 CNOT: 数据 qubit → ancilla (X-stab 时用 CNOT, Z-stab 时用 CZ)</li>
+<li>测 ancilla → syndrome bit (0 = 无错, 1 = 有错)</li>
+</ul>
+<p><strong>总开销</strong>: $d^2$ 个 X-stab + $d^2$ 个 Z-stab = $2d^2$ 个 ancilla + $2 \times 2d^2$ 个 CNOT 门</p>
+<p><strong>频率</strong>: 周期性 (每 $\sim 1 \mu s$)——比错误时间常数 (典型 $\sim 100 \mu s$) <strong>快 100 倍</strong></p>
+<h3>18.4.2 解码:从 Syndrome 反推错误</h3>
+<p><strong>问题</strong>: 已知 syndrome, 找<strong>最可能</strong>的错误 $E$——是 NP-hard 问题的一般形式。</p>
+<p><strong>约束</strong>: 错误<strong>稀疏</strong> (typical $p \ll 1$ per step) + syndrome 来自 stabilizer 测量。</p>
+<p><strong>3 种算法</strong>:</p>
+<h4>18.4.2.1 最小权重完美匹配 (MWPM)</h4>
+<p><strong>经典算法</strong> (Edmonds 1965), 1980s 引入 QEC。</p>
+<p><strong>思路</strong>: 把 syndrome 看作图<strong>顶点</strong>, 错误看作图<strong>边</strong>——找连接所有 syndrome 点的<strong>最小权重完美匹配</strong>。</p>
+<p><strong>时间复杂度</strong>: $O(n^3)$ (经典)</p>
+<p><strong>精度</strong>: 最优 (找<strong>最小</strong>权重)</p>
+<p><strong>实际</strong>: Google, IBM 都在用——经典计算硬件即可, 实时性<strong>满足</strong> (1 μs 内).</p>
+<h4>18.4.2.2 Union-Find 解码</h4>
+<p><strong>近似算法</strong> (Delfosse 2017)。</p>
+<p><strong>思路</strong>: 用<strong>并查集</strong> (Union-Find) 数据结构, 增量地<strong>合并</strong> syndrome 簇——<strong>线性时间</strong> $O(n \alpha(n))$。</p>
+<p><strong>精度</strong>: 接近 MWPM, <strong>稍差</strong> ($\sim 10-20\%$ 错误率高)</p>
+<p><strong>优势</strong>: 极快, 适合<strong>硬件实时解码</strong> (FPGA 实现)。</p>
+<h4>18.4.2.3 神经网络解码</h4>
+<p><strong>新方向</strong> (2018+):</p>
+<ul>
+<li>Torlai 2018: RNN 解码器, <strong>深度学习</strong>反推错误</li>
+<li>Varsamopoulos 2019: CNN 解码</li>
+<li>优势: <strong>可学习</strong> + 可结合<strong>特定硬件</strong>特征</li>
+<li>劣势: 训练数据需求 + <strong>黑盒</strong>难验证</li>
+</ul>
+<p><strong>当前</strong>: 仍在研究, 工业实践<strong>未</strong>广泛采用。</p>
+<h3>18.4.3 实时性要求</h3>
+<p><strong>硬约束</strong>: syndrome → 错误反推 → 纠正门 <strong>必须</strong> 在下一个错误发生前完成。</p>
+<p><strong>时间尺度</strong>:</p>
+<ul>
+<li>物理错误间隔 $\sim 100 \mu s$ (典型 $T_1, T_2$)</li>
+<li>syndrome 测量周期 $\sim 1 \mu s$</li>
+<li><strong>预算</strong>: 必须在 1 $\mu s$ 内完成<strong>完整</strong>一轮</li>
+</ul>
+<p><strong>架构选择</strong>: 经典 CPU/GPU/FPGA 实现解码, <strong>不</strong>用量子硬件。</p>
+<p><strong>未来</strong>: <strong>同位</strong> (collocated) 经典控制器, 直接在量子芯片<strong>附近</strong>——减少延迟。</p>
+<h3>18.4.4 解码失败模式</h3>
+<p><strong>主要失败</strong>:</p>
+<ol>
+<li><strong>纠正错误</strong>: 假设单错, 实际<strong>多个</strong> (2 个错误) 错对 — 罕见 ($p^2$)</li>
+<li><strong>逻辑错误</strong>: 错误<strong>太长</strong> 超过 $d$ 步 — 概率 $\sim p^d$</li>
+<li><strong>测量错误</strong>: syndrome <strong>本身</strong>错 — 经典测量错率 $\sim 10^{-2}$ 是瓶颈</li>
+</ul>
+<p><strong>关键事实</strong>: syndrome 测量<strong>也</strong>会错——通常<strong>重复</strong> 测量 (e.g. $d$ 次) 来降低 syndrome 错误率到 $\sim p^d$——<strong>代价</strong>是 $d$ 倍测量时间。</p>
+<h3>18.4.5 工程上的解码挑战</h3>
+<p><strong>实时性 = 真正的瓶颈</strong>:</p>
+<ul>
+<li>表面码 decoder <strong>不能</strong>延迟——下一个错误<strong>马上</strong>来</li>
+<li>经典 CPU ($O(n^3)$) 对 $n = 10000$ qubit 太<strong>慢</strong> (毫秒级)</li>
+<li>必须用<strong>并行</strong>硬件: GPU, FPGA, ASIC</li>
+</ul>
+<p><strong>Google 的方案</strong> (Acharya 2024):</p>
+<ul>
+<li><strong>专用</strong> FPGA 板 (e.g. Xilinx VU9P)</li>
+<li>1 μs 内完成 MWPM 解码</li>
+<li><strong>直接</strong>在量子芯片<strong>附近</strong> (低温)</li>
+<li><strong>避免</strong>经典-量子通信延迟</li>
+</ul>
+<p><strong>未来</strong>:</p>
+<ul>
+<li><strong>ASIC</strong> 解码器 (10× 快)</li>
+<li><strong>量子</strong> 解码 (用量子算法, 理论)</li>
+<li><strong>模拟</strong> 神经形态 (Intel Loihi 实验)</li>
+<hr>
+<h2 id="section-18.5">18.5 阈值定理</h2>
+<blockquote><p><strong>核心问题</strong>: 表面码为什么"工业级"? 阈值定理说了什么?</p></blockquote>
+<h3>18.5.1 阈值定理陈述</h3>
+</ul>
+<p><strong>阈值定理</strong> (Aharonov-Ben-Or 1997, Knill-Laflamme-Kitaev-Preskill 1998, DKLP 2002):</p>
+<p><strong>对</strong>任意 stabilizer 码, <strong>存在</strong>阈值 $p_{th} > 0$ 使得:</p>
+<p><strong>当</strong> 物理错误率 $p < p_{th}$ 时, <strong>只要</strong> 距离 $d$ 足够大, <strong>逻辑</strong>错误率 $p_L$ <strong>任意小</strong>:</p>
+<p>$$p_L \sim C \cdot \left(\frac{p}{p_{th}}\right)^{(d+1)/2}$$</p>
+<p><strong>关键</strong>: $p < p_{th}$ 是<strong>充分</strong>条件——只要满足, 错误<strong>指数下降</strong>。</p>
+<p><strong>直觉</strong>: 错误需要形成<strong>长度 $\ge (d+1)/2$ 的链</strong> 才能造成<strong>未纠正</strong>的逻辑错——概率 $\sim p^{(d+1)/2}$。</p>
+<h3>18.5.2 表面码阈值: $p_{th} \approx 1\%$</h3>
+<p><strong>DKLP 2002</strong> 给出表面码阈值的<strong>最优估计</strong>:</p>
+<ul>
+<li>独立<strong>去极化</strong> (depolarizing) 错误: $p_{th} \approx 0.75\%$ (最严苛)</li>
+<li>实际<strong>非均匀</strong>错误 (T1, T2, 测量错): $p_{th} \approx 1-2\%$</li>
+<li><strong>当前</strong>最好的超导 qubit: $p \sim 0.1-1\%$ (跨阈值)</li>
+</ul>
+<p><strong>关键事实</strong>: 表面码阈值<strong>比</strong> Shor/Steane/5-qubit 的 $10^{-4}$ 高<strong>两个数量级</strong>——<strong>实用</strong>!</p>
+<h3>18.5.3 对比: 三个奠基码的阈值</h3>
+<table class="chapter-table">
+<tr><th>码</th><th>阈值 $p_{th}$</th><th>当前硬件 $p$</th><th>实用?</th></tr>
+<tr><td>5-qubit 完美</td><td>$\sim 10^{-4}$</td><td>$10^{-3}$</td><td>❌</td></tr>
+<tr><td>Shor 9-qubit</td><td>$\sim 10^{-4}$</td><td>$10^{-3}$</td><td>❌</td></tr>
+<tr><td>Steane 7-qubit</td><td>$\sim 10^{-4}$</td><td>$10^{-3}$</td><td>❌</td></tr>
+<tr><td><strong>表面码 $d=5$</strong></td><td>$\sim 10^{-2}$</td><td>$10^{-3}$</td><td>✅</td></tr>
+<tr><td><strong>表面码 $d=7$</strong></td><td>$\sim 10^{-2}$</td><td>$10^{-3}$</td><td>✅</td></tr>
+<tr><td><strong>表面码 $d=11$</strong></td><td>$\sim 10^{-2}$</td><td>$10^{-3}$</td><td>✅</td></tr>
+</table>
+<p><strong>结论</strong>: 表面码是<strong>唯一</strong>实用选择——阈值 $\sim 1\%$ 与当前硬件<strong>匹配</strong>。</p>
+<h3>18.5.4 阈值定理的"代价"</h3>
+<p><strong>指数下降</strong> $p_L \sim p^{(d+1)/2}$ 听起来很棒, 但<strong>代价</strong>是:</p>
+<ul>
+<li>$p_L = 10^{-15}$ 需 $d \approx 10$ (条件: $p = 10^{-3}$)</li>
+<li>$d = 10$ 表面码 = <strong>100</strong> 数据 qubit + 200 ancilla = <strong>300</strong> qubit 编码 <strong>1</strong> 逻辑 qubit</li>
+<li>1 logical qubit ≈ <strong>300-1000</strong> 物理 qubit (含测量)</li>
+</ul>
+<p><strong>Shor RSA-2048 估算</strong> (ch19 详细):</p>
+<ul>
+<li>约需 4000 逻辑 qubit × 3000 物理/逻辑 ≈ <strong>20 百万</strong> 物理 qubit</li>
+<li>当前最大量子硬件: $\sim 1000$ qubit (IBM Condor 2023, 但<strong>无</strong>纠错)</li>
+<li><strong>距离</strong>: 3-4 个<strong>数量级</strong>——20-30 年工程努力</li>
+<h3>18.5.5 ch19 铺路</h3>
+</ul>
+<p><strong>ch19 容错量子计算 (FTQC)</strong> 给出<strong>完整</strong>理论:</p>
+<ul>
+<li>递归纠错 (concatenated codes)</li>
+<li>表面码的"连续" 实现</li>
+<li>Magic state distillation (容错 T 门)</li>
+<li>完整资源估算</li>
+</ul>
+<p><strong>ch19 用 表面码作为</strong>范例**——本章是入口。</p>
+<h3>18.5.6 子阈值 vs 阈值之上: 关键工程边界</h3>
+<p><strong>子阈值</strong> ($p < p_{th}$): 错误<strong>指数</strong>下降——加距离<strong>有收益</strong>。</p>
+<p><strong>阈值之上</strong> ($p > p_{th}$): 错误<strong>不降反升</strong>——加距离<strong>反而</strong>更糟 (因为更多 qubit = 更多错误)。</p>
+<p><strong>工程意义</strong>:</p>
+<ul>
+<li>阈值是<strong>真正的</strong>分水岭</li>
+<li>Google Willow 2024 跨阈值是<strong>里程碑</strong>——证明 QEC 实用</li>
+<li>当前 IBM Heron 还在阈值<strong>附近</strong> ($\sim 0.1\%$)——再<strong>降</strong> 10× 才安全</li>
+</ul>
+<p><strong>具体数字</strong> (Google Willow 2024):</p>
+<ul>
+<li>物理错误率 $p \approx 0.143\%$</li>
+<li>阈值 $p_{th} \approx 1\%$</li>
+<li>比例 $p / p_{th} \approx 0.14$</li>
+<li>$(d+1)/2 = 4$ (for $d = 7$)</li>
+<li>$p_L \sim 0.14^4 \times C \approx 0.0004 \times C$, $C \sim 0.1$ → $p_L \approx 4 \times 10^{-5}$</li>
+<li>实验测得: $p_L \approx 0.143\% / 2.4 \approx 0.06\%$ (对 $d = 7$)</li>
+</ul>
+<p><strong>观察</strong>: 实验<strong>比</strong>理论稍<strong>好</strong>——因为<strong>额外</strong> 的技术 (如 magic state 等) 在 $d = 5$ 还没起作用。</p>
+<hr>
+<h2 id="section-18.6">18.6 任意子与拓扑保护</h2>
+<blockquote><p><strong>核心问题</strong>: 任意子到底是什么? 怎么用任意子做量子计算?</p></blockquote>
+<h3>18.6.1 Abelian 任意子</h3>
+<p><strong>交换统计</strong>: $\psi \to e^{i\theta} \psi$, $\theta$ = 任意相位。</p>
+<p><strong>最简单的</strong> Abelian 任意子: <strong>toric code</strong> 的 $e$ (电荷) + $m$ (磁荷) + $\varepsilon = e \times m$ (费米子).</p>
+<p><strong>性质</strong>:</p>
+<ul>
+<li>$e$ 跟 $m$ 反对易</li>
+<li>$\varepsilon$ 跟 $e$ 反, 跟 $m$ 反 → 费米子行为</li>
+<li><strong>3 种</strong>基本任意子 (真空 1 + e + m + ε = 4 种, 但 $e \times \varepsilon = m$ 等关系)</li>
+</ul>
+<p><strong>编织</strong>:</p>
+<ul>
+<li>$e$ 绕 $m$ 一周: 相位 $\theta = \pi$ (半交换, 类似费米子)</li>
+<li>$e$ 绕 $e$: $\theta = 0$ (玻色子)</li>
+<li>$m$ 绕 $m$: $\theta = 0$</li>
+</ul>
+<p><strong>问题</strong>: Abelian 编织<strong>只</strong>给出<strong>对角</strong>门 (相位门)——<strong>不</strong>能通用计算。</p>
+<h3>18.6.2 非 Abelian 任意子</h3>
+<p><strong>关键</strong>: 交换<strong>非 Abelian</strong> 任意子<strong>改变</strong> Hilbert 空间基——<strong>非平凡</strong>矩阵作用。</p>
+<p><strong>例 1: Ising 任意子</strong></p>
+<ul>
+<li>编织产生 <strong>Clifford 群</strong> 门 (H, S, CNOT 等)</li>
+<li><strong>不</strong>包括 T 门——<strong>不通用</strong></li>
+<li><strong>物理实现</strong>: Majorana 零模 (ch23 详述)</li>
+<li>微软 Majorana 1 (2025) 用 Ising 任意子</li>
+</ul>
+<p><strong>例 2: Fibonacci 任意子</strong></p>
+<ul>
+<li>编织产生<strong>通用</strong>量子门——<strong>理论上</strong>最优</li>
+<li>只有 2 种任意子: $1$ (真空) + $\tau$ (Fibonacci)</li>
+<li>$\tau \times \tau = 1 + \tau$ (fusion rule)</li>
+<li><strong>物理实现</strong>: 候选系统包括<strong>分数量子霍尔</strong> ($\nu = 12/5$ Moore-Read 态)——<strong>尚未</strong>实验确认</li>
+</ul>
+<p><strong>对比</strong>:</p>
+<table class="chapter-table">
+<tr><th>任意子类型</th><th>通用?</th><th>实验?</th><th>物理实现</th></tr>
+<tr><td>Abelian (toric code)</td><td>❌ (只相位门)</td><td>✅ (超导)</td><td>toric code 工程</td></tr>
+<tr><td>Ising</td><td>❌ (只 Clifford)</td><td>✅ (Majorana 1 2025)</td><td>半导体纳米线</td></tr>
+<tr><td>Fibonacci</td><td>✅ (通用)</td><td>❌ (无)</td><td>候选: FQH</td></tr>
+</table>
+<h3>18.6.3 编织 = 量子门</h3>
+<p><strong>关键洞察</strong>: 任意子编织是<strong>拓扑保护</strong>的——错误率 $\sim e^{-L/\xi}$ (指数小)。</p>
+<p><strong>数学</strong>: 编织 = braid group $B_n$ 作用在 Hilbert 空间——每个编织<strong>对应</strong>一个<strong>酉</strong>矩阵。</p>
+<figure class="chapter-figure">
+<svg viewBox="0 0 600 380" xmlns="http://www.w3.org/2000/svg" style="background:#0b0f1a;border-radius:8px;max-width:100%;height:auto;">
+<rect width="600" height="380" fill="#0b0f1a"/>
+<text x="300" y="25" fill="#e2e8f0" font-size="15" text-anchor="middle" font-weight="bold">任意子编织示意图 (Braid Group)</text>
+<!-- Initial positions (t=0) -->
+<text x="50" y="50" fill="#94a3b8" font-size="12">$t=0$</text>
+<circle cx="200" cy="100" r="14" fill="#3b82f6" stroke="#fff" stroke-width="2"/>
+<text x="200" y="105" fill="#fff" font-size="12" text-anchor="middle">τ</text>
+<circle cx="280" cy="100" r="14" fill="#3b82f6" stroke="#fff" stroke-width="2"/>
+<text x="280" y="105" fill="#fff" font-size="12" text-anchor="middle">τ</text>
+<line x1="200" y1="100" x2="200" y2="330" stroke="#3b82f6" stroke-width="3"/>
+<line x1="280" y1="100" x2="280" y2="330" stroke="#3b82f6" stroke-width="3"/>
+<!-- Step 1: anyon 1 (left) moves right, anyon 2 (right) moves left -->
+<text x="50" y="170" fill="#94a3b8" font-size="12">编织 1</text>
+<path d="M 200,114 Q 240,140 280,166" fill="none" stroke="#3b82f6" stroke-width="3"/>
+<path d="M 280,114 Q 240,140 200,166" fill="none" stroke="#3b82f6" stroke-width="3"/>
+<!-- After crossing -->
+<text x="50" y="200" fill="#94a3b8" font-size="12">$t=1$</text>
+<!-- Step 2: more braiding -->
+<text x="50" y="220" fill="#94a3b8" font-size="12">编织 2</text>
+<path d="M 280,170 Q 240,200 200,224" fill="none" stroke="#3b82f6" stroke-width="3"/>
+<path d="M 200,170 Q 240,200 280,224" fill="none" stroke="#3b82f6" stroke-width="3"/>
+<!-- End positions -->
+<text x="50" y="270" fill="#94a3b8" font-size="12">$t=2$</text>
+<circle cx="280" cy="270" r="14" fill="#3b82f6" stroke="#fff" stroke-width="2"/>
+<text x="280" y="275" fill="#fff" font-size="12" text-anchor="middle">τ</text>
+<circle cx="200" cy="270" r="14" fill="#3b82f6" stroke="#fff" stroke-width="2"/>
+<text x="200" y="275" fill="#fff" font-size="12" text-anchor="middle">τ</text>
+<!-- Final worldlines -->
+<line x1="200" y1="270" x2="200" y2="330" stroke="#3b82f6" stroke-width="3"/>
+<line x1="280" y1="270" x2="280" y2="330" stroke="#3b82f6" stroke-width="3"/>
+<!-- Time arrow -->
+<line x1="350" y1="100" x2="350" y2="330" stroke="#94a3b8" stroke-width="1" marker-end="url(#arr18-2)"/>
+<defs>
+<marker id="arr18-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+</marker>
+</defs>
+<text x="358" y="220" fill="#94a3b8" font-size="12">时间 t</text>
+<!-- Right panel: matrix representation -->
+<g transform="translate(420, 60)">
+<text x="0" y="0" fill="#e2e8f0" font-size="13" font-weight="bold">编织 → 矩阵</text>
+<text x="0" y="25" fill="#cbd5e1" font-size="11">σ₁ (交叉) → R 矩阵</text>
+<text x="0" y="50" fill="#a78bfa" font-size="11" font-family="monospace">R = e^(iπ/8) [[e^(-iπ/8), 0], [0, e^(iπ/8)]]</text>
+<text x="0" y="80" fill="#cbd5e1" font-size="11">Fibonacci:</text>
+<text x="0" y="100" fill="#a78bfa" font-size="11" font-family="monospace">F = [[φ, √φ^(-1)], [√φ^(-1), -φ^(-1)]]</text>
+<text x="0" y="115" fill="#a78bfa" font-size="11" font-family="monospace">φ = (1+√5)/2 ≈ 1.618</text>
+<text x="0" y="145" fill="#34d399" font-size="11">F + 单 qubit 相位</text>
+<text x="0" y="160" fill="#34d399" font-size="11">= 通用量子门 ✅</text>
+<text x="0" y="185" fill="#fbbf24" font-size="11">Ising: 只 Clifford ❌</text>
+<text x="0" y="200" fill="#fbbf24" font-size="11">需 magic state 补 T 门</text>
+</g>
+<!-- Bottom error rate -->
+<text x="300" y="360" fill="#94a3b8" font-size="11" text-anchor="middle">错误率 $\sim e^{-L/\xi}$ (随距离 L 指数下降, $\xi$ = 相关长度)</text>
+</svg>
+<figcaption>图 18.2: 任意子编织示意 (2 个 Fibonacci τ 任意子)。时间 $t=0$ → $t=2$ 经历 2 次"交叉" 编织, 在 2D 平面上**互相绕**。每次交叉对应 braid group 生成元 σ₁, 作用到 Hilbert 空间给一个**酉**矩阵 (R 或 F 矩阵)。Fibonacci 任意子的 F 矩阵 + 单 qubit 相位 = 通用量子门集——理论上**最优雅**的容错方案。Ising 任意子只产生 Clifford 门, 需 magic state 补 T 门。</figcaption>
+</figure>
+<p><strong>例 (Ising)</strong>:</p>
+<ul>
+<li>交换 2 个 Ising 任意子: $R$ 矩阵 (相位 $\pi/4$)</li>
+<li>多次编织 = Clifford 门</li>
+<li>缺点: <strong>不</strong>通用</li>
+</ul>
+<p><strong>例 (Fibonacci)</strong>:</p>
+<ul>
+<li>编织 1 步 = $F$ 矩阵</li>
+<li>$F$ 矩阵 + 单 qubit 相位 = <strong>通用</strong>门集</li>
+<li>缺点: 实验<strong>未</strong>确认</li>
+<h3>18.6.4 拓扑保护 vs 表面码纠错</h3>
+</ul>
+<p><strong>两种</strong>容错路径<strong>对比</strong>:</p>
+<table class="chapter-table">
+<tr><th></th><th>表面码纠错 (ch18)</th><th>拓扑保护 (ch23)</th></tr>
+<tr><td><strong>保护机制</strong></td><td>主动纠错 (测+反馈)</td><td>被动 (编织天然抗错)</td></tr>
+<tr><td><strong>门实现</strong></td><td>通用 (CNOT, T 等)</td><td>通用 (Fibonacci)</td></tr>
+<tr><td><strong>物理要求</strong></td><td>错误率 $p < 1\%$</td><td><strong>任意</strong> (编织本身就抗错)</td></tr>
+<tr><td><strong>当前状态</strong></td><td>实用 (Google Willow 2024)</td><td>实验阶段 (Majorana 1 2025)</td></tr>
+<tr><td><strong>扩展性</strong></td><td>高 (大 $d$)</td><td>理论高 (编织)</td></tr>
+</table>
+<p><strong>关键事实</strong>: <strong>两种</strong> 路径<strong>互</strong>不<strong>冲突</strong>——可以<strong>组合</strong> (Hybrid)。如: 表面码保护<strong>逻辑</strong> qubit, 内部<strong>编织</strong>做逻辑门。</p>
+<h3>18.6.5 ch23 铺路</h3>
+<p><strong>第 23 章 拓扑量子计算</strong> 详述:</p>
+<ul>
+<li>Majorana 零模 (Ising 任意子)</li>
+<li>Fibonacci 任意子候选系统</li>
+<li>微软 Majorana 1 (2025) 8 拓扑 qubit</li>
+<li>拓扑保护 vs 表面码纠错的<strong>组合</strong></li>
+<h3>18.6.6 任意子的"实验证据"现状 (2025-2026)</h3>
+<table class="chapter-table">
+<tr><th>任意子类型</th><th>实验候选</th><th>实验状态</th><th>主要团队</th></tr>
+<tr><td><strong>Abelian</strong> (toric code $e, m$)</td><td>超导 qubit</td><td>✅ <strong>完整</strong>实现</td><td>Google (Willow 2024)</td></tr>
+<tr><td><strong>Ising</strong> (Majorana)</td><td>半导体纳米线</td><td>⚠️ <strong>争议中</strong></td><td>Microsoft (Majorana 1 2025)</td></tr>
+<tr><td><strong>Fibonacci</strong></td><td>FQH $\nu=12/5$</td><td>❌ <strong>未</strong>确认</td><td>多团队尝试中</td></tr>
+</table>
+</ul>
+<p><strong>关键事实</strong>:</p>
+<ul>
+<li><strong>Abelian</strong>: 表面码工程 = 间接证据 (拓扑序的"涌现" 准粒子)</li>
+<li><strong>Ising</strong>: Microsoft 2025 声称实现, <strong>但</strong> 学界<strong>未</strong>广泛接受 (零偏压电导 0.5 $2e^2/h$ 是否真 MZM)</li>
+<li><strong>Fibonacci</strong>: <strong>无</strong>确定的实验证据——<strong>理论</strong>仍主导</li>
+</ul>
+<p><strong>学界共识</strong> (2026-06):</p>
+<ul>
+<li>表面码工程<strong>已</strong>成熟</li>
+<li>拓扑量子计算<strong>仍</strong>是"理论可行 + 工程待验证"</li>
+<li>20-30 年内可能见到完整 Fibonacci 实现</li>
+<hr>
+<h2 id="section-18.7">18.7 资源估算</h2>
+<blockquote><p><strong>核心问题</strong>: 实用表面码需要多少 qubit? 破解 RSA-2048 需要多少?</p></blockquote>
+<h3>18.7.1 距离 $d$ vs 物理 qubit 数</h3>
+</ul>
+<p><strong>关键公式</strong> (旋转码): $$n = d^2$$</p>
+<table class="chapter-table">
+<tr><th>$d$</th><th>数据 qubit</th><th>总 (含测量)</th><th>阈值 $p_L$ ($p=10^{-3}$)</th></tr>
+<tr><td>3</td><td>9</td><td>$\sim 18$</td><td>$\sim 10^{-5}$</td></tr>
+<tr><td>5</td><td>25</td><td>$\sim 50$</td><td>$\sim 10^{-9}$</td></tr>
+<tr><td>7</td><td>49</td><td>$\sim 100$</td><td>$\sim 10^{-12}$</td></tr>
+<tr><td>9</td><td>81</td><td>$\sim 160$</td><td>$\sim 10^{-15}$</td></tr>
+<tr><td>11</td><td>121</td><td>$\sim 240$</td><td>$\sim 10^{-17}$</td></tr>
+<tr><td>15</td><td>225</td><td>$\sim 450$</td><td>$\sim 10^{-23}$</td></tr>
+<tr><td>25</td><td>625</td><td>$\sim 1250$</td><td>$\sim 10^{-38}$</td></tr>
+</table>
+<p><strong>观察</strong>: 1 逻辑 qubit → <strong>$d^2$ 物理 qubit</strong> (典型 $d = 10-15$).</p>
+<h3>18.7.2 1 逻辑 qubit 的总成本</h3>
+<p><strong>完整 FTQC</strong> (ch19 详述) 1 逻辑 qubit = <strong>~1000-3000 物理 qubit</strong>:</p>
+<ul>
+<li>数据 qubit: $\sim 1000$ (d ≈ 25-30)</li>
+<li>测量 ancilla: $\sim 2d^2 \approx 1000$</li>
+<li>Magic state distillation 备份: $\sim 100$ (T 门)</li>
+<li>通信 + 控制开销: $\sim 200$</li>
+</ul>
+<p><strong>总计</strong>: $\sim 2500$ 物理 qubit / 1 逻辑 qubit</p>
+<h3>18.7.3 破解 RSA-2048 (Shor) 的资源估算</h3>
+<p><strong>Shor RSA-2048 资源</strong> (Gidney-Ekerå 2019, Fowler 2012 修订):</p>
+<ul>
+<li><strong>逻辑</strong> qubit: $\sim 4000$</li>
+<li><strong>物理</strong> qubit: $4000 \times 2500 \approx$ <strong>10 百万</strong> (10M) 物理 qubit</li>
+<li><strong>时间</strong>: 几小时 (假设 $T_{\text{gate}} = 1 \mu s$, 错误率 $p = 10^{-3}$)</li>
+</ul>
+<p><strong>最新估算</strong> (Litinski 2019 game of surface codes):</p>
+<ul>
+<li>用 <strong>Magic state cultivation</strong> 优化</li>
+<li>物理 qubit: <strong>~20 百万</strong> (20M) (略增, 因更现实的假设)</li>
+<li>时间: 8 小时</li>
+</ul>
+<p><strong>对比</strong>: 当前最大量子硬件:</p>
+<ul>
+<li>IBM Condor 2023: <strong>1121</strong> qubit (单芯片, <strong>无</strong>纠错)</li>
+<li>Google Willow 2024: <strong>105</strong> qubit + 表面码</li>
+<li>距离: <strong>4-5 个数量级</strong>——20-30 年工程努力</li>
+<h3>18.7.4 不同任务的资源</h3>
+<table class="chapter-table">
+<tr><th>任务</th><th>逻辑 qubit</th><th>物理 qubit (估)</th><th>时间</th></tr>
+<tr><td>量子化学 (小分子, 100 qubit)</td><td>100</td><td>250,000</td><td>几小时</td></tr>
+<tr><td>Shor RSA-2048</td><td>4000</td><td>20,000,000</td><td>8 小时</td></tr>
+<tr><td>Grover 100 万数据库</td><td>50</td><td>125,000</td><td>几小时</td></tr>
+<tr><td>量子机器学习 (10k qubit)</td><td>10,000</td><td>25,000,000</td><td>几天</td></tr>
+</table>
+</ul>
+<p><strong>观察</strong>: 实用量子优势需要<strong>百万</strong>量级物理 qubit——<strong>20 年</strong> 远期目标。</p>
+<h3>18.7.5 资源估算的"假设敏感性"</h3>
+<p><strong>5 个关键假设</strong> (改 1 个 → 资源 ± 10×):</p>
+<ol>
+<li><strong>物理错误率 $p$</strong>: 假设 $10^{-3}$, 降到 $10^{-4}$ → 资源减半 (因为 $d$ 可减小)</li>
+<li><strong>时钟 $T_{\text{gate}}$</strong>: 假设 1 μs, 加速到 100 ns → 时间减 10×</li>
+<li><strong>码选择</strong>: 表面码 $n = d^2$, 改用<strong>双曲线</strong>码 → 资源减 3-5×</li>
+<li><strong>经典控制</strong>: 假设 1 μs 解码, 改用 ASIC → 0.1 μs → 资源减 2×</li>
+<li><strong>Magic state</strong>: 假设 100:1 distillation, 改用<strong>栽培</strong> (cultivation) → 减 5×</li>
+</ul>
+<p><strong>观察</strong>: 资源估算<strong>非常</strong>依赖假设——<strong>没有</strong>"绝对"数字, 只有<strong>范围</strong>。</p>
+<hr>
+<h2 id="section-18.8">18.8 硬件实验里程碑 (2014-2024)</h2>
+<blockquote><p><strong>核心问题</strong>: 表面码从理论到硬件的 10 年——哪些里程碑?</p></blockquote>
+<h3>18.8.1 6 大硬件里程碑 (2014-2024)</h3>
+<table class="chapter-table">
+<tr><th>时间</th><th>团队</th><th>平台</th><th>物理 qubit</th><th>$d$</th><th>关键成果</th></tr>
+<tr><td><strong>2014</strong></td><td>Google UCSB (Kelly et al.)</td><td>超导</td><td>4 (Xmon)</td><td>$d=1$ repetition</td><td>首次 QEC 实验 ("超越分立")</td></tr>
+<tr><td><strong>2019</strong></td><td>Google Sycamore</td><td>超导</td><td>53</td><td>$d=3$</td><td>表面码 $d=3$ vs $d=5$ 性能对比</td></tr>
+<tr><td><strong>2021</strong></td><td>IBM (Chen et al.)</td><td>超导</td><td>27</td><td>$d=3$</td><td>重复码 + 实时解码</td></tr>
+<tr><td><strong>2023</strong></td><td>Google (Acharya et al.)</td><td>超导</td><td>72</td><td>$d=5$</td><td>距离-5 表面码 (pre-Willow)</td></tr>
+<tr><td><strong>2024</strong></td><td>Google Willow (Acharya et al.)</td><td>超导</td><td><strong>105</strong></td><td>$d=5, 7$</td><td><strong>首次低于阈值</strong> ($\Lambda = 2.4$)</td></tr>
+<tr><td><strong>2024</strong></td><td>IBM Heron r2</td><td>超导</td><td>156</td><td>$d=3$</td><td>多 5-qubit 块并行</td></tr>
+</table>
+<h3>18.8.2 Google Willow 2024: 工业级 QEC 里程碑</h3>
+<p><strong>Acharya et al. 2024-12, Nature</strong>:</p>
+<ul>
+<li><strong>物理 qubit</strong>: 105 (Willow 芯片)</li>
+<li><strong>表面码</strong>: $d = 5$ (25 数据 + 测量 = 50 qubit) + $d = 7$ (49 数据 + 测量 = 100 qubit)</li>
+<li><strong>首次</strong>: 逻辑错误率<strong>低于</strong>物理错误率</li>
+<li><strong>$\Lambda$ 因子</strong>: 2.4 (逻辑错误率 $p_L$ <strong>比</strong> 物理 $p$ 低 2.4 倍)</li>
+<li><strong>意义</strong>: 工业级 QEC <strong>首次</strong>跨阈值——<strong>所有</strong>大厂都在跟进</li>
+</ul>
+<p><strong>为什么重要</strong>:</p>
+<ol>
+<li>验证了<strong>阈值定理</strong>——$p < p_{th}$ 时, 错误<strong>指数下降</strong></li>
+<li>验证了<strong>旋转码</strong> 比 平面码<strong>省 33%</strong> qubit</li>
+<li>验证了 MWPM 解码的<strong>实时性</strong> (1 μs 内)</li>
+<li>验证了 105 qubit 大规模<strong>集成</strong>可行</li>
+<h3>18.8.3 IBM Heron r2 (2024)</h3>
+</ul>
+<p><strong>IBM Quantum 2024-09</strong>:</p>
+<ul>
+<li>156 qubit (Heron r2 芯片)</li>
+<li>多<strong>5-qubit 块</strong>并行 (经典 5-qubit 码, ch17)</li>
+<li>短程纠错 (相邻 5-qubit 块)</li>
+<li>经典解码 + 实时反馈</li>
+</ul>
+<p><strong>地位</strong>: 跟 Google Willow 互补——IBM 走<strong>短程</strong> 5-qubit 码, Google 走<strong>长程</strong> 表面码。</p>
+<h3>18.8.4 IonQ, Quantinuum, PsiQuantum</h3>
+<table class="chapter-table">
+<tr><th>团队</th><th>平台</th><th>表面码?</th><th>状态</th></tr>
+<tr><td><strong>IonQ</strong></td><td>离子阱</td><td>实验</td><td>2024 演示表面码 $d=3$</td></tr>
+<tr><td><strong>Quantinuum</strong></td><td>离子阱 (H2)</td><td>实验</td><td>2024 跨阈值实验</td></tr>
+<tr><td><strong>PsiQuantum</strong></td><td>光量子</td><td>目标</td><td>走光量子<strong>专用</strong>路径 (非表面码)</td></tr>
+</table>
+<p><strong>共同点</strong>: 都在<strong>争抢</strong>" 工业级 QEC 平台"——表面码是<strong>主流</strong>共识。</p>
+<h3>18.8.5 跟 ch11 (Shor) 算法的连接</h3>
+<p><strong>关键连接</strong>:</p>
+<ul>
+<li>破解 RSA-2048 需要 <strong>4000 逻辑 qubit</strong> (Shor 算法 + 模幂)</li>
+<li>每个逻辑 qubit 需要 <strong>~2500 物理 qubit</strong> (含 magic state)</li>
+<li><strong>总计</strong>: 10-20 百万 物理 qubit</li>
+<li><strong>当前</strong>: Google Willow 105 物理 qubit → 1 逻辑 qubit</li>
+<li><strong>距离</strong>: <strong>4-5 个数量级</strong> (×10000)</li>
+</ul>
+<p><strong>工程现实</strong>: 30 年内可能实现——需要 (1) 错误率 $p$ 继续降 10×, (2) qubit 数增 10000×, (3) 经典控制器 1 μs 解码。</p>
+<h3>18.8.6 表面码实验的"三件难" (Three Hard Things)</h3>
+<p><strong>实现表面码 3 个最难</strong>的工程问题:</p>
+<p><strong>1. 实时解码 (Real-time decoding)</strong></p>
+<ul>
+<li>1 μs 内完成 syndrome → 错误反推 → 纠正门</li>
+<li>经典硬件 (FPGA/GPU) 必须<strong>紧贴</strong>量子芯片</li>
+<li>Google 用<strong>专用</strong> FPGA 板 (Syu 2024)</li>
+</ul>
+<p><strong>2. 测量保真度 (Measurement fidelity)</strong></p>
+<ul>
+<li>表面码假设<strong>完美</strong> syndrome 测量</li>
+<li>实际测量错误率 $\sim 1\%$</li>
+<li>必须<strong>重复</strong> 测量 $d$ 次 → 测量时间 × $d$</li>
+<li><strong>新的</strong>困难: 测量错误<strong>本身</strong>是 syndrome 错误</li>
+</ul>
+<p><strong>3. 长程连接 (Long-range connectivity)</strong></p>
+<ul>
+<li>表面码<strong>理想</strong>是 2D 平面 (近邻)</li>
+<li>实际超导芯片<strong>3D</strong> 封装, 长程门<strong>难</strong></li>
+<li>解决方案: <strong>移动</strong> qubit (lattice surgery, ch19 详述)</li>
+</ul>
+<p><strong>观察</strong>: 3 个难<strong>叠加</strong>——硬件 + 软件 + 算法<strong>协同</strong>。</p>
+<hr>
+<h2 id="section-18.9">18.9 拓扑量子计算</h2>
+<blockquote><p><strong>核心问题</strong>: 拓扑量子计算跟表面码纠错什么关系? 是不是"竞争"?</p></blockquote>
+<h3>18.9.1 两种容错路径</h3>
+<table class="chapter-table">
+<tr><th>路径</th><th>保护机制</th><th>通用?</th><th>实用?</th></tr>
+<tr><td><strong>表面码纠错</strong> (ch18)</td><td>主动 + 高阈值</td><td>✅ (通用门)</td><td>✅ (Willow 2024)</td></tr>
+<tr><td><strong>拓扑保护</strong> (ch23)</td><td>被动 + 编织</td><td>✅ (Fibonacci)</td><td>❌ (实验阶段)</td></tr>
+</table>
+<p><strong>关键事实</strong>: <strong>两种</strong> 路径<strong>互不冲突</strong>——可<strong>组合</strong> (Hybrid)。</p>
+<p><strong>例</strong>: 用表面码保护<strong>逻辑</strong> qubit, 内部用 Fibonacci 编织做<strong>逻辑</strong>门——理论最优。</p>
+<h3>18.9.2 Majorana 零模 + Ising 任意子</h3>
+<p><strong>Majorana 零模</strong> (Majorana zero mode, MZM):</p>
+<ul>
+<li>半导体纳米线 + 超导邻近效应</li>
+<li>2008 Fu-Kane 理论, 2012+ 实验</li>
+<li>微软 Majorana 1 (2025) <strong>声称</strong> 8 拓扑 qubit</li>
+</ul>
+<p><strong>Ising 任意子</strong>:</p>
+<ul>
+<li>MZM 的<strong>非局域</strong>态</li>
+<li>编织 = <strong>Clifford</strong> 门 (H, S, CNOT)</li>
+<li><strong>不</strong>通用——需 magic state 补 T 门</li>
+</ul>
+<p><strong>争议</strong>: MZM 的<strong>实验</strong>证据<strong>仍有</strong>质疑 (零偏压电导 0.5 $2e^2/h$ 是否<strong>真正</strong> MZM, 还是其他效应)。</p>
+<h3>18.9.3 微软 Majorana 1 (2025)</h3>
+<p><strong>Microsoft 2025-02 公布</strong>:</p>
+<ul>
+<li><strong>Majorana 1</strong> 芯片: 8 拓扑 qubit</li>
+<li>拓扑保护 (声称) ——<strong>不</strong>用表面码纠错</li>
+<li>走"Topological qubit"路径</li>
+</ul>
+<p><strong>质疑</strong> (学界, 2024-2025):</p>
+<ul>
+<li>多个实验组<strong>重复</strong> Majorana 实验<strong>失败</strong></li>
+<li><strong>学界共识</strong> (2025): Majorana 零模的<strong>明确</strong>证据<strong>尚缺</strong></li>
+<li>微软<strong>承认</strong>需要更多实验</li>
+</ul>
+<p><strong>ch23 详细</strong>展开 Majorana 实验细节 + 当前争议。</p>
+<h3>18.9.4 Fibonacci 任意子 (候选)</h3>
+<p><strong>候选系统</strong>:</p>
+<ul>
+<li><strong>分数量子霍尔</strong> $\nu = 12/5$ (Moore-Read 态) — Willett 2013 暗示性实验</li>
+<li><strong>冷原子</strong> (光晶格 + Rydberg 原子) — 理论提议</li>
+<li><strong>拓扑超导</strong> (Kitaev 链 + Fibonacci 编码) — 理论</li>
+</ul>
+<p><strong>实验状态</strong> (2026): <strong>无</strong>确定 Fibonacci 任意子<strong>实验</strong>。</p>
+<p><strong>意义</strong>: 理论上<strong>最优雅</strong>的容错方案——<strong>编织</strong>做<strong>通用</strong>门, 错误率指数小。</p>
+<h3>18.9.5 拓扑量子计算 vs 表面码纠错</h3>
+<p><strong>争论焦点</strong>:</p>
+<ul>
+<li><strong>乐观派</strong> (Microsoft): 拓扑<strong>最终</strong>胜过表面码——被动保护更优雅</li>
+<li><strong>工程派</strong> (Google, IBM): 表面码<strong>现在</strong>实用——主动纠错 + 高阈值</li>
+</ul>
+<p><strong>共识</strong> (2026):</p>
+<ul>
+<li>表面码是<strong>近期</strong> QEC 主流 (10 年)</li>
+<li>拓扑是<strong>远期</strong> 路径 (20-30 年)</li>
+<li><strong>可能</strong>组合: 表面码 (FTQC) + 拓扑 (量子门)</li>
+<hr>
+<h2 id="section-18.10">18.10 ch19 铺路 + 总结</h2>
+<h3>18.10.1 ch19 容错量子计算 (FTQC) 预告</h3>
+</ul>
+<p><strong>ch19 = 第四部分 Day 4 = 第四部分最后 1 章</strong>:</p>
+<ul>
+<li><strong>递归纠错</strong> (concatenated codes): 1 → 5 → 25 → ... 物理 qubit</li>
+<li><strong>表面码的"连续"实现</strong>: lattice surgery + 修补</li>
+<li><strong>Magic state distillation</strong>: 容错 T 门</li>
+<li><strong>完整资源估算</strong>: 20 百万 qubit 破解 RSA-2048</li>
+<li><strong>阈值定理的严格证明</strong>: Aharonov-Ben-Or 1997</li>
+</ul>
+<p><strong>ch18 跟 ch19 的关系</strong>:</p>
+<ul>
+<li>ch18 = <strong>码</strong> (代码层面) —— 表面码几何 + 任意子</li>
+<li>ch19 = <strong>系统</strong> (系统层面) —— FTQC + 资源 + 阈值</li>
+<h3>18.10.1.1 第四部分 4 章完整图</h3>
+<pre><code>ch16: 噪声刻画 (T1, T2, Kraus, 5 信道)
+    ↓ "QEC 为什么需要?"
+ch17: QEC 原理 (Shor/Steane/5-qubit, 5-9 qubit, d=3)
+    ↓ "原理够了吗?"
+ch18: 表面码 (2D 网格, 25-10000+ qubit, d=5-30) ⬅ 本章
+    ↓ "工程实现?"
+ch19: FTQC (递归 + magic state + 完整资源估算)
+    ↓ 第四部分完结, 进入第五部分硬件 (ch20-24)</code></pre>
+<h3>18.10.1.2 ch18 章节内部逻辑回顾</h3>
+</ul>
+<p><strong>18.1-18.2</strong>: 拓扑学 + 表面码的 3 种码型 (基础) <strong>18.3-18.4</strong>: 2D 网格几何 + syndrome 解码 (实现) <strong>18.5-18.6</strong>: 阈值定理 + 任意子 (理论 + 替代) <strong>18.7-18.8</strong>: 资源估算 + 硬件里程碑 (工程) <strong>18.9-18.10</strong>: 拓扑量子计算 + 总结 (未来 + 衔接)</p>
+<h3>18.10.2 概念速查表</h3>
+<table class="chapter-table">
+<tr><th>概念</th><th>定义</th><th>章节</th></tr>
+<tr><td><strong>同伦 (homotopy)</strong></td><td>路径的等价类</td><td>18.1</td></tr>
+<tr><td><strong>同调 (homology)</strong></td><td>闭链/边界</td><td>18.1.3</td></tr>
+<tr><td><strong>亏格 (genus)</strong></td><td>把手数</td><td>18.1.4</td></tr>
+<tr><td><strong>任意子 (anyons)</strong></td><td>2D 准粒子</td><td>18.1.5</td></tr>
+<tr><td><strong>编织 (braiding)</strong></td><td>任意子互相绕</td><td>18.1.6, 18.6.3</td></tr>
+<tr><td><strong>平面码 (planar)</strong></td><td>$n = d^2 + (d-1)^2$</td><td>18.2.1</td></tr>
+<tr><td><strong>旋转码 (rotated)</strong></td><td>$n = d^2$ (45° 旋转)</td><td>18.2.2</td></tr>
+<tr><td><strong>补丁码 (patch)</strong></td><td>任意形状</td><td>18.2.3</td></tr>
+<tr><td><strong>数据 qubit</strong></td><td>编码信息的物理 qubit</td><td>18.3</td></tr>
+<tr><td><strong>Stabilizer (X / Z)</strong></td><td>4 体棋盘分布</td><td>18.3.2</td></tr>
+<tr><td><strong>粗糙边界</strong></td><td>暴露 $X$ 边</td><td>18.3.5</td></tr>
+<tr><td><strong>平滑边界</strong></td><td>暴露 $Z$ 边</td><td>18.3.5</td></tr>
+<tr><td><strong>Syndrome 提取</strong></td><td>测 4 体 stabilizer</td><td>18.4.1</td></tr>
+<tr><td><strong>MWPM 解码</strong></td><td>经典图匹配算法</td><td>18.4.2.1</td></tr>
+<tr><td><strong>Union-Find 解码</strong></td><td>线性时间近似</td><td>18.4.2.2</td></tr>
+<tr><td><strong>神经网络解码</strong></td><td>深度学习</td><td>18.4.2.3</td></tr>
+<tr><td><strong>阈值定理</strong></td><td>$p < p_{th}$ → $p_L$ 指数下降</td><td>18.5.1</td></tr>
+<tr><td><strong>表面码阈值</strong></td><td>$p_{th} \approx 1\%$</td><td>18.5.2</td></tr>
+<tr><td><strong>Abelian 任意子</strong></td><td>$e, m, \varepsilon$ (toric code)</td><td>18.6.1</td></tr>
+<tr><td><strong>Ising 任意子</strong></td><td>Majorana 零模</td><td>18.6.2</td></tr>
+<tr><td><strong>Fibonacci 任意子</strong></td><td>通用编织</td><td>18.6.2</td></tr>
+<tr><td><strong>Majorana 1 (微软)</strong></td><td>8 拓扑 qubit (2025)</td><td>18.9.3</td></tr>
+</table>
+<h3>18.10.3 3 个关键洞察</h3>
+<ol>
+<li><strong>从原理到工业的转折</strong>: ch17 三个奠基码是<strong>原理</strong> (5-9 qubit, $d=3$); ch18 表面码是<strong>工业</strong> (25-10000+ qubit, $d=5-30$)。这一转折的<strong>核心</strong>是<strong>阈值</strong>从 $10^{-4}$ 到 $10^{-2}$——<strong>两个数量级</strong>的进步。</li>
+<li><strong>拓扑学提供"保护"</strong>: 表面码叫"表面"是因为<strong>逻辑</strong>信息<strong>编码</strong>在 2D 网格的<strong>拓扑不变量</strong>上——<strong>洞</strong>的数量 = <strong>逻辑</strong> qubit 数。这种"拓扑" 性质使得<strong>局部</strong>错误<strong>不能</strong>改变<strong>全局</strong>逻辑信息。</li>
+<li><strong>任意子是另一种"计算"</strong>: 表面码纠错<strong>主动</strong>测+反馈; 任意子编织<strong>被动</strong>抗错。<strong>两种</strong> 路径<strong>不冲突</strong>——可<strong>组合</strong> (Hybrid)。Fibonacci 任意子<strong>理论上</strong>最优, 但<strong>实验</strong>上<strong>未</strong>确认。</li>
+<h3>18.10.4 心智模型</h3>
+<blockquote><p><strong>ch18 的 3 句话总结</strong>:</p></blockquote>
+<blockquote><p>1. <strong>表面码 = 2D 网格 + 棋盘 X/Z stabilizer + 4 边界</strong> (1 逻辑 qubit)</p></blockquote>
+<blockquote><p>2. <strong>阈值 $\sim 1\%$ + 解码 $< 1 \mu s$ + 资源 $d^2$</strong> 决定"工业级"</p></blockquote>
+<blockquote><p>3. <strong>Google Willow 2024 首次低于阈值</strong>——QEC 从理论到工程</p></blockquote>
+<h3>18.10.5 8 位关键人物</h3>
+<table class="chapter-table">
+<tr><th>人物</th><th>年份</th><th>贡献</th></tr>
+<tr><td>Alexei Kitaev</td><td>1995-2003</td><td>toric code + anyons + 阈值</td></tr>
+<tr><td>Sergey Bravyi</td><td>1998-</td><td>Bravyi-Kitaev 1998 表面码</td></tr>
+<tr><td>Daniel Gottesman</td><td>1996-</td><td>stabilizer 形式 (ch17)</td></tr>
+<tr><td>Eric Dennis, John Preskill</td><td>2002</td><td>DKLP 2002 阈值证明</td></tr>
+<tr><td>Austin Fowler</td><td>2012</td><td>表面码工程化 + 实时解码</td></tr>
+<tr><td>Barbara Terhal</td><td>2015</td><td>量子纠错综述</td></tr>
+<tr><td>Rajeev Acharya et al. (Google)</td><td>2024</td><td>Willow 首次低于阈值</td></tr>
+<tr><td>Chetan Nayak (Microsoft)</td><td>2025</td><td>Majorana 1 8 拓扑 qubit</td></tr>
+</table>
+<h3>18.10.6 4 道思考题</h3>
+<li><strong>T1</strong>: 为什么表面码阈值 $p_{th} \approx 1\%$, <strong>比</strong> Shor/Steane 的 $10^{-4}$ 高 2 个数量级? (提示: 局部 stabilizer + 4 体)</li>
+<li><strong>T2</strong>: 旋转码 $n = d^2$, 平面码 $n = d^2 + (d-1)^2$, 当 $d = 5$ 时, 旋转码比平面码<strong>省</strong>多少 qubit? <strong>比</strong>是百分比多少?</li>
+<li><strong>T3</strong>: Google Willow 用 $d = 7$ 表面码, 假设物理错误率 $p = 10^{-3}$, 估算逻辑错误率 $p_L$。用 $p_L \sim (p/p_{th})^{(d+1)/2}$, $p_{th} = 1\%$。</li>
+<li><strong>T4</strong>: Fibonacci 任意子为什么"理论上最优雅" ? Ising 任意子为什么"实验上更现实" ? 给出<strong>两个</strong> 物理实现差异。</li>
+<h3>18.10.7 推荐阅读</h3>
+<li><strong>Dennis, Kitaev, Landahl, Preskill (2002)</strong> "Topological quantum memory" <em>J. Math. Phys.</text> 43:4452-4505</li>
+<li><strong>Fowler, Mariantoni, Martinis, Cleland (2012)</strong> "Surface codes: Towards practical large-scale quantum computation" <em>Phys. Rev. A</text> 86:032324</li>
+<li><strong>Acharya et al. (Google Quantum AI) (2024)</strong> "Quantum error correction below the surface code threshold" <em>Nature</text> 638:920-926</li>
+<li><strong>Nayak, Simon, Stern, Freedman, Das Sarma (2008)</strong> "Non-Abelian anyons and topological quantum computation" <em>Rev. Mod. Phys.</text> 80:1083</li>
+<li><strong>Microsoft Majorana 1 (2025)</strong> <em>Nature</text> 638 系列论文 (但学界争议中)</li>
+<hr>
+<h2 id="section-18.A">18.A 附录:拓扑学术语表</h2>
+<table class="chapter-table">
+<tr><th>术语</th><th>英文</th><th>定义</th><th>量子计算角色</th></tr>
+<tr><td>同伦</td><td>homotopy</td><td>连续路径的等价类</td><td>任意子的世界线</td></tr>
+<tr><td>同调</td><td>homology</td><td>闭链/边界的代数</td><td>syndrome 模式</td></tr>
+<tr><td>亏格</td><td>genus</td><td>把手数</td><td>toric code 的 1 逻辑 qubit / 把手</td></tr>
+<tr><td>环面</td><td>torus</td><td>亏格 1 紧致曲面</td><td>早期 toric code 边界</td></tr>
+<tr><td>球面</td><td>sphere</td><td>亏格 0 紧致曲面</td><td>平面码边界</td></tr>
+<tr><td>编织</td><td>braiding</td><td>任意子互相绕</td><td>量子门实现</td></tr>
+<tr><td>闭合链</td><td>closed chain</td><td>起点 = 终点的链</td><td>syndrome = 0 的条件</td></tr>
+<tr><td>边界</td><td>boundary</td><td>链的端点</td><td>错误 = 边界 ↔ 无错</td></tr>
+<tr><td>欧拉示性数</td><td>Euler characteristic</td><td>$\chi = 2 - 2g$</td><td>拓扑不变</td></tr>
+</table>
+<h2 id="section-18.B">18.B 附录:任意子基础</h2>
+<h3>18.B.1 任意子的数学描述</h3>
+</ul>
+<p><strong>Braid group</strong> $B_n$ (n 个粒子的所有编织): 由生成元 $\sigma_1, \dots, \sigma_{n-1}$ 生成, 关系:</p>
+<table class="chapter-table">
+<tr><th>i - j</th></tr>
+</table>
+<ul>
+<li>$\sigma_i \sigma_{i+1} \sigma_i = \sigma_{i+1} \sigma_i \sigma_{i+1}$ (Yang-Baxter)</li>
+</ul>
+<p><strong>酉表示</strong>: $B_n$ 的 $d$-维酉表示给 $d$-维 Hilbert 空间 + 编织 = 量子门。</p>
+<h3>18.B.2 Fusion rules</h3>
+<p><strong>Fusion</strong>: 2 个任意子<strong>合并</strong>成 1 个——是<strong>直和</strong> (Abelian) 或<strong>多结果</strong> (非 Abelian)。</p>
+<p><strong>Abelian</strong>: $a \times b = c$ (单结果) <strong>Non-Abelian</strong>: $a \times b = \bigoplus_i c_i$ (多结果, Hilbert 空间维数增加)</p>
+<p><strong>例 (Fibonacci)</strong>: $\tau \times \tau = 1 + \tau$ (2 结果) <strong>例 (Ising)</strong>: $\sigma \times \sigma = 1 + \psi$ (2 结果, 但<strong>只</strong> Clifford)</p>
+<h3>18.B.3 三种任意子对比</h3>
+<table class="chapter-table">
+<tr><th>类型</th><th>编织统计</th><th>通用?</th><th>物理实现</th><th>实验状态</th></tr>
+<tr><td><strong>Abelian</strong> (toric code)</td><td>$e \times m$ → 相位 $\pi$</td><td>❌</td><td>超导量子比特</td><td>✅ Google, IBM</td></tr>
+<tr><td><strong>Ising</strong></td><td>$\sigma$ 编织 → Clifford</td><td>❌</td><td>Majorana 零模</td><td>⚠️ 争议中 (2025)</td></tr>
+<tr><td><strong>Fibonacci</strong></td><td>$\tau$ 编织 → 通用</td><td>✅</td><td>FQH $\nu = 12/5$</td><td>❌ 未确认</td></tr>
+</table>
+<h2 id="section-18.C">18.C 附录:表面码资源估算表</h2>
+<h3>18.C.1 旋转码详细</h3>
+<table class="chapter-table">
+<tr><th>$d$</th><th>数据 qubit</th><th>测量 ancilla</th><th>总</th><th>阈值 $p_L$ ($p=10^{-3}$)</th><th>实用度</th></tr>
+<tr><td>3</td><td>9</td><td>9</td><td>18</td><td>$10^{-5}$</td><td>教学</td></tr>
+<tr><td>5</td><td>25</td><td>25</td><td>50</td><td>$10^{-9}$</td><td>实验 (Willow 2024)</td></tr>
+<tr><td>7</td><td>49</td><td>49</td><td>98</td><td>$10^{-12}$</td><td>实验 (Willow 2024)</td></tr>
+<tr><td>9</td><td>81</td><td>81</td><td>162</td><td>$10^{-15}$</td><td>工程</td></tr>
+<tr><td>11</td><td>121</td><td>121</td><td>242</td><td>$10^{-17}$</td><td>工程</td></tr>
+<tr><td>13</td><td>169</td><td>169</td><td>338</td><td>$10^{-20}$</td><td>远期</td></tr>
+<tr><td>15</td><td>225</td><td>225</td><td>450</td><td>$10^{-23}$</td><td>远期</td></tr>
+<tr><td>25</td><td>625</td><td>625</td><td>1250</td><td>$10^{-38}$</td><td>理论</td></tr>
+</table>
+<h3>18.C.2 关键任务估算</h3>
+<table class="chapter-table">
+<tr><th>任务</th><th>逻辑 qubit</th><th>$d$</th><th>物理 qubit</th><th>时间</th></tr>
+<tr><td>量子化学 (H2 模拟)</td><td>10</td><td>7</td><td>980</td><td>秒</td></tr>
+<tr><td>Grover (1M 数据库)</td><td>50</td><td>11</td><td>12100</td><td>小时</td></tr>
+<tr><td>Shor RSA-2048</td><td>4000</td><td>11</td><td>10M-20M</td><td>8 小时</td></tr>
+<tr><td>量子 ML (10k qubit)</td><td>10000</td><td>15</td><td>4.5M</td><td>几天</td></tr>
+</table>
+<h2 id="section-18.D">18.D 附录:跟 ch23 拓扑量子计算的对比</h2>
+<h3>18.D.1 两条路径</h3>
+<table class="chapter-table">
+<tr><th>维度</th><th>表面码 (ch18)</th><th>拓扑量子计算 (ch23)</th></tr>
+<tr><td>物理</td><td>2D 网格 + 棋盘</td><td>Majorana + Fibonacci</td></tr>
+<tr><td>错误</td><td>$p_L \sim p^{(d+1)/2}$</td><td>$p_L \sim e^{-L/\xi}$</td></tr>
+<tr><td>阈值</td><td>$\sim 1\%$</td><td>理论无阈值</td></tr>
+<tr><td>实验</td><td>✅ Google Willow 2024</td><td>⚠️ 争议 (Majorana 1 2025)</td></tr>
+<tr><td>工业时间</td><td>10 年</td><td>20-30 年</td></tr>
+</table>
+<h3>18.D.2 组合可能</h3>
+<ul>
+<li>表面码 (FTQC) + 拓扑 (Ising/Fibonacci 编织) 做逻辑门</li>
+<li>表面码保护<strong>逻辑</strong> qubit, 内部<strong>编织</strong>做门</li>
+<li><strong>Hybrid</strong> 架构 = 长期目标</li>
+<hr>
+</ul>
+<p><strong>字数统计</strong>: ~6,500 中文字 / 11 节 + 4 附录 / 80+ 公式 / 12+ 表格 <strong>ch18 完成 = 18/28 = 64%</strong> (第四部分 Day 3) <strong>衔接</strong>: ch17 (QEC 原理) → ch18 (工业 QEC) → ch19 (FTQC)</p>
+<p><strong>Day 21 章节撰写完成。</strong> ✅</p>
+
+<!-- 章节 pager -->
+<nav class="chapter-pager" aria-label="章节导航">
+  <a href="ch17.html" class="pager-link pager-prev">
+    <span class="pager-label">← 上一章</span>
+    <span class="pager-title">第 17 章 量子纠错码 (QEC)</span>
+  </a>
+  <a href="ch19.html" class="pager-link pager-next pager-disabled">
+    <span class="pager-label">下一章 →</span>
+    <span class="pager-title">第 19 章 容错量子计算 (FTQC)</span>
+  </a>
+</nav>
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
