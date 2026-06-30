@@ -490,7 +490,27 @@ q_6  q_7  q_8</code></pre>
 <li>用作逻辑 $\bar{X}$ 算子<strong>端点</strong></li>
 </ul>
 <p><strong>两对边界</strong> (rough + smooth) = <strong>1 个逻辑 qubit</strong>。</p>
-<p><strong>应用</strong>: 表面码的<strong>逻辑门</strong> (CNOT, T 门) 通过"补丁" 移动 + 边界转换实现——ch19 详细。</p>
+<p><strong>ASCII 简化图</strong> (俯视, 矩形 patch, 左粗糙右平滑):</p>
+<pre><code>                 平滑边界 (smooth) — 暴露 Z 边
+                 ══════════════════════════════
+                 ·   ·   ·   ·   ·   ·   ·
+                 · ─ · ─ · ─ · ─ · ─ · ─ ·   ← X-stab (×)
+                 ·   ·   ·   ·   ·   ·   ·
+                 · ─ · ─ · ─ · ─ · ─ · ─ ·   ← X-stab
+                 ·   ·   ·   ·   ·   ·   ·
+                 · ─ · ─ · ─ · ─ · ─ · ─ ·   ← X-stab
+                 ·   ·   ·   ·   ·   ·   ·
+                 ·   ·   ·   ·   ·   ·   ·
+                 ║   ║   ║   ║   ║   ║   ║
+                 ║   ║   ║   ║   ║   ║   ║   ← Z-stab (面)
+                 ║   ║   ║   ║   ║   ║   ║
+                 ══════════════════════════════
+                 粗糙边界 (rough) — 暴露 X 边
+
+   逻辑 X̄ 操作: 上/下 2 个 smooth 边界之间连一条 Z 字符串
+   逻辑 Z̄ 操作: 左/右 2 个 rough 边界之间连一条 X 字符串
+</code></pre>
+<p><strong>应用</strong>: 表面码的<strong>逻辑门</strong> (CNOT, T 门) 通过"补丁" 移动 + 边界转换实现——ch19 详细。ch19.7 介绍的 <strong>lattice surgery</strong> (Horsman et al. 2012) 全部基于边界转换——本节图示是<strong>基础</strong>。</p>
 <hr>
 <h2 id="section-18.4">18.4 Syndrome 提取 + 解码 (Decoding)</h2>
 <blockquote><p><strong>核心问题</strong>: 测 stabilizer → syndrome → 怎么反推错误?</p></blockquote>
@@ -585,6 +605,15 @@ q_6  q_7  q_8</code></pre>
 <li><strong>当前</strong>最好的超导 qubit: $p \sim 0.1-1\%$ (跨阈值)</li>
 </ul>
 <p><strong>关键事实</strong>: 表面码阈值<strong>比</strong> Shor/Steane/5-qubit 的 $10^{-4}$ 高<strong>两个数量级</strong>——<strong>实用</strong>!</p>
+<p><strong>阈值 $1\%$ 的物理来源</strong> — 表面码为什么"特别宽容"?</p>
+<ol>
+<li><strong>局部 4 体 stabilizer + 棋盘分布的"几何"</strong>: 单错只影响 4 个 stabilizer (2 个 X-stab + 2 个 Z-stab), syndrome 模式<strong>唯一</strong>——可<strong>精确</strong>定位。</li>
+<li><strong>错误是"空间"传播的,不是"时间"</strong>: 增加电路<strong>深度</strong> (更多层 stabilizer 测量) 不会<strong>显著</strong>降低阈值——错误是<strong>横向</strong>扩散,<strong>不</strong>累积。</li>
+<li><strong>任意子"超选择"保护</strong>: 错误 → 任意子对 ($e$ 和 $m$) → 任何操作必须<strong>整体</strong>移动→ 自然抑制。</li>
+<li><strong>2D 局部连接</strong>: 每个 qubit 只与<strong>最近邻</strong>耦合——硬件<strong>易实现</strong>, 串扰 (crosstalk) 局限于局部。</li>
+</ol>
+<p><strong>对比</strong>: Shor 9-qubit 阈值 $\sim 10^{-4}$ <strong>小 100 倍</strong>——9 qubit <strong>空间小</strong>, 单错可能<strong>多个</strong> stabilizer 触发, syndrome 模式<strong>重叠</strong>, 解码<strong>歧义</strong>大, 阈值<strong>低 2 个量级</strong>。</p>
+<p><strong>直觉总结</strong>: 表面码的"宽容"= <strong>大码距 + 棋盘分布 + 局部连接 + 几何错抑制</strong> 的<strong>综合</strong>——这是它成为工业实践<strong>首选</strong>的根本原因。</p>
 <h3>18.5.3 对比: 三个奠基码的阈值</h3>
 <table class="chapter-table">
 <tr><th>码</th><th>阈值 $p_{th}$</th><th>当前硬件 $p$</th><th>实用?</th></tr>
@@ -758,9 +787,16 @@ q_6  q_7  q_8</code></pre>
 <tr><td><strong>保护机制</strong></td><td>主动纠错 (测+反馈)</td><td>被动 (编织天然抗错)</td></tr>
 <tr><td><strong>门实现</strong></td><td>通用 (CNOT, T 等)</td><td>通用 (Fibonacci)</td></tr>
 <tr><td><strong>物理要求</strong></td><td>错误率 $p < 1\%$</td><td><strong>任意</strong> (编织本身就抗错)</td></tr>
+<tr><td><strong>温度要求</strong></td><td>超导 ~10-20 mK</td><td>Majorana 半导体 ~100 mK / FQH ~10 mK</td></tr>
 <tr><td><strong>当前状态</strong></td><td>实用 (Google Willow 2024)</td><td>实验阶段 (Majorana 1 2025)</td></tr>
 <tr><td><strong>扩展性</strong></td><td>高 (大 $d$)</td><td>理论高 (编织)</td></tr>
 </table>
+<p><strong>温度维度的物理意义</strong>:</p>
+<ul>
+<li><strong>超导表面码</strong> (Google Willow): 稀释制冷机 (dilution refrigerator) ~10-20 mK, <strong>铝</strong>超导转变温度 ~1.2 K, <strong>$T/T_c \sim 0.01$</strong>——工程上<strong>成熟</strong></li>
+<li><strong>Majorana 半导体</strong> (Microsoft): 铟砷 (InAs) 纳米线 + 超导邻近, ~100 mK, 仍<strong>远低于</strong>超导 $T_c$ 但<strong>远高于</strong>表面码——降低制冷难度</li>
+<li><strong>Fibonacci FQH</strong> (理论): $\nu=12/5$ 分数量子霍尔态, ~10 mK, 需<strong>强磁场</strong> (10-15 T)——<strong>最严苛</strong></li>
+</ul>
 <p><strong>关键事实</strong>: <strong>两种</strong> 路径<strong>互</strong>不<strong>冲突</strong>——可以<strong>组合</strong> (Hybrid)。如: 表面码保护<strong>逻辑</strong> qubit, 内部<strong>编织</strong>做逻辑门。</p>
 <h3>18.6.5 ch23 铺路</h3>
 <p><strong>第 23 章 拓扑量子计算</strong> 详述:</p>
@@ -832,6 +868,18 @@ q_6  q_7  q_8</code></pre>
 <li>IBM Condor 2023: <strong>1121</strong> qubit (单芯片, <strong>无</strong>纠错)</li>
 <li>Google Willow 2024: <strong>105</strong> qubit + 表面码</li>
 <li>距离: <strong>4-5 个数量级</strong>——20-30 年工程努力</li>
+<p><strong>资源估算历史 (Fowler 2012 → Gidney 2024) — 5 个里程碑</strong>:</p>
+<table class="chapter-table">
+<tr><th>年份</th><th>团队</th><th>估算 (物理 qubit)</th><th>时间</th><th>关键改进</th></tr>
+<tr><td><strong>2012</strong></td><td>Fowler et al.</td><td><strong>10 亿</strong> (1B)</td><td>不详</td><td>早期估算, 假设悲观</td></tr>
+<tr><td><strong>2019</strong></td><td>Gidney-Ekerå</td><td><strong>2000 万</strong> (20M)</td><td>8 小时</td><td>改进模幂 + 节省 100×</td></tr>
+<tr><td><strong>2019</strong></td><td>Litinski</td><td><strong>2000 万</strong> (20M)</td><td>几小时</td><td>Magic state cultivation</td></tr>
+<tr><td><strong>2021</strong></td><td>Gidney-Babbush</td><td><strong>~3000 万</strong> (30M)</td><td>不详</td><td>更现实的噪声模型</td></tr>
+<tr><td><strong>2024</strong></td><td>Gidney</td><td><strong>~100 万</strong> (1M)</td><td>不详</td><td><strong>激进</strong>假设 (<strong>争议中</strong>)</td></tr>
+</table>
+<p><strong>趋势</strong>: 估算<strong>逐次</strong>减 5-10×——因为<strong>更好的</strong>算法 (cultivation) + <strong>更现实的</strong>硬件假设。</p>
+<p><strong>重要提醒</strong>: 2024 Gidney 的 1M 估算假设<strong>当前</strong> 99.9% 门保真度, <strong>未</strong>考虑规模化时<strong>新</strong>错误源——学界<strong>未</strong>广泛接受。</p>
+<p><strong>保守</strong>采用 <strong>Litinski 2019</strong> 的 20M 估算作为"基线"。</p>
 <h3>18.7.4 不同任务的资源</h3>
 <table class="chapter-table">
 <tr><th>任务</th><th>逻辑 qubit</th><th>物理 qubit (估)</th><th>时间</th></tr>
@@ -929,6 +977,23 @@ q_6  q_7  q_8</code></pre>
 <li>实际超导芯片<strong>3D</strong> 封装, 长程门<strong>难</strong></li>
 <li>解决方案: <strong>移动</strong> qubit (lattice surgery, ch19 详述)</li>
 </ul>
+<p><strong>实际工程数字表 (2024-2025 现状)</strong>:</p>
+<table class="chapter-table">
+<tr><th>难</th><th>目标</th><th>当前 (2024-2025)</th><th>差距</th><th>主要团队</th></tr>
+<tr><td><strong>实时解码</strong></td><td>&lt; 1 μs</td><td>1.1 μs (Google Willow 2024)</td><td>~10% (1.1× 超时)</td><td>Google Syu 2024</td></tr>
+<tr><td><strong>测量保真度</strong></td><td>&gt; 99.9%</td><td>99.85% (Google Willow 2024)</td><td>1.5% (0.999 vs 0.9985)</td><td>Google Acharya 2024</td></tr>
+<tr><td><strong>长程门错误率</strong></td><td>&lt; 0.1%</td><td>~0.5% (跨芯片 SWAP)</td><td>5× (需 5× 改进)</td><td>IBM Heron r2 2024</td></tr>
+<tr><td><strong>门保真度</strong></td><td>&gt; 99.99%</td><td>99.9% (双 qubit)</td><td>10× (需 10× 改进)</td><td>多团队</td></tr>
+<tr><td><strong>qubit 数</strong></td><td>$d=11$ (121) + 1</td><td>105 (Willow 2024)</td><td>差距 $d$ 还需增</td><td>Google</td></tr>
+</table>
+<p><strong>关键洞察</strong>:</p>
+<ul>
+<li><strong>实时解码</strong>: <strong>接近</strong> 目标 (1.1 μs vs &lt; 1 μs), 工程上<strong>最易解决</strong>——FPGA 升级即可</li>
+<li><strong>测量保真度</strong>: 99.85% 在 $d=5$ 时<strong>可接受</strong> (测量错误<strong>不</strong>主导), 但 $d \to 11$ 时成为<strong>瓶颈</strong></li>
+<li><strong>长程门</strong>: 仍是<strong>最大</strong>挑战, lattice surgery 仍未<strong>完全</strong>实用化</li>
+<li><strong>qubit 数</strong>: 增 100× 是<strong>最大</strong>鸿沟——制造工艺+控制电子+制冷机<strong>全</strong>需升级</li>
+</ul>
+<p><strong>对比 ch19</strong>: ch19.9 将详述这些工程数字<strong>怎么</strong>转化为<strong>完整</strong>容错系统的设计目标。</p>
 <p><strong>观察</strong>: 3 个难<strong>叠加</strong>——硬件 + 软件 + 算法<strong>协同</strong>。</p>
 <hr>
 <h2 id="section-18.9">18.9 拓扑量子计算</h2>
@@ -1159,7 +1224,7 @@ ch19: FTQC (递归 + magic state + 完整资源估算)
     <span class="pager-label">← 上一章</span>
     <span class="pager-title">第 17 章 量子纠错码 (QEC)</span>
   </a>
-  <a href="ch19.html" class="pager-link pager-next pager-disabled">
+  <a href="ch19.html" class="pager-link pager-next">
     <span class="pager-label">下一章 →</span>
     <span class="pager-title">第 19 章 容错量子计算 (FTQC)</span>
   </a>
@@ -1218,6 +1283,7 @@ ch19: FTQC (递归 + magic state + 完整资源估算)
           <li><a href="ch16.html">第 16 章</a></li>
           <li><a href="ch17.html">第 17 章</a></li>
           <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

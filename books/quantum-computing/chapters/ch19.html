@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第19章：容错量子计算 (Fault-Tolerant Quantum Computation) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第19章：容错量子计算 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第四部分 · 量子纠错与容错 · Day 4 (最后一章)</span>
+        <span class="chapter-day-tag">Day 22 · 2026-06-30</span>
+      </div>
+      <h1 class="chapter-title">第 19 章 容错量子计算 (Fault-Tolerant Quantum Computation, FTQC)</h1>
+      <p class="chapter-subtitle">阈值定理 + 容错门集合 + Magic state distillation/cultivation + Surface code lattice surgery + 完整 FTQC 架构 + 第四部分 Day 4 (最后一章)</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,500 字</span>
+        <span class="stat">🔢 10 节 · 4 附录 · 77 子节</span>
+        <span class="stat">📑 阈值定理 / 容错门 / Magic state / Lattice surgery / RSA-2048 资源</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                  <article class="chapter-content">
+          <h1>第 19 章 容错量子计算 (Fault-Tolerant Quantum Computation, FTQC)</h1>
+          <blockquote><strong>第四部分 · 量子纠错与容错</strong> — Day 4 (最后一章) <strong>目标</strong>: 阈值定理 + 容错门 + Magic state + Lattice surgery <strong>里程碑</strong>: 19/28 章 = 68%</blockquote>
+          <hr>
+<h1>第 19 章 容错量子计算 (Fault-Tolerant Quantum Computation, FTQC)</h1>
+<blockquote><p><strong>本章定位</strong>: 第四部分 Day 4(最后一章)——从"码"到"计算"的飞跃</p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>核心问题</strong>: 有了 ch17/18 的纠错码,如何在<strong>有噪声的硬件</strong>上运行<strong>任意</strong>量子算法?</p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p><strong>本章答案</strong>: 阈值定理 + 容错门 + Magic state + Lattice surgery + 完整系统设计</p></blockquote>
+<hr>
+<h2 id="section-19.0">19.0 引言:从"码"到"计算"</h2>
+<h3>19.0.1 前情提要:ch15→ch16→ch17→ch18 闭环</h3>
+<table class="chapter-table">
+<tr><th>章</th><th>主题</th><th>关键</th></tr>
+<tr><td><strong>ch15</strong></td><td>BQP 复杂性</td><td>假设<strong>无</strong>噪声量子电路</td></tr>
+<tr><td><strong>ch16</strong></td><td>量子噪声与退相干</td><td>T1/T2/去极化噪声, 物理错误率 $p \sim 10^{-3}$</td></tr>
+<tr><td><strong>ch17</strong></td><td>量子纠错码</td><td>Shor 9 / Steane 7 / 5-qubit — 保护<strong>1 个</strong>逻辑 qubit</td></tr>
+<tr><td><strong>ch18</strong></td><td>表面码与拓扑量子计算</td><td>25-10000+ qubit 工业级 QEC, 阈值 ~1%</td></tr>
+</table>
+<p><strong>本章核心问题</strong>: 在 ch18 的工业级 QEC 之上,<strong>整个</strong>算法怎么运行?</p>
+<h3>19.0.2 三大规模扩展障碍(接 ch18.0.3.2)</h3>
+<p>ch18.0.3.2 提到的"三大障碍"在算法层面<strong>更严重</strong>:</p>
+<ol>
+<li><strong>错误传播 (Error Propagation)</strong>: 1 个<strong>物理</strong>错误,在 CNOT 之后<strong>变 2 个</strong>——递归导致<strong>灾难</strong></li>
+<li><strong>解码实时性</strong>: 错误<strong>累积</strong>速度 (1 μs) 必须<strong>快于</strong>解码速度 (1 μs)——<strong>紧贴</strong>硬件时钟</li>
+<li><strong>通用门集</strong>: 纠错码<strong>不能</strong>有<strong>所有</strong>门的横向实现(Eastin-Knill 2009)——必有"昂贵"的非横向门</li>
+<h3>19.0.3 解决方案:容错 (Fault-Tolerance)</h3>
+</ul>
+<p><strong>容错的定义</strong> (Preskill 1998):</p>
+<blockquote><p>量子电路在物理错误率 $p < p_{th}$ 下运行,经过<strong>容错</strong>的<strong>编码</strong> + <strong>解码</strong> + <strong>编码门</strong>设计,逻辑错误率 $p_L$ <strong>指数</strong>下降于码距 $d$——任意长电路 $L$ 可用<strong>多项式</strong>资源 $L \cdot \text{polylog}(L)$ 实现。</p></blockquote>
+<p><strong>关键事实</strong>: 阈值定理 (Aharonov-Ben-Or 1997, Knill-Laflamme-Zurek 1998, Kitaev 1997) <strong>保证</strong>这样的 $p_{th}$ 存在。</p>
+<h3>19.0.4 章节地图(5 个先验)</h3>
+<p>阅读本章需要:</p>
+<ol>
+<li><strong>ch07 量子门</strong>: 理解 H, S, T, CNOT 门</li>
+<li><strong>ch08 电路模型</strong>: 理解"encoded gate" 概念</li>
+<li><strong>ch11 Shor 算法</strong>: 知道<strong>为什么</strong>需要破解 RSA-2048</li>
+<li><strong>ch17 量子纠错码</strong>: Shor 9, Steane 7, 5-qubit 码</li>
+<li><strong>ch18 表面码</strong>: 棋盘分布, 边界条件, 阈值 1%</li>
+</ul>
+<p><strong>章节路线</strong> (10 节 + 4 附录):</p>
+<ul>
+<li>19.1 容错定义</li>
+<li>19.2 错误传播 + 编码门</li>
+<li>19.3 容错门集合</li>
+<li>19.4 Magic State Distillation</li>
+<li>19.5 阈值定理</li>
+<li>19.6 Concatenated Code 架构</li>
+<li>19.7 Surface Code 容错架构 (Lattice Surgery)</li>
+<li>19.8 资源开销估算</li>
+<li>19.9 实际容错系统的工程挑战</li>
+<li>19.10 ch20-24 铺路 + 总结</li>
+<li>19.A-19.D 4 附录</li>
+<h3>19.0.5 本章与第四部分其他章节的衔接</h3>
+<pre><code>ch15 BQP 复杂性
+     ↓ (加入噪声后无法实现)
+ch16 量子噪声与退相干
+     ↓ (纠错保护 1 个逻辑 qubit)
+ch17 量子纠错码 (Shor/Steane/5-qubit)
+     ↓ (扩展到 25-10000+ qubit 工业级)
+ch18 表面码与拓扑量子计算
+     ↓ ← 本章 (整个算法怎么在 ch18 之上运行?)
+ch19 容错量子计算 ← 第 19 章
+     ↓ (FTQC 理论 → 5 种硬件实现)
+ch20-24 第五部分硬件</code></pre>
+<hr>
+<h2 id="section-19.1">19.1 容错的定义与三大基本要求</h2>
+<h3>19.1.1 容错的形式化定义</h3>
+</ul>
+<p><strong>定义 19.1</strong> (容错量子计算, Preskill 1998):</p>
+<p>设物理错误率 $p < p_{th}$。<strong>容错量子计算 (FTQC)</strong> 是一组<strong>协议</strong> $\mathcal{P}$ 使得:</p>
+<ol>
+<li><strong>任意</strong>量子电路 $C$ 长度 $L$, 可用<strong>多项式</strong>资源 $L \cdot \text{polylog}(L)$ 实现</li>
+<li><strong>输出</strong>保真度 ≥ $1 - \epsilon$, 任意 $\epsilon > 0$</li>
+<li><strong>错误率指数下降</strong>于码距 $d$: $p_L \sim (p/p_{th})^{(d+1)/2}$</li>
+</ul>
+<p><strong>注</strong>: $\text{polylog}(L) = (\log L)^c$ for 某常数 $c$——比 $L$ 小<strong>指数</strong>多。</p>
+<h3>19.1.2 三大基本要求</h3>
+<table class="chapter-table">
+<tr><th>要求</th><th>物理意义</th><th>违反后果</th></tr>
+<tr><td><strong>(R1) 错误不扩散</strong></td><td>单错 → 编码空间<strong>内</strong>的<strong>常数</strong>个错</td><td>错误<strong>指数</strong>累积, 容错<strong>失败</strong></td></tr>
+<tr><td><strong>(R2) 错误可纠正</strong></td><td>周期性纠错 + 解码<strong>快于</strong>错误累积</td><td>错误"跑赢"解码, <strong>不</strong>容错</td></tr>
+<tr><td><strong>(R3) 通用门集</strong></td><td>{Clifford + T} 或 {任意单 qubit + CNOT} <strong>可</strong>容错实现</td><td><strong>不能</strong>跑任意算法, FTQC 退化为"受限 FTQC"</td></tr>
+</table>
+<p><strong>关键事实</strong>: 三大要求<strong>互相</strong>制约——R1 + R2 + R3 <strong>同时</strong>满足是<strong>容错理论</strong>的核心。</p>
+<h3>19.1.3 阈值的关键不等式</h3>
+<p><strong>逻辑错误率的渐近</strong> (Aliferis-Preskill 2008):</p>
+<p>$$p_L \le C \cdot \left(\frac{p}{p_{th}}\right)^{(d+1)/2}$$</p>
+<p>其中:</p>
+<ul>
+<li>$C$: 常数, 取决于<strong>码型</strong>和<strong>解码算法</strong></li>
+<li>$p_{th}$: 阈值, 表面码 ~1%, Shor/Steane/5-qubit ~$10^{-4}$</li>
+<li>$d$: 码距, 越大保护越强</li>
+</ul>
+<p><strong>直觉</strong>: 错误需要形成<strong>长度 $\ge (d+1)/2$ 的链</strong>才能造成<strong>未纠正</strong>的逻辑错——概率 $\sim p^{(d+1)/2}$。</p>
+<h3>19.1.4 容错的"工程含义"</h3>
+<table class="chapter-table">
+<tr><th>错误率 $p$</th><th>含义</th><th>表面码 $d$ 需要</th><th>物理 qubit</th></tr>
+<tr><td>$p = 0.1\% < p_{th}$</td><td><strong>好</strong> 硬件</td><td>$d = 5$ (保护 1 逻辑)</td><td>$25$</td></tr>
+<tr><td>$p = 0.5\% < p_{th}$</td><td><strong>中</strong> 硬件</td><td>$d = 11$</td><td>$121$</td></tr>
+<tr><td>$p = 1\% \approx p_{th}$</td><td><strong>临界</strong></td><td>$d \to \infty$</td><td>$\to \infty$</td></tr>
+<tr><td>$p = 5\% > p_{th}$</td><td><strong>不</strong> 容错</td><td>$d$ <strong>无意义</strong></td><td>—</td></tr>
+</table>
+<p><strong>结论</strong>: 表面码的工程"目标"是 $p < 0.5\%$——给 $d = 7-11$ 留<strong>足够</strong>安全边际。</p>
+<h3>19.1.5 容错的"历史里程碑"</h3>
+<table class="chapter-table">
+<tr><th>年份</th><th>事件</th><th>关键</th><th>阈值</th></tr>
+<tr><td><strong>1995</strong></td><td>Shor 9-qubit 码</td><td>首次 QEC</td><td>未知</td></tr>
+<tr><td><strong>1996</strong></td><td>Steane 7-qubit 码</td><td>简化 Shor</td><td>未知</td></tr>
+<tr><td><strong>1996</strong></td><td>Knill-Laflamme 条件</td><td>QEC 理论框架</td><td>未知</td></tr>
+<tr><td><strong>1997</strong></td><td>Aharonov-Ben-Or 阈值</td><td>首次证明</td><td>$\sim 10^{-6}$</td></tr>
+<tr><td><strong>1997</strong></td><td>Kitaev 拓扑码</td><td>拓扑保护思路</td><td>未知</td></tr>
+<tr><td><strong>1998</strong></td><td>KLZ 阈值</td><td>改进</td><td>$\sim 10^{-3}$</td></tr>
+<tr><td><strong>1998</strong></td><td>Preskill 综述</td><td>"fault-tolerant QC" 命名</td><td>—</td></tr>
+<tr><td><strong>2005</strong></td><td>Bravyi-Kitaev 蒸馏</td><td>Magic state 解决 T 门</td><td>—</td></tr>
+<tr><td><strong>2009</strong></td><td>Eastin-Knill 定理</td><td>不可有通用横向门</td><td>—</td></tr>
+<tr><td><strong>2012</strong></td><td>Horsman lattice surgery</td><td>表面码工程化</td><td>—</td></tr>
+<tr><td><strong>2019</strong></td><td>Litinski "Game of SC"</td><td>完整容错架构</td><td>—</td></tr>
+<tr><td><strong>2024</strong></td><td>Google Willow</td><td>首次<strong>低于</strong> 阈值</td><td><strong>1%</strong> ✅</td></tr>
+</table>
+<p><strong>关键</strong>: 从 1995 到 2024, <strong>29 年</strong> 阈值定理<strong>首次</strong>被实验<strong>低于</strong>——FTQC 进入"工程实现" 阶段。</p>
+<h3>19.1.6 容错 vs 纠错的区别</h3>
+<p><strong>纠错 (Error Correction, ch17-18)</strong>:</p>
+<ul>
+<li><strong>静态</strong> 保护: 把 1 个 logical qubit 编码到 $n$ 个物理 qubit</li>
+<li><strong>一次性</strong> 操作: 测 syndrome → 解码 → 纠正</li>
+<li><strong>不</strong>考虑<strong>门操作</strong>过程中的错误</li>
+</ul>
+<p><strong>容错 (Fault-Tolerance, ch19)</strong>:</p>
+<ul>
+<li><strong>动态</strong> 保护: 整个<strong>电路</strong>在错误<strong>可能发生</strong>的情况下<strong>持续</strong>运行</li>
+<li><strong>持续</strong> 操作: 每 $\sim 1 \mu s$ 测 syndrome, 实时纠正</li>
+<li><strong>考虑</strong>门操作<strong>中</strong>的错误, 加上<strong>编码门</strong> 防止错误<strong>扩散</strong></li>
+</ul>
+<p><strong>类比</strong>:</p>
+<ul>
+<li>纠错 = 给物品<strong>加</strong>保护壳 (静态)</li>
+<li>容错 = 在<strong>生产过程</strong>中<strong>实时</strong> 检测 + 修复 (动态)</li>
+</ul>
+<p><strong>关系</strong>: 纠错是容错的<strong>基础</strong>——没有纠错,容错<strong>不</strong>可能。但纠错<strong>不</strong>等于容错。</p>
+<h3>19.1.7 为什么"容错"难?</h3>
+<p>容错之所以<strong>难</strong>, 有 5 个根本原因:</p>
+<ol>
+<li><strong>错误传播 (Error Propagation)</strong>: 量子门<strong>不</strong>像经典门可以"复制" 信息——CNOT 把 1 错变 2 错</li>
+<li><strong>不可克隆 (No-Cloning)</strong>: ch06 学的——<strong>不</strong>能"复制" qubit 来检查错误,必须用<strong>间接</strong> syndrome</li>
+<li><strong>连续错误 (Continuous Errors)</strong>: 经典错误是 bit-flip (0 ↔ 1), 量子错误是<strong>连续</strong> ($\alpha I + \beta X + \gamma Y + \delta Z$)——需<strong>全</strong>纠正</li>
+<li><strong>测量塌缩 (Measurement Collapse)</strong>: 测 qubit 本身<strong>就</strong>破坏量子态——必须用 ancilla + CNOT 间接测</li>
+<li><strong>阈值权衡 (Threshold Trade-off)</strong>: 任何容错码都<strong>有</strong> 阈值——物理错误率<strong>必须</strong> $p < p_{th}$ 才有效</li>
+</ul>
+<p><strong>关键事实</strong>: 经典纠错<strong>没有</strong>这些问题——所以<strong>经典</strong>容错 1950s 就<strong>成熟</strong>, 量子容错 1996 才<strong>开始</strong>。</p>
+<hr>
+<h2 id="section-19.2">19.2 错误传播问题与编码门 (Encoded Gates)</h2>
+<h3>19.2.1 错误传播的灾难性</h3>
+<p><strong>关键问题</strong>: CNOT 门<strong>传播</strong>错误!</p>
+<p>设控制 qubit 有 $X$ 错误 $X_c$, 则: $$\text{CNOT}_{c \to t} (X_c \otimes I_t) \text{CNOT}_{c \to t}^\dagger = X_c \otimes X_t$$</p>
+<p><strong>1 个</strong>控制错<strong>变 2 个错</strong>(控制+目标)!</p>
+<p><strong>递归</strong>: 1000 个 CNOT 串联 → 1 错<strong>指数增长</strong>到 $2^{1000}$ 错——<strong>不可</strong>容错。</p>
+<h3>19.2.2 编码门 (Encoded Gate) 的定义</h3>
+<p><strong>定义 19.2</strong> (编码门):</p>
+<p>设量子纠错码 $[[n, k, d]]$。<strong>编码门</strong> $\bar{U}$ 是<strong>物理</strong>操作 $U^{\otimes m}$ 加上<strong>辅助</strong>操作, 使得:</p>
+<ol>
+<li>$\bar{U}$ <strong>保持</strong>码空间 $V \subset \mathcal{H}_2^{\otimes n}$</li>
+<li>$\bar{U}$ <strong>不</strong>将码空间<strong>外</strong>的错误<strong>传播</strong>到码空间<strong>内</strong>(<strong>局部化</strong>)</li>
+</ul>
+<p><strong>理想</strong>编码门: <strong>横向 (transversal)</strong>——$U$ 分别作用在<strong>对应</strong> qubit 上,<strong>不</strong>跨 qubit。</p>
+<h3>19.2.3 Shor 9-qubit 码的编码门例子</h3>
+<table class="chapter-table">
+<tr><th>逻辑门</th><th>物理实现</th><th>横向?</th><th>错误传播</th></tr>
+<tr><td>$\bar{H}$</td><td>$H^{\otimes 9}$</td><td>✅ 完全横向</td><td>1 → 1</td></tr>
+<tr><td>$\bar{S}$</td><td>$S^{\otimes 9}$</td><td>✅ 完全横向</td><td>1 → 1</td></tr>
+<tr><td>$\bar{\text{CNOT}}$</td><td>3 个 CNOT (block 间)</td><td>✅ Block-wise 横向</td><td>1 → 1 (block)</td></tr>
+<tr><td>$\bar{T}$</td><td><strong>不</strong>能横向</td><td>❌</td><td>—</td></tr>
+</table>
+<p><strong>关键事实</strong>: Shor 9-qubit 码<strong>天然</strong>有 {Clifford} 横向实现——<strong>完美</strong>容错 Clifford 群。</p>
+<h3>19.2.4 Eastin-Knill 定理 (2009)</h3>
+<p><strong>Eastin-Knill 定理</strong>:</p>
+<blockquote><p><strong>任何</strong>量子纠错码<strong>不能</strong>有<strong>通用</strong>的横向门集。</p></blockquote>
+<p><strong>证明</strong> (Knech 2011 简化): 假设<strong>存在</strong>横向通用门集 $\{U_i\}$, 它们<strong>生成</strong>全部酉算子。<strong>但</strong>任何纠错码的码空间 $V$ 是<strong>有限</strong>的, 横向门的 $U_i^{\otimes n}$ 作用在 $V$ 上<strong>不</strong>能生成<strong>所有</strong>酉算子——<strong>矛盾</strong>。</p>
+<p><strong>推论</strong>:</p>
+<ul>
+<li>$\bar{T}$ <strong>不</strong>能横向——<strong>必须</strong>用"非横向"方法实现</li>
+<li><strong>最常见</strong>方法: <strong>Magic state injection</strong> (Bravyi-Kitaev 2005) — 19.3 详述</li>
+<h3>19.2.5 编码门的"成本"</h3>
+</ul>
+<p><strong>横向门</strong> $U^{\otimes n}$:</p>
+<ul>
+<li><strong>门数</strong>: $n$ (每个 qubit 1 个)</li>
+<li><strong>时间</strong>: 1 步 (并行)</li>
+<li><strong>物理 qubit</strong>: $n$ (数据 qubit)</li>
+<li><strong>资源开销</strong>: 低</li>
+</ul>
+<p><strong>非横向门</strong> (e.g., magic state injection):</p>
+<ul>
+<li><strong>门数</strong>: $O(n^2)$ (含错误检查)</li>
+<li><strong>时间</strong>: $O(1)$ (假设 magic state 已制备)</li>
+<li><strong>物理 qubit</strong>: $n + m$ (含 $m$ 个 magic state 工厂)</li>
+<li><strong>资源开销</strong>: 高 (magic state 是<strong>最贵</strong>的)</li>
+</ul>
+<p><strong>关键事实</strong>: 在表面码架构中, <strong>T 门是"最贵"的</strong>——需要<strong>大量</strong> magic state 工厂。</p>
+<hr>
+<h2 id="section-19.3">19.3 容错门集合 (Fault-Tolerant Gate Set)</h2>
+<h3>19.3.1 通用门集的要求</h3>
+<p><strong>定理 19.1</strong> (Nielsen-Chuang): 通用门集 = {Clifford 群} + {任意<strong>非</strong>Clifford 门}。</p>
+<p><strong>最简形式</strong>:</p>
+<ul>
+<li>{Clifford + T} — <strong>最常见</strong> (Google, IBM, IonQ, Rigetti 都在用)</li>
+<li>{Clifford + π/8 旋转}</li>
+<li>{Toffoli + Hadamard} — 经典可逆计算</li>
+</ul>
+<p><strong>关键</strong>: T 门是<strong>唯一</strong>的"非 Clifford" 1-qubit 门——其他 (S, H, CNOT) 都在 Clifford 群内。</p>
+<h3>19.3.2 Clifford 门的容错实现</h3>
+<p><strong>Clifford 群</strong> = 生成元 {H, S, CNOT} 张成的群 (共 24 个 1-qubit 元素)。</p>
+<table class="chapter-table">
+<tr><th>门</th><th>表面码实现</th><th>横向?</th><th>错误率</th></tr>
+<tr><td>$\bar{H}$</td><td>$H^{\otimes n}$</td><td>✅</td><td>$np$</td></tr>
+<tr><td>$\bar{S}$</td><td>$S^{\otimes n}$</td><td>✅</td><td>$np$</td></tr>
+<tr><td>$\bar{\text{CNOT}}$</td><td>横向 + lattice surgery</td><td>✅</td><td>$O(np)$</td></tr>
+</table>
+<p><strong>总开销</strong>: Clifford 门<strong>便宜</strong>——$O(n)$ 物理门, $O(1)$ 时间 (假设并行)。</p>
+<h3>19.3.3 T 门: 不容错容易, 容错难</h3>
+<p><strong>T 门</strong>: $T = \text{diag}(1, e^{i\pi/4})$ — 引入 $\pi/4$ 相位,<strong>不</strong>在 Clifford 群内。</p>
+<p><strong>直接实现问题</strong>:</p>
+<ul>
+<li>T 门<strong>不</strong>能横向 (Eastin-Knill)</li>
+<li>直接物理 T 门<strong>不</strong>容错——错误<strong>不</strong>被纠正</li>
+<li>物理 T 门错误率 $p_T \sim 10^{-3}$, 但<strong>逻辑</strong> T 门需要 $p_T \sim 10^{-15}$ (RSA-2048 所需)</li>
+</ul>
+<p><strong>解决方案</strong>: Magic State Injection (Bravyi-Kitaev 2005)。</p>
+<h3>19.3.4 Magic State Injection 协议</h3>
+<p><strong>Magic state</strong> (Bravyi-Kitaev 2005):</p>
+<table class="chapter-table">
+<tr><th>m\rangle = \frac{1}{\sqrt{2}}(</th><th>0\rangle + e^{i\pi/4}</th><th>1\rangle) = T</th></tr>
+</table>
+<table class="chapter-table">
+<tr><th>m\rangle$ 是 $T H</th></tr>
+</table>
+<p><strong>Injection 协议</strong> (5 步):</p>
+<table class="chapter-table">
+<tr></tr>
+<tr></tr>
+<tr><td>\psi\rangle$ 控制, $</td></tr>
+<tr></tr>
+</table>
+<ol>
+<li>若测 $1$, 应用 $S$ 修正; 测 $0$ → 成功!</li>
+</ul>
+<p><strong>关键</strong>: 协议<strong>不</strong>容错 (magic state 制备<strong>不</strong>容错),但<strong>配合</strong> distillation 后<strong>容错</strong>。</p>
+<h3>19.3.5 容错 T 门的总成本</h3>
+<p><strong>最朴素估算</strong>:</p>
+<ul>
+<li>1 个逻辑 T 门 = 1 个 magic state (蒸馏后)</li>
+<li>1 个蒸馏后 magic state = ~100-1000 物理 magic state</li>
+<li>物理 magic state 制备 = 物理 T 门 (用其他 qubit)</li>
+<li>1 个物理 T 门 = $O(1)$ 物理门</li>
+</ul>
+<p><strong>总成本</strong>: 1 个<strong>容错</strong> T 门 ≈ <strong>100-1000 物理门</strong>——比 Clifford 门<strong>贵 100-1000 倍</strong>!</p>
+<hr>
+<h2 id="section-19.4">19.4 Magic State Distillation (Bravyi-Kitaev 2005)</h2>
+<h3>19.4.1 问题陈述</h3>
+<p><strong>目标</strong>: 从 $n$ 个<strong>低</strong> fidelity magic state 蒸馏出 $k$ 个<strong>高</strong> fidelity。</p>
+<table class="chapter-table">
+<tr></tr>
+<tr></tr>
+</table>
+<p><strong>关键</strong>: 蒸馏是<strong>经典编码</strong> + <strong>量子测量</strong>的<strong>结合</strong>。</p>
+<h3>19.4.2 15-to-1 蒸馏 (Bravyi-Kitaev 2005 原始)</h3>
+<p><strong>Bravyi-Kitaev 2005 协议</strong>:</p>
+<ol>
+<li>准备 15 个 fidelity $1 - \epsilon_0$ 的 magic state</li>
+<li>用 Shor 9-qubit 码编码其中 1 个 (作为"主")</li>
+<li>用 CNOT + 测 (Transversal CNOT 15-to-1)</li>
+<li>测后选择: 测 8 个"陪衬" 全部得 $0$ → 主 magic state fidelity 提升</li>
+<li>提升: $\epsilon_1 \sim 35 \epsilon_0^3$ (立方关系!)</li>
+</ul>
+<p><strong>关键事实</strong>: 错误率<strong>立方</strong>降低——15-to-1 蒸馏把 $\epsilon_0 = 10^{-3}$ 提升到 $\epsilon_1 \sim 35 \times 10^{-9} = 3.5 \times 10^{-8}$。</p>
+<h3>19.4.3 递归蒸馏 (Cascaded Distillation)</h3>
+<p><strong>单次</strong> 15-to-1 蒸馏<strong>不足</strong>以达到 $\epsilon_1 = 10^{-15}$。需要<strong>递归</strong>:</p>
+<ul>
+<li><strong>第 1 级</strong>: $15^1 = 15$ → 1, $\epsilon_1 = 35 \epsilon_0^3$</li>
+<li><strong>第 2 级</strong>: $15 \times 15 = 225$ → 1, $\epsilon_2 = 35 \epsilon_1^3 = 35^4 \epsilon_0^9$</li>
+<li><strong>第 3 级</strong>: $15^3 = 3375$ → 1, $\epsilon_3 = 35 \epsilon_2^3 = 35^{13} \epsilon_0^{27}$</li>
+<li><strong>第 4 级</strong>: $15^4 = 50625$ → 1, $\epsilon_4 = 35^{40} \epsilon_0^{81}$</li>
+</ul>
+<p><strong>总开销</strong>: 制造 1 个 $\epsilon = 10^{-15}$ magic state 需要 ~$10^5$ 物理 magic state。</p>
+<h3>19.4.4 Magic State Cultivation (Litinski 2019)</h3>
+<p><strong>新方案</strong> (Litinski 2019): 用<strong>表面码</strong>的拓扑结构做"原地" 蒸馏。</p>
+<p><strong>优势</strong>:</p>
+<ul>
+<li>减少蒸馏<strong>级数</strong> (从 4 级 → 2 级)</li>
+<li>减少<strong>总</strong> magic state 消耗 5-10×</li>
+<li>跟表面码<strong>兼容</strong> (在同一芯片)</li>
+</ul>
+<p><strong>关键</strong>: Litinski 2019 的 RSA-2048 估算 (20M 物理 qubit) 依赖此技术——是<strong>现代</strong>主流。</p>
+<h3>19.4.5 蒸馏的"硬件开销"</h3>
+<table class="chapter-table">
+<tr><th>蒸馏方法</th><th>物理 magic state / 逻辑 T</th><th>表面码 $d$</th><th>总时间</th></tr>
+<tr><td>朴素 4 级 (BK 2005)</td><td>~$10^5$</td><td>11</td><td>~$10^5 \times 1\mu s = 0.1 s$</td></tr>
+<tr><td>Cultivation (Litinski 2019)</td><td>~$10^4$</td><td>11</td><td>~$10^4 \times 1\mu s = 10 ms$</td></tr>
+<tr><td>多级 cultivation</td><td>~$10^3$</td><td>15</td><td>~$10^3 \times 1\mu s = 1 ms$</td></tr>
+</table>
+<p><strong>关键事实</strong>: magic state 工厂<strong>占用</strong> ~10-30% 的<strong>总</strong>物理 qubit (RSA-2048 估算)。</p>
+<h3>19.4.6 蒸馏的"工程考虑"</h3>
+<p><strong>蒸馏的 4 个工程考虑</strong>:</p>
+<ol>
+<li><strong>物理 magic state 的制备</strong>:</li>
+<table class="chapter-table">
+<tr></tr>
+</table>
+</ul>
+<p>- 物理方法: Rabi 振荡 + 测量 - 初始 fidelity: $1 - 10^{-3}$ (物理限制)</p>
+<table class="chapter-table">
+<tr></tr>
+</table>
+<ol>
+<li><strong>蒸馏协议的"选择性"</strong>:</li>
+</ul>
+<p>- 测后<strong>接受</strong> 概率 ~$1 - O(\epsilon^3)$ (15-to-1) - 实际 ~99.9% 接受, ~0.1% <strong>失败</strong> (浪费) - 失败时<strong>重新</strong> 蒸馏</p>
+<ol>
+<li><strong>蒸馏的"并行度"</strong>:</li>
+</ul>
+<p>- 多组蒸馏<strong>并行</strong> → 提高<strong>吞吐量</strong> - 1 个 15-to-1 蒸馏 ~$10 \mu s$, 1000 个并行 = 1000 蒸馏 / $10 \mu s$ - <strong>总吞吐</strong>: $10^8$ 蒸馏 / 秒 (足够 RSA-2048)</p>
+<ol>
+<li><strong>蒸馏的"层级"</strong>:</li>
+</ul>
+<p>- 1 级: 1 distillation factory (15 物理 qubit 输入) - 2 级: 15 1-级工厂 (225 物理 qubit) - 3 级: 15 2-级工厂 (3375 物理 qubit) - <strong>总</strong> 4 级: ~$10^4$ 物理 qubit 占用</p>
+<p><strong>关键洞察</strong>: 蒸馏的"硬件"是<strong>大量</strong> 的辅助 qubit + 复杂的测后选择——是 RSA-2048 资源开销的<strong>主要</strong>来源。</p>
+<h3>19.4.7 蒸馏 vs Cultivation 的对比</h3>
+<table class="chapter-table">
+<tr><th>维度</th><th>BK 2005 Distillation</th><th>Litinski 2019 Cultivation</th></tr>
+<tr><td>物理 magic state / 逻辑 T</td><td>~$10^5$</td><td>~$10^4$ (减 <strong>10×</strong>)</td></tr>
+<tr><td>层级数</td><td>4 级</td><td>2 级</td></tr>
+<tr><td>占用 qubit</td><td>~$10^4$</td><td>~$10^3$ (减 <strong>10×</strong>)</td></tr>
+<tr><td>时间</td><td>0.1 s / T</td><td>10 ms / T (快 <strong>10×</strong>)</td></tr>
+<tr><td>工程难度</td><td><strong>高</strong> (4 级嵌套)</td><td><strong>中</strong> (2 级, 用表面码几何)</td></tr>
+<tr><td>表面码兼容</td><td><strong>否</strong> (独立协议)</td><td><strong>是</strong> (同芯片)</td></tr>
+<tr><td>当前实践</td><td>学术 (Bravyi-Kitaev 论文)</td><td><strong>工业</strong> (Google, IBM 路线图)</td></tr>
+</table>
+<p><strong>关键</strong>: Cultivation 是<strong>现代</strong> FTQC 的<strong>主流</strong>——把 distillation 集成到表面码<strong>几何</strong>中, 大幅减开销。</p>
+<h3>19.4.8 蒸馏的"哲学含义"</h3>
+<p><strong>蒸馏揭示的"信息"与"魔法"的分离</strong>:</p>
+<ul>
+<li><strong>Clifford 门</strong> (H, S, CNOT) 是"经典" 信息操作 — 制备<strong>便宜</strong> + 蒸馏<strong>不</strong>需要</li>
+<li><strong>T 门</strong> 是"魔法" 操作 — 制备<strong>昂贵</strong> + 蒸馏<strong>必要</strong></li>
+</ul>
+<p><strong>类比</strong>:</p>
+<ul>
+<li>Clifford ≈ 经典计算机的"逻辑门" (AND, OR, NOT) — <strong>免费</strong></li>
+<li>T ≈ 经典计算机的"非线性" 操作 (乘法) — <strong>需要</strong> 特殊资源</li>
+</ul>
+<p><strong>关键洞察</strong>: 量子计算<strong>超越</strong> 经典计算<strong>只</strong>在 T 门 (或等价) 上 — 这<strong>正是</strong> 量子优势<strong>的根源</strong>。</p>
+<hr>
+<h2 id="section-19.5">19.5 阈值定理 (Threshold Theorem)</h2>
+<h3>19.5.1 定理陈述 (严格形式)</h3>
+<p><strong>阈值定理</strong> (Aharonov-Ben-Or 1997, Knill-Laflamme-Zurek 1998, Kitaev 1997):</p>
+<p><strong>设</strong>物理错误率 $p < p_{th}$ (对给定码 + 解码算法)。 <strong>则</strong>对<strong>任意</strong> $\epsilon > 0$, <strong>存在</strong>足够大码距 $d$ 使得:</p>
+<ul>
+<li>任意 $L$-门量子电路可用<strong>容错</strong>实现</li>
+<li>输出<strong>逻辑</strong>错误率 ≤ $\epsilon$</li>
+<li><strong>资源开销</strong>: $L \cdot \text{polylog}(L)$ 物理门</li>
+</ul>
+<p><strong>正式地</strong>:</p>
+<p>$$p_L \le C \cdot \left(\frac{p}{p_{th}}\right)^{(d+1)/2}$$</p>
+<p>$$d \sim \log^{1+\eta}(L/\epsilon), \quad \text{for any } \eta > 0$$</p>
+<h3>19.5.2 三层证明 (简化)</h3>
+<p><strong>第 1 层: Concatenation 提升</strong></p>
+<p>设码 $[[n, k, d]]$ 有<strong>逻辑</strong>错误率 $p_L$。<strong>Concatenate</strong> $r$ 层 (码套码):</p>
+<p>$$p_L^{(r)} = (p_L)^r = p^{d^r}$$</p>
+<p><strong>码距</strong> $d^{(r)} = d^r$ — <strong>指数</strong>增长。 <strong>物理 qubit</strong> $n^{(r)} = n^r$ — <strong>指数</strong>增长。 <strong>物理门</strong> $L^{(r)} = L \cdot n^r$ — 接近 $L$。</p>
+<p><strong>第 2 层: 选 $r$ 使错误"足够小"</strong></p>
+<p>要 $p_L^{(r)} < 1/L$, 需要:</p>
+<p>$$p^{d^r} < 1/L \implies d^r > \log(1/p) \cdot \log L \implies r \sim \log\log L$$</p>
+<p><strong>第 3 层: 总资源</strong></p>
+<p>物理 qubit: $n^r = n^{\log\log L} = (\log L)^{\log n} = \text{polylog}(L)$ ✅ 物理门: $L \cdot n^r = L \cdot \text{polylog}(L)$ ✅</p>
+<p><strong>结论</strong>: 阈值定理<strong>保证</strong>容错<strong>多项式</strong>资源。</p>
+<h3>19.5.3 $p_{th}$ 的具体数字</h3>
+<table class="chapter-table">
+<tr><th>码类型</th><th>$p_{th}$</th><th>当前超导 $p$</th><th>实用?</th></tr>
+<tr><td>重复码 (经典)</td><td>$p_{th} = 50\%$</td><td>$p = 0.1\%$</td><td>✅ 远超阈值</td></tr>
+<tr><td>表面码 (DKLP 2002)</td><td>$p_{th} \approx 1\%$</td><td>$p = 0.1-1\%$</td><td>✅ 跨阈值</td></tr>
+<tr><td>Steane $[[7,1,3]]$</td><td>$p_{th} \approx 10^{-4}$</td><td>$p = 10^{-3}$</td><td>❌ 接近</td></tr>
+<tr><td>Shor $[[9,1,3]]$</td><td>$p_{th} \approx 10^{-4}$</td><td>$p = 10^{-3}$</td><td>❌ 接近</td></tr>
+<tr><td>5-qubit $[[5,1,3]]$</td><td>$p_{th} \approx 10^{-4}$</td><td>$p = 10^{-3}$</td><td>❌ 接近</td></tr>
+<tr><td>Concatenated</td><td>$p_{th} \approx 10^{-3}$</td><td>$p = 10^{-3}$</td><td>⚠️ 临界</td></tr>
+</table>
+<p><strong>关键</strong>: 表面码 $p_{th} = 1\%$ 比 Shor/Steane/5-qubit <strong>高 10000 倍</strong>——<strong>最宽容</strong>。</p>
+<h3>19.5.4 阈值的"假设依赖"</h3>
+<p><strong>阈值大小依赖</strong>:</p>
+<ol>
+<li><strong>错误模型</strong>: depolarizing vs. 真实非均匀 (e.g., 测量错 1%)</li>
+<li><strong>并行性</strong>: 假设<strong>并行</strong> stabilizer 测量 vs <strong>串行</strong> (并行阈值<strong>高 10×</strong>)</li>
+<li><strong>门集合大小</strong>: 通用门集<strong>大</strong>则阈值<strong>低</strong> (更多错误源)</li>
+<li><strong>解码算法</strong>: MWPM vs Union-Find vs 神经网络</li>
+</ul>
+<p><strong>典型数字</strong> (DKLP 2002, Raussendorf-Harrington 2007):</p>
+<ul>
+<li>表面码 + depolarizing + 并行 + MWPM: $p_{th} \approx 0.75-1\%$</li>
+<li>表面码 + 真实非均匀 + 串行 + MWPM: $p_{th} \approx 0.5-0.7\%$</li>
+</ul>
+<p><strong>保守采用</strong>: $p_{th} = 0.5\%$ — 工程安全边际。</p>
+<hr>
+<h2 id="section-19.6">19.6 Concatenated Code 架构 (Nielsen-Chuang 例子)</h2>
+<h3>19.6.1 2 层 Concatenation: $[[5,1,3]]$ → $[[25,1,9]]$</h3>
+<p><strong>定义</strong>: 用 $[[5,1,3]]$ 码<strong>编码</strong> <strong>5 次</strong>, 即"5-qubit 码套 5-qubit 码"。</p>
+<p><strong>资源</strong>:</p>
+<ul>
+<li>物理 qubit: $5 \times 5 = 25$</li>
+<li>逻辑 qubit: 1</li>
+<li>距离: $3 \times 3 = 9$</li>
+</ul>
+<p><strong>逻辑错误率</strong> (假设 5-qubit 码自身 $p_L = Cp^2$): $$p_L^{(2)} = C \cdot (C p^2)^2 = C^3 p^4$$</p>
+<p><strong>关键</strong>: 错误率从 $p$ 升到 $p^4$——<strong>平方</strong>改善 (concatenation <strong>1 层</strong>)。</p>
+<h3>19.6.2 $r$ 层 Concatenation: $[[5^r, 1, 3^r]]$</h3>
+<p><strong>资源</strong>:</p>
+<ul>
+<li>物理 qubit: $n^r = 5^r$</li>
+<li>距离: $d^r = 3^r$</li>
+<li>逻辑错误率: $p_L^{(r)} \sim p^{2^r}$ (<strong>双指数</strong> 改善!)</li>
+</ul>
+<p><strong>例子</strong> ($r=3$): $[[125, 1, 27]]$ 码, 物理错误率 $p = 10^{-3}$ → 逻辑 $p_L = 10^{-27}$ (RSA-2048 足够!)</p>
+<p><strong>总资源</strong>:</p>
+<ul>
+<li>物理 qubit: $5^3 = 125$</li>
+<li>物理门: $L \cdot 5^3 = 125 L$</li>
+<li>物理时间: $L \cdot 5^3 \cdot 1 \mu s$</li>
+<h3>19.6.3 编码门递归构造</h3>
+</ul>
+<p><strong>$\bar{H}$ 在 $r$ 层 concatenation</strong>:</p>
+<ul>
+<li>第 1 层: $H^{\otimes 5}$ (5 个物理 H)</li>
+<li>第 2 层: 每个物理 H <strong>变成</strong> $H^{\otimes 5}$</li>
+<li>第 $r$ 层: $H^{\otimes 5^r}$ (5^r 个物理 H)</li>
+</ul>
+<p><strong>总门数</strong>: $5^r$ 个物理 H, 全部<strong>并行</strong> → 1 步时间。</p>
+<h3>19.6.4 历史地位与限制</h3>
+<p><strong>历史地位</strong>:</p>
+<ul>
+<li><strong>1996-2005</strong>: concatenated 码是<strong>主流</strong> (Shor 1996, Aharonov-Ben-Or 1997, Knill-Laflamme-Zurek 1998, Preskill 1998, Nielsen-Chuang 2000)</li>
+<li><strong>2005+</strong>: Bravyi-Kitaev magic state 蒸馏出现, 但仍用 concatenated</li>
+<li><strong>2012+</strong>: 表面码 + lattice surgery 取代 concatenated</li>
+</ul>
+<p><strong>限制</strong>:</p>
+<ul>
+<li>阈值 $p_{th} \approx 10^{-3}$ — 严苛</li>
+<li>物理 qubit $n^r$ 增长<strong>指数</strong>于层数 $r$</li>
+<li>编码门<strong>不</strong>易构造 (特别是 magic state distillation)</li>
+<li><strong>让位</strong>给 surface code (阈值 $1\%$, 资源<strong>多项式</strong>)</li>
+<hr>
+<h2 id="section-19.7">19.7 Surface Code 容错架构 (现代主流)</h2>
+<h3>19.7.1 Lattice Surgery (Horsman et al. 2012)</h3>
+</ul>
+<p><strong>定义</strong>: <strong>Lattice surgery</strong> = 在 surface code 上, 通过<strong>边界</strong>操作实现 2 qubit 门。</p>
+<p><strong>3 种基本操作</strong> (19.A 附录 SVG):</p>
+<ol>
+<li><strong>Split</strong>: 1 patch → 2 patches (1 个 logical → 2 logical, <strong>辅助</strong>操作)</li>
+<li><strong>Merge</strong>: 2 patches → 1 patch (2 logical → 1 logical, <strong>测量</strong>辅助)</li>
+<li><strong>Deform</strong>: 移动 patch 边界 (调整 logical 操作位置)</li>
+<h3>19.7.2 2-qubit 门: 横向 + Lattice Surgery</h3>
+</ul>
+<p><strong>$\bar{\text{CNOT}}$ 实现</strong>:</p>
+<ul>
+<li>步骤 1: 横向 CNOT (block-wise) — $O(n)$ 物理门</li>
+<li>步骤 2: lattice surgery 调整 logical 操作位置</li>
+</ul>
+<p><strong>总时间</strong>: $O(1)$ 步 (假设并行)</p>
+<p><strong>$\bar{H}$ 实现</strong> (不在 surface code 横向!):</p>
+<ul>
+<li><strong>不</strong>能直接 $H^{\otimes n}$ (因为 H 在 transversal 后<strong>不</strong>保持码空间)</li>
+<li>解决方案: 3 个 S + 1 个 MS (测量) 的序列 (Litinski 2019)</li>
+<li><strong>代价</strong>: 1 个 magic state</li>
+<h3>19.7.3 T 门: Magic State Injection + Cultivation</h3>
+</ul>
+<p><strong>T 门流程</strong> (Litinski 2019):</p>
+<table class="chapter-table">
+<tr></tr>
+<tr></tr>
+</table>
+<ol>
+<li><strong>辅助</strong> magic state <strong>消失</strong> (被消耗) — 下次再注入</li>
+</ul>
+<p><strong>总资源</strong>: 1 个 $\bar{T}$ 门 = 1 个 cultivated magic state ≈ $10^3-10^4$ 物理 magic state。</p>
+<h3>19.7.4 完整 FTQC 架构 (Litinski 2019 "Game of Surface Codes")</h3>
+<p><strong>架构图</strong>:</p>
+<pre><code>┌────────────────────────────────────────────────┐
+│          Classical control                      │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐     │
+│  │ Decoder  │  │ Compiler │  │  Router  │     │
+│  └──────────┘  └──────────┘  └──────────┘     │
+└────────────────────────────────────────────────┘
+         ↕ (real-time, 1 μs 反馈)
+┌────────────────────────────────────────────────┐
+│          Quantum hardware                       │
+│  ┌──────────────────────┐ ┌──────────────┐    │
+│  │  Logical qubit area   │ │ Magic state  │    │
+│  │  (surface code patches│ │ factory      │    │
+│  │   + lattice surgery)  │ │ (cultivation)│    │
+│  └──────────────────────┘ └──────────────┘    │
+│  ┌──────────────────────┐ ┌──────────────┐    │
+│  │  Syndrome measurement │ │  Distillation│    │
+│  │  (ancilla + CNOT)     │ │  (BK 15-to-1)│    │
+│  └──────────────────────┘ └──────────────┘    │
+└────────────────────────────────────────────────┘</code></pre>
+<p><strong>资源分配</strong> (RSA-2048):</p>
+<ul>
+<li>逻辑 qubit: ~4000 patches × $d^2$ = <strong>~10M</strong> 物理 qubit</li>
+<li>Magic state factory: ~10M 物理 qubit (~50% 总数!)</li>
+<li>解码 + 控制: 经典硬件 (FPGA/ASIC)</li>
+<h3>19.7.5 FTQC 架构的 4 大子系统</h3>
+</ul>
+<p><strong>子系统 1: Logical Qubit Area (逻辑 qubit 区)</strong></p>
+<ul>
+<li>任务: 存放<strong>所有</strong>逻辑 qubit</li>
+<li>实现: 表面码 patches (每个 ~$d^2$ 物理 qubit)</li>
+<li>操作: 横向 Clifford 门 + Lattice surgery 2 qubit 门</li>
+<li>资源: ~50% 总物理 qubit</li>
+<li>关键挑战: 维持 $d$ 码距 + 实时 lattice surgery</li>
+</ul>
+<p><strong>子系统 2: Magic State Factory (魔法态工厂)</strong></p>
+<table class="chapter-table">
+<tr></tr>
+</table>
+<ul>
+<li>实现: BK 15-to-1 蒸馏 + Litinski cultivation</li>
+<li>操作: 周期性制造 + 注入</li>
+<li>资源: ~30% 总物理 qubit</li>
+<li>关键挑战: 维持 99.99%+ fidelity</li>
+</ul>
+<p><strong>子系统 3: Syndrome Measurement (综合征测量)</strong></p>
+<ul>
+<li>任务: 每 $\sim 1 \mu s$ 测所有 stabilizer</li>
+<li>实现: ancilla + CNOT + 测量</li>
+<li>操作: 并行测量 → 经典信号</li>
+<li>资源: ancilla qubit (每个 stabilizer 1 个)</li>
+<li>关键挑战: 测量保真度 99.9%+</li>
+</ul>
+<p><strong>子系统 4: Classical Control (经典控制)</strong></p>
+<ul>
+<li>任务: 实时解码 + 反馈 + 编译</li>
+<li>实现: FPGA / ASIC + 经典 CPU</li>
+<li>操作: syndrome → 错误 → 反馈门</li>
+<li>资源: 经典硬件 (FPGA $10K-$100K / 板)</li>
+<li>关键挑战: < 1 μs 解码延迟</li>
+</ul>
+<p><strong>关键</strong>: 4 个子系统<strong>协同</strong>——经典 ↔ 量子 反馈在 $\mu s$ 级<strong>紧</strong>耦合。</p>
+<h3>19.7.6 架构的"扩展规律"</h3>
+<table class="chapter-table">
+<tr><th>逻辑 qubit 数</th><th>物理 qubit</th><th>Magic state qubit</th><th>控制电子</th></tr>
+<tr><td>10</td><td>25K</td><td>7.5K</td><td>1 FPGA</td></tr>
+<tr><td>100</td><td>250K</td><td>75K</td><td>10 FPGA</td></tr>
+<tr><td>1000</td><td>2.5M</td><td>750K</td><td>100 FPGA</td></tr>
+<tr><td>4000 (RSA-2048)</td><td>10M</td><td>3M</td><td>400 FPGA</td></tr>
+<tr><td>10000 (机器学习)</td><td>25M</td><td>7.5M</td><td>1000 FPGA</td></tr>
+</table>
+<p><strong>关键</strong>: 物理 qubit <strong>线性</strong> 增于逻辑 qubit——<strong>不</strong>指数, 这是 surface code 的<strong>优势</strong>。</p>
+<hr>
+<h3>19.7.7 Surface Code vs Concatenated 资源对比</h3>
+<table class="chapter-table">
+<tr><th>指标</th><th>Concatenated $[[5^r, 1, 3^r]]$</th><th>Surface Code (Litinski 2019)</th></tr>
+<tr><td>阈值 $p_{th}$</td><td>$\sim 10^{-3}$</td><td>$\sim 1\%$ (高 <strong>1000×</strong>)</td></tr>
+<tr><td>资源增长</td><td><strong>指数</strong> $n^r$</td><td><strong>多项式</strong> $d^2$</td></tr>
+<tr><td>$L$ 门电路</td><td>$L \cdot n^r$ qubit</td><td>$L \cdot d^2$ qubit</td></tr>
+<tr><td>编码门</td><td>递归 (复杂)</td><td>Lattice surgery (几何)</td></tr>
+<tr><td>工程难度</td><td><strong>高</strong> (嵌套)</td><td><strong>中</strong> (平面)</td></tr>
+<tr><td>当前实践</td><td>学术</td><td><strong>工业</strong> (Google, IBM, IonQ)</td></tr>
+</table>
+<p><strong>关键</strong>: Surface code 是<strong>现代</strong> FTQC <strong>主流</strong>。</p>
+<hr>
+<h2 id="section-19.8">19.8 资源开销估算 (跟 ch11/18 衔接)</h2>
+<h3>19.8.1 1 逻辑 qubit 的总成本</h3>
+<p><strong>完整 FTQC 1 逻辑 qubit</strong> (~2500 物理 qubit):</p>
+<table class="chapter-table">
+<tr><th>部分</th><th>物理 qubit</th><th>占比</th></tr>
+<tr><td>数据 qubit (surface code $d \approx 25$)</td><td>~625</td><td>25%</td></tr>
+<tr><td>测量 ancilla</td><td>~1250</td><td>50%</td></tr>
+<tr><td>Magic state 备份 (T 门)</td><td>~500</td><td>20%</td></tr>
+<tr><td>通信 + 控制</td><td>~125</td><td>5%</td></tr>
+<tr><td><strong>总计</strong></td><td><strong>~2500</strong></td><td>100%</td></tr>
+</table>
+<h3>19.8.2 不同任务的资源</h3>
+<table class="chapter-table">
+<tr><th>任务</th><th>逻辑 qubit</th><th>物理 qubit (估)</th><th>时间</th></tr>
+<tr><td>量子化学 (小分子, 100 qubit)</td><td>100</td><td>250,000</td><td>几小时</td></tr>
+<tr><td>Grover 搜索 N=$2^{100}$</td><td>50</td><td>125,000</td><td>几小时</td></tr>
+<tr><td>量子机器学习 (10k qubit)</td><td>10,000</td><td>25,000,000</td><td>几天</td></tr>
+<tr><td><strong>Shor RSA-2048</strong></td><td><strong>4000</strong></td><td><strong>20,000,000</strong></td><td><strong>8 小时</strong></td></tr>
+<tr><td>Shor RSA-4096</td><td>8000</td><td>40,000,000</td><td>16 小时</td></tr>
+</table>
+<p><strong>观察</strong>: 实用量子优势需要<strong>百万</strong>量级物理 qubit——<strong>20 年</strong> 远期目标。</p>
+<h3>19.8.3 时间开销 (1 MHz 时钟假设)</h3>
+<p><strong>单门时间</strong> (1 物理门): $1 \mu s$ (超导) <strong>逻辑门时间</strong>: 包含<strong>错误纠正</strong> → $O(d)$ 倍 → $\sim 10 \mu s$ <strong>RSA-2048 总时间</strong>: $\sim 10^{12}$ 逻辑门 × $10 \mu s$ = $10^7$ s = <strong>~100 天</strong> (未优化)</p>
+<p><strong>优化后</strong> (Litinski 2019): <strong>8 小时</strong> — 通过 magic state cultivation + 并行 + 早期容错</p>
+<p><strong>结论</strong>: 实用 RSA-2048 = <strong>10M 物理 qubit × 8 小时</strong> = $10^{11}$ qubit-秒。</p>
+<h3>19.8.4 跟 ch11 算法的衔接</h3>
+<p><strong>ch11 Shor RSA-2048</strong>:</p>
+<ul>
+<li>经典前置: gcd, 选择 $a$, 计算周期 $r$</li>
+<li><strong>量子</strong>周期发现 (核心加速): $O(n^3)$ 量子门</li>
+<li>经典后处理: 连分数, gcd</li>
+<li><strong>总资源</strong>: $O(n^3 \log n)$ 量子门 (多项式!)</li>
+</ul>
+<p><strong>配合 ch19</strong>:</p>
+<ul>
+<li>$n = 2048$ → $n^3 \approx 8.6 \times 10^9$ 量子门</li>
+<li>加 FTQC 开销: × 100-1000 (逻辑 T 门昂贵) → $10^{12}$ 物理门</li>
+<li>加容错开销: × $d^2 = 25$ (表面码) → $2.5 \times 10^{13}$ 物理门</li>
+</ul>
+<p><strong>总时间</strong>: $2.5 \times 10^{13} \times 1 \mu s$ = $2.5 \times 10^7$ s = <strong>~290 天</strong> (纯串行, <strong>未</strong>优化)</p>
+<p><strong>优化后</strong> (Litinski 2019): <strong>8 小时</strong> — 通过 magic state cultivation + 并行化。</p>
+<hr>
+<h2 id="section-19.9">19.9 实际容错系统的工程挑战</h2>
+<h3>19.9.1 实时解码挑战</h3>
+<p><strong>问题</strong>: 1 μs 内完成 syndrome → 错误反推 → 反馈控制。</p>
+<p><strong>Google Willow 2024 实测</strong> (Syu 2024):</p>
+<ul>
+<li>解码时间: 1.1 μs (目标 < 1 μs, 差距 ~10%)</li>
+<li>硬件: 专用 FPGA 板 (Xilinx VU13P)</li>
+<li>算法: Union-Find (更快, 略低于 MWPM 性能)</li>
+</ul>
+<p><strong>未来方向</strong>:</p>
+<ul>
+<li>神经网络解码 (2024+ 新方向, <strong>快 2-10×</strong>)</li>
+<li>ASIC 替代 FPGA (更<strong>快</strong>, 但<strong>贵</strong>)</li>
+<li>量子解码 (用<strong>小</strong>量子电路做 syndrome 分析, 理论)</li>
+<h3>19.9.2 测量保真度挑战</h3>
+</ul>
+<p><strong>问题</strong>: 表面码假设<strong>完美</strong> syndrome 测量, 实际测量<strong>有错</strong>。</p>
+<p><strong>Google Willow 2024 实测</strong> (Acharya 2024):</p>
+<ul>
+<li>单次测量保真度: 99.6%</li>
+<li>重复测量 $d$ 次 → 等效保真度: $1 - (1 - 0.996)^d$</li>
+<li>$d = 5$: $1 - 0.004^5 = 1 - 10^{-12}$ — <strong>足够</strong></li>
+<li>$d = 11$: $1 - 0.004^{11} = 1 - 4 \times 10^{-27}$ — <strong>远足够</strong></li>
+</ul>
+<p><strong>关键</strong>: 重复测量<strong>指数</strong>提升保真度——但<strong>代价</strong>是测量时间 × $d$。</p>
+<h3>19.9.3 长程门挑战</h3>
+<p><strong>问题</strong>: 表面码<strong>理想</strong>是 2D 平面 (近邻耦合), 但<strong>长程</strong>操作需要 qubit 移动或 SWAP。</p>
+<p><strong>Lattice surgery</strong> (Horsman 2012) <strong>部分解决</strong>:</p>
+<ul>
+<li>边界 merge / split 实现 2 qubit 门</li>
+<li><strong>代价</strong>: $O(d)$ 时间 (因为 patch 边界"长" $d$)</li>
+<li>适合<strong>低频</strong>长程操作 (e.g., 隐式 SWAP)</li>
+</ul>
+<p><strong>未来方向</strong>:</p>
+<ul>
+<li>3D 集成 (Google 探索中) — 长程门<strong>快 10×</strong></li>
+<li>光子互连 (PsiQuantum 路径) — 天然长程</li>
+<li>移动 qubit (Microsoft Majorana) — 单 qubit <strong>任意</strong>位置</li>
+<h3>19.9.4 校准与漂移</h3>
+</ul>
+<p><strong>问题</strong>: 物理 qubit 参数 (频率, 耦合, T1, T2) <strong>漂移</strong>:</p>
+<ul>
+<li>频率漂移: kHz/hour 量级</li>
+<li>T1 漂移: 10%/day 量级</li>
+<li>串扰 (crosstalk): 1% 量级</li>
+</ul>
+<p><strong>解决方案</strong>:</p>
+<ul>
+<li>周期性 calibration (每 1 小时)</li>
+<li>反馈控制 (实时参数调整)</li>
+<li>漂移补偿算法 (machine learning)</li>
+<h3>19.9.5 量子-经典界面</h3>
+</ul>
+<p><strong>问题</strong>: 1 个表面码 $d = 11$ 块 = 121 数据 + 242 ancilla = <strong>363 qubit</strong> → 每 μs 测 363 qubit → 363 × 1 Gsps ADC = 363 Gsps → <strong>不</strong>可行。</p>
+<p><strong>解决方案</strong>:</p>
+<ul>
+<li>多路复用 (multiplexing): 多个 qubit <strong>共享</strong> 1 个 ADC</li>
+<li>现场可编程门阵列 (FPGA): 紧贴 quantum chip</li>
+<li><strong>专用</strong> ASIC (Google Sycamore 之后): 集成度更高</li>
+</ul>
+<p><strong>未来</strong>: photonic interconnect (光互连) + cryogenic CMOS (低温 CMOS 控制) — 减 100× 线路。</p>
+<h3>19.9.6 系统集成挑战 (1M qubit 量级)</h3>
+<table class="chapter-table">
+<tr><th>部件</th><th>当前</th><th>1M qubit 所需</th><th>差距</th></tr>
+<tr><td>Qubit 制造</td><td>100 / chip</td><td>1M / system</td><td>× 10000</td></tr>
+<tr><td>制冷</td><td>1 mK @ 1 chip</td><td>1 mK @ 100 chips</td><td>× 100</td></tr>
+<tr><td>控制电子</td><td>100 channel</td><td>1M channel</td><td>× 10000</td></tr>
+<tr><td>解码硬件</td><td>1 FPGA</td><td>1M / 100 = 10K FPGA</td><td>× 10000</td></tr>
+<tr><td>软件栈</td><td>小规模</td><td>大规模容错</td><td>—</td></tr>
+</table>
+<p><strong>关键</strong>: 1M qubit 系统是<strong>多芯片</strong> (100 chip × 10K qubit) + <strong>模块化</strong> 控制 + <strong>实时</strong> 解码。</p>
+<p><strong>时间表</strong> (工程界共识):</p>
+<ul>
+<li>2025-2030: 100-1000 qubit + $d = 5-7$ 表面码 (Google, IBM 路线图)</li>
+<li>2030-2035: 10K-100K qubit + $d = 9-11$ 容错 (里程碑)</li>
+<li>2035-2045: 1M qubit + $d = 15-25$ — <strong>实用</strong> RSA-2048</li>
+<h3>19.9.7 容错的"4 个常见误解"</h3>
+</ul>
+<p><strong>误解 1: "容错 = 没有错误"</strong></p>
+<p><strong>真相</strong>: 容错<strong>不</strong>消除错误,只是让错误<strong>指数下降</strong>于码距 $d$。即使 $p = 0.1\%$ + 表面码 $d = 25$, 逻辑错误率仍 $\sim 10^{-23}$ (非零,只是<strong>极小</strong>)。</p>
+<p><strong>误解 2: "阈值是绝对的"</strong></p>
+<p><strong>真相</strong>: 阈值<strong>依赖</strong>错误模型 + 解码算法 + 门集合 + 并行度。表面码 depolarizing 阈值 1% <strong>不等于</strong> 真实非均匀阈值 0.5%。<strong>保守</strong>采用 $p_{th} = 0.5\%$。</p>
+<p><strong>误解 3: "容错保证 100% 正确"</strong></p>
+<p><strong>真相</strong>: 容错是<strong>概率</strong>保证——输出与理想分布 $\epsilon$-close ($\epsilon$ 任意小, 但<strong>非</strong>零)。<strong>实际</strong>应用要求 $p_L < 10^{-15}$ 才<strong>足够</strong>。</p>
+<p><strong>误解 4: "容错 = 完整 FTQC"</strong></p>
+<p><strong>真相</strong>: 容错是<strong>必要</strong>条件, <strong>不</strong>是<strong>充分</strong>条件。完整 FTQC 还需:</p>
+<ul>
+<li>通用门集 (e.g., {Clifford + T})</li>
+<li>实时解码</li>
+<li>Magic state 工厂</li>
+<li>完整软件栈 (编译, 路由, 校准)</li>
+<h3>19.9.8 容错与"非容错"的对比</h3>
+<table class="chapter-table">
+<tr><th>指标</th><th>非容错 (NISQ)</th><th>容错 (FTQC)</th></tr>
+<tr><td>qubit 数</td><td>100-1000</td><td>1M+</td></tr>
+<tr><td>错误率 $p$</td><td>$10^{-3}$</td><td>$< 10^{-3}$</td></tr>
+<tr><td>电路深度</td><td>$O(1)$ (浅)</td><td>$O(L \cdot \text{polylog}(L))$</td></tr>
+<tr><td>算法</td><td>短, 噪声鲁棒</td><td>任意长</td></tr>
+<tr><td>资源</td><td><strong>少</strong></td><td><strong>多</strong> (1000×)</td></tr>
+<tr><td>时间</td><td><strong>短</strong></td><td><strong>长</strong> (考虑 $d$ 因子)</td></tr>
+<tr><td>实用门槛</td><td>5-10 年</td><td>15-30 年</td></tr>
+</table>
+</ul>
+<p><strong>关键</strong>: <strong>不</strong>是 FTQC <strong>取代</strong> NISQ——而是 FTQC 是<strong>长期</strong>目标, NISQ 是<strong>短期</strong>实用。</p>
+<h3>19.9.9 容错的"经济成本"</h3>
+<p><strong>1 个容错逻辑 qubit 的成本</strong> (估算, 2025):</p>
+<ul>
+<li>物理 qubit: ~2500</li>
+<li>制冷 (1 mK, 100 chip): $5M-10M (一次性)</li>
+<li>控制电子 (FPGA / ASIC): $1M-5M (一次性)</li>
+<li>校准 + 软件: $5M-10M / 年 (运营)</li>
+<li>电力: $100K-1M / 年</li>
+</ul>
+<p><strong>总成本 (1 逻辑 qubit)</strong>: $10M-25M (一次性) + $5M-10M / 年</p>
+<p><strong>RSA-2048 (4000 逻辑 qubit)</strong>: $40B-100B 一次性 + $20B-40B / 年</p>
+<p><strong>对比经典超算 (Frontier)</strong>: $0.6B 一次性 + $0.1B / 年</p>
+<p><strong>关键事实</strong>: FTQC RSA-2048 的硬件成本<strong>仍</strong>显著高于经典超算——<strong>但</strong>问题在<strong>量子</strong>层面是<strong>多项式</strong> (vs 经典亚指数)。</p>
+<h3>19.9.10 三个"开放问题"</h3>
+<ol>
+<li><strong>超低错误率硬件</strong>: $p < 0.1\%$ 在大规模系统中<strong>可</strong>持续吗? 串扰、漂移、calibration 错误<strong>不</strong>会<strong>累加</strong>吗?</li>
+<li><strong>多芯片互连</strong>: 1M qubit 是<strong>单芯片</strong> 还是<strong>模块化</strong>? 跨芯片门<strong>如何</strong>容错?</li>
+<li><strong>端到端软件栈</strong>: 编译 → 路由 → 实时调度 → 解码 → 反馈——<strong>全栈</strong>容错<strong>未</strong>成熟。</li>
+</ul>
+<p><strong>当前共识</strong>: 上述问题<strong>有</strong>方向但<strong>无</strong>定论——FTQC 是<strong>进行中</strong>的工程,<strong>不</strong>是<strong>已</strong>完成**的科学。</p>
+<hr>
+<h2 id="section-19.10">19.10 ch20-24 铺路 + 总结</h2>
+<h3>19.10.1 第四部分完整图(回顾)</h3>
+<pre><code>ch15 BQP 复杂性
+     ↓ (加入噪声后无法实现)
+ch16 量子噪声与退相干 (T1, T2, depolarizing, 退相干)
+     ↓ (纠错保护 1 个逻辑 qubit)
+ch17 量子纠错码 (Shor 9 / Steane 7 / 5-qubit / stabilizer)
+     ↓ (扩展到 25-10000+ qubit 工业级)
+ch18 表面码与拓扑量子计算 (2D 网格, 阈值 1%, 任意子)
+     ↓ (整个算法怎么运行)
+ch19 容错量子计算 ← 本章
+     ↓ (FTQC 理论 → 5 种硬件实现)
+ch20-24 第五部分: 5 种硬件平台</code></pre>
+<p><strong>第四部分 5 章 (ch15-19) 完整</strong>:</p>
+<ul>
+<li><strong>ch15</strong>: 量子算法<strong>理论</strong> 上界 (BQP)</li>
+<li><strong>ch16</strong>: 实际<strong>硬件</strong>有噪声</li>
+<li><strong>ch17</strong>: <strong>1 个</strong>逻辑 qubit 怎么保护</li>
+<li><strong>ch18</strong>: <strong>25-10000+</strong> 逻辑 qubit 怎么保护</li>
+<li><strong>ch19</strong>: <strong>整个</strong>算法怎么在保护下运行</li>
+<h3>19.10.2 第五部分预告 (ch20-24)</h3>
+<table class="chapter-table">
+<tr><th>章</th><th>平台</th><th>T1</th><th>门保真度</th><th>门速度</th><th>qubit 数</th></tr>
+<tr><td><strong>ch20</strong></td><td><strong>超导</strong> (IBM, Google)</td><td>~100 μs</td><td>99.9%</td><td>10-100 ns</td><td>1000+</td></tr>
+<tr><td><strong>ch21</strong></td><td><strong>离子阱</strong> (IonQ, Quantinuum)</td><td>> 1 s</td><td>99.99%</td><td>1-100 μs</td><td>100+</td></tr>
+<tr><td><strong>ch22</strong></td><td><strong>光量子</strong> (PsiQuantum, Xanadu)</td><td>N/A</td><td>99%</td><td>1 ns</td><td>100+</td></tr>
+<tr><td><strong>ch23</strong></td><td><strong>拓扑</strong> (Microsoft Majorana 1)</td><td>1-100 μs</td><td>99%</td><td>10-100 ns</td><td>8 (2025)</td></tr>
+<tr><td><strong>ch24</strong></td><td><strong>中性原子</strong> (QuEra, Pasqal)</td><td>1-10 s</td><td>99.5%</td><td>1-10 μs</td><td>1000+</td></tr>
+</table>
+</ul>
+<p><strong>5 种硬件的核心取舍</strong>:</p>
+<ul>
+<li>超导: <strong>快</strong> + <strong>多</strong> qubit + <strong>短</strong> T1</li>
+<li>离子阱: <strong>长</strong> T1 + <strong>高</strong>保真 + <strong>慢</strong>门</li>
+<li>光量子: <strong>天然</strong>长程 + <strong>冷</strong>系统</li>
+<li>拓扑: <strong>理论</strong> 抗错 + <strong>实验</strong> 早期</li>
+<li>中性原子: <strong>可扩展</strong> + <strong>新</strong>兴</li>
+<h3>19.10.3 关键人物回顾</h3>
+<table class="chapter-table">
+<tr><th>人物</th><th>贡献</th><th>年份</th></tr>
+<tr><td><strong>Dorit Aharonov</strong></td><td>阈值定理 (AB 1997)</td><td>1997</td></tr>
+<tr><td><strong>Michael Ben-Or</strong></td><td>阈值定理 (AB 1997)</td><td>1997</td></tr>
+<tr><td><strong>Daniel Gottesman</strong></td><td>Stabilizer 形式化</td><td>1996-1997</td></tr>
+<tr><td><strong>Peter Shor</strong></td><td>9-qubit 码 + 阈值定理</td><td>1995-1996</td></tr>
+<tr><td><strong>John Preskill</strong></td><td>综述 + "quantum supremacy"</td><td>1998-2012</td></tr>
+<tr><td><strong>Sergey Bravyi</strong></td><td>Magic state distillation (BK 2005)</td><td>2005</td></tr>
+<tr><td><strong>Alexei Kitaev</strong></td><td>表面码 + 拓扑量子计算</td><td>1997-2003</td></tr>
+<tr><td><strong>Austin Fowler</strong></td><td>表面码工程化 (Fowler 2012)</td><td>2012-2024</td></tr>
+<tr><td><strong>Daniel Litinski</strong></td><td>Magic state cultivation + Game of surface codes</td><td>2019</td></tr>
+</table>
+<h3>19.10.4 概念速查表</h3>
+<table class="chapter-table">
+<tr><th>概念</th><th>简述</th><th>章节</th></tr>
+<tr><td><strong>容错 (FTQC)</strong></td><td>物理 $p < p_{th}$ → 任意长电路</td><td>19.1</td></tr>
+<tr><td><strong>三大要求</strong></td><td>R1 错误不扩散 + R2 可纠正 + R3 通用门</td><td>19.1.2</td></tr>
+<tr><td><strong>错误传播</strong></td><td>CNOT 使 1 错变 2 错</td><td>19.2.1</td></tr>
+<tr><td><strong>编码门 (Encoded Gate)</strong></td><td>码空间内操作</td><td>19.2.2</td></tr>
+<tr><td><strong>横向门 (Transversal)</strong></td><td>$U^{\otimes n}$, 不跨 qubit</td><td>19.2.2</td></tr>
+<tr><td><strong>Eastin-Knill 定理</strong></td><td>无通用横向门集</td><td>19.2.4</td></tr>
+<tr><td><strong>通用门集</strong></td><td>{Clifford + T}</td><td>19.3.1</td></tr>
+<tr><td><strong>Magic State</strong></td><td>$</td><td>m\rangle = T</td><td>+\rangle$</td><td>19.3.4</td></tr>
+<tr><td><strong>Magic State Injection</strong></td><td>注入 magic state 做 T 门</td><td>19.3.4</td></tr>
+<tr><td><strong>Magic State Distillation</strong></td><td>15-to-1 提升保真度</td><td>19.4.2</td></tr>
+<tr><td><strong>Magic State Cultivation</strong></td><td>Litinski 2019 减少开销</td><td>19.4.4</td></tr>
+<tr><td><strong>阈值定理</strong></td><td>$p_L \sim (p/p_{th})^{(d+1)/2}$</td><td>19.5</td></tr>
+<tr><td><strong>Concatenation</strong></td><td>码套码, 距离 $d^r$</td><td>19.6.1</td></tr>
+<tr><td><strong>Lattice Surgery</strong></td><td>surface code 上的 2 qubit 门</td><td>19.7.1</td></tr>
+<tr><td><strong>Split / Merge / Deform</strong></td><td>3 种 lattice surgery 操作</td><td>19.7.1</td></tr>
+<tr><td><strong>RSA-2048 资源</strong></td><td>20M 物理 qubit × 8 小时</td><td>19.8.4</td></tr>
+<tr><td><strong>实时解码</strong></td><td>1 μs syndrome → 错误</td><td>19.9.1</td></tr>
+<tr><td><strong>重复测量</strong></td><td>$d$ 次提升保真度</td><td>19.9.2</td></tr>
+<tr><td><strong>Game of Surface Codes</strong></td><td>Litinski 2019 完整架构</td><td>19.7.4</td></tr>
+</table>
+<h3>19.10.5 三个关键洞察</h3>
+<li><strong>容错 = 阈值 + 编码门 + 通用门集</strong> —— 三大要求<strong>互相</strong>制约,缺一不可</li>
+<li><strong>T 门是"最贵"的</strong> —— magic state distillation / cultivation 占用 20-50% 物理 qubit</li>
+<li><strong>表面码 + lattice surgery 是现代 FTQC 主流</strong> —— 阈值 1% + 资源多项式 + 几何直观</li>
+<h3>19.10.6 思考题</h3>
+</ul>
+<p><strong>Q1</strong>: 为什么 Eastin-Knill 定理<strong>不</strong>允许通用横向门集? 这对容错电路设计有什么实际后果?</p>
+<p><strong>Q2</strong>: 假设表面码 $d = 7$, 错误率 $p = 0.5\%$, 估算 $p_L$。如果需要 $p_L < 10^{-12}$ (Shor RSA-2048 所需), 码距 $d$ 需要多少?</p>
+<p><strong>Q3</strong>: Magic state distillation 15-to-1 协议中, 错误率 $\epsilon_1 \sim 35 \epsilon_0^3$。如果 $\epsilon_0 = 10^{-3}$, $\epsilon_1 = ?$ 如果需要 $\epsilon_1 = 10^{-15}$, 需要<strong>几级</strong> distillation?</p>
+<p><strong>Q4</strong>: Lattice surgery 的 3 种操作 (split / merge / deform) 各自对应什么<strong>逻辑</strong>操作? 为什么 lattice surgery 比<strong>直接</strong>物理 CNOT 更<strong>容错</strong>?</p>
+<p><strong>Q5 (开放)</strong>: 假设你负责设计 1M qubit 容错系统。你会选择 (a) 单芯片 1M qubit, (b) 100 芯片 × 10K qubit 模块化, (c) 1000 芯片 × 1K qubit? 给出你的理由 (制冷, 控制, 制造, 校准)。</p>
+<h3>19.10.7 思考题答案(详细)</h3>
+<p><strong>Q1 答案</strong>:</p>
+<p>Eastin-Knill 定理(2009)证明:任何量子纠错码的码空间 $V$ 是<strong>有限</strong>维的, 横向门 $U^{\otimes n}$ 作用在 $V$ 上<strong>不能</strong>生成<strong>所有</strong>酉算子——<strong>矛盾</strong>。所以<strong>任何</strong>码都<strong>不</strong>能有<strong>通用</strong>横向门集。</p>
+<p><strong>实际后果</strong>:</p>
+<ul>
+<li>表面码的 $\bar{T}$ <strong>不</strong>能横向</li>
+<li><strong>必须</strong>用 magic state injection 实现</li>
+<li>资源开销: $\bar{T}$ 门比 Clifford 门<strong>贵 100-1000 倍</strong></li>
+<li>Magic state factory 占用 20-50% 总物理 qubit</li>
+</ul>
+<p><strong>Q2 答案</strong>:</p>
+<p>表面码 $d = 7$, $p = 0.5\%$, $p_{th} = 0.75\%$ (DKLP): $$p_L \sim C \cdot (p/p_{th})^{(d+1)/2} = C \cdot (0.5/0.75)^4 = C \cdot 0.198$$</p>
+<p>常数 $C \sim 0.1$ (DKLP 估算) → $p_L \sim 0.02$ — <strong>远</strong>不够 RSA-2048。</p>
+<p><strong>要 $p_L < 10^{-12}$</strong>: $$(0.5/0.75)^{(d+1)/2} < 10^{-12} / 0.1 \approx 10^{-11}$$ $$(d+1)/2 > 11 \cdot \log(0.75/0.5) / \log(10) \approx 1.6 \cdot 11 = 17.6$$ $$d \ge 35$$</p>
+<p><strong>结论</strong>: 需要 $d \ge 35$, 物理 qubit = $35^2 + 34^2 = 1225 + 1156 = 2381$ / 1 逻辑 qubit。</p>
+<p><strong>Q3 答案</strong>:</p>
+<p>15-to-1 蒸馏: $\epsilon_1 = 35 \epsilon_0^3$。 $\epsilon_0 = 10^{-3}$:</p>
+<ul>
+<li>$r = 1$: $\epsilon_1 = 35 \times 10^{-9} = 3.5 \times 10^{-8}$</li>
+<li>$r = 2$: $\epsilon_2 = 35 \times (3.5 \times 10^{-8})^3 = 35 \times 4.3 \times 10^{-23} = 1.5 \times 10^{-21}$</li>
+<li>$r = 3$: $\epsilon_3 = 35 \times (1.5 \times 10^{-21})^3 = 35 \times 3.4 \times 10^{-63} = 1.2 \times 10^{-61}$</li>
+</ul>
+<p>要 $\epsilon_r < 10^{-15}$: $r = 2$ <strong>足够</strong> ($\epsilon_2 = 1.5 \times 10^{-21}$)。 总物理 magic state: $15^2 = 225$。</p>
+<p><strong>Q4 答案</strong>:</p>
+<p>Lattice surgery 3 种操作:</p>
+<ul>
+<li><strong>Split</strong>: 1 patch → 2 patches, 逻辑上 = "将 1 个 logical qubit 分为 2 个独立 logical qubit"</li>
+<li><strong>Merge</strong>: 2 patches → 1 patch, 逻辑上 = "测量 2 个 logical qubit 的 $\bar{X} \otimes \bar{X}$ 或 $\bar{Z} \otimes \bar{Z}$"</li>
+<li><strong>Deform</strong>: 移动 patch 边界, 逻辑上 = "重新定义 logical 算子的位置"</li>
+</ul>
+<p>Lattice surgery <strong>比</strong>直接 CNOT <strong>更</strong>容错:</p>
+<ol>
+<li><strong>错误不扩散</strong>: merge 测后<strong>不</strong>扩散到目标 patch</li>
+<li><strong>2D 几何</strong>: 只需要边界操作, 不需要 3D 长程</li>
+<li><strong>并行</strong>: 多对 patch <strong>同时</strong> merge, 大规模操作<strong>易</strong>实现</li>
+<li><strong>可解码</strong>: merge 的 syndrome 是<strong>经典</strong>信号, 实时解码<strong>易</strong></li>
+</ul>
+<p><strong>Q5 答案 (参考)</strong>:</p>
+<p><strong>推荐</strong> (b) 100 芯片 × 10K qubit 模块化。</p>
+<p><strong>理由</strong>:</p>
+<ul>
+<li><strong>制冷</strong>: 100 chip 比 1000 chip <strong>易</strong> 制冷 (1 制冷机可容纳 ~100 chip); 1 chip 太<strong>大</strong> (1M qubit 芯片 <strong>不</strong> 可制造)</li>
+<li><strong>控制</strong>: 100 chip × 100 channel = 10K channel, <strong>可</strong> 经典硬件支持; 1000 chip <strong>超</strong> 经典硬件</li>
+<li><strong>制造</strong>: 10K qubit 芯片<strong>接近</strong>当前工艺 (Google Willow 105 qubit → 10K 是 100× 提升, <strong>可达</strong>)</li>
+<li><strong>校准</strong>: 100 chip 校准时间 $O(100)$, 1000 chip <strong>太</strong> 慢</li>
+<li><strong>容错</strong>: 跨 chip lattice surgery <strong>部分</strong> 已解决 (光子互连 + 经典反馈)</li>
+</ul>
+<p><strong>不</strong>推荐 (a) 单芯片: 1M qubit 单芯片<strong>未</strong>有工艺, <strong>不</strong>可达 良率 <strong>不</strong>推荐 (c) 1000 chip: 校准 + 控制 + 互连<strong>超</strong> 经典硬件能力</p>
+<h3>19.10.8 推荐阅读 (按主题)</h3>
+<p><strong>容错综述</strong> (入门 → 高级):</p>
+<ul>
+<li><strong>Nielsen & Chuang</strong> 《Quantum Computation and Quantum Information》 Ch. 10 — 标准入门</li>
+<li><strong>Preskill 1998</strong> "Reliable Quantum Computers" Proc. R. Soc. A 454 — 经典综述</li>
+<li><strong>Gottesman 1997</strong> "Stabilizer Codes and Quantum Error Correction" PhD thesis — stabilizer 形式化</li>
+<li><strong>Aliferis, Gottesman, Preskill 2006</strong> "Quantum Accuracy Threshold for Concatenated Codes" — 阈值证明</li>
+</ul>
+<p><strong>表面码 + Lattice Surgery</strong> (现代主流):</p>
+<ul>
+<li><strong>Dennis, Kitaev, Landahl, Preskill 2002</strong> "Topological quantum memory" — 表面码阈值</li>
+<li><strong>Fowler, Mariantoni, Martinis, Cleland 2012</strong> "Surface codes: Towards practical large-scale quantum computation" — 工程综述</li>
+<li><strong>Horsman, Fowler, Devitt, Van Meter 2012</strong> "Lattice surgery" — 表面码 2 qubit 门</li>
+<li><strong>Litinski 2019</strong> "A Game of Surface Codes" — 完整容错架构</li>
+</ul>
+<p><strong>Magic State</strong> (T 门实现):</p>
+<ul>
+<li><strong>Bravyi, Kitaev 2005</strong> "Universal quantum computation with ideal Clifford gates and noisy ancillas" — 15-to-1 蒸馏</li>
+<li><strong>Litinski 2019</strong> "Magic State Distillation: Not as Costly as You Think" — cultivation</li>
+<li><strong>Gidney 2024</strong> "Magic state cultivation with low resource cost" — 最新优化</li>
+</ul>
+<p><strong>最新硬件实验</strong> (2024-2026):</p>
+<ul>
+<li><strong>Google Quantum AI 2024</strong> (Acharya et al., Nature 638) — Willow 表面码 $d=5,7$</li>
+<li><strong>IBM Quantum 2024</strong> (Heron r2) — 短程 5-qubit 码</li>
+<li><strong>Quantinuum 2024</strong> (H2) — 离子阱跨阈值</li>
+<li><strong>IonQ 2024</strong> (Forte) — 表面码 $d=3$ 实验</li>
+<li><strong>Microsoft Majorana 1 2025</strong> — 拓扑量子比特 8 qubit</li>
+</ul>
+<p><strong>推荐路径</strong>:</p>
+<ul>
+<li>入门: Nielsen-Chuang Ch. 10 → Preskill 1998</li>
+<li>中级: Fowler 2012 综述 → Litinski 2019</li>
+<li>高级: 2024 Nature 论文 + 各种专用文献</li>
+</ul>
+<p><strong>注</strong>: 上述文献均可通过 arXiv 免费获取——搜索作者 + 标题。</p>
+<hr>
+<h2 id="section-19.A">19.A 附录 A:阈值定理的严格陈述与文献</h2>
+<h3>19.A.1 严格陈述</h3>
+<p><strong>定理</strong> (Aharonov-Ben-Or 1997):</p>
+<p>设电路 $C$ 长度 $L$, 物理错误率 $p$。对<strong>任意</strong> $\epsilon > 0$, 假设<strong>存在</strong>码 $[[n, k, d]]$ 满足:</p>
+<ol>
+<li>编码 + 解码 + 容错门: 总<strong>物理</strong>错误率 $p$ <strong>不</strong>增加</li>
+<li>错误<strong>不</strong>扩散到<strong>多于</strong>常数个 qubit (R1)</li>
+<li>解码时间<strong>短于</strong>错误累积时间 (R2)</li>
+</ul>
+<p><strong>则</strong>存在<strong>容错</strong>模拟 $\tilde{C}$ 使得:</p>
+<ul>
+<li>$\tilde{C}$ 用<strong>多项式</strong>额外资源 $L \cdot \text{polylog}(L/\epsilon)$</li>
+<li>输出与 $C$ 分布 <strong>$\epsilon$-close</strong> (total variation distance)</li>
+<h3>19.A.2 关键文献</h3>
+<li><strong>Aharonov, Ben-Or 1997</strong>: 首次证明阈值定理 (concurrent, $p_{th} \sim 10^{-6}$)</li>
+<li><strong>Knill, Laflamme, Zurek 1998</strong>: 改进 $p_{th} \sim 10^{-3}$</li>
+<li><strong>Kitaev 1997</strong>: 拓扑码 + 阈值</li>
+<li><strong>Aliferis, Preskill 2008</strong>: 简化证明, 推广到更广错误模型</li>
+<li><strong>Dennis, Kitaev, Landahl, Preskill 2002</strong>: 表面码 $p_{th} \approx 1\%$</li>
+<li><strong>Fowler, Mariantoni, Martinis, Cleland 2012</strong>: 表面码工程综述</li>
+<hr>
+<h2 id="section-19.B">19.B 附录 B:Magic State Distillation 数学</h2>
+<h3>19.B.1 15-to-1 协议详细</h3>
+<table class="chapter-table">
+<tr></tr>
+</table>
+</ul>
+<p><strong>协议</strong>:</p>
+<table class="chapter-table">
+<tr><th>m\rangle$ → $\overline{</th></tr>
+<tr><td>m\rangle}$ (控制) → 8 个 $</td></tr>
+</table>
+<ol>
+<li>测 Shor 码 (测 stabilizer) → 测 8 个 syndrome</li>
+<table class="chapter-table">
+<tr></tr>
+<tr></tr>
+<tr></tr>
+</table>
+</ul>
+<p><strong>错误分析</strong> (Bravyi-Kitaev 2005):</p>
+<p>设每个 magic state 有 $X$ 错概率 $\epsilon_X$, $Z$ 错概率 $\epsilon_Z$。<strong>最坏情况</strong>:</p>
+<ul>
+<li>Shor 码<strong>检</strong>出<strong>任何</strong>单错 → 拒绝</li>
+<li>仅当 Shor 码内<strong>未</strong>检出, 且 8 个目标都"看起来" 0 → 接受</li>
+<li>接受概率: $\sim \epsilon_0^3$ (3 个错同时发生)</li>
+</ul>
+<p><strong>结论</strong>: $\epsilon_1 \sim 35 \epsilon_0^3$ (立方降低)</p>
+<h3>19.B.2 资源估算公式</h3>
+<p><strong>$r$ 级递归</strong>: $$\epsilon_r = 35 \cdot (35 \cdot (\cdots 35 \epsilon_0^3 \cdots)^3)^3 = 35^{(3^r-1)/2} \cdot \epsilon_0^{3^r}$$</p>
+<p><strong>物理 magic state 总数</strong>: $$N_r = 15^r$$</p>
+<p><strong>例子</strong> ($\epsilon_0 = 10^{-3}$, 需要 $\epsilon_r = 10^{-15}$):</p>
+<ul>
+<li>$r = 1$: $\epsilon_1 = 3.5 \times 10^{-8}$ — <strong>不足</strong></li>
+<li>$r = 2$: $\epsilon_2 = 4.3 \times 10^{-23}$ — <strong>足够</strong></li>
+<li>总物理 magic state: $N_2 = 15^2 = 225$</li>
+</ul>
+<p><strong>实际</strong>: 配合 magic state cultivation (Litinski 2019) 可降至 $N_2 \approx 100$。</p>
+<hr>
+<h2 id="section-19.C">19.C 附录 C:Concatenated vs Surface Code 资源对比</h2>
+<h3>19.C.1 详细对比表</h3>
+<table class="chapter-table">
+<tr><th>维度</th><th>Concatenated $[[5^r, 1, 3^r]]$</th><th>Surface Code $[[d^2+(d-1)^2, 1, d]]$</th></tr>
+<tr><td>阈值 $p_{th}$</td><td>$10^{-3}$</td><td>$10^{-2}$ (高 <strong>10×</strong>)</td></tr>
+<tr><td>资源增长</td><td>指数 $5^r$</td><td>多项式 $d^2$</td></tr>
+<tr><td>$L$ 门电路</td><td>$L \cdot 5^r$ qubit</td><td>$L \cdot d^2$ qubit</td></tr>
+<tr><td>1 逻辑 T 门成本</td><td>~$5^r$ 物理门</td><td>~$d^2$ + magic state ($10^3$)</td></tr>
+<tr><td>编码门</td><td>递归构造</td><td>Lattice surgery</td></tr>
+<tr><td>当前实践</td><td>学术</td><td><strong>工业</strong> (Google, IBM)</td></tr>
+<tr><td>主要缺点</td><td>阈值<strong>低</strong> + 资源<strong>指数</strong></td><td>测量<strong>频</strong> + 长程门<strong>慢</strong></td></tr>
+</table>
+<h3>19.C.2 实际部署选择</h3>
+<p><strong>Google Willow 2024</strong>: 表面码 $d = 5$ + Union-Find 解码 + 1.1 μs FPGA <strong>IBM Heron r2 2024</strong>: 短程 5-qubit 码 + 经典解码 (短程容错) <strong>IonQ / Quantinuum 2024</strong>: 表面码 $d = 3$ 实验 (跨阈值演示) <strong>PsiQuantum</strong>: 走光量子<strong>专用</strong>路径 (非表面码)</p>
+<p><strong>共识</strong>: 表面码是<strong>主流</strong>——但<strong>短期</strong>不同平台用<strong>不同</strong>短期容错策略。</p>
+<hr>
+<h2 id="section-19.D">19.D 附录 D:跟第五部分硬件章节衔接</h2>
+<h3>19.D.1 ch20 超导 (Google/IBM)</h3>
+<p><strong>FTQC 应用</strong>:</p>
+<ul>
+<li>当前: 表面码 $d = 5$ (Google Willow 2024)</li>
+<li>路线图: 2030 → $d = 11$ + 1000 物理 qubit</li>
+<li>长期: $d = 25$ + 1M 物理 qubit + FTQC</li>
+</ul>
+<p><strong>挑战</strong>: T1 ~100 μs, <strong>短</strong> (表面码需 $d$ × 1 μs stabilizer 周期)</p>
+<h3>19.D.2 ch21 离子阱 (IonQ/Quantinuum)</h3>
+<p><strong>FTQC 应用</strong>:</p>
+<ul>
+<li>当前: 表面码 $d = 3$ 实验</li>
+<li>优势: T1 > 1 s (long!), 门保真度 99.99%</li>
+<li>挑战: 门<strong>慢</strong> (1-100 μs), 扩展性 (1D 链)</li>
+<h3>19.D.3 ch22 光量子 (PsiQuantum)</h3>
+</ul>
+<p><strong>FTQC 应用</strong>:</p>
+<ul>
+<li>路径: <strong>不</strong>走表面码</li>
+<li>替代: 测量基础 (measurement-based) + fusion-based quantum computing (FBQC)</li>
+<li>优势: 天然长程 + 室温探测</li>
+<li>挑战: 确定性双 qubit 门<strong>难</strong></li>
+<h3>19.D.4 ch23 拓扑 (Microsoft Majorana 1)</h3>
+</ul>
+<p><strong>FTQC 应用</strong>:</p>
+<ul>
+<li>路径: 编织 (braiding) — 拓扑保护</li>
+<li>当前: 8 拓扑 qubit (2025)</li>
+<li>优势: <strong>理论</strong> 抗错 + 内在容错</li>
+<li>挑战: 实验<strong>未</strong>广泛接受 (零偏压电导争议)</li>
+<h3>19.D.5 ch24 中性原子 (QuEra/Pasqal)</h3>
+</ul>
+<p><strong>FTQC 应用</strong>:</p>
+<ul>
+<li>当前: 1000+ 原子 (无纠错)</li>
+<li>优势: <strong>可扩展</strong> + Rydberg 阻塞门</li>
+<li>路径: 表面码实验 + 大规模容错</li>
+<h3>19.D.6 综合路线图 (2025-2045)</h3>
+<table class="chapter-table">
+<tr><th>年份</th><th>阶段</th><th>物理 qubit</th><th>$d$</th><th>算法能力</th></tr>
+<tr><td>2025</td><td>早期容错</td><td>100-1000</td><td>3-5</td><td>小规模容错</td></tr>
+<tr><td>2030</td><td>中等容错</td><td>10K-100K</td><td>7-11</td><td>量子化学模拟</td></tr>
+<tr><td>2035</td><td>实用容错</td><td>100K-1M</td><td>11-15</td><td>优化问题</td></tr>
+<tr><td>2040+</td><td>通用容错</td><td>1M-10M</td><td>15-25</td><td>RSA-2048 破解</td></tr>
+</table>
+<hr>
+<h2 id="section-19.11">19.11 章节总结</h2>
+</ul>
+<p><strong>本章核心</strong>:</p>
+<ul>
+<li><strong>ch19 = 第四部分的"工程闭环"</strong> —— 把 ch15-18 的<strong>理论</strong> 转化为<strong>实践</strong>算法</li>
+<li><strong>容错 = 阈值 + 编码门 + 通用门集</strong> —— 三大要求缺一不可</li>
+<li><strong>Eastin-Knill 定理 + Magic State Injection</strong> —— T 门是"最贵"的</li>
+<li><strong>阈值定理</strong> —— $p_L \sim (p/p_{th})^{(d+1)/2}$ 是<strong>核心</strong>数学结果</li>
+<li><strong>Surface Code + Lattice Surgery</strong> —— 现代 FTQC 主流</li>
+<li><strong>RSA-2048 资源</strong> —— 20M 物理 qubit × 8 小时 (Litinski 2019)</li>
+<li><strong>工程挑战</strong> —— 实时解码 + 测量保真度 + 长程门 + 系统集成</li>
+<li><strong>承上启下</strong> —— ch20-24 5 种硬件实践 FTQC 理论</li>
+</ul>
+<p><strong>第四部分完结</strong>: 5 章 (ch15-19) 完整, 从 BQP 假设到容错实践。</p>
+<p><strong>下一步</strong>: 第五部分 ch20-24 — 5 种硬件实现, 把 FTQC 理论转化为<strong>实际</strong>系统。</p>
+<hr>
+<p><strong>第 19 章完。19/28 章完成 (68%)。第四部分 4/5 章完成 (80%)。</strong></p>
+      </article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch18.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 18 章 表面码与拓扑量子计算 (Surface Codes)</span>
+        </a>
+        <a href="ch20.html" class="pager-link pager-next pager-disabled">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 20 章 超导量子比特 (即将推出)</span>
+        </a>
+      </nav>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
