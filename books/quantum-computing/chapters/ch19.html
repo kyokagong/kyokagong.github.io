@@ -187,6 +187,16 @@ ch20-24 第五部分硬件</code></pre>
 <li>$d$: 码距, 越大保护越强</li>
 </ul>
 <p><strong>直觉</strong>: 错误需要形成<strong>长度 $\ge (d+1)/2$ 的链</strong>才能造成<strong>未纠正</strong>的逻辑错——概率 $\sim p^{(d+1)/2}$。</p>
+<p><strong>常数 $C$ 的物理意义</strong> (Day 23 S1 修订):</p>
+<ul>
+<li>$C$ 取决于<strong>码</strong> (例如表面码 $C \sim 0.1$) 和<strong>解码算法</strong> (MWPM $C \sim 0.1$, Union-Find $C \sim 0.2$, 神经网络 $C$ <strong>未知</strong>)</li>
+<li>$C$ <strong>不</strong>依赖 $d$——所以"指数下降"主要来自 $(p/p_{th})^{(d+1)/2}$ 项</li>
+<li><strong>量级</strong>:</li>
+<li>表面码 + MWPM: $C \sim 0.1$</li>
+<li>表面码 + Union-Find: $C \sim 0.2$</li>
+<li>神经网络解码: $C$ 实验<strong>未</strong>充分研究 (2024 新方向)</li>
+<li><strong>直觉</strong>: $C$ 反映"解码算法的次最优程度"——$C$ 越小, 解码<strong>越接近</strong>最优 (Bayes optimal)</li>
+</ul>
 <h3>19.1.4 容错的"工程含义"</h3>
 <table class="chapter-table">
 <tr><th>错误率 $p$</th><th>含义</th><th>表面码 $d$ 需要</th><th>物理 qubit</th></tr>
@@ -367,6 +377,15 @@ ch20-24 第五部分硬件</code></pre>
 <li>提升: $\epsilon_1 \sim 35 \epsilon_0^3$ (立方关系!)</li>
 </ul>
 <p><strong>关键事实</strong>: 错误率<strong>立方</strong>降低——15-to-1 蒸馏把 $\epsilon_0 = 10^{-3}$ 提升到 $\epsilon_1 \sim 35 \times 10^{-9} = 3.5 \times 10^{-8}$。</p>
+<p><strong>接受概率</strong> (Day 23 S2 修订):</p>
+<ul>
+<li>15 个 magic state <strong>全部</strong>无错概率: $(1 - \epsilon_0)^{15} \approx 1 - 15\epsilon_0$ (对 $\epsilon_0 = 10^{-3}$ 是 <strong>98.5%</strong>)</li>
+<li>接受<strong>后</strong> 1 个高保真 magic state</li>
+<li>接受<strong>失败</strong> 浪费 15 个 magic state</li>
+<li><strong>吞吐</strong>: 1 次 15-to-1 蒸馏 → ~0.985 高保真 magic state / 15 输入 = <strong>~6.6% 效率</strong></li>
+<li><strong>多级</strong>蒸馏<strong>指数</strong>降效率 (4 级后 ~$10^{-5}$ 效率)</li>
+<li><strong>改进</strong>: Litinski 2019 cultivation 把效率<strong>提升</strong> 到 30-50% (复用失败的状态)</li>
+</ul>
 <h3>19.4.3 递归蒸馏 (Cascaded Distillation)</h3>
 <p><strong>单次</strong> 15-to-1 蒸馏<strong>不足</strong>以达到 $\epsilon_1 = 10^{-15}$。需要<strong>递归</strong>:</p>
 <ul>
@@ -548,6 +567,16 @@ ch20-24 第五部分硬件</code></pre>
 <li><strong>Split</strong>: 1 patch → 2 patches (1 个 logical → 2 logical, <strong>辅助</strong>操作)</li>
 <li><strong>Merge</strong>: 2 patches → 1 patch (2 logical → 1 logical, <strong>测量</strong>辅助)</li>
 <li><strong>Deform</strong>: 移动 patch 边界 (调整 logical 操作位置)</li>
+</ul>
+<p><strong>例子: 实现 $\bar{\text{CNOT}}_{A \to B}$ 在 2 个 patch 上</strong> (Day 23 S3 修订):</p>
+<ol>
+<li><strong>准备</strong>: 2 个 patch (logical qubit A 和 B), $d \times d$ 表面码</li>
+<li><strong>Merge</strong> (rough-rough): 把 2 个 patch 的 1 个粗糙边界<strong>临时</strong>合并 → 测 $\bar{X}_A \otimes \bar{X}_B$ → 获得 1 比特 syndrome</li>
+<li><strong>Split</strong> (还原): 把合并的边界<strong>再</strong> split 开</li>
+<li><strong>条件</strong>操作: 根据 syndrome 测得 $X$-stabilizer → 决定是否对 B 应用 $\bar{Z}$</li>
+<li><strong>结果</strong>: $\bar{\text{CNOT}}_{A \to B}$ 实现, 时间 $O(d)$ (因为 patch 边界"长" $d$)</li>
+</ol>
+<p><strong>关键</strong>: 整个过程<strong>不</strong>引入<strong>额外</strong>错误扩散, 因为只测"边界" ancilla。</p>
 <h3>19.7.2 2-qubit 门: 横向 + Lattice Surgery</h3>
 </ul>
 <p><strong>$\bar{\text{CNOT}}$ 实现</strong>:</p>
@@ -683,6 +712,16 @@ ch20-24 第五部分硬件</code></pre>
 <p><strong>单门时间</strong> (1 物理门): $1 \mu s$ (超导) <strong>逻辑门时间</strong>: 包含<strong>错误纠正</strong> → $O(d)$ 倍 → $\sim 10 \mu s$ <strong>RSA-2048 总时间</strong>: $\sim 10^{12}$ 逻辑门 × $10 \mu s$ = $10^7$ s = <strong>~100 天</strong> (未优化)</p>
 <p><strong>优化后</strong> (Litinski 2019): <strong>8 小时</strong> — 通过 magic state cultivation + 并行 + 早期容错</p>
 <p><strong>结论</strong>: 实用 RSA-2048 = <strong>10M 物理 qubit × 8 小时</strong> = $10^{11}$ qubit-秒。</p>
+<p><strong>总时间 = 量子门时间 + 实时解码时间 + 经典控制时间</strong> (Day 23 S4 修订):</p>
+<ul>
+<li><strong>量子门时间</strong>: $2.5 \times 10^{13} \times 1 \mu s = 2.5 \times 10^7$ s = <strong>290 天</strong> (纯串行)</li>
+<li><strong>实时解码时间</strong>: 每 $\mu s$ 1 次, <strong>总</strong> = $2.5 \times 10^7$ s = <strong>290 天</strong> (1:1 跟量子门同步)</li>
+<li><strong>经典控制时间</strong>: 0.1 μs / 量子门 → 29 天</li>
+<li><strong>总计</strong>: ~300 天 (纯串行, 未优化)</li>
+<li><strong>优化后</strong> (Litinski 2019 + 1000× 并行): <strong>8 小时</strong> = 0.3 天 ✅</li>
+</ul>
+<p><strong>关键</strong>: <strong>并行化</strong> 是关键——1 个 RSA-2048 任务<strong>用 1000× 物理 qubit 并行</strong>可减 1000× 时间。这要求 1 个 RSA-2048 用 10M × 1000 = 10G 物理 qubit——但 1000 个 RSA-2048 用 10M qubit 也可 (只要<strong>任务</strong>并行)。</p>
+<p><strong>核心</strong>: 时间<strong>不</strong>仅是量子门, 还有实时解码 + 经典反馈——这<strong>正是</strong> 19.9 工程挑战的本质。</p>
 <h3>19.8.4 跟 ch11 算法的衔接</h3>
 <p><strong>ch11 Shor RSA-2048</strong>:</p>
 <ul>
@@ -824,6 +863,22 @@ ch20-24 第五部分硬件</code></pre>
 <li><strong>端到端软件栈</strong>: 编译 → 路由 → 实时调度 → 解码 → 反馈——<strong>全栈</strong>容错<strong>未</strong>成熟。</li>
 </ul>
 <p><strong>当前共识</strong>: 上述问题<strong>有</strong>方向但<strong>无</strong>定论——FTQC 是<strong>进行中</strong>的工程,<strong>不</strong>是<strong>已</strong>完成**的科学。</p>
+<p><strong>研究热点 (2025-2026)</strong> (Day 23 S5 修订):</p>
+<ol>
+<li><strong>超低错误率硬件</strong>:</li>
+<li><strong>超导</strong>: Google/IBM/IonQ → 99.9% → 99.99% 门保真度</li>
+<li><strong>离子阱</strong>: Quantinuum H3 → 99.99% 已达 (ch21)</li>
+<li><strong>拓扑</strong>: Microsoft Majorana 1 → 99% (待验证, ch23)</li>
+<li><strong>多芯片互连</strong>:</li>
+<li><strong>光子互连</strong>: PsiQuantum + Xanadu 探索 (ch22)</li>
+<li><strong>模块化超导</strong>: Google 2024 演示 2-chip + 光子 link</li>
+<li><strong>cryogenic CMOS</strong>: 集成控制 + qubit (Intel 探索)</li>
+<li><strong>端到端软件栈</strong>:</li>
+<li><strong>编译</strong>: Cambridge / Riverlane / Quantinuum</li>
+<li><strong>实时调度</strong>: Q-CTRL / IBM Qiskit Runtime</li>
+<li><strong>错误缓解</strong>: 主动错误缓解 + 零噪声外推 (ZNE, ch19 附录)</li>
+</ol>
+<p><strong>就业/研究方向</strong>: 容错 QC 是<strong>未来 10 年</strong>的<strong>热门</strong>——QEC 工程师 + 编译专家 + 硬件架构师<strong>需求大</strong>。2025-2035 是 FTQC <strong>从</strong>研究<strong>到工程</strong>的关键 10 年。</p>
 <hr>
 <h2 id="section-19.10">19.10 ch20-24 铺路 + 总结</h2>
 <h3>19.10.1 第四部分完整图(回顾)</h3>
@@ -1141,9 +1196,9 @@ ch20-24 第五部分: 5 种硬件平台</code></pre>
           <span class="pager-label">← 上一章</span>
           <span class="pager-title">第 18 章 表面码与拓扑量子计算 (Surface Codes)</span>
         </a>
-        <a href="ch20.html" class="pager-link pager-next pager-disabled">
+        <a href="ch20.html" class="pager-link pager-next">
           <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 20 章 超导量子比特 (即将推出)</span>
+          <span class="pager-title">第 20 章 超导量子比特 (Superconducting Qubits)</span>
         </a>
       </nav>
     </main>

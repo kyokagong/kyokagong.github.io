@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第20章：超导量子比特 (Superconducting Qubits) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第20章：超导量子比特 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第五部分 · 量子硬件 · Day 1 开篇 🚀</span>
+        <span class="chapter-day-tag">Day 23 · 2026-07-01</span>
+      </div>
+      <h1 class="chapter-title">第 20 章 超导量子比特 (Superconducting Qubits)</h1>
+      <p class="chapter-subtitle">Josephson 效应 + Transmon qubit + 量子门实现 + 25 年里程碑 (Sycamore/Condor/Willow) + 第五部分 Day 1 开篇 🚀</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,500 字</span>
+        <span class="stat">🔢 10 节 · 3 附录 · 73 子节</span>
+        <span class="stat">📑 Transmon / Josephson / Quantum gates / Willow 2024 / 第五部分开篇</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                        <article class="chapter-content">
+          <h1>第 20 章 超导量子比特 (Superconducting Qubits)</h1>
+          <blockquote><strong>第五部分 · 量子硬件</strong> — Day 1 开篇 🚀 <strong>目标</strong>: Josephson 效应 + Transmon + 量子门 + 25 年里程碑 <strong>里程碑</strong>: 20/28 章 = 71%</blockquote>
+          <hr>
+<h1>第 20 章 超导量子比特 (Superconducting Qubits)</h1>
+<blockquote><p><strong>本章定位</strong>: 第五部分 Day 1 开篇 🚀 —— 从"算法理论"到"硬件现实"的转折</p></blockquote>
+<blockquote><p><strong>核心问题</strong>: ch15-19 给了我们完整的容错量子计算理论,但<strong>物理</strong>上<strong>怎么</strong>造 1 个 qubit?</p></blockquote>
+<blockquote><p><strong>本章答案</strong>: Josephson 结 + Transmon 电路 + 微波控制 + 稀释制冷 + 25 年工程积累</p></blockquote>
+<hr>
+<h2 id="section-20.0">20.0 引言:量子硬件的"工业现实"</h2>
+<h3>20.0.1 从理论到硬件:5 种平台概览</h3>
+<p>ch15-19 给了我们 FTQC <strong>理论</strong>:阈值定理 + 容错门 + Magic state + Lattice surgery。但这些<strong>算法</strong>必须跑在<strong>物理硬件</strong>上。<strong>第五部分 (ch20-24)</strong> 介绍 5 种主流硬件实现:</p>
+<table class="chapter-table">
+<tr><th>章</th><th>平台</th><th>核心思想</th><th>主流玩家</th><th>当前规模</th><th>门保真度</th></tr>
+<tr><td><strong>ch20</strong></td><td><strong>超导</strong></td><td>Josephson 结 + transmon 电路</td><td>IBM, Google, Rigetti</td><td>100-1121 qubit</td><td>99.5-99.9%</td></tr>
+<tr><td><strong>ch21</strong></td><td><strong>离子阱</strong></td><td>电磁囚禁 + 激光门</td><td>IonQ, Quantinuum</td><td>36-56 qubit</td><td>99.9-99.99%</td></tr>
+<tr><td><strong>ch22</strong></td><td><strong>光量子</strong></td><td>单光子 + 线性光学</td><td>PsiQuantum, Xanadu</td><td>100-1000 光子</td><td>99%</td></tr>
+<tr><td><strong>ch23</strong></td><td><strong>拓扑</strong></td><td>Majorana 任意子编织</td><td>Microsoft, Bell Labs</td><td>8 qubit (2025)</td><td>99%</td></tr>
+<tr><td><strong>ch24</strong></td><td><strong>中性原子</strong></td><td>光镊 + 里德堡原子</td><td>QuEra, Pasqal, Atom Computing</td><td>100-1180 qubit</td><td>99.5%</td></tr>
+</table>
+<p><strong>关键问题</strong>:<strong>为什么</strong> 5 种平台<strong>都</strong>在<strong>并行</strong>发展?<strong> 答案:</strong>没有任何<strong>单一平台</strong>同时**满足所有指标:</p>
+<ul>
+<li>超导:<strong>多</strong> qubit + <strong>快</strong>门 → 但<strong>短</strong> T1</li>
+<li>离子阱:<strong>长</strong> T1 + <strong>高</strong>保真 → 但<strong>慢</strong>门 + <strong>少</strong> qubit</li>
+<li>光量子:<strong>室温</strong> + <strong>长程</strong> → 但<strong>概率性</strong>门</li>
+<li>拓扑:<strong>抗错</strong>(理论) → 但<strong>实验</strong>早期</li>
+<li>中性原子:<strong>多</strong> qubit + <strong>可重排</strong> → 但<strong>新</strong>兴</li>
+</ul>
+<p><strong>没有"winner"</strong>, 5 种平台<strong>互补</strong>——这是量子硬件的"生态现实"。</p>
+<h3>20.0.2 为什么先讲超导?</h3>
+<p><strong>理由 1: 超导是当前主流</strong></p>
+<ul>
+<li>IBM Condor (2023): 1121 qubit — <strong>最大</strong>超导系统</li>
+<li>Google Willow (2024): 105 qubit + <strong>首次低于阈值</strong></li>
+<li>IBM Quantum Network: 200+ 机构 + 100+ 商业用户</li>
+<li><strong>超导 = 当前量子云的主要"产品"</strong> (IBM Quantum, Google Quantum AI)</li>
+</ul>
+<p><strong>理由 2: 超导原理最直观</strong></p>
+<ul>
+<li>基于<strong>经典</strong>电路理论 (LC 振子)</li>
+<li>Josephson 结 → <strong>非线性</strong>元件 → anharmonicity → 二能级系统</li>
+<li>比离子阱/中性原子的"原子物理"<strong>简单</strong></li>
+</ul>
+<p><strong>理由 3: 超导 = 量子硬件的"工业基础"</strong></p>
+<ul>
+<li>制造工艺<strong>类比</strong> CMOS (光刻, 薄膜沉积)</li>
+<li><strong>可扩展</strong> (VLSI 路径)</li>
+<li><strong>快速迭代</strong> (1 个新设计 → 1 个月制造 → 测试)</li>
+<h3>20.0.3 历史里程碑 (1999-2024)</h3>
+<table class="chapter-table">
+<tr><th>年份</th><th>事件</th><th>关键</th><th>qubit 数</th></tr>
+<tr><td><strong>1999</strong></td><td>Nakamura 第 1 个超导 qubit</td><td>NEC, Japan</td><td>1</td></tr>
+<tr><td><strong>2002</strong></td><td>UC Berkeley 改进</td><td>早期工程</td><td>1</td></tr>
+<tr><td><strong>2004</strong></td><td>Wallraff 第 1 个 circuit QED</td><td>transmon 前身</td><td>1</td></tr>
+<tr><td><strong>2007</strong></td><td>Koch transmon 设计</td><td><strong>关键论文</strong></td><td>1</td></tr>
+<tr><td><strong>2014</strong></td><td>Google 量子 AI 实验室成立</td><td>工业化开始</td><td>—</td></tr>
+<tr><td><strong>2016</strong></td><td>IBM Quantum Experience</td><td><strong>首次</strong>云平台</td><td>5</td></tr>
+<tr><td><strong>2019</strong></td><td>Google Sycamore "量子优越性"</td><td>random circuit sampling</td><td>53</td></tr>
+<tr><td><strong>2021</strong></td><td>IBM Eagle</td><td>突破 100</td><td>127</td></tr>
+<tr><td><strong>2022</strong></td><td>IBM Osprey</td><td>433</td><td>433</td></tr>
+<tr><td><strong>2023</strong></td><td>IBM Condor</td><td>突破 1000</td><td>1121</td></tr>
+<tr><td><strong>2024</strong></td><td>Google Willow</td><td><strong>首次低于阈值</strong></td><td>105</td></tr>
+</table>
+</ul>
+<p><strong>关键事实</strong>: 从 1999 到 2024, <strong>25 年</strong>, 超导量子比特从 <strong>1 个</strong> lab demo → <strong>1000+ qubit</strong> 工业级系统。</p>
+<p><strong>25 年关键节点</strong>:</p>
+<ul>
+<li><strong>1999</strong> Nakamura 第 1 个超导 qubit (charge qubit, 短寿命)</li>
+<li><strong>2004</strong> Wallraff circuit QED → transmon 前身</li>
+<li><strong>2007</strong> Koch transmon 设计 → <strong>现代</strong> transmon</li>
+<li><strong>2014</strong> Google Quantum AI 实验室 → 工业化</li>
+<li><strong>2016</strong> IBM Quantum 5 qubit → <strong>首次</strong>云平台</li>
+<li><strong>2019</strong> Google Sycamore 53 qubit → <strong>首次</strong>量子优越性 (有争议)</li>
+<li><strong>2021</strong> IBM Eagle 127 qubit → 突破 100</li>
+<li><strong>2023</strong> IBM Condor 1121 qubit → 突破 1000</li>
+<li><strong>2024</strong> Google Willow 105 qubit → <strong>首次低于阈值</strong></li>
+</ul>
+<p><strong>25 年</strong> 增长: 1 → 1121 qubit (<strong>千倍增长</strong>)—— 但<strong>错误率</strong> ↓ 100 倍—— 净效应 <strong>十万倍</strong> 电路容量提升!</p>
+<h3>20.0.4 章节地图(5 个先验)</h3>
+<p>阅读本章需要:</p>
+<ol>
+<li><strong>ch02 量子态</strong>: bra-ket 符号, 态叠加</li>
+<li><strong>ch06 量子比特</strong>: Bloch 球, 单 qubit 几何</li>
+<li><strong>ch07 量子门</strong>: 单 qubit (H, X, Y, Z, T) + 两 qubit (CNOT)</li>
+<li><strong>ch15 量子算法</strong>: 算法→电路→硬件</li>
+<li><strong>ch17 量子纠错码</strong>: Shor 9 / Steane 7 / 5-qubit</li>
+</ul>
+<p><strong>章节路线</strong> (10 节 + 3 附录):</p>
+<ul>
+<li>20.1 超导物理基础 (BCS + Josephson 效应)</li>
+<li>20.2 Transmon qubit 详解</li>
+<li>20.3 量子门实现 (单 qubit + 两 qubit)</li>
+<li>20.4 多 qubit 系统 + 连接性</li>
+<li>20.5 关键物理参数 (T1, T2, 错误率)</li>
+<li>20.6 测量与读出</li>
+<li>20.7 制冷与封装</li>
+<li>20.8 里程碑系统 (2019-2024)</li>
+<li>20.9 优势、劣势与未来</li>
+<li>20.10 ch21-24 铺路 + 总结</li>
+<li>20.A 附录 A: Josephson 效应数学</li>
+<li>20.B 附录 B: Transmon Hamiltonian</li>
+<li>20.C 附录 C: IBM Heavy-hex vs Google 2D grid</li>
+<h3>20.0.5 本章与第五部分其他章节的衔接</h3>
+</ul>
+<p>ch20 是第五部分的<strong>开篇</strong>——ch21-24 跟 ch20 的关系:</p>
+<table class="chapter-table">
+<tr><th>章</th><th>物理对象</th><th>跟 ch20 对比</th></tr>
+<tr><td><strong>ch21</strong> 离子阱</td><td>电磁囚禁离子</td><td><strong>慢</strong> + <strong>精</strong> + <strong>全连接</strong> vs <strong>快</strong> + <strong>粗</strong> + <strong>近邻</strong></td></tr>
+<tr><td><strong>ch22</strong> 光量子</td><td>单光子</td><td><strong>室温</strong> + <strong>长程</strong> vs <strong>极低温</strong> + <strong>近邻</strong></td></tr>
+<tr><td><strong>ch23</strong> 拓扑</td><td>Majorana 任意子</td><td><strong>抗错</strong>(理论) vs <strong>裸</strong> transmon</td></tr>
+<tr><td><strong>ch24</strong> 中性原子</td><td>里德堡原子</td><td><strong>可重排</strong> vs <strong>固定</strong></td></tr>
+</table>
+<p><strong>核心洞察</strong>: <strong>没有</strong>一种硬件<strong>同时</strong>满足所有指标——5 种平台<strong>互补</strong>——这是量子硬件的"工业多元生态"。读者读完整章,应该<strong>清楚地</strong> 知道<strong>为什么</strong>超导是<strong>当前主流</strong>, 以及<strong>未来 5-10 年</strong>可能<strong>什么</strong>平台会崛起。</p>
+<hr>
+<h2 id="section-20.1">20.1 超导量子比特的基本物理</h2>
+<h3>20.1.1 经典超导回顾 (BCS 理论)</h3>
+<p><strong>经典超导</strong> (1911 Onnes 发现; 1957 BCS 理论):</p>
+<ul>
+<li>某些金属在温度 $T < T_c$ (临界温度) → 电阻<strong>消失</strong></li>
+<li><strong>机制</strong> (BCS 1957): 晶格振动 → 电子间<strong>间接吸引</strong> → 形成 <strong>Cooper 对</strong></li>
+<table class="chapter-table">
+<tr><th>\Psi</th></tr>
+</table>
+<li><strong>关键</strong>: $\phi$ (相位) 是<strong>宏观量子变量</strong> —— 这就是超导 qubit 的"量子化对象"</li>
+</ul>
+<p><strong>临界温度</strong> $T_c$ (常用超导材料):</p>
+<ul>
+<li><strong>Al (铝)</strong>: $T_c = 1.2$ K (最早用, 1999 Nakamura)</li>
+<li><strong>Nb (铌)</strong>: $T_c = 9.3$ K (常用, IBM/Google)</li>
+<li><strong>Ta (钽)</strong>: $T_c = 4.5$ K (新, 2020+ Google 用, T1 ↑ 5×)</li>
+<li><strong>TiN (氮化钛)</strong>: $T_c = 4.6$ K (可变, 研究中)</li>
+</ul>
+<p><strong>关键</strong>: 超导 qubit 必须<strong>远低于</strong> $T_c$ (通常 $< T_c / 10$) 才能保持相干。</p>
+<h3>20.1.2 Josephson 效应 (1962 Josephson 预言)</h3>
+<p><strong>Josephson 结</strong> (Josephson 1962, 1973 诺贝尔奖):</p>
+<ul>
+<li>两个超导体之间夹<strong>薄</strong>绝缘层 (~1 nm 厚)</li>
+<li>Cooper 对通过<strong>量子隧穿</strong>穿过绝缘层</li>
+<li><strong>Josephson 关系</strong>:</li>
+</ul>
+<p>$$I_s = I_c \sin(\phi), \quad \frac{d\phi}{dt} = \frac{2e}{\hbar} V$$</p>
+<ul>
+<li>其中 $\phi$ 是相位差, $I_c$ 是临界电流 (典型 ~10-100 nA)</li>
+</ul>
+<p><strong>关键事实</strong>: Josephson 结是一个<strong>非线性</strong>电感 + <strong>理想</strong>的非色散元件——这是超导 qubit 的<strong>核心</strong>。</p>
+<p><strong>为什么非线性很重要?</strong></p>
+<ul>
+<li><strong>线性</strong> LC 振子 → 谐波子 → <strong>无穷多</strong>等距能级 → <strong>不能</strong>选 2 个能级当 qubit</li>
+<li><strong>非线性</strong> Josephson 电感 → <strong>非谐</strong>(anharmonic)→ <strong>能级不等距</strong> → 选<strong>最低</strong> 2 个能级当 $\lvert 0\rangle, \lvert 1\rangle$</li>
+<li>微波驱动<strong>只</strong>激发 $\lvert 0\rangle \to \lvert 1\rangle$ transition (因为其他 transition 频率不同)</li>
+<h3>20.1.3 Josephson 结的等效电路</h3>
+</ul>
+<p><strong>等效电路</strong>:</p>
+<pre><code>[超导体 1] || (Josephson 结 = 非线性电感 + 电容) || [超导体 2]</code></pre>
+<p><strong>详细</strong>:</p>
+<ul>
+<li><strong>非线性电感</strong> $L_J = \phi_0 / (I_c \cos\phi)$, 其中 $\phi_0 = \hbar / 2e$ 是<strong>磁通量子</strong></li>
+<li><strong>结电容</strong> $C_J$ (来自几何, ~fF 量级)</li>
+<li><strong>总能量</strong>: 电容能 + Josephson 能</li>
+<h3>20.1.4 Josephson 能量与电荷能</h3>
+</ul>
+<p><strong>两个关键参数</strong>:</p>
+<ol>
+<li><strong>Josephson 能量</strong>: $E_J = I_c \phi_0 = \hbar I_c / 2e$</li>
+</ul>
+<p>- 典型: $E_J / h \sim$ 5-20 GHz - 物理: 决定 Josephson 结"非线性强度"</p>
+<ol>
+<li><strong>电荷能</strong> (charging energy): $E_C = e^2 / (2C)$</li>
+</ul>
+<p>- 典型: $E_C / h \sim$ 0.2-0.5 GHz - 物理: 决定 qubit 对电荷<strong>噪声</strong>的灵敏度</p>
+<ol>
+<li><strong>关键比</strong>: $E_J / E_C$</li>
+</ul>
+<p>- <strong>小</strong> ($E_J / E_C \sim 1-10$): <strong>charge qubit</strong> (Cooper-pair box) — <strong>敏感</strong>于电荷噪声 → T1 短 - <strong>大</strong> ($E_J / E_C \sim 50-100$): <strong>transmon</strong> — <strong>不敏感</strong>于电荷噪声 → T1 长 ✅ - <strong>现代超导 qubit 几乎全部用 transmon</strong></p>
+<hr>
+<h2 id="section-20.2">20.2 Transmon Qubit 详解 (Koch et al. 2007)</h2>
+<h3>20.2.1 Transmon 的设计</h3>
+<p><strong>关键 idea</strong> (Koch, Manucharyan, Devoret 2007, "Charge-insensitive qubit design derived from the Cooper pair box"):</p>
+<ul>
+<li>在 Josephson 结<strong>两端</strong>并联 1 个<strong>大</strong>电容 $C_B$ (shunting capacitor)</li>
+<li>$C_B \gg C_J$ → $E_C \downarrow$ → $E_J / E_C \gg 1$</li>
+<li>物理: 电荷起伏<strong>被大电容"平均"掉</strong> → qubit <strong>不敏感</strong>于电荷噪声</li>
+</ul>
+<p><strong>结构示意</strong>:</p>
+<pre><code>       ┌─── Josephson 结 ───┐
+[ qubit island ]            [ ground ]
+       └──── C_B ────────────┘</code></pre>
+<p><strong>典型参数</strong> (现代 transmon):</p>
+<ul>
+<li>$E_J / h \sim$ 10-20 GHz (Josephson 频率)</li>
+<li>$E_C / h \sim$ 0.2-0.3 GHz (电荷能)</li>
+<li>$E_J / E_C \sim$ 50-100 ✅</li>
+<li>工作频率 $\omega_{01} / (2\pi) \sim$ 4-6 GHz (qubit 跃迁频率)</li>
+<li>非谐性 $\alpha / (2\pi) = (E_{12} - E_{01}) / h \sim -200$ MHz</li>
+<h3>20.2.2 Transmon Hamiltonian</h3>
+</ul>
+<p><strong>完整 Hamiltonian</strong> (简化版): $$H = 4 E_C (\hat{n} - n_g)^2 - E_J \cos\hat{\phi}$$</p>
+<p>其中:</p>
+<ul>
+<li>$\hat{n}$: qubit island 上的<strong>Cooper 对数</strong>算符 (整数, $\hat{n} = -i \partial / \partial \phi$)</li>
+<li>$n_g$: 偏置电荷 (环境浮动, transmon $E_J/E_C \gg 1$ 时<strong>不重要</strong>)</li>
+<li>$\hat{\phi}$: <strong>相位</strong>算符 (transmon 的"量子化对象")</li>
+<li>$E_J \cos\hat{\phi}$: Josephson 势能 (来自 $I_s \phi$ 积分)</li>
+<li>$4E_C \hat{n}^2$: 电容能 (库仑相互作用)</li>
+</ul>
+<p><strong>关键</strong>: 在 $E_J/E_C \gg 1$ 极限, 系统<strong>近似</strong>量子化简谐振子 + 弱<strong>非谐</strong>修正。</p>
+<h3>20.2.3 Transmon 的能级</h3>
+<p><strong>transmon 能级</strong> (数值对角化):</p>
+<table class="chapter-table">
+<tr><th>能级</th><th>标记</th><th>能量 (相对基态)</th><th>物理</th></tr>
+<tr><td>$\lvert 0\rangle$</td><td>基态</td><td>$0$</td><td>qubit 的 $\lvert 0\rangle$</td></tr>
+<tr><td>$\lvert 1\rangle$</td><td>第 1 激发</td><td>$\hbar \omega_{01} \sim 5$ GHz</td><td>qubit 的 $\lvert 1\rangle$</td></tr>
+<tr><td>$\lvert 2\rangle$</td><td>第 2 激发</td><td>$\hbar \omega_{02} \sim 10$ GHz - $\alpha$</td><td>"泄漏"能级</td></tr>
+<tr><td>$\lvert 3\rangle$</td><td>第 3 激发</td><td>$\hbar \omega_{03} \sim 15$ GHz - $3\alpha$</td><td>更远</td></tr>
+</table>
+<p><strong>关键</strong>:</p>
+<ul>
+<li>$\omega_{01} \sim \sqrt{8 E_J E_C} / \hbar$ (主导项)</li>
+<li>$\alpha = (E_{12} - E_{01}) / h \sim -200$ MHz (非谐性)</li>
+<li>微波驱动 $\omega_d = \omega_{01}$ → <strong>只</strong>激发 $\lvert 0\rangle \leftrightarrow \lvert 1\rangle$ transition</li>
+<li>微波<strong>不</strong>激发 $\lvert 0\rangle \leftrightarrow \lvert 2\rangle$ (因为频率差 ~200 MHz)</li>
+<h3>20.2.4 Transmon vs Charge qubit</h3>
+<table class="chapter-table">
+<tr><th>指标</th><th>Charge qubit (Cooper-pair box)</th><th>Transmon</th></tr>
+<tr><td>$E_J / E_C$</td><td>~1-10</td><td>~50-100</td></tr>
+<tr><td>灵敏度 (电荷噪声)</td><td><strong>高</strong> (10× qubit dephasing)</td><td><strong>低</strong> (1/100)</td></tr>
+<tr><td>T1 (能量弛豫)</td><td>~1 μs</td><td><strong>100-300 μs</strong> ✅</td></tr>
+<tr><td>T2 (退相干)</td><td>~0.1-1 μs</td><td><strong>50-200 μs</strong> ✅</td></tr>
+<tr><td>非谐性</td><td><strong>大</strong> (1-5 GHz)</td><td><strong>小</strong> (200 MHz)</td></tr>
+<tr><td>微波门时间</td><td>~1 ns</td><td>~10-100 ns</td></tr>
+<tr><td>制造工艺</td><td><strong>复杂</strong> (需要 gate voltage)</td><td><strong>简单</strong> (固定参数)</td></tr>
+<tr><td>现代使用</td><td>❌ 几乎不用</td><td>✅ <strong>标准</strong></td></tr>
+</table>
+</ul>
+<p><strong>关键事实</strong>: Transmon 的"小非谐性"是<strong>代价</strong> (泄漏 $\lvert 2\rangle$ 概率 ~1%)——但"长 T1/T2"是<strong>巨大收益</strong>——净效应是<strong>指数</strong>级提升电路深度。</p>
+<h3>20.2.5 Transmon 的物理实现</h3>
+<p><strong>典型 transmon 几何</strong>:</p>
+<ul>
+<li><strong>2D transmon</strong>: 1 个 Josephson 结 + 1 个大电容 (叉指电容) → 在 Si 衬底上</li>
+<li><strong>3D transmon</strong> (Paik et al. 2011): 整个电路放在 3D 铝谐振腔内 → T1 ↑ 10× (屏蔽电磁环境)</li>
+</ul>
+<p><strong>材料</strong>:</p>
+<ul>
+<li><strong>Al/AlO_x/Al</strong>: 标准, $T_c \sim 1.2$ K (1999-2020 主流)</li>
+<li><strong>Nb/AlO_x/Nb</strong>: $T_c \sim 9$ K (更稳定, IBM 用)</li>
+<li><strong>Ta/TaO_x/Ta</strong>: $T_c \sim 4.5$ K (新, Google 2020+ 用, T1 ↑ 5×)</li>
+</ul>
+<p><strong>Josephson 结制造</strong>:</p>
+<ul>
+<li><strong>Dolan 桥工艺</strong> (1999, 主流): 电子束光刻 + 斜角蒸镀 + 氧化</li>
+<li><strong>shadow evaporation</strong>: 1 步定义 junction</li>
+<li>现代: <strong>sub-μm</strong> 结面积 → 高度可控</li>
+<hr>
+<h2 id="section-20.3">20.3 量子门实现</h2>
+<h3>20.3.1 单 qubit 门: X, Y 旋转</h3>
+</ul>
+<p><strong>物理机制</strong>: 微波驱动 (10-100 ns 脉冲)</p>
+<p><strong>XY 控制 Hamiltonian</strong> (驱动频率 $\omega_d \approx \omega_{01}$): $$H_d(t) = \hbar \Omega(t) \cos(\omega_d t + \phi) \hat{\sigma}_x$$</p>
+<p>其中:</p>
+<ul>
+<li>$\Omega(t)$: <strong>Rabi 频率</strong> (脉冲包络, ~10-50 MHz)</li>
+<li>$\phi$: 微波相位 (决定 X 还是 Y 旋转)</li>
+<li>$\hat{\sigma}_x$: qubit X 算符</li>
+</ul>
+<p><strong>关键事实</strong>:</p>
+<ul>
+<li>驱动<strong>时间</strong> $t_g$ → <strong>旋转角度</strong> $\theta = \int_0^{t_g} \Omega(t) dt$</li>
+<li>$t_g = 25$ ns, $\Omega = 20$ MHz → $\theta = \pi$ (X 门)</li>
+<li><strong>保真度</strong>: 99.9%+ (现代硬件)</li>
+</ul>
+<p><strong>典型门</strong>:</p>
+<ul>
+<li>$R_x(\pi)$ (NOT 门): 25 ns, 99.9%</li>
+<li>$R_x(\pi/2)$ (Hadamard 的一半): 12.5 ns, 99.95%</li>
+<li>任意 $R_x(\theta)$: $t_g = \theta / \Omega$</li>
+<h3>20.3.2 单 qubit 门: Z 旋转 (虚拟 Z)</h3>
+</ul>
+<p><strong>Z 旋转 = 虚拟 Z 门</strong> (McKay et al. 2017):</p>
+<p><strong>关键 idea</strong>: Z 旋转<strong>不需要</strong>硬件脉冲, 只在<strong>软件</strong>上<strong>更新</strong>驱动相位。</p>
+<p><strong>机制</strong>:</p>
+<ol>
+<li>跟踪驱动相位 $\phi_{frame}$</li>
+<li>要做 $R_z(\theta)$ → 把 $\phi_{frame} \to \phi_{frame} + \theta$</li>
+<li>下一次 X/Y 驱动自动"携带" 这个相位</li>
+</ul>
+<p><strong>优势</strong>:</p>
+<ul>
+<li><strong>零</strong>门时间 (软件操作)</li>
+<li><strong>零</strong>错误率 (完美)</li>
+<li><strong>零</strong>硬件成本</li>
+</ul>
+<p><strong>局限</strong>:</p>
+<ul>
+<li>只能跟 X/Y 一起用 (单独 Z 不物理)</li>
+<li>跨 chip 时<strong>不</strong>能直接传递 (要 reference frame 重置)</li>
+<h3>20.3.3 单 qubit 门: 任意旋转 + Hadamard</h3>
+</ul>
+<p><strong>任意单 qubit</strong> = 3 个 Euler 角: $$U(\theta, \phi, \lambda) = R_z(\phi) R_x(\theta) R_z(\lambda)$$</p>
+<p><strong>Hadamard</strong> = $R_z(\pi/2) R_x(\pi/2) R_z(\pi/2)$:</p>
+<ul>
+<li>3 个虚拟 Z + 1 个 X → 总时间 <strong>25 ns</strong> (跟单 X 一样)</li>
+</ul>
+<p><strong>关键</strong>: 任意单 qubit 都<strong>可以</strong>用 1 个 X 脉冲 + 软件 Z 实现 → <strong>25 ns</strong> 是单 qubit 门的<strong>最低</strong>时间。</p>
+<h3>20.3.3.1 单 qubit 门的硬件实现细节</h3>
+<p><strong>控制线</strong> (从室温到 qubit):</p>
+<ul>
+<li><strong>DC 偏置</strong>: 控制 Z 旋转 (用 flux 偏置 SQUID 环)</li>
+<li><strong>XY 微波线</strong>: 微波驱动 X, Y 旋转</li>
+<li><strong>每条线</strong>长度 ~1 m, <strong>总衰减</strong> ~50 dB → 室温 1 mW → qubit 处 1 fW</li>
+<li><strong>室温电子</strong>: AWG (任意波形发生器) → IQ 调制器 → 上变频 → 放大 → 低温衰减</li>
+</ul>
+<p><strong>关键工程</strong>:</p>
+<ul>
+<li><strong>阻抗匹配</strong>: 50 Ω → 防止反射</li>
+<li><strong>滤波</strong>: 低通 + 高通 + 低温滤波器 → 防止杂散</li>
+<li><strong>校准</strong>: 振幅 / 相位 / 频率漂移 → 周期性补偿 (每小时)</li>
+<h3>20.3.4 两 qubit 门: Cross-Resonance (CR, IBM 方案)</h3>
+</ul>
+<p><strong>Cross-Resonance (CR) 门</strong> (Chow et al. 2011):</p>
+<ul>
+<li><strong>物理</strong>: 微波驱动<strong>控制</strong> qubit (Q_c), 频率调到<strong>目标</strong> qubit (Q_t) 的跃迁频率 $\omega_{Q_t}$</li>
+<li><strong>机制</strong>: Q_c 感受到的微波 → 通过<strong>耦合</strong> (电容/电感) → Q_t → 有效 ZZ 相互作用 → $\bar{Z}_c \otimes \bar{Z}_t$</li>
+</ul>
+<p><strong>CR 门 Hamiltonian</strong> (近似): $$H_{CR} = \frac{\Omega_{CR}}{2} \cos[(\omega_d - \omega_t) t] \cdot \bar{Z}_c \otimes \bar{I}_t \cdot \frac{J}{\Delta} \bar{I}_c \otimes \bar{X}_t$$</p>
+<p>其中:</p>
+<ul>
+<li>$\omega_d$: 驱动频率 (= $\omega_t$)</li>
+<li>$\Delta = \omega_q - \omega_t$: 两个 qubit 的频率差</li>
+<li>$J$: 静态耦合强度</li>
+<li>$\Omega_{CR}$: CR 驱动 Rabi 频率</li>
+</ul>
+<p><strong>CR CNOT 时间</strong>: 100-300 ns</p>
+<p><strong>CR 保真度</strong>: 99.5-99.7% (现代 IBM 硬件)</p>
+<h3>20.3.5 两 qubit 门: CZ (Google 方案)</h3>
+<p><strong>CZ 门</strong> (DiCarlo et al. 2009):</p>
+<ul>
+<li><strong>物理</strong>: flux 偏置<strong>目标</strong> qubit → 暂时调到跟控制 qubit 频率<strong>共振</strong></li>
+<li><strong>机制</strong>: 共振 → 交换激发 → $\lvert 11\rangle \to -\lvert 11\rangle$, 其他态不动 → 这是 CZ</li>
+</ul>
+<p><strong>CZ Hamiltonian</strong> (理想化): $$H_{CZ}(t) = J(t) (\bar{X}_c \otimes \bar{X}_t + \bar{Y}_c \otimes \bar{Y}_t)$$</p>
+<p><strong>CZ 时间</strong>: 30-50 ns (Google Willow)</p>
+<p><strong>CZ 保真度</strong>: 99.7-99.9% (Google Willow 2024)</p>
+<p><strong>优势</strong>: <strong>快</strong> (30 ns vs CR 200 ns) + <strong>高保真</strong> <strong>劣势</strong>: 需要 flux 偏置 (硬件复杂, 串扰)</p>
+<h3>20.3.6 两 qubit 门对比</h3>
+<table class="chapter-table">
+<tr><th>指标</th><th>CR (IBM)</th><th>CZ (Google)</th><th>iSWAP (通用)</th></tr>
+<tr><td>门时间</td><td>100-300 ns</td><td>30-50 ns</td><td>50-100 ns</td></tr>
+<tr><td>保真度</td><td>99.5-99.7%</td><td>99.7-99.9%</td><td>99.5-99.8%</td></tr>
+<tr><td>硬件</td><td>微波 + 耦合器</td><td>flux 偏置</td><td>flux 偏置</td></tr>
+<tr><td>串扰</td><td>中</td><td>高 (flux)</td><td>高 (flux)</td></tr>
+<tr><td>实现难度</td><td>中</td><td>高</td><td>中</td></tr>
+<tr><td>主流采用</td><td>IBM, Rigetti</td><td>Google, Atom Computing</td><td>部分</td></tr>
+</table>
+<p><strong>关键</strong>: 两 qubit 门是<strong>瓶颈</strong>——保真度比单 qubit <strong>差 5-10 倍</strong>, 是 FTQC 阈值 ~99.99% 目标的<strong>主要挑战</strong>。</p>
+<h3>20.3.7.1 可调耦合器 (Tunable Coupler, Google 2021)</h3>
+<p><strong>问题</strong>: 静态耦合 → 闲置时<strong>也</strong>耦合 → 串扰 + 频率拥挤</p>
+<p><strong>解决</strong> (Google Yan et al. 2018):</p>
+<ul>
+<li>在 2 个 qubit 之间加 1 个<strong>可调</strong>耦合器 (1 个额外 transmon)</li>
+<li>耦合强度 $J$ <strong>可调</strong>: 闲置时 $J = 0$, 操作时 $J \neq 0$</li>
+<li>通过 flux 偏置耦合器 → 调 $J$</li>
+</ul>
+<p><strong>优势</strong>:</p>
+<ul>
+<li>串扰 ↓ <strong>10×</strong></li>
+<li>两 qubit 错误率 ↓ <strong>2×</strong> (从 0.3% 到 0.15%)</li>
+<li>可调耦合器<strong>也</strong>能做<strong>iSWAP</strong> 门</li>
+</ul>
+<p><strong>代价</strong>:</p>
+<ul>
+<li>多 1 个 transmon per 耦合器 → qubit 数<strong>实际</strong> 增加 ~50%</li>
+<li>硬件 + 控制<strong>更</strong>复杂</li>
+<li>Google Willow (2024) <strong>全部</strong>用可调耦合器</li>
+<h3>20.3.7 两 qubit 门错误率来源</h3>
+</ul>
+<p><strong>主要错误源</strong>:</p>
+<ol>
+<li><strong>ZZ 耦合泄漏</strong>: 不希望的双 qubit 静态耦合 → 旋转中泄漏</li>
+<li><strong>频率拥挤</strong>: 多 qubit 时, 驱动频率命中非目标 qubit</li>
+<li><strong>非谐性</strong>: 微波驱动<strong>也</strong>激发 $\lvert 0\rangle \to \lvert 2\rangle$ 泄漏 → 用 DRAG 修正 (Motzoi 2009)</li>
+<li><strong>控制脉冲形状</strong>: 不完美的高斯/方波脉冲 → 用 GRAPE 等最优控制</li>
+</ul>
+<p><strong>典型现代两 qubit 错误率</strong>: 0.1-0.5% (99.5-99.9%)</p>
+<hr>
+<h2 id="section-20.4">20.4 多 qubit 系统与连接性</h2>
+<h3>20.4.1 连接性拓扑</h3>
+<p><strong>为什么连接性重要?</strong></p>
+<ul>
+<li>算法需要<strong>任意</strong> qubit 对通信 (e.g., Shor)</li>
+<li>物理上只能<strong>近邻</strong>耦合 (2D 平面) → 远距 qubit 需要 SWAP 链</li>
+<li><strong>SWAP 链</strong> = 多个 CNOT 串接 → 错误<strong>累积</strong> + 时间<strong>增长</strong></li>
+</ul>
+<p><strong>5 种拓扑</strong>:</p>
+<pre><code>1. 1D chain:        2. 2D grid:        3. Heavy-hex (IBM):
+○─○─○─○─○           ○─○─○             ○───○───○
+                                       │   │   │
+○─○─○─○─○           ○─○─○             ○   ○   ○
+                                       │   │   │
+○─○─○─○─○           ○─○─○             ○───○───○</code></pre>
+<ol>
+<li><strong>3D 集成</strong> (Google 探索): 多层 2D</li>
+<li><strong>全连接</strong> (离子阱, ch21): 任意 qubit 对</li>
+</ul>
+<p><strong>关键事实</strong>: <strong>没有</strong> 2D 拓扑能实现<strong>全连接</strong> → SWAP 是<strong>必然代价</strong>。</p>
+<h3>20.4.2 IBM Heavy-hex 拓扑</h3>
+<p><strong>Heavy-hex</strong> (IBM 2021+, 127 qubit 起):</p>
+<ul>
+<li>每个 qubit 连 <strong>2-3 个</strong> 邻居 (不是 2D grid 的 4 个)</li>
+<li><strong>减少频率拥挤</strong>: 邻居少 → 频率冲突少</li>
+<li><strong>增加冗余</strong>: 多条路径 → 容错</li>
+</ul>
+<p><strong>典型参数</strong> (IBM Eagle 127 qubit):</p>
+<ul>
+<li>量子比特: 127</li>
+<li>平均连接度: 2.4</li>
+<li>频率范围: 4.5-5.5 GHz</li>
+<li>频率间隔: ~10 MHz (避免冲突)</li>
+</ul>
+<p><strong>对比 2D grid</strong>:</p>
+<table class="chapter-table">
+<tr><th>指标</th><th>2D grid</th><th>Heavy-hex</th></tr>
+<tr><td>连接度</td><td>4</td><td>2-3</td></tr>
+<tr><td>频率拥挤</td><td><strong>高</strong></td><td><strong>中</strong></td></tr>
+<tr><td>SWAP 深度 (平均)</td><td>$O(\sqrt{N})$</td><td>$O(\sqrt{N})$</td></tr>
+<tr><td>制造容差</td><td><strong>紧</strong></td><td><strong>松</strong></td></tr>
+<tr><td>现代采用</td><td>Google (Sycamore 53)</td><td>IBM (127+)</td></tr>
+</table>
+<h3>20.4.3 频率拥挤问题</h3>
+<p><strong>问题</strong>: N 个 qubit → N 个不同频率 → 频率范围<strong>有限</strong> (~4-6 GHz) → 平均频率间隔 $\Delta f / N$</p>
+<p><strong>例子</strong> (100 qubit, 4-5.5 GHz 范围):</p>
+<ul>
+<li>总范围: 1.5 GHz</li>
+<li>平均间隔: 15 MHz</li>
+<li>但<strong>避免</strong>碰撞需要间隔 > 50 MHz → <strong>不</strong>够!</li>
+</ul>
+<p><strong>解决方案</strong>:</p>
+<ol>
+<li><strong>拓扑优化</strong> (Heavy-hex): 减少连接 → 减少需要的不同频率</li>
+<li><strong>频率分配算法</strong>: graph coloring + 优化</li>
+<li><strong>可调耦合器</strong> (Google 2021+): qubit 频率<strong>可调</strong> → 灵活但增加硬件</li>
+<li><strong>Tunable qubit</strong>: flux 调节频率 → 但<strong>降低</strong> T1 (flux noise)</li>
+<h3>20.4.4 串扰 (Crosstalk)</h3>
+</ul>
+<p><strong>问题</strong>: 操作 1 个 qubit <strong>同时</strong>影响<strong>相邻</strong> qubit</p>
+<p><strong>典型串扰</strong>:</p>
+<ul>
+<li><strong>ZZ 耦合</strong>: qubit A 操作 → 引起 qubit B 的频率微移 → 错误</li>
+<li><strong>驱动串扰</strong>: 微波泄漏到相邻 qubit → 不期望的旋转</li>
+<li><strong>测量串扰</strong>: 测量 qubit A → qubit B 也被"测" (残基光)</li>
+<li><strong>典型串扰强度</strong>: 0.1-1% (需要 0.01% 才是 FTQC 级)</li>
+</ul>
+<p><strong>解决方案</strong>:</p>
+<ul>
+<li><strong>可调耦合器</strong> (Google 2021+): 闲置时<strong>断开</strong> 耦合 → 串扰 ↓ 10×</li>
+<li><strong>硬件 calibration</strong>: 测量串扰矩阵 → 实时补偿</li>
+<li><strong>DRAG 脉冲</strong>: 抑制泄漏 → 间接减少串扰</li>
+<h3>20.4.5 规模演化 (2017-2024)</h3>
+<table class="chapter-table">
+<tr><th>系统</th><th>年份</th><th>qubit 数</th><th>拓扑</th><th>关键</th></tr>
+<tr><td><strong>IBM 5</strong></td><td>2016</td><td>5</td><td>星形</td><td>首次云平台</td></tr>
+<tr><td><strong>IBM 16</strong></td><td>2017</td><td>16</td><td>2D grid</td><td>IBM Q 16</td></tr>
+<tr><td><strong>Google Bristlecone</strong></td><td>2018</td><td>72</td><td>2D grid</td><td>公布未演示</td></tr>
+<tr><td><strong>Google Sycamore</strong></td><td>2019</td><td>53</td><td>2D grid</td><td>量子优越性</td></tr>
+<tr><td><strong>IBM Eagle</strong></td><td>2021</td><td>127</td><td>Heavy-hex</td><td>突破 100</td></tr>
+<tr><td><strong>IBM Osprey</strong></td><td>2022</td><td>433</td><td>Heavy-hex</td><td>4× 上代</td></tr>
+<tr><td><strong>IBM Condor</strong></td><td>2023</td><td>1121</td><td>Heavy-hex</td><td>突破 1000</td></tr>
+<tr><td><strong>Google Willow</strong></td><td>2024</td><td>105</td><td>2D grid + tunable</td><td><strong>首次低于阈值</strong></td></tr>
+<tr><td><strong>Atom Computing</strong></td><td>2023</td><td>1180</td><td>中性原子 (ch24)</td><td>非超导</td></tr>
+</table>
+</ul>
+<p><strong>观察</strong>:</p>
+<ul>
+<li>IBM 用 Heavy-hex <strong>指数</strong>增长 (5 → 16 → 127 → 433 → 1121)</li>
+<li>Google 偏向<strong>质量</strong> (53 → 105) 而非数量</li>
+<li>2024 年最大超导 = <strong>1121</strong> (IBM Condor)</li>
+<hr>
+<h2 id="section-20.5">20.5 关键物理参数</h2>
+<h3>20.5.1 T1: 能量弛豫时间</h3>
+</ul>
+<p><strong>定义</strong>: qubit 从 $\lvert 1\rangle$ <strong>自发</strong>弛豫到 $\lvert 0\rangle$ 的<strong>时间常数</strong> (e 折): $$P_{\lvert 1\rangle}(t) = P_{\lvert 1\rangle}(0) e^{-t / T_1}$$</p>
+<p><strong>典型值</strong> (现代 transmon):</p>
+<ul>
+<li><strong>平均 T1</strong>: 100-300 μs</li>
+<li><strong>最佳 T1</strong>: 1-2 ms (某些优化样本)</li>
+<li><strong>最差 T1</strong>: 10-50 μs (制造缺陷)</li>
+</ul>
+<p><strong>物理来源</strong>:</p>
+<ol>
+<li><strong>介电损耗</strong>: qubit island 上的 oxide / interface 缺陷 → 介电损耗</li>
+<li><strong>辐射</strong>: qubit 发射光子到自由空间或传输线</li>
+<li><strong>准粒子</strong>: 热激发 Cooper 对破裂 → 自由电子 → 损耗</li>
+</ul>
+<p><strong>改进路径</strong>:</p>
+<ul>
+<li><strong>材料工程</strong>: Ta (2020+) 替代 Nb/Al → T1 ↑ 5×</li>
+<li><strong>3D transmon</strong> (Paik 2011): T1 ↑ 10× vs 2D</li>
+<li><strong>Surface treatment</strong>: 去除表面 oxide → T1 ↑ 2×</li>
+<h3>20.5.2 T2: 退相干时间</h3>
+</ul>
+<p><strong>定义</strong>: qubit 失去<strong>相位</strong>信息的时间 (T2* 是 "纯" 退相干, T2 是用 Hahn echo):</p>
+<p><strong>典型值</strong>:</p>
+<ul>
+<li><strong>T2</strong>*: 30-100 μs (低频噪声限制)</li>
+<li><strong>T2 (echo)</strong>: 100-200 μs (低频部分可恢复)</li>
+<li><strong>T2 ≤ 2 T1</strong> (理论上限)</li>
+</ul>
+<p><strong>物理来源</strong>:</p>
+<ol>
+<li><strong>低频噪声</strong>: 1/f 噪声 (flux noise, charge noise) → T2* 限制</li>
+<li><strong>高频噪声</strong>: 介电损耗 → T1 限制 (跟 T2 相关)</li>
+<h3>20.5.3 门错误率</h3>
+</ul>
+<p><strong>现代超导 qubit 错误率</strong> (2024):</p>
+<table class="chapter-table">
+<tr><th>门</th><th>错误率</th><th>保真度</th></tr>
+<tr><td><strong>单 qubit (X, Y)</strong></td><td>0.05-0.1%</td><td>99.9-99.95%</td></tr>
+<tr><td><strong>单 qubit (虚拟 Z)</strong></td><td><strong>0</strong></td><td>100% ✅</td></tr>
+<tr><td><strong>两 qubit (CZ/CR)</strong></td><td>0.1-0.5%</td><td>99.5-99.9%</td></tr>
+<tr><td><strong>测量</strong></td><td>0.3-1%</td><td>99-99.7%</td></tr>
+<tr><td><strong>初始化</strong></td><td>0.1%</td><td>99.9%</td></tr>
+</table>
+<p><strong>关键</strong>:</p>
+<ul>
+<li>单 qubit <strong>接近</strong>完美 (99.9%)</li>
+<li>两 qubit <strong>差 5-10×</strong> (99.5%)</li>
+<li>测量<strong>最差</strong> (1%)</li>
+<li><strong>FTQC 阈值</strong>: 99.99% — <strong>还差 10-100×</strong></li>
+</ul>
+<p><strong>FTQC 阈值差距分析</strong>:</p>
+<ul>
+<li>当前两 qubit: 99.5% → 错误率 0.5%</li>
+<li>FTQC 阈值: 99.99% → 错误率 0.01%</li>
+<li><strong>差距</strong>: 50×</li>
+</ul>
+<p><strong>3 个</strong>主要<strong>改进路径</strong>:</p>
+<ol>
+<li><strong>硬件</strong>: 可调耦合器 + 材料升级 (Ta) + cryo-CMOS → 错误率 ↓ 5-10×</li>
+<li><strong>控制</strong>: DRAG + GRAPE + AI 优化 → 错误率 ↓ 2-3×</li>
+<li><strong>纠错</strong>: 表面码 + 实时解码 → 错误率 ↓ <strong>指数</strong> (但<strong>代价</strong> qubit 数 ↑ 1000×)</li>
+</ul>
+<p><strong>关键</strong>: <strong>没有</strong>单一路径<strong>单独</strong>达阈值——必须<strong>硬件 + 控制 + 纠错</strong> 三者<strong>结合</strong>——这正是 ch18-19 QEC + FTQC 的<strong>核心</strong>。</p>
+<h3>20.5.4 错误率时间演化</h3>
+<table class="chapter-table">
+<tr><th>年份</th><th>单 qubit 错</th><th>两 qubit 错</th><th>测量错</th></tr>
+<tr><td>2017</td><td>0.5%</td><td>2%</td><td>5%</td></tr>
+<tr><td>2019</td><td>0.1%</td><td>0.5%</td><td>1%</td></tr>
+<tr><td>2021</td><td>0.05%</td><td>0.3%</td><td>0.7%</td></tr>
+<tr><td>2024 (Willow)</td><td>0.03%</td><td>0.1%</td><td>0.4%</td></tr>
+</table>
+<p><strong>观察</strong>: 7 年内, 单 qubit ↓ 15×, 两 qubit ↓ 20×, 测量 ↓ 12× — <strong>持续改进</strong>!</p>
+<h3>20.5.5.1 现代硬件错误率数据 (2024)</h3>
+<p><strong>Google Willow (2024)</strong> (Acharya et al., Nature 2024):</p>
+<ul>
+<li><strong>单 qubit 错误</strong>: 0.035%</li>
+<li><strong>两 qubit 错误</strong> (测时, 1 step): 0.33%</li>
+<li><strong>两 qubit 错误</strong> (循环时, 100 ns cycle): 0.14%</li>
+<li><strong>测量错误</strong> (测时): 0.77%</li>
+<li><strong>测量错误</strong> (循环时): 0.34%</li>
+</ul>
+<p><strong>IBM Heron (2024)</strong> (IBM Quantum roadmap):</p>
+<ul>
+<li>156 qubit</li>
+<li>单 qubit 错误: 0.05%</li>
+<li>两 qubit 错误: 0.30%</li>
+<li>测量错误: 0.50%</li>
+</ul>
+<p><strong>关键观察</strong>:</p>
+<ul>
+<li>"测时" vs "循环时" 区别: 测时是单步门 + 测; 循环时是连续操作 → 反映<strong>真实电路</strong>性能</li>
+<li>循环时错误率<strong>更</strong>接近实际 (低 2×)</li>
+<li>Google Willow 循环时两 qubit 错误 0.14% → <strong>接近</strong> FTQC 阈值 0.01% — <strong>还差 14×</strong></li>
+<h3>20.5.5 改进路径: DRAG 和最优控制</h3>
+</ul>
+<p><strong>DRAG</strong> (Derivative Removal by Adiabatic Gate, Motzoi 2009):</p>
+<ul>
+<li><strong>问题</strong>: 微波驱动<strong>也</strong>激发 $\lvert 0\rangle \to \lvert 2\rangle$ 泄漏</li>
+<li><strong>解决</strong>: 在 Gaussian 脉冲上<strong>叠加</strong>导数项 (DRAG 修正) → 抑制泄漏</li>
+<li><strong>效果</strong>: 泄漏错误 ↓ 10×</li>
+</ul>
+<p><strong>GRAPE</strong> (Gradient Ascent Pulse Engineering, Khaneja 2005):</p>
+<ul>
+<li><strong>问题</strong>: 简单脉冲 (Gaussian, square) <strong>不</strong>是最优</li>
+<li><strong>解决</strong>: 数值<strong>优化</strong>脉冲形状 (100+ 参数) → 最小化错误</li>
+<li><strong>效果</strong>: 门错误 ↓ 2-3×, 时间 ↓ 20%</li>
+<hr>
+<h2 id="section-20.6">20.6 测量与读出 (Dispersive Readout)</h2>
+<h3>20.6.1 基本原理</h3>
+</ul>
+<p><strong>色散读出</strong> (Dispersive readout, Wallraff 2004):</p>
+<ul>
+<li>每个 qubit <strong>耦合</strong>到 1 个<strong>谐振腔</strong> (readout resonator, ~6-7 GHz)</li>
+<li><strong>色散区</strong>: $\lvert \omega_q - \omega_r \rvert \gg g$ (qubit-腔耦合远小于失谐)</li>
+<li><strong>机制</strong>: qubit 态<strong>改变</strong>谐振腔的有效频率:</li>
+</ul>
+<p>- $\lvert 0\rangle$ → $\omega_r' = \omega_r + \chi$ - $\lvert 1\rangle$ → $\omega_r' = \omega_r - \chi$</p>
+<ul>
+<li>$\chi \sim g^2 / \Delta$ 是<strong>色散频移</strong> (典型 ~1-5 MHz)</li>
+</ul>
+<p><strong>测量</strong>:</p>
+<ol>
+<li>发送微波到谐振腔 (频率 $\omega_r$)</li>
+<li>测<strong>透射</strong> (或反射) 信号</li>
+<li>根据<strong>相位</strong> (S21 参数) 推断 qubit 是 $\lvert 0\rangle$ 还是 $\lvert 1\rangle$</li>
+<h3>20.6.2 信噪比与积分时间</h3>
+</ul>
+<p><strong>信噪比</strong> (SNR): $$\text{SNR} = \frac{\lvert V_0 - V_1 \rvert}{\sigma_V} \propto \sqrt{n_{\text{ph}}} \cdot \kappa \cdot t_m$$</p>
+<p>其中:</p>
+<ul>
+<li>$V_0, V_1$: $\lvert 0\rangle, \lvert 1\rangle$ 时的平均电压</li>
+<li>$\sigma_V$: 电压噪声</li>
+<li>$n_{\text{ph}}$: 平均光子数 (限制: 避免 qubit 扰动)</li>
+<li>$\kappa$: 腔衰减率 (~MHz)</li>
+<li>$t_m$: 测量时间 (典型 100-1000 ns)</li>
+</ul>
+<p><strong>保真度</strong>: $$F_m = \frac{1}{2} (1 + \text{erf}(\text{SNR}/\sqrt{2}))$$</p>
+<p><strong>典型值</strong>:</p>
+<ul>
+<li>$t_m = 200$ ns, SNR = 5 → $F_m = 99.7\%$</li>
+<li>$t_m = 1$ μs, SNR = 10 → $F_m = 99.99\%$</li>
+<li><strong>但</strong> $t_m \uparrow$ → 测量错误<strong>累积</strong>到电路错误 → 折衷</li>
+<h3>20.6.3 Purcell 滤波</h3>
+</ul>
+<p><strong>Purcell 效应</strong> (Purcell 1946):</p>
+<ul>
+<li>qubit 能量<strong>快速</strong>泄漏到<strong>耦合</strong>腔 (如果 $\kappa$ 大)</li>
+<li>导致 T1 ↓ (尤其 qubit 跟 readout 腔<strong>强</strong>耦合时)</li>
+</ul>
+<p><strong>Purcell 滤波</strong> (Reed 2010):</p>
+<ul>
+<li>在 qubit 和 readout 腔之间加 1 个<strong>滤波</strong>腔</li>
+<li>滤波腔频率<strong>远离</strong> qubit → 阻止泄漏</li>
+<li><strong>效果</strong>: T1 ↑ 10×, 同时维持 readout 效率</li>
+<h3>20.6.4 多路复用读出</h3>
+</ul>
+<p><strong>问题</strong>: 1000 qubit → 1000 个 readout 通道 → <strong>不</strong>可行 (线路 + 冷却功率)</p>
+<p><strong>Frequency multiplexing</strong>:</p>
+<ul>
+<li>多 qubit <strong>共享</strong> 1 个 readout 通道</li>
+<li>不同 qubit 的 readout 腔<strong>频率不同</strong> (e.g., 6.0, 6.1, 6.2 GHz)</li>
+<li>1 个 microwave 源 + 1 个 ADC → <strong>频谱</strong> 分离 → 同时读 5-10 qubit</li>
+</ul>
+<p><strong>典型配置</strong> (IBM):</p>
+<ul>
+<li>1 个 readout 通道 → 5-10 qubit</li>
+<li>1000 qubit → 100-200 通道 → <strong>可行</strong></li>
+<h3>20.6.5 测量错误的挑战</h3>
+</ul>
+<p><strong>典型测量错误</strong>:</p>
+<ul>
+<li><strong>热错误</strong>: $\lvert 1\rangle$ 错误读成 $\lvert 0\rangle$ (弛豫) → ~0.1-0.3%</li>
+<li><strong>激发错误</strong>: $\lvert 0\rangle$ 错误读成 $\lvert 1\rangle$ (热激发) → ~0.1%</li>
+<li><strong>串扰</strong>: 测量 A 影响 B → ~0.1%</li>
+</ul>
+<p><strong>FTQC 需求</strong>: < 0.1% (表面码假设 < 0.1%) → <strong>还差 3-10×</strong></p>
+<hr>
+<h2 id="section-20.7">20.7 制冷与封装</h2>
+<h3>20.7.1 为什么需要极低温?</h3>
+<p><strong>问题</strong>: 热激发 $n_{th} = 1 / (e^{\hbar \omega_q / k_B T} - 1)$</p>
+<ul>
+<li>$\omega_q / (2\pi) = 5$ GHz</li>
+<li>$T = 300$ K: $n_{th} \sim 10^3$ → qubit <strong>完全</strong>热化 (无量子相干性)</li>
+<li>$T = 100$ mK: $n_{th} \sim 10^{-3}$ → qubit 几乎<strong>完全</strong>基态 ✅</li>
+<li>$T = 10$ mK: $n_{th} \sim 10^{-4}$ → <strong>足够</strong>安全</li>
+</ul>
+<p><strong>关键</strong>: 需要 $T < 100$ mK → <strong>稀释制冷机</strong>!</p>
+<h3>20.7.2 稀释制冷机</h3>
+<p><strong>原理</strong> (³He-⁴He 混合):</p>
+<ul>
+<li>³He 原子从 ⁴He 液体中"蒸发" → <strong>吸热</strong> → 局部降温</li>
+<li>可达 5-10 mK</li>
+</ul>
+<p><strong>多层屏蔽</strong> (从外到内):</p>
+<pre><code>室温 (300 K) ──────┐
+                   │ 真空 + 辐射屏蔽
+50 K ──────────────┤
+                   │
+4 K ──────────────┤  ← 1 级冷头
+                   │
+800 mK ────────────┤  ← still
+                   │
+100 mK ────────────┤  ← cold plate
+                   │
+10 mK ─────────────┘  ← mixing chamber (样品)</code></pre>
+<p><strong>冷却功率</strong> (典型 100 μW @ 10 mK):</p>
+<ul>
+<li>1 qubit 微波线路 ~1 mW → 需要<strong>大量衰减</strong></li>
+<li>1000 qubit → 1000 mW → <strong>超过</strong> 100 μW! → <strong>挑战</strong></li>
+<h3>20.7.3 微波线路与衰减</h3>
+</ul>
+<p><strong>典型微波线路</strong> (从室温到 10 mK):</p>
+<pre><code>[室温源] → [~-30 dB 衰减] → [滤波器] → [-10 dB/-20 dB] → [样品]</code></pre>
+<p><strong>总衰减</strong>: ~-50 to -60 dB (功率衰减 10⁶-10⁹ 倍)</p>
+<ul>
+<li>室温 1 mW → 样品 1 fW → <strong>几乎</strong> 0 加热</li>
+<li>但<strong>信号</strong>也<strong>衰减</strong> → 测量的挑战</li>
+<h3>20.7.4 封装</h3>
+</ul>
+<p><strong>PCB (印刷电路板) 封装</strong>:</p>
+<ul>
+<li>样品 (chip) 用<strong>超声 wire bonding</strong> 到 PCB</li>
+<li>PCB 是高频材料 (Rogers, Isola) → 低损耗</li>
+<li>PCB 装在<strong>铜</strong>样品架 → 热接触 + 电磁屏蔽</li>
+<li><strong>3D 铝腔</strong> (3D transmon) → 进一步屏蔽</li>
+</ul>
+<p><strong>典型样品</strong> (Google Willow 2024):</p>
+<ul>
+<li>1 个 ~5×5 mm Si 芯片</li>
+<li>~100 个 transmon + ~200 耦合器 + ~200 readout 谐振腔</li>
+<li>封装到 ~30×30 mm 样品架</li>
+<h3>20.7.5 制冷机的工程挑战</h3>
+</ul>
+<p><strong>挑战 1: 冷却功率</strong></p>
+<ul>
+<li>1000 qubit → 1 W 微波功率 → <strong>远超</strong> 100 μW @ 10 mK</li>
+<li><strong>解决</strong>: 低温放大器 (HEMT, TWPA) + 多级滤波 + 优化衰减</li>
+<li>TWPA (Travelling Wave Parametric Amplifier, 2021+): <strong>量子极限</strong>低噪放大 → 减少输入功率</li>
+</ul>
+<p><strong>挑战 2: 振动</strong></p>
+<ul>
+<li>稀释制冷机的<strong>机械</strong>振动 → 微波相位噪声 → T2 ↓</li>
+<li><strong>解决</strong>: 减振平台 + 软连接 + 振动隔离</li>
+</ul>
+<p><strong>挑战 3: 维护</strong></p>
+<ul>
+<li>³He 循环 → 每周补充</li>
+<li>1 次完整维护 (1 周) → 停机成本<strong>高</strong></li>
+<h3>20.7.6 Cryogenic CMOS 控制</h3>
+</ul>
+<p><strong>问题</strong>: 1000 qubit → 1000+ 同轴电缆 → <strong>热</strong> + <strong>空间</strong> + <strong>成本</strong></p>
+<p><strong>解决</strong> (Intel 2020+ 路线):</p>
+<ul>
+<li>把<strong>部分</strong>控制电路 (DAC, ADC, FPGA) 移到 4 K</li>
+<li>Cryogenic CMOS (cryo-CMOS): 标准 CMOS 工艺, 4 K 仍工作</li>
+<li><strong>优势</strong>: 减少电缆 → 100× 减少</li>
+<li><strong>挑战</strong>: 4 K 功耗 → 几个 W → 4 K 冷头<strong>足够</strong></li>
+<li><strong>路线</strong>: 室温 → 4 K 控制 → 100 mK → 10 mK (qubit)</li>
+</ul>
+<p><strong>现状</strong>: 2024 演示 4 K CMOS 控制 4 qubit (Intel Horse Ridge) — 距离 1000 qubit <strong>还有 5 年</strong>。</p>
+<hr>
+<h2 id="section-20.8">20.8 里程碑系统 (2019-2024)</h2>
+<h3>20.8.1 Google Sycamore (2019) — 量子优越性</h3>
+<p><strong>Sycamore</strong> (Arute et al., Nature 2019):</p>
+<ul>
+<li><strong>53 qubit</strong> 2D grid</li>
+<li><strong>任务</strong>: random circuit sampling (RCS)</li>
+<li><strong>结果</strong>: 200 秒 vs 经典超算 Summit <strong>1 万年</strong></li>
+<li><strong>争议</strong>: 经典算法 (张量网络, IBM 2020) 把时间降到 <strong>几天</strong></li>
+<li><strong>意义</strong>: <strong>首次</strong> 量子设备<strong>超越</strong>经典超算 (有争议)</li>
+</ul>
+<p><strong>技术细节</strong>:</p>
+<ul>
+<li>53 qubit 中<strong>有效</strong> 53</li>
+<li>单 qubit 错误: 0.1%, 两 qubit: 0.6%, 测量: 1%</li>
+<li>电路深度: 20 层</li>
+<li>总操作: $53 \times 20 \times 10 \approx 10^4$ 两 qubit 门</li>
+<h3>20.8.2 IBM Eagle/Osprey/Condor (2021-2023) — 数量级突破</h3>
+</ul>
+<p><strong>IBM Eagle</strong> (2021):</p>
+<ul>
+<li><strong>127 qubit</strong> Heavy-hex</li>
+<li><strong>首次</strong>突破 100 qubit</li>
+<li><strong>量子体积</strong> $2^{128}$ (声称)</li>
+</ul>
+<p><strong>IBM Osprey</strong> (2022):</p>
+<ul>
+<li><strong>433 qubit</strong> Heavy-hex</li>
+<li><strong>4×</strong> 上代</li>
+</ul>
+<p><strong>IBM Condor</strong> (2023):</p>
+<ul>
+<li><strong>1121 qubit</strong> Heavy-hex</li>
+<li><strong>首次</strong>突破 1000 qubit</li>
+<li><strong>意义</strong>: 数量级突破,<strong>但</strong> 错误率仍高 → 需容错</li>
+<h3>20.8.3 Google Willow (2024) — 首次低于阈值</h3>
+</ul>
+<p><strong>Willow</strong> (Acharya et al., Nature 2024):</p>
+<ul>
+<li><strong>105 qubit</strong> 2D grid</li>
+<li><strong>关键突破</strong>: <strong>首次</strong>实验<strong>低于</strong>表面码阈值!</li>
+</ul>
+<p><strong>详细数据</strong>:</p>
+<ul>
+<li>单 qubit 错误: <strong>0.035%</strong></li>
+<li>两 qubit 错误: <strong>0.33%</strong> (测时) / <strong>0.14%</strong> (循环时)</li>
+<li>测量错误: <strong>0.77%</strong> (测时) / <strong>0.34%</strong> (循环时)</li>
+<li>$d = 3, 5, 7$ 表面码 → <strong>逻辑错误率指数下降</strong> (跨阈值证据!)</li>
+</ul>
+<p><strong>关键</strong>: 从 1997 阈值定理到 2024 实验验证 — <strong>27 年</strong> 终于有实验<strong>低于阈值</strong> — FTQC <strong>进入</strong>工程时代。</p>
+<h3>20.8.4 现代超导系统对比 (2024)</h3>
+<table class="chapter-table">
+<tr><th>系统</th><th>玩家</th><th>qubit</th><th>错误率 (2q)</th><th>拓扑</th><th>关键</th></tr>
+<tr><td><strong>Willow</strong></td><td>Google</td><td>105</td><td><strong>0.33%</strong></td><td>2D grid</td><td><strong>首次低于阈值</strong></td></tr>
+<tr><td><strong>Condor</strong></td><td>IBM</td><td>1121</td><td>~1%</td><td>Heavy-hex</td><td>突破 1000</td></tr>
+<tr><td><strong>Forte</strong></td><td>IonQ</td><td>36 (离子)</td><td><strong>0.03%</strong></td><td>全连接</td><td>(ch21)</td></tr>
+<tr><td><strong>H3</strong></td><td>Quantinuum</td><td>56 (离子)</td><td><strong>0.01%</strong></td><td>全连接</td><td>(ch21)</td></tr>
+<tr><td><strong>Majorana 1</strong></td><td>Microsoft</td><td>8 (拓扑)</td><td>~1%</td><td>1D chain</td><td>(ch23)</td></tr>
+</table>
+<p><strong>关键对比</strong>:</p>
+<ul>
+<li><strong>超导 vs 离子阱</strong>: 数量级 100-1000 vs 10-100 (超导<strong>多</strong>)</li>
+<li><strong>超导 vs 离子阱</strong>: 错误率 0.1% vs 0.01% (离子<strong>精</strong>)</li>
+<li><strong>超导 vs 拓扑</strong>: 数量级 100+ vs 8 (拓扑<strong>早期</strong>)</li>
+</ul>
+<p><strong>结论</strong>: 超导<strong>最大</strong>但<strong>不</strong>最精, 离子阱<strong>最精</strong>但<strong>少</strong>, 各有优势。</p>
+<hr>
+<h2 id="section-20.9">20.9 优势、劣势与未来</h2>
+<h3>20.9.1 优势</h3>
+<p><strong>优势 1: 快门</strong></p>
+<ul>
+<li>单 qubit: 10-50 ns (vs 离子阱 1-100 μs — <strong>慢 100-10000×</strong>)</li>
+<li>两 qubit: 30-300 ns (vs 离子阱 100 μs — <strong>慢 100-3000×</strong>)</li>
+<li><strong>意义</strong>: 算法<strong>深度</strong> ↑ → 实用 FTQC <strong>路径</strong></li>
+</ul>
+<p><strong>优势 2: 多 qubit</strong></p>
+<ul>
+<li>1000+ qubit 当前 (IBM Condor)</li>
+<li>路径: VLSI → 1M qubit (类比 Moore 定律)</li>
+<li><strong>意义</strong>: 实用规模<strong>近</strong></li>
+</ul>
+<p><strong>优势 3: 成熟工艺</strong></p>
+<ul>
+<li>类比 CMOS 制造 (光刻, 薄膜, 蚀刻)</li>
+<li>工艺<strong>快速迭代</strong> (1 个新设计 → 1-3 个月)</li>
+<li>学术 + 工业<strong>共同</strong>推进</li>
+</ul>
+<p><strong>优势 4: 可扩展</strong></p>
+<ul>
+<li>2D 平面 → VLSI 路径</li>
+<li>3D 集成 → 更高密度</li>
+<li>光子互连 → 多芯片</li>
+</ul>
+<p><strong>优势 5: 软件栈</strong></p>
+<ul>
+<li>IBM Qiskit, Google Cirq, Rigetti PyQuil — <strong>完整</strong> 工具链</li>
+<li>量子云 → 全球访问</li>
+<li>教育 + 商业<strong>生态</strong>成熟</li>
+<h3>20.9.2 劣势</h3>
+</ul>
+<p><strong>劣势 1: 短 T1</strong></p>
+<ul>
+<li>100-300 μs (vs 离子阱 > 1 s — <strong>长 10⁴×</strong>)</li>
+<li><strong>意义</strong>: 算法深度<strong>受限</strong> ~ $10^4$ 门 (vs 离子阱 $10^6$)</li>
+</ul>
+<p><strong>劣势 2: 连接性差</strong></p>
+<ul>
+<li>近邻耦合 (vs 离子阱全连接)</li>
+<li>SWAP 链<strong>不可避免</strong></li>
+<li>SWAP 链<strong>增加</strong>深度 + 错误</li>
+</ul>
+<p><strong>劣势 3: 串扰</strong></p>
+<ul>
+<li>频率拥挤 + 静态耦合 → 串扰 ~0.1-1%</li>
+<li>FTQC 要求 < 0.01% → <strong>还差 10-100×</strong></li>
+</ul>
+<p><strong>劣势 4: 测量错误</strong></p>
+<ul>
+<li>~1% 当前 (vs 离子阱 ~0.1%)</li>
+<li>FTQC 要求 < 0.1% → <strong>还差 10×</strong></li>
+</ul>
+<p><strong>劣势 5: 极低温需求</strong></p>
+<ul>
+<li>10 mK → 稀释制冷机 → <strong>昂贵</strong> + <strong>维护</strong>成本</li>
+<li>1 台稀释制冷机: $1M-$5M</li>
+<li>1000 qubit 系统: $10M-$50M</li>
+<h3>20.9.3 与其他平台对比</h3>
+<table class="chapter-table">
+<tr><th>指标</th><th>超导 (ch20)</th><th>离子阱 (ch21)</th><th>光 (ch22)</th><th>拓扑 (ch23)</th><th>中性原子 (ch24)</th></tr>
+<tr><td><strong>T1</strong></td><td>100 μs</td><td>> 1 s</td><td>N/A</td><td>(预测) 1-100 μs</td><td>1-10 s</td></tr>
+<tr><td><strong>门时间</strong></td><td>30 ns</td><td>100 μs</td><td>1 ns</td><td>(预测) 50 ns</td><td>1 μs</td></tr>
+<tr><td><strong>错误率</strong></td><td>0.1-1%</td><td>0.01-0.1%</td><td>1%</td><td>(预测) 0.1%</td><td>0.5%</td></tr>
+<tr><td><strong>qubit 数</strong></td><td>1000+</td><td>100</td><td>100-1000</td><td>8</td><td>1000+</td></tr>
+<tr><td><strong>连接性</strong></td><td>近邻</td><td><strong>全</strong></td><td>概率</td><td>1D</td><td>灵活</td></tr>
+<tr><td><strong>温度</strong></td><td>10 mK</td><td>室温 (真空)</td><td>室温</td><td>10 mK</td><td>室温 (激光)</td></tr>
+<tr><td><strong>可扩展</strong></td><td>✅ VLSI</td><td>⚠️ 线性</td><td>✅ 光子</td><td>⚠️ 早期</td><td>✅ 光镊</td></tr>
+<tr><td><strong>成熟</strong></td><td>✅ 工业</td><td>✅ 工业</td><td>⚠️ 早期</td><td>⚠️ 实验</td><td>⚠️ 早期</td></tr>
+<tr><td><strong>当前应用</strong></td><td>NISQ + 量子云</td><td>量子化学</td><td>采样</td><td>(TBD)</td><td>优化 + 模拟</td></tr>
+</table>
+</ul>
+<p><strong>关键</strong>:</p>
+<ul>
+<li>超导<strong>最大</strong> + <strong>最快</strong> + <strong>最成熟</strong></li>
+<li>离子阱<strong>最精</strong> + <strong>全连接</strong></li>
+<li>中性原子<strong>最灵活</strong> + <strong>可扩展</strong></li>
+<li>各有<strong>不可替代</strong>的优势</li>
+<h3>20.9.4 未来 5 年的改进路径</h3>
+</ul>
+<p><strong>改进 1: 可调耦合器 (Tunable Couplers)</strong></p>
+<ul>
+<li>闲置时<strong>断开</strong> 耦合 → 串扰 ↓ 10×</li>
+<li>Google 2021+ 演示, IBM 2024+ 路线</li>
+<li><strong>预期</strong>: 两 qubit 错误 ↓ 到 0.1% (vs 0.3% 当前)</li>
+</ul>
+<p><strong>改进 2: Ta / TiN 材料</strong></p>
+<ul>
+<li>Ta 替代 Nb → T1 ↑ 5× (2020 Google 验证)</li>
+<li>TiN 研究中 → T1 ↑ 10× (可能性)</li>
+<li><strong>预期</strong>: T1 100 μs → 500 μs → 1 ms</li>
+</ul>
+<p><strong>改进 3: 3D 集成</strong></p>
+<ul>
+<li>多层 2D → 更高密度</li>
+<li>长程门<strong>快 10×</strong></li>
+<li><strong>预期</strong>: 10000 qubit 在 1 个芯片</li>
+</ul>
+<p><strong>改进 4: 光子互连</strong></p>
+<ul>
+<li>多 chip → 光纤 → 跨芯片门</li>
+<li>PsiQuantum + Google 路线</li>
+<li><strong>预期</strong>: 1M qubit 在多个芯片</li>
+</ul>
+<p><strong>改进 5: 错误缓解 (Error Mitigation)</strong></p>
+<ul>
+<li>ZNE (零噪声外推) + PEC (概率错误消除)</li>
+<li><strong>不</strong>改硬件,<strong>软件</strong>降低错误 ~10×</li>
+<li>短期 NISQ 应用关键</li>
+</ul>
+<p><strong>改进 6: AI 控制</strong></p>
+<ul>
+<li>ML 优化脉冲 → 门错误 ↓ 2-3×</li>
+<li>ML 校准 → 漂移 ↓</li>
+<li>ML 解码 → 实时解码时间 ↓</li>
+<h3>20.9.5 超导在 5 种硬件中的地位</h3>
+</ul>
+<p><strong>预测</strong> (2025-2030):</p>
+<ul>
+<li><strong>短期 (2025-2027)</strong>: 超导<strong>继续</strong>主导 NISQ + 量子优越性演示</li>
+<li><strong>中期 (2028-2030)</strong>: 超导 + 中性原子<strong>并行</strong>FTQC 早期演示</li>
+<li><strong>长期 (2030+)</strong>: 离子阱 + 超导 + 中性原子<strong>三足鼎立</strong> (FTQC 实用)</li>
+</ul>
+<p><strong>关键</strong>: <strong>不</strong>是 1 种平台<strong>赢</strong>——而是<strong>5 种</strong>平台<strong>互补</strong>——这是量子硬件的"多元生态"。</p>
+<h3>20.9.6 超导在 5 种硬件中的"竞争位置"</h3>
+<p><strong>详细定位</strong> (基于 2024 数据):</p>
+<table class="chapter-table">
+<tr><th>任务</th><th>最优平台</th><th>理由</th></tr>
+<tr><td><strong>大 qubit 数 + 中保真</strong></td><td><strong>超导</strong> ✅</td><td>1000+ qubit, 99.5% 门</td></tr>
+<tr><td><strong>极高保真 + 少量子</strong></td><td>离子阱 ✅</td><td>99.99% 门, < 100 qubit</td></tr>
+<tr><td><strong>大规模采样 + 室温</strong></td><td>光量子 ✅</td><td>1000+ 光子, 室温</td></tr>
+<tr><td><strong>理论抗错</strong></td><td>拓扑 ✅ (未来)</td><td>拓扑保护, 实验早期</td></tr>
+<tr><td><strong>可重排 + 多 qubit</strong></td><td>中性原子 ✅</td><td>1180 qubit, Rydberg 门</td></tr>
+</table>
+<p><strong>观察</strong>: <strong>超导</strong>在<strong>大 qubit 数 + 中保真</strong> 区<strong>几乎</strong>是<strong>唯一选择</strong>——这是为什么 IBM/Google/Rigetti 都选超导。</p>
+<p><strong>但</strong>: <strong>超导</strong> <strong>不</strong>是<strong>全</strong>胜——每个平台都有<strong>不可替代</strong>的优势。<strong>真正</strong>的 FTQC <strong>可能</strong>是<strong>多平台</strong>协作 (e.g., 超导做算法核心 + 离子阱做高保真子模块 + 光量子做长程通信)。</p>
+<p><strong>行业预测</strong>:</p>
+<ul>
+<li><strong>短期</strong> (2025-2027): 超导 + 离子阱主导商业市场</li>
+<li><strong>中期</strong> (2028-2032): 中性原子加入, 形成 3 足鼎立</li>
+<li><strong>长期</strong> (2033+): 拓扑可能加入, <strong>完全</strong> FTQC 路径</li>
+<hr>
+<h2 id="section-20.10">20.10 ch21-24 铺路 + 总结</h2>
+<h3>20.10.1 第五部分完整图</h3>
+<pre><code>ch15-19 算法 + 容错 (理论)
+       ↓ (需要硬件实现)
+ch20 超导量子比特 ← 本章 (主流, 工业)
+       ↓ (其他 4 种平台)
+ch21 离子阱 (最精, 全连接)
+ch22 光量子 (室温, 长程)
+ch23 拓扑 (抗错, 早期)
+ch24 中性原子 (可扩展, 新兴)
+       ↓ (5 种平台对比 → 选最优)
+ch25-28 应用与展望 (第六部分)</code></pre>
+<h3>20.10.2 5 种平台核心对比 (回顾)</h3>
+<table class="chapter-table">
+<tr><th>维度</th><th>超导</th><th>离子阱</th><th>光量子</th><th>拓扑</th><th>中性原子</th></tr>
+<tr><td><strong>物理对象</strong></td><td>Josephson 电路</td><td>囚禁离子</td><td>单光子</td><td>Majorana 任意子</td><td>里德堡原子</td></tr>
+<tr><td><strong>qubit 编码</strong></td><td>电路相位</td><td>离子能级</td><td>光子偏振/路径</td><td>任意子位置</td><td>原子态</td></tr>
+<tr><td><strong>门实现</strong></td><td>微波 + flux</td><td>激光</td><td>线性光学</td><td>编织</td><td>激光 + 里德堡</td></tr>
+<tr><td><strong>门时间</strong></td><td>30 ns</td><td>100 μs</td><td>1 ns</td><td>50 ns</td><td>1 μs</td></tr>
+<tr><td><strong>错误率</strong></td><td>0.1%</td><td>0.01%</td><td>1%</td><td>0.1% (预测)</td><td>0.5%</td></tr>
+<tr><td><strong>qubit 数</strong></td><td>1000+</td><td>100</td><td>100-1000</td><td>8</td><td>1000+</td></tr>
+<tr><td><strong>温度</strong></td><td>10 mK</td><td>室温</td><td>室温</td><td>10 mK</td><td>室温</td></tr>
+<tr><td><strong>成熟度</strong></td><td>工业</td><td>工业</td><td>早期</td><td>实验</td><td>早期</td></tr>
+<tr><td><strong>代表玩家</strong></td><td>IBM, Google</td><td>IonQ, Quantinuum</td><td>PsiQuantum</td><td>Microsoft</td><td>QuEra, Pasqal</td></tr>
+</table>
+<h3>20.10.3 关键人物回顾</h3>
+<table class="chapter-table">
+<tr><th>人物</th><th>贡献</th><th>年份</th></tr>
+<tr><td><strong>Nakamura Yasunobu</strong></td><td>第 1 个超导 qubit</td><td>1999</td></tr>
+<tr><td><strong>Michel Devoret</strong></td><td>transmon 概念 + circuit QED</td><td>2004-2007</td></tr>
+<tr><td><strong>Robert Schoelkopf</strong></td><td>Yale 量子电路先驱</td><td>2004+</td></tr>
+<tr><td><strong>John Martinis</strong></td><td>Google Sycamore 工程化</td><td>2014-2020</td></tr>
+<tr><td><strong>Jay Gambetta</strong></td><td>IBM Quantum 路线图</td><td>2017+</td></tr>
+<tr><td><strong>Hartmut Neven</strong></td><td>Google 量子 AI 创始</td><td>2006+</td></tr>
+<tr><td><strong>Sergey Bravyi</strong></td><td>magic state + 错误纠正</td><td>2005+</td></tr>
+</table>
+<h3>20.10.4 概念速查表</h3>
+<table class="chapter-table">
+<tr><th>概念</th><th>简述</th><th>章节</th></tr>
+<tr><td><strong>BCS 理论</strong></td><td>Cooper 对 → 超导宏观波函数</td><td>20.1.1</td></tr>
+<tr><td><strong>Josephson 效应</strong></td><td>$I_s = I_c \sin\phi$</td><td>20.1.2</td></tr>
+<tr><td><strong>Cooper 对</strong></td><td>电子配对 → 玻色子</td><td>20.1.1</td></tr>
+<tr><td><strong>临界温度 $T_c$</strong></td><td>超导转变温度</td><td>20.1.1</td></tr>
+<tr><td><strong>Josephson 能量 $E_J$</strong></td><td>Josephson 结能量尺度</td><td>20.1.4</td></tr>
+<tr><td><strong>电荷能 $E_C$</strong></td><td>库仑相互作用能</td><td>20.1.4</td></tr>
+<tr><td><strong>Transmon</strong></td><td>$E_J/E_C \gg 1$ 的 Cooper 对盒</td><td>20.2.1</td></tr>
+<tr><td><strong>非谐性 $\alpha$</strong></td><td>$E_{12} - E_{01}$, ~-200 MHz</td><td>20.2.3</td></tr>
+<tr><td><strong>虚拟 Z 门</strong></td><td>软件操作, 零错误</td><td>20.3.2</td></tr>
+<tr><td><strong>Cross-Resonance (CR)</strong></td><td>IBM 两 qubit 门</td><td>20.3.4</td></tr>
+<tr><td><strong>CZ 门</strong></td><td>Google 两 qubit 门</td><td>20.3.5</td></tr>
+<tr><td><strong>Heavy-hex 拓扑</strong></td><td>IBM 连接拓扑</td><td>20.4.2</td></tr>
+<tr><td><strong>T1</strong></td><td>能量弛豫时间</td><td>20.5.1</td></tr>
+<tr><td><strong>T2</strong></td><td>退相干时间</td><td>20.5.2</td></tr>
+<tr><td><strong>DRAG</strong></td><td>抑制泄漏的脉冲修正</td><td>20.5.5</td></tr>
+<tr><td><strong>Dispersive Readout</strong></td><td>通过谐振腔测 qubit 态</td><td>20.6.1</td></tr>
+<tr><td><strong>Purcell 效应</strong></td><td>qubit 能量向耦合腔泄漏</td><td>20.6.3</td></tr>
+<tr><td><strong>稀释制冷机</strong></td><td>³He-⁴He 混合, 10 mK</td><td>20.7.2</td></tr>
+<tr><td><strong>Willow</strong></td><td>Google 2024 跨阈值系统</td><td>20.8.3</td></tr>
+<tr><td><strong>Condor</strong></td><td>IBM 2023, 1121 qubit</td><td>20.8.2</td></tr>
+</table>
+<h3>20.10.5 三个关键洞察</h3>
+<li><strong>Transmon 是工业基础</strong> —— $E_J/E_C \gg 1$ 让超导 qubit <strong>实用化</strong>——没有 transmon, 就没有 IBM/Google</li>
+<li><strong>两 qubit 门是瓶颈</strong> —— 错误率比单 qubit 差 5-10 倍——是 FTQC 的关键挑战</li>
+<li><strong>5 种平台互补</strong> —— <strong>没有</strong>"winner"——超导<strong>多</strong> + 离子<strong>精</strong> + 中性原子<strong>灵活</strong>——多元生态是量子硬件的"工业现实"</li>
+<h3>20.10.6 思考题</h3>
+</ul>
+<p><strong>Q1</strong>: 为什么 transmon 选择 $E_J / E_C \gg 1$? 代价是什么?</p>
+<p><strong>Q2</strong>: Cross-Resonance 门和 CZ 门的<strong>根本</strong>区别是什么? 为什么 Google 用 CZ, IBM 用 CR?</p>
+<p><strong>Q3</strong>: 超导 qubit 的 T1 主要受什么限制? 列出 3 种改进 T1 的方法。</p>
+<p><strong>Q4</strong>: 为什么稀释制冷机需要 10 mK? 100 mK 可以吗? 解释 1 K vs 100 mK vs 10 mK 的物理差别。</p>
+<p><strong>Q5</strong>: 比较超导、离子阱、中性原子的<strong>优劣</strong>。如果你是一家量子初创公司的 CTO, 你会选哪个平台? 为什么?</p>
+<h3>20.10.7 思考题详细答案</h3>
+<p><strong>A1</strong>: 选择 $E_J / E_C \gg 1$ 的<strong>好处</strong>是降低 qubit 对<strong>电荷噪声</strong>的灵敏度 (charge noise dephasing 指数 ↓). <strong>代价</strong>是<strong>非谐性</strong>减小 (从 ~1 GHz 减到 ~200 MHz) — 这使得微波驱动<strong>更</strong>容易泄漏到 $\lvert 2\rangle$ (因为 $\lvert 0\rangle \to \lvert 2\rangle$ transition 频率更接近 $\lvert 0\rangle \to \lvert 1\rangle$)。代价<strong>通过</strong> DRAG 脉冲<strong>缓解</strong> (Motzoi 2009)。</p>
+<p><strong>A2</strong>: CR 门是<strong>微波</strong>驱动 (频率控制 qubit 的频率), 产生<strong>有效</strong> ZZ 相互作用 (依赖静态耦合); CZ 门是<strong>flux</strong> 偏置 (目标 qubit 的频率), 产生<strong>真实</strong> ZZ 相互作用 (两个 qubit <strong>共振</strong>)。根本区别是<strong>驱动</strong> vs <strong>共振</strong>。Google 用 CZ 因为它<strong>快</strong> (~30 ns) + <strong>高保真</strong> (依赖可调 qubit); IBM 用 CR 因为它<strong>简单</strong> (无 flux 偏置) + <strong>稳定</strong> (频率固定)。</p>
+<p><strong>A3</strong>: 主要限制: <strong>介电损耗</strong> (oxide / interface 缺陷) + <strong>辐射</strong> (到自由空间 / 传输线) + <strong>准粒子</strong> (热激发)。改进方法:</p>
+<ol>
+<li><strong>材料</strong>: Ta 替代 Nb → T1 ↑ 5×</li>
+<li><strong>3D transmon</strong> (Paik 2011) → T1 ↑ 10× (屏蔽电磁环境)</li>
+<li><strong>表面处理</strong>: 去除 oxide → T1 ↑ 2×</li>
+</ul>
+<p><strong>A4</strong>: 稀释制冷机需要 10 mK 的<strong>根本</strong>原因是 qubit 频率 ~5 GHz → $\hbar \omega / k_B \approx 240$ mK。要 qubit <strong>不</strong>被热激发 ($n_{th} < 10^{-3}$), 需要 $T \ll 240$ mK → 10 mK 是<strong>安全</strong>边际。100 mK 也<strong>可</strong>以 ($n_{th} \sim 10^{-2}$ 仍可接受), 但 qubit 性能会<strong>降</strong> (T1 ↓ ~10×)。1 K 完全<strong>不可</strong>用 ($n_{th} \sim 1$, qubit 完全热化)。</p>
+<p><strong>A5</strong>: 优劣势:</p>
+<ul>
+<li>超导: 多 qubit + 快门 + 成熟工艺, 但 T1 短 + 串扰 + 需极低温</li>
+<li>离子阱: 长 T1 + 高保真 + 全连接, 但慢门 + 少 qubit + 激光复杂</li>
+<li>中性原子: 灵活 + 多 qubit + 可重排, 但错误率高 + 早期</li>
+</ul>
+<p><strong>我的选择</strong>: 中性原子 (ch24)。理由: <strong>可扩展</strong> + <strong>灵活</strong> + <strong>可重排</strong> → 5-10 年可能<strong>赶上</strong>超导的 qubit 数 + 离子阱的保真度。但<strong>短期</strong> (1-3 年) 选超导 (成熟)。</p>
+<h3>20.10.8 推荐阅读</h3>
+<p><strong>经典论文</strong>:</p>
+<ul>
+<li>Nakamura et al. (1999) "Coherent control of macroscopic quantum states in a single-Cooper-pair box" — <strong>第 1 个</strong>超导 qubit</li>
+<li>Koch et al. (2007) "Charge-insensitive qubit design derived from the Cooper pair box" — <strong>transmon 经典论文</strong></li>
+<li>Arute et al. (2019) "Quantum supremacy using a programmable superconducting processor" — Sycamore Nature 论文</li>
+<li>Acharya et al. (2024) "Quantum error correction below the surface code threshold" — Willow Nature 论文</li>
+</ul>
+<p><strong>综述</strong>:</p>
+<ul>
+<li>Devoret & Schoelkopf (2013) "Superconducting circuits for quantum information" — Science 综述</li>
+<li>Krantz et al. (2019) "A quantum engineer's guide to superconducting qubits" — APEX 综述</li>
+<li>Place et al. (2021) "New material platforms for superconducting superconducting qubits" — 综述</li>
+</ul>
+<p><strong>教科书</strong>:</p>
+<ul>
+<li>Nielsen & Chuang (2010) "Quantum Computation and Quantum Information" — 第 7 章超导 qubit</li>
+<li>Wendin (2017) "Quantum information processing with superconducting circuits" — RPP 综述</li>
+<hr>
+<h2 id="section-20.A">20.A 附录 A: Josephson 效应数学推导</h2>
+<h3>20.A.1 Josephson 关系</h3>
+</ul>
+<p><strong>第 1 Josephson 关系</strong> (1962 Josephson 预言): $$I_s = I_c \sin(\phi)$$</p>
+<p>其中:</p>
+<ul>
+<li>$I_s$: 超电流</li>
+<li>$I_c$: 临界电流 (典型 ~10-100 nA)</li>
+<li>$\phi$: 两个超导体之间的相位差</li>
+</ul>
+<p><strong>第 2 Josephson 关系</strong>: $$\frac{d\phi}{dt} = \frac{2eV}{\hbar} = \frac{V}{\phi_0}$$</p>
+<p>其中:</p>
+<ul>
+<li>$V$: 跨 Josephson 结的电压</li>
+<li>$\phi_0 = \hbar / 2e$: 磁通量子 (≈ 2.07 × 10⁻¹⁵ Wb)</li>
+<h3>20.A.2 Josephson 能量</h3>
+</ul>
+<p><strong>Josephson 能量</strong> = 势能 $U(\phi) = -E_J \cos(\phi)$, 其中: $$E_J = I_c \phi_0 = \frac{\hbar I_c}{2e}$$</p>
+<p><strong>物理</strong>: $E_J$ 是 Josephson 结"储存"超流能量的能力。</p>
+<h3>20.A.3 RCSJ 模型 (Resistively and Capacitively Shunted Junction)</h3>
+<p><strong>完整等效电路</strong>:</p>
+<ul>
+<li>Josephson 结 (理想, 非线性电感) + 电阻 $R$ + 电容 $C$ 并联</li>
+</ul>
+<p><strong>Lagrangian</strong>: $$\mathcal{L} = \frac{1}{2} C \left(\frac{\phi_0 \dot{\phi}}{1}\right)^2 + E_J \cos(\phi)$$</p>
+<p><strong>Hamiltonian</strong> (正则共轭 $\hat{n} = -i \partial / \partial\phi$): $$H = 4 E_C \hat{n}^2 - E_J \cos(\hat{\phi})$$</p>
+<p>其中 $E_C = e^2 / (2C)$ 是电荷能。</p>
+<p><strong>关键</strong>: 这就是 transmon 的 Hamiltonian (式 20.2) — 详细推导见 20.B 附录。</p>
+<hr>
+<h2 id="section-20.B">20.B 附录 B: Transmon Hamiltonian 详细推导</h2>
+<h3>20.B.1 完整 Transmon Hamiltonian</h3>
+<p><strong>完整 Hamiltonian</strong> (Cooper-pair box + shunting capacitor): $$H = 4 E_C (\hat{n} - n_g)^2 - E_J \cos(\hat{\phi})$$</p>
+<p>参数:</p>
+<ul>
+<li>$\hat{n}$: 岛上的 Cooper 对数算符 (整数, 对易 $[\hat{\phi}, \hat{n}] = i$)</li>
+<li>$n_g = C_g V_g / (2e)$: 偏置电荷</li>
+<li>$E_C = e^2 / (2(C_J + C_g + C_B))$: 总电荷能 (含并联 $C_B$)</li>
+<li>$E_J$: Josephson 能</li>
+<h3>20.B.2 极限 $E_J / E_C \gg 1$ (Transmon Regime)</h3>
+</ul>
+<p><strong>近似</strong>:</p>
+<ol>
+<li>$\phi$ 涨落<strong>小</strong>: $\langle \phi^2 \rangle \ll 1$</li>
+<li>Taylor 展开 $\cos \hat{\phi} \approx 1 - \hat{\phi}^2 / 2 + \hat{\phi}^4 / 24 - ...$</li>
+<li><strong>有效</strong> Hamiltonian: $H \approx \sqrt{8 E_J E_C} \hat{b}^\dagger \hat{b} - \frac{E_C}{12} (\hat{b}^\dagger + \hat{b})^4 + ...$</li>
+</ul>
+<p>其中 $\hat{b} = \sqrt[4]{E_J / (8 E_C)} \hat{\phi} + i \hat{n} / \sqrt[4]{E_J / (8 E_C)}$ 是<strong>声子</strong>湮灭算符。</p>
+<h3>20.B.3 能级公式</h3>
+<p><strong>transmon 能级</strong> (perturbation theory): $$E_n \approx \hbar \omega_p \left(n + \frac{1}{2}\right) - \frac{E_C}{12} (6 n^2 + 6 n + 3)$$</p>
+<p>其中 $\omega_p = \sqrt{8 E_J E_C} / \hbar$ 是<strong>等离子体</strong>频率。</p>
+<p><strong>关键量子</strong>:</p>
+<ul>
+<li>$\omega_{01} = \omega_p - E_C / \hbar$ (qubit 跃迁频率)</li>
+<li>$\omega_{12} = \omega_p - 2 E_C / \hbar$</li>
+<li><strong>非谐性</strong> $\alpha = \omega_{12} - \omega_{01} = -E_C / \hbar \sim -200$ MHz</li>
+<h3>20.B.4 Charge noise 灵敏度</h3>
+</ul>
+<p><strong>charge noise 灵敏度</strong> (对 $n_g$ 微扰): $$\frac{\partial \omega_{01}}{\partial n_g} \propto e^{-\sqrt{8 E_J / E_C}}$$</p>
+<p><strong>指数</strong>减小于 $E_J / E_C$:</p>
+<ul>
+<li>$E_J / E_C = 10$: 灵敏度 ~ 0.01</li>
+<li>$E_J / E_C = 50$: 灵敏度 ~ $10^{-5}$</li>
+<li>$E_J / E_C = 100$: 灵敏度 ~ $10^{-10}$</li>
+</ul>
+<p><strong>关键</strong>: $E_J / E_C$ ↑ 50 → 灵敏度 ↓ 100000× — <strong>巨大收益</strong>!</p>
+<hr>
+<h2 id="section-20.C">20.C 附录 C: IBM Heavy-hex vs Google 2D Grid 拓扑对比</h2>
+<h3>20.C.1 拓扑结构</h3>
+<p><strong>Heavy-hex</strong> (IBM 2021+):</p>
+<pre><code>●───●───●───●
+│       │
+●   ●   ●   ●
+│       │
+●───●───●───●</code></pre>
+<ul>
+<li><strong>6 角形</strong>结构</li>
+<li>每个 qubit <strong>2-3 个</strong>邻居</li>
+<li>总 qubit 数 $N$ → 总连接 ~$N$</li>
+<li><strong>频率拥挤减少</strong></li>
+</ul>
+<p><strong>2D grid</strong> (Google Sycamore, Willow):</p>
+<pre><code>●───●───●───●
+│   │   │   │
+●───●───●───●
+│   │   │   │
+●───●───●───●
+│   │   │   │
+●───●───●───●</code></pre>
+<ul>
+<li>每个 qubit <strong>4 个</strong>邻居</li>
+<li>总 qubit 数 $N$ → 总连接 ~$2N$</li>
+<li><strong>频率拥挤</strong> + <strong>更多耦合</strong> → 串扰高</li>
+<h3>20.C.2 SWAP 深度对比</h3>
+</ul>
+<p><strong>平均 SWAP 链长度</strong> (从 qubit $i$ 到 $j$):</p>
+<table class="chapter-table">
+<tr><th>拓扑</th><th>平均深度</th><th>最差深度</th></tr>
+<tr><td><strong>1D chain</strong></td><td>$O(N)$</td><td>$O(N)$</td></tr>
+<tr><td><strong>2D grid</strong></td><td>$O(\sqrt{N})$</td><td>$O(\sqrt{N})$</td></tr>
+<tr><td><strong>Heavy-hex</strong></td><td>$O(\sqrt{N})$</td><td>$O(N)$ (最差)</td></tr>
+<tr><td><strong>全连接</strong></td><td>$O(1)$</td><td>$O(1)$</td></tr>
+</table>
+<p><strong>关键</strong>:</p>
+<ul>
+<li>2D grid 和 Heavy-hex 的<strong>平均</strong>深度<strong>相同</strong> ($O(\sqrt{N})$)</li>
+<li>但 Heavy-hex 的<strong>最差</strong>深度 $O(N)$ → 不利长程通信</li>
+<h3>20.C.3 选择权衡</h3>
+<table class="chapter-table">
+<tr><th>维度</th><th>Heavy-hex (IBM)</th><th>2D grid (Google)</th></tr>
+<tr><td><strong>qubit 数</strong></td><td>大 (1000+)</td><td>中 (100)</td></tr>
+<tr><td><strong>平均 SWAP</strong></td><td>$O(\sqrt{N})$</td><td>$O(\sqrt{N})$</td></tr>
+<tr><td><strong>最差 SWAP</strong></td><td>$O(N)$</td><td>$O(\sqrt{N})$</td></tr>
+<tr><td><strong>频率拥挤</strong></td><td>低</td><td>高</td></tr>
+<tr><td><strong>串扰</strong></td><td>中</td><td>高</td></tr>
+<tr><td><strong>耦合器数</strong></td><td>少 (~1.5N)</td><td>多 (~2N)</td></tr>
+<tr><td><strong>可调耦合器</strong></td><td>部分 (2024+)</td><td>全部 (2021+)</td></tr>
+<tr><td><strong>代表系统</strong></td><td>Condor 1121</td><td>Willow 105</td></tr>
+</table>
+</ul>
+<p><strong>关键</strong>:</p>
+<ul>
+<li>IBM 选 Heavy-hex → <strong>多 qubit</strong> + <strong>低串扰</strong></li>
+<li>Google 选 2D grid → <strong>少 qubit</strong> + <strong>高保真</strong></li>
+<hr>
+</ul>
+<p><strong>ch20 完成。第五部分 Day 1 开篇 🚀。20/28 章完成 (71%)。</strong></p>
+      </article>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
