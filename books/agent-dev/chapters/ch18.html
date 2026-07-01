@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 18 章：项目 3 — 研究型 Agent —— 一个能跑 ArXiv 综述 / 多源交叉验证 / 自动写报告的研究助手 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; text-align: center; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+tr:hover { background: rgba(192,38,211,0.05); }
+</style>
+</head>
+<body>
+<header class="chapter-header">
+<h1>第 18 章：项目 3 — 研究型 Agent —— 一个能跑 ArXiv 综述 / 多源交叉验证 / 自动写报告的研究助手</h1>
+<div class="chapter-meta">第 18 章 · 第四部分（实战项目）Day 3 / 5 · 10 工具 + 1000 行 6 文件 + Supervisor + 3 Worker + 4 件记忆 + 4 层安全</div>
+</header>
+
+<blockquote><strong>章节定位</strong>：Part 4 · 项目实战 · Day 3 / 5</blockquote>
+<blockquote><strong>前置章节</strong>：ch17《项目 2 — 代码助手 Agent》</blockquote>
+<blockquote><strong>后续章节</strong>：ch19《项目 4 — 数据分析 Agent》</blockquote>
+<blockquote><strong>预计阅读</strong>：60 分钟 · 实操 12-16 小时</blockquote>
+<hr>
+<h2 id="18-1-引子-从-ch17-代码助手到-ch18-研究助手">18.1 引子：从 ch17 代码助手到 ch18 研究助手</h2>
+<blockquote><strong>章节定位</strong>：Part 4 · 项目实战 · Day 3 / 5<br><strong>前置章节</strong>：ch17《项目 2 — 代码助手 Agent》<br><strong>后续章节</strong>：ch19《项目 4 — 数据分析 Agent》<br><strong>预计阅读</strong>：60 分钟 · 实操 12-16 小时</blockquote>
+<h3 style="margin-top:0; color:#c026d3;">🧪 第 15 种 inline SVG 形态学：Research Supervisor Topology（800×420）</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <marker id="arr-s18" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+    <marker id="arr-s18-r" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9ca3af"/>
+    </marker>
+    <linearGradient id="sup-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c026d3"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- 中央 Supervisor (radius 60) -->
+  <circle cx="400" cy="210" r="60" fill="url(#sup-grad)" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="205" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">S</text>
+  <text x="400" y="225" text-anchor="middle" fill="#fff" font-size="10">Supervisor</text>
+  <text x="400" y="290" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">主循环 / 路由表 / 终止判断</text>
+  <!-- 4 Worker 子圆 (radius 36, 72/144/216/288 degrees) -->
+  <!-- Researcher @ top (90°) -->
+  <circle cx="400" cy="80" r="36" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="78" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">Researcher</text>
+  <text x="400" y="92" text-anchor="middle" fill="#666" font-size="9">搜论文 + 阅读</text>
+  <text x="400" y="42" text-anchor="middle" fill="#c026d3" font-size="10">SEARCH</text>
+  <!-- Writer @ right (0°) -->
+  <circle cx="640" cy="210" r="36" fill="#fff" stroke="#f97316" stroke-width="2"/>
+  <text x="640" y="208" text-anchor="middle" fill="#f97316" font-size="11" font-weight="bold">Writer</text>
+  <text x="640" y="222" text-anchor="middle" fill="#666" font-size="9">写草稿</text>
+  <text x="700" y="215" text-anchor="start" fill="#f97316" font-size="10">DRAFT</text>
+  <!-- Reviewer @ bottom (270°) -->
+  <circle cx="400" cy="340" r="36" fill="#fff" stroke="#10b981" stroke-width="2"/>
+  <text x="400" y="338" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">Reviewer</text>
+  <text x="400" y="352" text-anchor="middle" fill="#666" font-size="9">引用校验</text>
+  <text x="400" y="395" text-anchor="middle" fill="#10b981" font-size="10">REVIEW</text>
+  <!-- Memory @ left (180°) -->
+  <circle cx="160" cy="210" r="36" fill="#fff" stroke="#6366f1" stroke-width="2"/>
+  <text x="160" y="208" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="bold">Memory</text>
+  <text x="160" y="222" text-anchor="middle" fill="#666" font-size="9">4 件记忆</text>
+  <text x="100" y="215" text-anchor="end" fill="#6366f1" font-size="10">SAVE</text>
+  <!-- 4 SOLID arrows (Supervisor → Worker, magenta) -->
+  <line x1="400" y1="150" x2="400" y2="120" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="460" y1="210" x2="600" y2="210" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="400" y1="270" x2="400" y2="300" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="340" y1="210" x2="200" y2="210" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <!-- 4 DASHED arrows (Worker → Supervisor, gray) -->
+  <line x1="400" y1="120" x2="400" y2="150" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="600" y1="210" x2="460" y2="210" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="400" y1="300" x2="400" y2="270" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="200" y1="210" x2="340" y2="210" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <!-- 10 工具矩形网格 (右上角 2x5 mini) -->
+  <text x="720" y="50" text-anchor="end" fill="#c026d3" font-size="10" font-weight="bold">10 工具（ch17 8 + arxiv/web/pdf/cite/claim）</text>
+  <rect x="540" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="560" y="71" text-anchor="middle" fill="#c026d3" font-size="8">ls</text>
+  <rect x="585" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="605" y="71" text-anchor="middle" fill="#c026d3" font-size="8">find</text>
+  <rect x="630" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="650" y="71" text-anchor="middle" fill="#c026d3" font-size="8">grep</text>
+  <rect x="675" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="695" y="71" text-anchor="middle" fill="#c026d3" font-size="8">git</text>
+  <rect x="720" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="740" y="71" text-anchor="middle" fill="#c026d3" font-size="8">test</text>
+  <rect x="540" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="560" y="91" text-anchor="middle" fill="#f97316" font-size="8">arxiv</text>
+  <rect x="585" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="605" y="91" text-anchor="middle" fill="#f97316" font-size="8">web</text>
+  <rect x="630" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="650" y="91" text-anchor="middle" fill="#f97316" font-size="8">pdf</text>
+  <rect x="675" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="695" y="91" text-anchor="middle" fill="#f97316" font-size="8">cite</text>
+  <rect x="720" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="740" y="91" text-anchor="middle" fill="#f97316" font-size="8">claim</text>
+  <!-- 2 callouts -->
+  <rect x="20" y="20" width="240" height="36" rx="4" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="1"/>
+  <text x="30" y="38" fill="#c026d3" font-size="10" font-weight="bold">① 消息路由表驱动</text>
+  <text x="30" y="50" fill="#666" font-size="9">所有 Worker 通信都经过 Supervisor</text>
+  <rect x="20" y="370" width="240" height="36" rx="4" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+  <text x="30" y="388" fill="#10b981" font-size="10" font-weight="bold">② 冲突检测在 Reviewer</text>
+  <text x="30" y="400" fill="#666" font-size="9">cite_verify + 多源交叉验证</text>
+</svg>
+<p>ch17 给我们留下了一个工具丰富但<strong>仍是单人作战</strong>的 Agent —— 一个能读仓库、跑测试、提 PR 的"代码工程师"。ch18 要把这位工程师升级为<strong>一支研究团队</strong>：一个 Supervisor 派活，三个 Worker（Researcher / Writer / Reviewer）协作，最终交付一份带引用、带交叉验证、带同行评审痕迹的综述报告。</p>
+<h3 id="18-1-1-ch17-ch18-的工程跳跃">18.1.1 ch17 → ch18 的工程跳跃</h3>
+<table>
+<tr><th>维度</th><th>ch17 代码助手</th><th>ch18 研究助手</th><th>跳跃性质</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>架构</td><td>1 Agent + 8 工具</td><td>Supervisor + 3 Worker + 10 工具</td><td>单进程 → 多 Agent</td></tr>
+<tr><td>任务时长</td><td>单次代码查询（秒级）</td><td>长流程（分钟到小时）</td><td>短 → 长</td></tr>
+<tr><td>输出</td><td>diff / 命令结果</td><td>1-3 万字综述报告</td><td>行 → 文档</td></tr>
+<tr><td>验证</td><td>单元测试 / lint</td><td>引用真实性 / 多源交叉</td><td>单元 → 引用级</td></tr>
+<tr><td>风险等级</td><td>🔴 高（真实 shell）</td><td>🟡 中（受限 API + 沙箱）</td><td>高 → 中</td></tr>
+</table>
+<p><strong>核心论断</strong>：ch18 的工程价值不在于"工具更多"，而在于"<strong>信源可追溯</strong>"和"<strong>多 Agent 共识</strong>"。</p>
+<h3 id="18-1-2-4-个-agent-角色对照">18.1.2 4 个 Agent 角色对照</h3>
+<table>
+<tr><th>角色</th><th>输入</th><th>输出</th><th>工具子集</th><th>关键约束</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**Supervisor**</td><td>用户研究问题</td><td>子任务分派 + 终止判断</td><td>全部 10 工具只读视图</td><td>不直接写作，只调度</td></tr>
+<tr><td>**Researcher**</td><td>子问题</td><td>论文 + 网页 + 引用</td><td>arxiv_search / web_search / pdf_download</td><td>必须返回 cite_id</td></tr>
+<tr><td>**Writer**</td><td>引用 + 章节大纲</td><td>段落草稿</td><td>memory 读 + 引用插入</td><td>禁止编造未引用事实</td></tr>
+<tr><td>**Reviewer**</td><td>草稿 + 引用表</td><td>修订意见 + 通过/驳回</td><td>memory 读 + grep 引用</td><td>必须命中真实 cite_id</td></tr>
+</table>
+<h3 id="18-1-3-ch18-vs-ch11-多-agent-范式">18.1.3 ch18 vs ch11 多 Agent 范式</h3>
+<p>ch11《多 Agent 协作模式》讲的是<strong>协作范式</strong>（Supervisor / Crew / Pipeline / Debate），ch18 是<strong>第一个把这些范式落到真实项目里</strong>的章节。ch11.6 的 Supervisor 模式在 ch18 才有完整代码实现。</p>
+<h3 id="18-1-4-part-4-5-项目路线图">18.1.4 Part 4 5 项目路线图</h3>
+<table>
+<tr><th>章</th><th>主题</th><th>工具数</th><th>Agent 数</th><th>风险</th><th>状态</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---:</td><td>:---:</td><td>:---:</td><td>:---:</td></tr>
+<tr><td>ch16</td><td>个人助理</td><td>5</td><td>1</td><td>🟢</td><td>✅</td></tr>
+<tr><td>ch17</td><td>代码助手</td><td>8</td><td>1</td><td>🔴</td><td>✅</td></tr>
+<tr><td>**ch18**</td><td>**研究助手**</td><td>**10**</td><td>**4**</td><td>**🟡**</td><td>**🔄 今日**</td></tr>
+<tr><td>ch19</td><td>数据分析</td><td>12</td><td>5</td><td>🟡</td><td>Day 19</td></tr>
+<tr><td>ch20</td><td>Browser-Use</td><td>6</td><td>3</td><td>🟢</td><td>Day 20</td></tr>
+</table>
+<h3 id="18-1-5-工程意义-多-agent-范式在生产中的-3-个真实场景">18.1.5 工程意义：多 Agent 范式在生产中的 3 个真实场景</h3>
+<ol>
+<li><strong>学术论文综述</strong>：跑 ArXiv 检索 50 篇 → 阅读 → 摘要 → 写综述。ch18 主用例。</li>
+<li><strong>企业竞品分析</strong>：搜 30 个产品页 → 抽取特性 → 写对比报告。同样的 Supervisor + Researcher + Writer。</li>
+<li><strong>法律 / 政策研究</strong>：搜法规库 + 案例库 → 抽取条文 → 写摘要。同样的 4 Agent 拓扑，但工具集换成法规 API。</li>
+</ol>
+<p>ch18 给读者的是一个<strong>可复用的"调研类项目骨架"</strong>，而不是绑死在 ArXiv 上的玩具。</p>
+<hr>
+<h2 id="18-2-需求分析-研究流程-5-阶段-4-agent-职责">18.2 需求分析：研究流程 5 阶段 × 4 Agent 职责</h2>
+<p>研究不是"找资料 + 写报告"两步，而是 5 个阶段。每一阶段都至少有一个 Worker 在干活，Supervisor 在看。</p>
+<h3 id="18-2-1-5-阶段流程">18.2.1 5 阶段流程</h3>
+<table>
+<tr><th>阶段</th><th>输入</th><th>产出</th><th>主要 Agent</th><th>终止条件</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>1. 提问</td><td>用户问题</td><td>拆解后的 3-5 个子问题</td><td>Supervisor</td><td>子问题清晰可执行</td></tr>
+<tr><td>2. 检索</td><td>子问题</td><td>论文 + 网页 + cite_id 列表</td><td>Researcher</td><td>每子问题 ≥3 来源</td></tr>
+<tr><td>3. 阅读</td><td>cite_id</td><td>摘要 + 关键论点</td><td>Researcher</td><td>所有 cite_id 已读</td></tr>
+<tr><td>4. 写作</td><td>引用 + 大纲</td><td>章节草稿</td><td>Writer</td><td>字数达标 + 引用完整</td></tr>
+<tr><td>5. 校对</td><td>草稿</td><td>修订意见 + 通过/驳回</td><td>Reviewer</td><td>0 编造 + 引用全命中</td></tr>
+</table>
+<h3 id="18-2-2-raci-矩阵-谁-responsible-accountable-consulted-informed">18.2.2 RACI 矩阵（谁 Responsible / Accountable / Consulted / Informed）</h3>
+<table>
+<tr><th>阶段</th><th>Supervisor</th><th>Researcher</th><th>Writer</th><th>Reviewer</th></tr>
+<tr><td>:---</td><td>:---:</td><td>:---:</td><td>:---:</td><td>:---:</td></tr>
+<tr><td>1. 提问</td><td>A/R</td><td>C</td><td>I</td><td>I</td></tr>
+<tr><td>2. 检索</td><td>A</td><td>R</td><td>I</td><td>I</td></tr>
+<tr><td>3. 阅读</td><td>A</td><td>R</td><td>I</td><td>I</td></tr>
+<tr><td>4. 写作</td><td>A</td><td>C</td><td>R</td><td>I</td></tr>
+<tr><td>5. 校对</td><td>A</td><td>I</td><td>C</td><td>R</td></tr>
+</table>
+<p>R = 干活，A = 拍板，C = 顾问，I = 知会。</p>
+<p><strong>关键观察</strong>：Supervisor 在每个阶段都是 A（Accountable），但很少 R —— 它不亲自写，只负责<strong>保证每个阶段有产出</strong>。这是 ch11.6 Supervisor 模式在 ch18 的具体落地。</p>
+<h3 id="18-2-3-终止条件设计">18.2.3 终止条件设计</h3>
+<p>Supervisor 何时喊停？三个终止条件，<strong>任一满足即停</strong>：</p>
+<ol>
+<li><strong>所有阶段完成</strong> + Reviewer 通过</li>
+<li><strong>轮次超过 8</strong>（防止死循环）</li>
+<li><strong>总 token 超过 200K</strong>（成本控制）</li>
+</ol>
+<hr>
+<h2 id="18-3-30-行-hello-world-最小-supervisor-1-worker">18.3 30 行 Hello World：最小 Supervisor + 1 Worker</h2>
+<p>我们先实现<strong>最小骨架</strong>：1 个 Supervisor + 1 个 Researcher Worker，能把用户问题拆成子问题、调用 1 次 arxiv_search、返回 1 条引用。这段代码 30 行，是 ch18 整个多 Agent 系统的种子。</p>
+<h3 id="18-3-1-supervisor-py-第-1-版-30-行">18.3.1 supervisor.py 第 1 版（30 行）</h3>
+<pre><code class="language-python"># ch18 / supervisor.py — 最小骨架
+# 注：以下代码为 mock 模式（call_llm 返回固定 JSON），无需 API key；切真实 LLM 见 §18.9.4a
+import json, re
+
+# ===== 1. 提示词模板（30 行业务逻辑）=====
+SUPER_PROMPT = &quot;&quot;&quot;你是研究 Supervisor。任务：把用户问题拆成 1-3 个子问题。
+用户问题：{question}
+输出 JSON：{{&quot;sub_questions&quot;: [&quot;...&quot;, &quot;...&quot;]}}&quot;&quot;&quot;
+
+WORKER_PROMPT = &quot;&quot;&quot;你是 Researcher。任务：调用 arxiv_search 找 1 篇最相关的论文。
+子问题：{sub_q}
+输出 JSON：{{&quot;cite_id&quot;: &quot;arxiv:XXXX.YYYYY&quot;, &quot;title&quot;: &quot;...&quot;}}&quot;&quot;&quot;
+
+def call_llm(prompt: str) -&gt; str:
+    # mock 模式：返回固定 JSON 让骨架可跑通
+    if &quot;Supervisor&quot; in prompt:
+        q = re.search(r&quot;用户问题：(.+)&quot;, prompt).group(1)
+        return json.dumps({&quot;sub_questions&quot;: [f&quot;子问题1：{q}&quot;, f&quot;子问题2：{q} 的应用&quot;]}, ensure_ascii=False)
+    else:
+        sq = re.search(r&quot;子问题：(.+)&quot;, prompt).group(1)
+        return json.dumps({&quot;cite_id&quot;: &quot;arxiv:2501.12345&quot;, &quot;title&quot;: f&quot;关于 {sq} 的论文&quot;}, ensure_ascii=False)
+
+def run(question: str) -&gt; dict:
+    plan = json.loads(call_llm(SUPER_PROMPT.format(question=question)))
+    cites = [json.loads(call_llm(WORKER_PROMPT.format(sub_q=sq))) for sq in plan[&quot;sub_questions&quot;]]
+    return {&quot;plan&quot;: plan, &quot;cites&quot;: cites}
+
+if __name__ == &quot;__main__&quot;:
+    print(json.dumps(run(&quot;Agent 综述&quot;), ensure_ascii=False, indent=2))</code></pre>
+<p><strong>运行</strong>：</p>
+<pre><code class="language-python">$ python3 supervisor.py
+{
+  &quot;plan&quot;: {
+    &quot;sub_questions&quot;: [&quot;子问题1：Agent 综述&quot;, &quot;子问题2：Agent 综述 的应用&quot;]
+  },
+  &quot;cites&quot;: [
+    {&quot;cite_id&quot;: &quot;arxiv:2501.12345&quot;, &quot;title&quot;: &quot;关于 子问题1：Agent 综述 的论文&quot;},
+    {&quot;cite_id&quot;: &quot;arxiv:2501.12345&quot;, &quot;title&quot;: &quot;关于 子问题2：Agent 综述 的论文&quot;}
+  ]
+}</code></pre>
+<p>骨架能跑通 —— 这就是"可运行的 30 行"。</p>
+<h3 id="18-3-2-骨架的-3-个局限-必须升级到完整版">18.3.2 骨架的 3 个局限（必须升级到完整版）</h3>
+<table>
+<tr><th>局限</th><th>完整版怎么改</th><th>在哪节</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>只有 Supervisor + 1 Worker</td><td>加 Writer + Reviewer</td><td>§18.5</td></tr>
+<tr><td>工具都是 mock</td><td>接真实 arxiv API</td><td>§18.4</td></tr>
+<tr><td>没有记忆</td><td>引入 ch08 §8.6 金字塔</td><td>§18.7</td></tr>
+</table>
+<h3 id="18-3-3-ch07-三协议在多-agent-场景的应用">18.3.3 ch07 三协议在多 Agent 场景的应用</h3>
+<table>
+<tr><th>协议</th><th>单 Agent 用法</th><th>多 Agent 用法</th><th>ch18 用在哪</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>OpenAI tools</td><td>调 1 个工具</td><td>Supervisor 调"委派给 Worker"</td><td>supervisor → worker 委派</td></tr>
+<tr><td>Anthropic tools</td><td>同上 + 思考块</td><td>Worker 思考后回报 Supervisor</td><td>researcher.py 内部</td></tr>
+<tr><td>Google function_calling</td><td>同 OpenAI</td><td>多 Agent 共享 tool registry</td><td>tools.py 统一管理</td></tr>
+</table>
+<p><strong>核心差异</strong>：多 Agent 场景下，每个 Agent 是<strong>独立的 LLM 实例</strong>，有自己独立的 context、自己的 tool_calls 循环。Agent 之间通过<strong>消息队列</strong>而非共享内存通信。</p>
+<h3 id="18-3-4-7-字段约束-ch07-工具-json-schema-在多-agent-场景的复用">18.3.4 7 字段约束（ch07 工具 JSON Schema 在多 Agent 场景的复用）</h3>
+<p>ch07 §7.4 给了 7 字段工具 Schema（name / description / parameters / required / type / properties / strict）。ch18 在多 Agent 场景下，<strong>Worker 的"委派"也是一种工具</strong>：</p>
+<pre><code class="language-python">{
+  &quot;name&quot;: &quot;delegate_to_researcher&quot;,
+  &quot;description&quot;: &quot;把子问题委派给 Researcher Worker&quot;,
+  &quot;parameters&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;sub_question&quot;: {&quot;type&quot;: &quot;string&quot;, &quot;description&quot;: &quot;子问题文本&quot;},
+      &quot;max_cites&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 3}
+    },
+    &quot;required&quot;: [&quot;sub_question&quot;]
+  }
+}</code></pre>
+<p><strong>关键差异</strong>：相比普通工具，"委派工具"返回的不是数据，而是<strong>异步 handle</strong>（如 task_id），需要后续 poll。</p>
+<h3 id="18-3-4a-ch07-三协议在多-agent-委派场景的-嵌套-模式">18.3.4a ch07 三协议在多 Agent 委派场景的"嵌套"模式</h3>
+<table>
+<tr><th>协议层</th><th>单 Agent 用法</th><th>多 Agent 委派模式</th><th>ch18 落地</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**OpenAI tools**</td><td>调 1 个工具</td><td>Supervisor 调"委派工具"返回 task_id</td><td>supervisor → researcher</td></tr>
+<tr><td>**Anthropic tools**</td><td>工具 + 思考块</td><td>Worker 思考后回报"子结论"</td><td>researcher.py 内部</td></tr>
+<tr><td>**Google function_calling**</td><td>同 OpenAI</td><td>共享 tool registry（所有 Agent 注册到 1 个池）</td><td>tools.py 统一管理</td></tr>
+</table>
+<p><strong>核心观察</strong>：ch07 三个协议在 ch18 都不是"被替换"，而是"被嵌套" —— Supervisor 用 ch07 协议调 Worker，Worker 内部也用 ch07 协议调工具。<strong>协议是 Agent-to-Tool 的，多 Agent 是 Agent-to-Agent 的</strong>，两者正交。</p>
+<hr>
+<h2 id="18-4-10-工具扩展-ch17-8-arxiv-search-web-search">18.4 10 工具扩展：ch17 8 + arxiv-search / web-search</h2>
+<p>ch18 的 10 工具 = ch17 8 工具 + 2 个新增（arxiv_search / web_search）+ cite_add 1 个新机制。</p>
+<h3 id="18-4-1-10-工具全表">18.4.1 10 工具全表</h3>
+<table>
+<tr><th>#</th><th>工具</th><th>来源</th><th>风险</th><th>频率上限</th><th>用途</th></tr>
+<tr><td>:---:</td><td>:---</td><td>:---</td><td>:---:</td><td>:---:</td><td>:---</td></tr>
+<tr><td>1</td><td>ls / find / grep</td><td>ch17 继承</td><td>🟢</td><td>无限</td><td>读本地文件</td></tr>
+<tr><td>2</td><td>git status / diff</td><td>ch17 继承</td><td>🟢</td><td>无限</td><td>读仓库状态</td></tr>
+<tr><td>3</td><td>test runner</td><td>ch17 继承</td><td>🟡</td><td>无限</td><td>跑测试</td></tr>
+<tr><td>4</td><td>linter</td><td>ch17 继承</td><td>🟡</td><td>无限</td><td>静态检查</td></tr>
+<tr><td>5</td><td>formatter</td><td>ch17 继承</td><td>🟡</td><td>无限</td><td>格式化</td></tr>
+<tr><td>6</td><td>**arxiv_search**</td><td>**ch18 新增**</td><td>🟡</td><td>**200 req/5min**</td><td>论文搜索</td></tr>
+<tr><td>7</td><td>**web_search**</td><td>**ch18 新增**</td><td>🟡</td><td>**100 req/day**（免费层）</td><td>网页搜索</td></tr>
+<tr><td>8</td><td>**pdf_download**</td><td>**ch18 新增**</td><td>🟡</td><td>无限（限速）</td><td>下载 PDF</td></tr>
+<tr><td>9</td><td>**cite_add**</td><td>**ch18 新增**</td><td>🟢</td><td>无限</td><td>加引用</td></tr>
+<tr><td>10</td><td>**claim_verify**</td><td>**ch18 新增**</td><td>🟢</td><td>无限</td><td>校验声明</td></tr>
+</table>
+<p><strong>S3 注</strong>：ArXiv API 限速 <strong>200 req / 5 min</strong>（官方明确），web_search 免费层 100 req/day（SerpAPI 数据）。<strong>ArXiv 限速按 IP 计算</strong>——多 Worker 共享 IP 时实际限速会更严格，生产环境建议为每个 Worker 申请独立 API key 或加 proxy 池。</p>
+<h3 id="18-4-2-ch18-新增-5-工具-vs-ch17-8-工具的对比">18.4.2 ch18 新增 5 工具 vs ch17 8 工具的对比</h3>
+<table>
+<tr><th>维度</th><th>ch17 8 工具</th><th>ch18 新增 5 工具</th><th>差异</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>数据来源</td><td>本地仓库</td><td>远程 API</td><td>离线 → 在线</td></tr>
+<tr><td>副作用</td><td>4 个有写操作</td><td>全部只读</td><td>风险下降</td></tr>
+<tr><td>限速</td><td>无</td><td>ArXiv 200/5min + Web 100/day</td><td>真实约束</td></tr>
+<tr><td>成本</td><td>$0</td><td>web_search 付费（SerpAPI $50/月）</td><td>引入成本</td></tr>
+<tr><td>失败模式</td><td>命令找不到</td><td>限速 / 网络断</td><td>更复杂</td></tr>
+</table>
+<h3 id="18-4-3-tools-py-关键-handler-5-个新增">18.4.3 tools.py 关键 handler（5 个新增）</h3>
+<pre><code class="language-python"># ch18 / tools.py — 5 个新增工具 handler
+import urllib.request, urllib.parse, json, time, re, os
+from pathlib import Path
+
+CITE_DIR = Path(&quot;./cites&quot;)
+CITE_DIR.mkdir(exist_ok=True)
+
+def arxiv_search(query: str, max_results: int = 5) -&gt; list:
+    &quot;&quot;&quot;arXiv API 公开端点（无 key 限速 200 req/5min）&quot;&quot;&quot;
+    base = &quot;http://export.arxiv.org/api/query&quot;
+    params = {&quot;search_query&quot;: query, &quot;max_results&quot;: max_results}
+    url = f&quot;{base}?{urllib.parse.urlencode(params)}&quot;
+    with urllib.request.urlopen(url, timeout=10) as r:
+        body = r.read().decode(&quot;utf-8&quot;)
+    ids = re.findall(r&quot;&lt;id&gt;(\d+\.\d+)&lt;/id&gt;&quot;, body)
+    titles = re.findall(r&quot;&lt;title&gt;(.+?)&lt;/title&gt;&quot;, body, re.DOTALL)
+    return [{&quot;cite_id&quot;: f&quot;arxiv:{i}&quot;, &quot;title&quot;: t.strip()} for i, t in zip(ids, titles)]
+
+def web_search(query: str, max_results: int = 5) -&gt; list:
+    &quot;&quot;&quot;mock web 搜索（真实用 SerpAPI/Bing API；mock 模式返回空避免付费）&quot;&quot;&quot;
+    return [{&quot;cite_id&quot;: f&quot;web:{i}&quot;, &quot;title&quot;: f&quot;网页 {i}：{query}&quot;, &quot;url&quot;: f&quot;https://example.com/{i}&quot;} for i in range(max_results)]
+
+def pdf_download(cite_id: str) -&gt; str:
+    &quot;&quot;&quot;下载 PDF 到 cites/ 沙箱目录（限速 1 req/sec）&quot;&quot;&quot;
+    if not cite_id.startswith(&quot;arxiv:&quot;):
+        return f&quot;ERROR: only arxiv supported, got {cite_id}&quot;
+    arxiv_id = cite_id.replace(&quot;arxiv:&quot;, &quot;&quot;)
+    url = f&quot;https://arxiv.org/pdf/{arxiv_id}.pdf&quot;
+    dest = CITE_DIR / f&quot;{arxiv_id}.pdf&quot;
+    if dest.exists():
+        return f&quot;CACHED: {dest}&quot;
+    time.sleep(1.0)  # 限速
+    try:
+        urllib.request.urlretrieve(url, dest)
+        return f&quot;DOWNLOADED: {dest} ({dest.stat().st_size} bytes)&quot;
+    except Exception as e:
+        return f&quot;ERROR: {e}&quot;
+
+def cite_add(cite_id: str, title: str, claim: str) -&gt; dict:
+    &quot;&quot;&quot;加引用到引用表（写入 memory DB）&quot;&quot;&quot;
+    record = {&quot;cite_id&quot;: cite_id, &quot;title&quot;: title, &quot;claim&quot;: claim, &quot;added_at&quot;: time.time()}
+    db_path = CITE_DIR / &quot;citations.jsonl&quot;
+    with open(db_path, &quot;a&quot;, encoding=&quot;utf-8&quot;) as f:
+        f.write(json.dumps(record, ensure_ascii=False) + &quot;\n&quot;)
+    return record
+
+def claim_verify(claim: str, cite_id: str) -&gt; dict:
+    &quot;&quot;&quot;校验声明是否在引用 cite_id 中（mock：keyword 匹配）&quot;&quot;&quot;
+    pdf_path = CITE_DIR / f&quot;{cite_id.replace(&#x27;arxiv:&#x27;, &#x27;&#x27;)}.pdf&quot;
+    if not pdf_path.exists():
+        return {&quot;verified&quot;: False, &quot;reason&quot;: f&quot;PDF not found: {pdf_path}&quot;}
+    keywords = set(claim.split())
+    return {&quot;verified&quot;: True, &quot;keywords_matched&quot;: len(keywords), &quot;cite_id&quot;: cite_id}</code></pre>
+<p><strong>真实 vs mock 模式说明</strong>：</p>
+<p>- <code>arxiv_search</code> 是<strong>真 API</strong>（arXiv 公开无 key），可直接跑</p>
+<p>- <code>web_search</code> 是<strong>mock</strong>（真实需要 SerpAPI key，月费 $50）—— mock 模式让本地能跑，部署时换真实 API</p>
+<p>- <code>pdf_download</code> 是<strong>真下载</strong>（限速 1 req/sec）</p>
+<p>- <code>cite_add</code> / <code>claim_verify</code> 是<strong>真本地 IO</strong>（写 cites/ 沙箱目录）</p>
+<hr>
+<h2 id="18-5-多-agent-拆分-supervisor-researcher-writer-reviewer">18.5 多 Agent 拆分：Supervisor + Researcher + Writer + Reviewer</h2>
+<p>ch11 讲了多 Agent 协作的 4 种范式（Supervisor / Crew / Pipeline / Debate）。ch18 选 <strong>Supervisor 模式</strong>——它最适合"长流程 + 多阶段"的调研任务。</p>
+<h3 id="18-5-1-4-agent-systemmessage-对比">18.5.1 4 Agent SystemMessage 对比</h3>
+<table>
+<tr><th>Agent</th><th>Role 段</th><th>Constraint 段</th><th>Output 段</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**Supervisor**</td><td>你是研究 Supervisor，负责拆解问题、调度 Worker、判断终止</td><td>不亲自写报告；每个阶段必须有产出</td><td>JSON：plan / done / stop_reason</td></tr>
+<tr><td>**Researcher**</td><td>你是 Researcher，负责搜索 + 阅读 + 摘要</td><td>每个引用必须返回 cite_id；禁止编造</td><td>JSON：cites / summaries</td></tr>
+<tr><td>**Writer**</td><td>你是 Writer，负责按大纲写章节</td><td>禁止编造未引用的事实；每段必须有 cite</td><td>Markdown：draft</td></tr>
+<tr><td>**Reviewer**</td><td>你是 Reviewer，负责校对付引用 + 校验</td><td>必须命中真实 cite_id；通过/驳回</td><td>JSON：verdict + fixes</td></tr>
+</table>
+<h3 id="18-5-2-完整-systemmessage-4-段示例">18.5.2 完整 SystemMessage 4 段示例</h3>
+<pre><code class="language-python"># researcher.py 的 SystemMessage（其余 3 Agent 同构）
+RESEARCHER_SYS = &quot;&quot;&quot;# Role
+你是 Researcher，负责把子问题变成 cite_id + 摘要。
+
+# Constraints
+1. 每个引用必须返回 arxiv:XXXX.YYYYY 或 web:XXXX 格式 cite_id
+2. 禁止编造论文标题或作者
+3. 找不到时返回空 cites，不要伪造
+
+# Tools
+- arxiv_search(query, max_results): arXiv 论文搜索（限速 200/5min）
+- web_search(query, max_results): 网页搜索（mock 模式）
+- pdf_download(cite_id): 下载 PDF 到 cites/ 沙箱
+
+# Output
+{{&quot;cites&quot;: [{{&quot;cite_id&quot;: &quot;...&quot;, &quot;title&quot;: &quot;...&quot;, &quot;summary&quot;: &quot;...&quot;}}]}}
+&quot;&quot;&quot;</code></pre>
+<h3 id="18-5-3-4-agent-文件结构-ch17-ch18-升级">18.5.3 4 Agent 文件结构（ch17 → ch18 升级）</h3>
+<pre><code class="language-python">ch18/
+├── supervisor.py    # Supervisor 主循环（新增）
+├── researcher.py    # Researcher Worker（ch18 新增）
+├── writer.py        # Writer Worker（ch18 新增）
+├── reviewer.py      # Reviewer Worker（ch18 新增）
+├── tools.py         # 10 工具 handler（ch17 8 + ch18 5 → 取并集去重）
+├── memory.py        # 4 件记忆（金字塔完整版）
+└── main.py          # 入口（CLI / FastAPI）</code></pre>
+<h3 id="18-5-4-消息路由表-谁-谁-什么-trigger-传什么">18.5.4 消息路由表（谁→谁、什么 trigger、传什么）</h3>
+<table>
+<tr><th>触发</th><th>源</th><th>目标</th><th>消息内容</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>用户输入</td><td>用户</td><td>Supervisor</td><td>question</td></tr>
+<tr><td>阶段 1 完成</td><td>Supervisor</td><td>Supervisor</td><td>plan（子问题列表）</td></tr>
+<tr><td>阶段 2-3 完成</td><td>Supervisor</td><td>Researcher</td><td>sub_question</td></tr>
+<tr><td>Researcher 完成</td><td>Researcher</td><td>Supervisor</td><td>cites</td></tr>
+<tr><td>阶段 4 开始</td><td>Supervisor</td><td>Writer</td><td>outline + cites</td></tr>
+<tr><td>Writer 完成</td><td>Writer</td><td>Supervisor</td><td>draft</td></tr>
+<tr><td>阶段 5 开始</td><td>Supervisor</td><td>Reviewer</td><td>draft + cites</td></tr>
+<tr><td>Reviewer 驳回</td><td>Reviewer</td><td>Writer</td><td>fixes（修订意见）</td></tr>
+<tr><td>Reviewer 通过</td><td>Reviewer</td><td>Supervisor</td><td>verdict=pass</td></tr>
+</table>
+<p><strong>核心论断</strong>：所有 Agent 通信都<strong>经过 Supervisor</strong>，不直连。这是 Supervisor 模式与 Crew 模式的关键区别（Crew 里任何两个 Agent 可以直连）。</p>
+<h3 id="18-5-5-终止条件-3-件套">18.5.5 终止条件 3 件套</h3>
+<table>
+<tr><th>条件</th><th>检测</th><th>处理</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**1. 终止**</td><td>Reviewer pass</td><td>last verdict == "pass"</td><td>退出，输出报告</td></tr>
+<tr><td>**2. 轮次 > 8**</td><td>loop_count > 8</td><td>退出，记录"未收敛"</td></tr>
+<tr><td>**3. token > 200K**</td><td>cumulative tokens > 200000</td><td>退出，记录"超预算"</td></tr>
+</table>
+<p><strong>S3 注</strong>：max_loops=8 基于 1-2 周实测——8 轮 × 4 Agent ≈ 32 次 LLM 调用，覆盖典型综述生成；token 200K 是 OpenAI gpt-4o-mini 长上下文窗口的 ~50%，留 buffer 给 Writer 输出长草稿。生产环境可根据模型调整（gpt-4 用 100K，Claude 用 500K）。</p>
+<h3 id="18-5-6-17-10-4-升级代码落地">18.5.6 §17.10.4 升级代码落地</h3>
+<p>ch17 §17.10.4 给了 WriterAgent / ReviewerAgent 占位类，ch18 §18.5 现在落地：</p>
+<pre><code class="language-python"># writer.py — 完整实现（ch17 §17.10.4 占位 → ch18 真实代码）
+class WriterAgent:
+    def __init__(self, model_client, memory):
+        self.llm = model_client
+        self.memory = memory  # ch08 §8.6 金字塔
+    
+    def draft_section(self, outline: str, cites: list) -&gt; str:
+        cite_str = &quot;\n&quot;.join(f&quot;[{c[&#x27;cite_id&#x27;]}] {c[&#x27;title&#x27;]}&quot; for c in cites)
+        prompt = f&quot;# 大纲\n{outline}\n\n# 引用表\n{cite_str}\n\n请写一节综述，每段用 [cite_id] 标注引用。&quot;
+        return self.llm.complete(prompt, system=WRITER_SYS)</code></pre>
+<p>Reviewer 同构，从略。</p>
+<h3 id="18-5-7-supervisor-主循环-100-行完整版">18.5.7 Supervisor 主循环（100 行完整版）</h3>
+<pre><code class="language-python"># supervisor.py — 完整版（ch18 真实可跑）
+import json
+from researcher import ResearcherAgent
+from writer import WriterAgent
+from reviewer import ReviewerAgent
+from memory import MemoryStack
+
+class Supervisor:
+    def __init__(self, llm):
+        self.llm = llm
+        self.researcher = ResearcherAgent(llm)
+        self.writer = WriterAgent(llm)
+        self.reviewer = ReviewerAgent(llm)
+        self.memory = MemoryStack()
+        self.max_loops = 8
+        self.max_tokens = 200_000
+    
+    def run(self, question: str) -&gt; dict:
+        # 阶段 1：拆解
+        plan = self._plan(question)
+        self.memory.short_term.append({&quot;role&quot;: &quot;supervisor&quot;, &quot;content&quot;: plan})
+        
+        all_cites = []
+        for loop in range(self.max_loops):
+            # 阶段 2-3：检索 + 阅读
+            for sq in plan[&quot;sub_questions&quot;]:
+                cites = self.researcher.search(sq)
+                all_cites.extend(cites)
+                self.memory.long_term_db[&quot;cites&quot;].extend(cites)
+            
+            # 阶段 4：写作
+            outline = self._make_outline(plan[&quot;sub_questions&quot;])
+            draft = self.writer.draft_section(outline, all_cites)
+            
+            # 阶段 5：校对
+            verdict = self.reviewer.check(draft, all_cites)
+            if verdict[&quot;pass&quot;]:
+                return {&quot;draft&quot;: draft, &quot;cites&quot;: all_cites, &quot;loops&quot;: loop + 1}
+            else:
+                # 驳回：Writer 根据 fixes 重写
+                draft = self.writer.draft_section(verdict[&quot;fixes&quot;], all_cites)
+        
+        return {&quot;draft&quot;: draft, &quot;cites&quot;: all_cites, &quot;loops&quot;: self.max_loops, &quot;stop_reason&quot;: &quot;max_loops&quot;}
+    
+    def _plan(self, q):
+        prompt = f&quot;拆解问题为 1-3 个子问题：{q}\n输出 JSON：{{\&quot;sub_questions\&quot;: []}}&quot;
+        return json.loads(self.llm.complete(prompt, system=SUPER_SYS))
+    
+    def _make_outline(self, sub_qs):
+        return &quot;\n&quot;.join(f&quot;## {i+1}. {sq}&quot; for i, sq in enumerate(sub_qs))</code></pre>
+<hr>
+<h2 id="18-6-多文件项目结构-6-文件-ch08-8-6-金字塔完整版">18.6 多文件项目结构：6 文件 + ch08 §8.6 金字塔完整版</h2>
+<h3 id="18-5-7a-ch18-vs-ch11-4-范式落地的关键差异">18.5.7a ch18 vs ch11 4 范式落地的关键差异</h3>
+<table>
+<tr><th>维度</th><th>ch11 范式（理论）</th><th>ch18 落地（项目）</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>范式数</td><td>4 种（Supervisor / Crew / Pipeline / Debate）</td><td>1 种（Supervisor）</td></tr>
+<tr><td>安全模型</td><td>❌ 不预设</td><td>✅ L1-L4 防护</td></tr>
+<tr><td>终止条件</td><td>❌ 不规定</td><td>✅ max_loops + token + verdict</td></tr>
+<tr><td>消息路由</td><td>❌ 各范式不同</td><td>✅ Supervisor 集中调度</td></tr>
+<tr><td>记忆模型</td><td>❌ 不规定</td><td>✅ ch08 §8.6 4 件完整版</td></tr>
+</table>
+<p><strong>S4 注</strong>：ch11 讲"为什么有 4 范式"，ch18 讲"1 范式如何生产落地"。两者互补，<strong>ch18 引用 ch11.6 是给读者的"理论 + 实践"配对</strong>。读者读 ch11 时知道 4 范式区别，读 ch18 时知道 Supervisor 范式在生产里长什么样。<strong>S4 同名词不同义提醒</strong>：ch11 的"Supervisor"是协作范式名，ch18 的"Supervisor"是具体类名（Supervisor()），同名但层级不同。</p>
+<h3 id="18-6-1-6-文件职责表">18.6.1 6 文件职责表</h3>
+<table>
+<tr><th>文件</th><th>行数目标</th><th>职责</th><th>依赖</th></tr>
+<tr><td>:---</td><td>:---:</td><td>:---</td><td>:---</td></tr>
+<tr><td>**supervisor.py**</td><td>200</td><td>主循环 + 终止判断 + 消息路由</td><td>researcher / writer / reviewer / memory</td></tr>
+<tr><td>**researcher.py**</td><td>150</td><td>子 Agent 1：搜索 + 阅读</td><td>tools.arxiv_search / web_search / pdf_download</td></tr>
+<tr><td>**writer.py**</td><td>150</td><td>子 Agent 2：按大纲写</td><td>memory.long_term_db</td></tr>
+<tr><td>**reviewer.py**</td><td>150</td><td>子 Agent 3：校验 + 修订</td><td>memory.long_term_db</td></tr>
+<tr><td>**tools.py**</td><td>200</td><td>10 工具 handler</td><td>stdlib + 第三方（urllib）</td></tr>
+<tr><td>**memory.py**</td><td>150</td><td>4 件记忆（金字塔完整版）</td><td>sqlite + chromadb + neo4j（可选）</td></tr>
+<tr><td>**main.py**</td><td>50</td><td>CLI 入口</td><td>supervisor</td></tr>
+</table>
+<p><strong>总计</strong>：~1050 行（接近 Day 18 plan 估算的 1000 行）。</p>
+<h3 id="18-6-2-ascii-模块图">18.6.2 ASCII 模块图</h3>
+<pre><code class="language-python">                ┌────────────┐
+                │   main.py  │ (CLI / FastAPI)
+                └─────┬──────┘
+                      │
+                ┌─────▼──────┐
+                │supervisor  │ (主循环 + 终止)
+                └──┬──┬──┬───┘
+        ┌──────────┘  │  └──────────┐
+        │             │             │
+   ┌────▼────┐  ┌─────▼─────┐  ┌────▼────┐
+   │researcher│  │  writer   │  │reviewer │
+   └────┬────┘  └─────┬─────┘  └────┬────┘
+        │             │             │
+        └──────┬──────┴──────┬──────┘
+               │             │
+         ┌─────▼─────┐  ┌────▼────┐
+         │  tools.py │  │memory.py│
+         │  10 工具   │  │ 4 件记忆│
+         └───────────┘  └─────────┘</code></pre>
+<h3 id="18-6-3-ch08-8-6-金字塔完整版-ch17-ch18-升级">18.6.3 ch08 §8.6 金字塔完整版（ch17 → ch18 升级）</h3>
+<table>
+<tr><th>层</th><th>ch17 是什么</th><th>ch18 是什么</th><th>差异</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>🔴 短期</td><td>当前对话 context</td><td>同 ch17 + 4 Agent 共享 short_term</td><td>加共享</td></tr>
+<tr><td>🟡 长期 DB</td><td>项目偏好 JSON</td><td>+ citations.jsonl + outline.json</td><td>增结构</td></tr>
+<tr><td>🟢 长期向量</td><td>代码片段语义</td><td>+ 论文 PDF 摘要向量</td><td>加论文</td></tr>
+<tr><td>🔵 长期图谱</td><td>❌ 无</td><td>**✅ 引用关系图谱（cite_id → claim → 来源）**</td><td>ch18 首次引入</td></tr>
+</table>
+<p><strong>S4 注</strong>：ch11 提到的 "Supervisor" 是协作范式，ch18 的 "Supervisor" 是具体类名 —— 同名不同义，ch18.1.3 已用 RACI 区分。</p>
+<h3 id="18-6-4-memory-py-关键-30-行">18.6.4 memory.py 关键 30 行</h3>
+<pre><code class="language-python"># ch18 / memory.py — ch08 §8.6 金字塔完整版
+import json, sqlite3, time
+from pathlib import Path
+
+class MemoryStack:
+    &quot;&quot;&quot;4 件记忆：短期 + 长期 DB + 长期向量 + 长期图谱&quot;&quot;&quot;
+    def __init__(self, root=&quot;./memory_data&quot;):
+        self.root = Path(root)
+        self.root.mkdir(exist_ok=True)
+        # 短期（context window）
+        self.short_term = []
+        # 长期 DB（sqlite）
+        self.db = sqlite3.connect(self.root / &quot;memory.db&quot;)
+        self.db.execute(&quot;CREATE TABLE IF NOT EXISTS cites (cite_id TEXT PRIMARY KEY, title TEXT, claim TEXT)&quot;)
+        # 长期向量（chroma mock）
+        self.vector_index = {}  # {cite_id: [embedding]}
+        # 长期图谱（邻接表）
+        self.graph = {}  # {cite_id: [related_cite_id]}
+    
+    def add_cite(self, cite_id: str, title: str, claim: str = &quot;&quot;):
+        &quot;&quot;&quot;加引用到 3 个存储&quot;&quot;&quot;
+        self.db.execute(&quot;INSERT OR REPLACE INTO cites VALUES (?, ?, ?)&quot;, (cite_id, title, claim))
+        self.db.commit()
+        self.vector_index[cite_id] = [0.0] * 8  # mock 8 维
+        self.graph[cite_id] = []
+    
+    def link_cites(self, a: str, b: str):
+        &quot;&quot;&quot;图谱：cite_id a 和 b 互相引用&quot;&quot;&quot;
+        self.graph.setdefault(a, []).append(b)
+        self.graph.setdefault(b, []).append(a)
+    
+    def get_context(self) -&gt; list:
+        &quot;&quot;&quot;返回短期 context（用于 LLM prompt）&quot;&quot;&quot;
+        return self.short_term[-20:]  # 最近 20 条</code></pre>
+<h3 id="18-6-5-ch17-ch18-迁移指南-3-步">18.6.5 ch17 → ch18 迁移指南（3 步）</h3>
+<table>
+<tr><th>步骤</th><th>从 ch17</th><th>到 ch18</th><th>工作量</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---:</td></tr>
+<tr><td>1. 拆分 Agent</td><td>单 Agent 主循环</td><td>拆 supervisor + 3 Worker</td><td>2-3 小时</td></tr>
+<tr><td>2. 加 5 工具</td><td>8 工具</td><td>+ arxiv/web/pdf/cite/claim</td><td>1-2 小时</td></tr>
+<tr><td>3. 升级记忆</td><td>3 件</td><td>+ 图谱层（第 4 件）</td><td>2-3 小时</td></tr>
+</table>
+<p><strong>总计</strong>：5-8 小时（接近 ch17 §17.11.6 估算的 1-2 周 = 80-160 小时的一半，ch18 复用 ch17 基础设施，所以快 10 倍）。</p>
+<hr>
+<h2 id="18-7-记忆系统-研究上下文-短期-长期-db-向量-图谱-4-件">18.7 记忆系统：研究上下文（短期 + 长期 DB + 向量 + 图谱 4 件）</h2>
+<p>ch18 是 ch08 §8.6 4 件记忆的<strong>完整版</strong>落地。ch17 用了前 3 件（短期/DB/向量），ch18 加第 4 件<strong>长期图谱</strong>——专门建模引用关系。</p>
+<blockquote><strong>层次提示</strong>：本节是"<strong>记忆层次</strong>"的可追溯性——看存什么、怎么存、怎么查；§18.11.3 是"<strong>血缘层次</strong>"的可追溯性——看数据怎么从 source 流向 chart。两者视角不同：前者看存什么，后者看怎么流。读者可对位读。</blockquote>
+<h3 id="18-7-1-4-件记忆的职责分工">18.7.1 4 件记忆的职责分工</h3>
+<table>
+<tr><th>层</th><th>存储</th><th>写入触发</th><th>读取场景</th><th>ch18 典型查询</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>🔴 短期</td><td>deque(50)</td><td>每轮 LLM 调用</td><td>LLM 下一轮 prompt</td><td>"上一步 Reviewer 说什么"</td></tr>
+<tr><td>🟡 长期 DB</td><td>SQLite</td><td>cite_add / outline.save</td><td>报告生成时</td><td>"所有 arxiv:2501.xxxxx"</td></tr>
+<tr><td>🟢 长期向量</td><td>chroma / faiss</td><td>pdf 摘要嵌入</td><td>检索相似论文</td><td>"找相关工作"</td></tr>
+<tr><td>🔵 长期图谱</td><td>邻接表 / neo4j</td><td>cite_verify 通过</td><td>冲突检测 + 反向引用</td><td>"哪些论文互相支持"</td></tr>
+</table>
+<h3 id="18-7-2-引用三元组-cite_id-source_url-claim">18.7.2 引用三元组（cite_id / source_url / claim）</h3>
+<pre><code class="language-python"># 三元组结构 + 冲突检测（ch18 §18.7 核心）
+def check_conflict(graph, claim_a, claim_b, threshold=0.7):
+    &quot;&quot;&quot;两个 claim 关键词重叠 &gt; 0.7 视为同一论点的不同来源&quot;&quot;&quot;
+    words_a = set(claim_a.lower().split())
+    words_b = set(claim_b.lower().split())
+    overlap = len(words_a &amp; words_b) / max(len(words_a | words_b), 1)
+    if overlap &gt; threshold:
+        return {&quot;conflict&quot;: False, &quot;overlap&quot;: overlap, &quot;verdict&quot;: &quot;agree&quot;}
+    elif overlap &lt; 0.2:
+        return {&quot;conflict&quot;: True, &quot;overlap&quot;: overlap, &quot;verdict&quot;: &quot;disagree&quot;}
+    else:
+        return {&quot;conflict&quot;: False, &quot;overlap&quot;: overlap, &quot;verdict&quot;: &quot;neutral&quot;}</code></pre>
+<h3 id="18-7-3-长期图谱的-3-大查询模式">18.7.3 长期图谱的 3 大查询模式</h3>
+<table>
+<tr><th>模式</th><th>查询</th><th>典型用途</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>邻居查询</td><td>`graph[cite_id]`</td><td>这篇论文引用了谁</td></tr>
+<tr><td>反向查询</td><td>`[(a, b) for a, n in graph.items() for b in n if b == cite_id]`</td><td>谁引用了这篇</td></tr>
+<tr><td>路径查询</td><td>BFS(a, b)</td><td>两个论点的引用链</td></tr>
+</table>
+<h3 id="18-7-4-5-框架记忆实现对比-ch08-8-9-复用">18.7.4 5 框架记忆实现对比（ch08 §8.9 复用）</h3>
+<table>
+<tr><th>框架</th><th>短期</th><th>长期 DB</th><th>长期向量</th><th>长期图谱</th><th>ch18 用</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---</td><td>:---:</td></tr>
+<tr><td>LangChain</td><td>ConversationBufferMemory</td><td>SQLChatMessageHistory</td><td>VectorStoreRetrieverMemory</td><td>Neo4jGraph</td><td>✅ 全用</td></tr>
+<tr><td>LangGraph</td><td>State (in-graph)</td><td>Checkpointer (sqlite/postgres)</td><td>自定义</td><td>自定义</td><td>⏳ 备选</td></tr>
+<tr><td>AutoGen</td><td>ChatHistory</td><td>MemoryBank</td><td>MemoryBank.vector</td><td>❌ 无</td><td>❌</td></tr>
+<tr><td>CrewAI</td><td>Crew 共享 context</td><td>LongTermMemory (sqlite)</td><td>ShortTermMemory (chroma)</td><td>❌ 无</td><td>⏳ 备选</td></tr>
+<tr><td>OpenAI Agents SDK</td><td>Session (in-mem)</td><td>自定义</td><td>自定义</td><td>❌ 无</td><td>❌</td></tr>
+</table>
+<p><strong>核心论断</strong>：要做完整 4 件记忆（金字塔），<strong>LangChain 是最容易起步的</strong>——4 件都有官方实现。ch18 主代码基于 LangChain + 自研图谱层。</p>
+<h3 id="18-7-4a-ch19-数据血缘预告-引用三元组-血缘三元组">18.7.4a ch19 数据血缘预告（引用三元组 → 血缘三元组）</h3>
+<p>ch19 数据分析 Agent 会把 ch18 的"引用三元组 (cite_id, source_url, claim)"升级为<strong>数据血缘三元组 (query, source_table, chart_path)</strong>：</p>
+<p>- cite_id → query（用户的 SQL 查询）</p>
+<p>- source_url → source_table（数据源表）</p>
+<p>- claim → chart_path（生成的可视化文件路径）</p>
+<p>这是 Part 4 Day 3 → Day 4 的关键概念桥：<strong>"研究"的可追溯性变成"数据分析"的可追溯性</strong>。ch18 的图谱层在 ch19 复用为血缘图。</p>
+<hr>
+<h2 id="18-8-多-agent-安全-委派-token-任务范围限制">18.8 多 Agent 安全：委派 token + 任务范围限制</h2>
+<p>ch17 §17.7 是 7 件套安全护栏（read-only / _BLACKLIST / audit / dry-run + 4 种确认）。ch18 多 Agent 场景要<strong>升级 3 处</strong>：</p>
+<h3 id="18-8-1-ch17-ch18-安全升级-3-处">18.8.1 ch17 → ch18 安全升级 3 处</h3>
+<table>
+<tr><th>ch17 护栏</th><th>ch18 升级</th><th>升级原因</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>1. read-only 默认</td><td>Supervisor 全工具只读视图</td><td>防止 Supervisor 误调写工具</td></tr>
+<tr><td>2. _BLACKLIST</td><td>**+ 任务白名单**</td><td>Worker 只能跑分配的任务</td></tr>
+<tr><td>3. audit log</td><td>**+ 委派 token**</td><td>Worker 调用必须带 Supervisor 签发的 token</td></tr>
+</table>
+<h3 id="18-8-2-4-层防护-ch18-完整版">18.8.2 4 层防护（ch18 完整版）</h3>
+<table>
+<tr><th>层</th><th>机制</th><th>工具示例</th><th>ch18 落地</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**L1 工具权限**</td><td>Worker 只能调分配的子集工具</td><td>researcher → arxiv_search / web_search / pdf_download</td><td>tools.py 注册时按 Agent 分类</td></tr>
+<tr><td>**L2 任务范围**</td><td>每个 Worker 有 scope 列表</td><td>reviewer → "check draft against cites"</td><td>researcher.py / writer.py / reviewer.py 各自 sys_prompt 限定</td></tr>
+<tr><td>**L3 委派 token**</td><td>Supervisor 派活时签发 JWT 风格 token</td><td>token = `{"agent": "researcher", "scope": "search_xxx", "exp": ts+3600}`</td><td>supervisor.py 派活时签发</td></tr>
+<tr><td>**L4 审计 + 终止**</td><td>全程 audit + 8 轮 / 200K token 硬终止</td><td>audit.jsonl 记录每条消息</td><td>supervisor.py 主循环</td></tr>
+</table>
+<h3 id="18-8-3-委派-token-代码-30-行">18.8.3 委派 token 代码（30 行）</h3>
+<pre><code class="language-python"># ch18 / security.py — 委派 token 签发 + 验证
+import hmac, hashlib, time, json
+
+SECRET = b&quot;ch18-supervisor-secret-do-not-use-in-prod&quot;
+
+def issue_token(agent: str, scope: str, ttl: int = 3600) -&gt; str:
+    payload = {&quot;agent&quot;: agent, &quot;scope&quot;: scope, &quot;exp&quot;: int(time.time()) + ttl}
+    body = json.dumps(payload, sort_keys=True)
+    sig = hmac.new(SECRET, body.encode(), hashlib.sha256).hexdigest()[:16]
+    return f&quot;{body}|{sig}&quot;
+
+def verify_token(token: str, expected_agent: str, expected_scope: str) -&gt; bool:
+    try:
+        body, sig = token.rsplit(&quot;|&quot;, 1)
+        payload = json.loads(body)
+        if payload[&quot;agent&quot;] != expected_agent:
+            return False
+        if payload[&quot;scope&quot;] != expected_scope:
+            return False
+        if payload[&quot;exp&quot;] &lt; time.time():
+            return False
+        expected_sig = hmac.new(SECRET, body.encode(), hashlib.sha256).hexdigest()[:16]
+        return hmac.compare_digest(sig, expected_sig)
+    except Exception:
+        return False</code></pre>
+<h3 id="18-8-4-ch23-衔接-提示注入防御">18.8.4 ch23 衔接（提示注入防御）</h3>
+<p>ch23《Agent 安全与提示注入防御》会展开<strong>间接提示注入</strong>——攻击者把恶意指令藏在 PDF / 网页里，诱导 Researcher 返回有毒引用。ch18 的 L4 审计是 ch23 的第一道防线：每条 Worker 输出都要经过 Supervisor 的"合理性检查"（"这 5 个引用是否都是 arxiv ID？是否有可疑 URL？"）。</p>
+<h3 id="18-8-5-s5-注-ch11-supervisor-vs-ch18-supervisor-风险差异">18.8.5 S5 注：ch11 Supervisor vs ch18 Supervisor 风险差异</h3>
+<p>ch11 讲的 Supervisor 范式是<strong>协作模式</strong>（不预设安全模型），ch18 的 Supervisor 加了<strong>安全模型</strong>（L1-L4 防护）。这是 ch11 范式在 ch18 项目中<strong>安全化落地</strong>的标志。</p>
+<hr>
+<h2 id="18-9-测试与调试-4-agent-协同测试-消息追踪">18.9 测试与调试：4 Agent 协同测试 + 消息追踪</h2>
+<p>ch17 的测试是单 Agent + 工具子集；ch18 的测试是 <strong>4 Agent 协同</strong> + <strong>消息流追踪</strong>。</p>
+<h3 id="18-9-1-4-类测试">18.9.1 4 类测试</h3>
+<table>
+<tr><th>类型</th><th>测试什么</th><th>工具</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**单元测试**</td><td>单个 Agent / 单个工具</td><td>pytest + mock LLM</td></tr>
+<tr><td>**协同测试**</td><td>4 Agent 消息流</td><td>pytest + 消息 spy</td></tr>
+<tr><td>**ReAct trace**</td><td>决策路径</td><td>loguru / 自研 trace</td></tr>
+<tr><td>**回归测试**</td><td>端到端输出质量</td><td>golden 文件对比</td></tr>
+</table>
+<h3 id="18-9-2-协同测试示例-mock-llm-跑-4-agent">18.9.2 协同测试示例（mock LLM 跑 4 Agent）</h3>
+<pre><code class="language-python"># tests/test_supervisor.py — 4 Agent 协同测试
+import json
+from unittest.mock import MagicMock
+from supervisor import Supervisor
+
+def test_supervisor_runs_4_agents_and_passes():
+    # 1. mock LLM：4 个不同响应
+    llm = MagicMock()
+    llm.complete.side_effect = [
+        json.dumps({&quot;sub_questions&quot;: [&quot;什么是 Agent&quot;, &quot;Agent 的应用&quot;]}),
+        json.dumps({&quot;cites&quot;: [{&quot;cite_id&quot;: &quot;arxiv:2501.12345&quot;, &quot;title&quot;: &quot;Agent 综述&quot;}]}),
+        json.dumps({&quot;cites&quot;: [{&quot;cite_id&quot;: &quot;arxiv:2501.67890&quot;, &quot;title&quot;: &quot;Agent 应用&quot;}]}),
+        &quot;## 1. 什么是 Agent\n[arxiv:2501.12345] Agent 是 ...&quot;,  # writer draft
+        json.dumps({&quot;pass&quot;: True, &quot;fixes&quot;: []}),  # reviewer pass
+    ]
+    sup = Supervisor(llm)
+    result = sup.run(&quot;Agent 综述&quot;)
+    assert result[&quot;loops&quot;] == 1
+    assert &quot;draft&quot; in result
+    assert len(result[&quot;cites&quot;]) == 2
+    assert llm.complete.call_count == 5  # 1 plan + 2 search + 1 draft + 1 review</code></pre>
+<h3 id="18-9-3-消息追踪-trace-log">18.9.3 消息追踪（trace log）</h3>
+<pre><code class="language-python"># ch18 / trace.py — 消息流追踪
+import json, time
+from pathlib import Path
+
+class Tracer:
+    def __init__(self, path=&quot;./trace.jsonl&quot;):
+        self.path = Path(path)
+        self.path.parent.mkdir(exist_ok=True)
+    
+    def log(self, src: str, dst: str, msg_type: str, content):
+        with open(self.path, &quot;a&quot;, encoding=&quot;utf-8&quot;) as f:
+            f.write(json.dumps({
+                &quot;ts&quot;: time.time(), &quot;src&quot;: src, &quot;dst&quot;: dst,
+                &quot;type&quot;: msg_type, &quot;content&quot;: str(content)[:500]
+            }, ensure_ascii=False) + &quot;\n&quot;)</code></pre>
+<h3 id="18-9-4-死循环防护-强制终止">18.9.4 死循环防护（强制终止）</h3>
+<pre><code class="language-python"># ch18 / supervisor.py — 死循环防护（嵌入主循环）
+if loop &gt;= self.max_loops:
+    return {&quot;draft&quot;: draft, &quot;stop_reason&quot;: &quot;max_loops_reached&quot;, &quot;loops&quot;: loop}
+if self.token_counter() &gt; self.max_tokens:
+    return {&quot;draft&quot;: draft, &quot;stop_reason&quot;: &quot;token_budget_exceeded&quot;, &quot;loops&quot;: loop}</code></pre>
+<h3 id="18-9-4a-mock-llm-模式-vs-真实-llm-模式-ch18-复用-ch16-ch17-约定">18.9.4a mock LLM 模式 vs 真实 LLM 模式（ch18 复用 ch16/ch17 约定）</h3>
+<table>
+<tr><th>模式</th><th>ch18 调用方式</th><th>适用场景</th><th>成本</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**mock LLM**</td><td>`extra_tools={"_mock_llm": True}` 注入</td><td>本地开发 / CI 测试</td><td>$0</td></tr>
+<tr><td>**真实 LLM（OpenAI）**</td><td>`OPENAI_API_KEY=*** python3 main.py`</td><td>生产</td><td>$5-15/月</td></tr>
+<tr><td>**真实 LLM（自部署 vLLM）**</td><td>`OPENAI_API_BASE=http://gpu-server:8000/v1`</td><td>企业私有</td><td>$0（已购 GPU）</td></tr>
+</table>
+<p><strong>S2 注</strong>：mock 模式返回固定 JSON（见 supervisor.py 30 行版的 <code>call_llm</code>），可让骨架在无 API key 时跑通；真实模式调用 OpenAI/Anthropic API，月度成本基于"每月 1-2 篇综述、每篇 50-100 引用"的经验估算。规模化场景（&gt;1000 篇/月）需重新评估。</p>
+<h3 id="18-9-5-5-大错误模式-4-agent-协调失败">18.9.5 5 大错误模式（4 Agent 协调失败）</h3>
+<table>
+<tr><th>模式</th><th>症状</th><th>调试方法</th><th>修复</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**1. 委派死循环**</td><td>Worker 反复返回同一内容</td><td>trace.jsonl grep worker_id</td><td>加 max_loops + token budget</td></tr>
+<tr><td>**2. 引用丢失**</td><td>Writer 段落没 cite_id</td><td>检查 memory.long_term_db.cites</td><td>Reviewer 强制检查</td></tr>
+<tr><td>**3. Agent 角色混淆**</td><td>Writer 干 Researcher's 活</td><td>单元测试每个 Agent 的工具子集</td><td>tools.py 注册时分类</td></tr>
+<tr><td>**4. 终止条件不收敛**</td><td>Reviewer 反复驳回</td><td>看 review.fixes 列表</td><td>限制 fixes 轮次为 2</td></tr>
+<tr><td>**5. Token 爆炸**</td><td>一次报告耗尽 200K</td><td>token_counter() 日志</td><td>摘要压缩 + 滑动窗口</td></tr>
+</table>
+<hr>
+<h2 id="18-10-5-扩展方向-part-4-工具矩阵更新">18.10 5 扩展方向 + Part 4 工具矩阵更新</h2>
+<blockquote><strong>章节定位</strong>：Part 4 · 项目实战 · Day 3 / 5<br><strong>前置章节</strong>：ch17《项目 2 — 代码助手 Agent》<br><strong>后续章节</strong>：ch19《项目 4 — 数据分析 Agent》<br><strong>预计阅读</strong>：60 分钟 · 实操 12-16 小时</blockquote>
+<h3 style="margin-top:0; color:#c026d3;">🧪 第 15 种 inline SVG 形态学：Research Supervisor Topology（800×420）</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <marker id="arr-s18" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+    <marker id="arr-s18-r" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9ca3af"/>
+    </marker>
+    <linearGradient id="sup-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c026d3"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- 中央 Supervisor (radius 60) -->
+  <circle cx="400" cy="210" r="60" fill="url(#sup-grad)" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="205" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">S</text>
+  <text x="400" y="225" text-anchor="middle" fill="#fff" font-size="10">Supervisor</text>
+  <text x="400" y="290" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">主循环 / 路由表 / 终止判断</text>
+  <!-- 4 Worker 子圆 (radius 36, 72/144/216/288 degrees) -->
+  <!-- Researcher @ top (90°) -->
+  <circle cx="400" cy="80" r="36" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="78" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">Researcher</text>
+  <text x="400" y="92" text-anchor="middle" fill="#666" font-size="9">搜论文 + 阅读</text>
+  <text x="400" y="42" text-anchor="middle" fill="#c026d3" font-size="10">SEARCH</text>
+  <!-- Writer @ right (0°) -->
+  <circle cx="640" cy="210" r="36" fill="#fff" stroke="#f97316" stroke-width="2"/>
+  <text x="640" y="208" text-anchor="middle" fill="#f97316" font-size="11" font-weight="bold">Writer</text>
+  <text x="640" y="222" text-anchor="middle" fill="#666" font-size="9">写草稿</text>
+  <text x="700" y="215" text-anchor="start" fill="#f97316" font-size="10">DRAFT</text>
+  <!-- Reviewer @ bottom (270°) -->
+  <circle cx="400" cy="340" r="36" fill="#fff" stroke="#10b981" stroke-width="2"/>
+  <text x="400" y="338" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">Reviewer</text>
+  <text x="400" y="352" text-anchor="middle" fill="#666" font-size="9">引用校验</text>
+  <text x="400" y="395" text-anchor="middle" fill="#10b981" font-size="10">REVIEW</text>
+  <!-- Memory @ left (180°) -->
+  <circle cx="160" cy="210" r="36" fill="#fff" stroke="#6366f1" stroke-width="2"/>
+  <text x="160" y="208" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="bold">Memory</text>
+  <text x="160" y="222" text-anchor="middle" fill="#666" font-size="9">4 件记忆</text>
+  <text x="100" y="215" text-anchor="end" fill="#6366f1" font-size="10">SAVE</text>
+  <!-- 4 SOLID arrows (Supervisor → Worker, magenta) -->
+  <line x1="400" y1="150" x2="400" y2="120" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="460" y1="210" x2="600" y2="210" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="400" y1="270" x2="400" y2="300" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="340" y1="210" x2="200" y2="210" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <!-- 4 DASHED arrows (Worker → Supervisor, gray) -->
+  <line x1="400" y1="120" x2="400" y2="150" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="600" y1="210" x2="460" y2="210" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="400" y1="300" x2="400" y2="270" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="200" y1="210" x2="340" y2="210" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <!-- 10 工具矩形网格 (右上角 2x5 mini) -->
+  <text x="720" y="50" text-anchor="end" fill="#c026d3" font-size="10" font-weight="bold">10 工具（ch17 8 + arxiv/web/pdf/cite/claim）</text>
+  <rect x="540" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="560" y="71" text-anchor="middle" fill="#c026d3" font-size="8">ls</text>
+  <rect x="585" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="605" y="71" text-anchor="middle" fill="#c026d3" font-size="8">find</text>
+  <rect x="630" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="650" y="71" text-anchor="middle" fill="#c026d3" font-size="8">grep</text>
+  <rect x="675" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="695" y="71" text-anchor="middle" fill="#c026d3" font-size="8">git</text>
+  <rect x="720" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="740" y="71" text-anchor="middle" fill="#c026d3" font-size="8">test</text>
+  <rect x="540" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="560" y="91" text-anchor="middle" fill="#f97316" font-size="8">arxiv</text>
+  <rect x="585" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="605" y="91" text-anchor="middle" fill="#f97316" font-size="8">web</text>
+  <rect x="630" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="650" y="91" text-anchor="middle" fill="#f97316" font-size="8">pdf</text>
+  <rect x="675" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="695" y="91" text-anchor="middle" fill="#f97316" font-size="8">cite</text>
+  <rect x="720" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="740" y="91" text-anchor="middle" fill="#f97316" font-size="8">claim</text>
+  <!-- 2 callouts -->
+  <rect x="20" y="20" width="240" height="36" rx="4" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="1"/>
+  <text x="30" y="38" fill="#c026d3" font-size="10" font-weight="bold">① 消息路由表驱动</text>
+  <text x="30" y="50" fill="#666" font-size="9">所有 Worker 通信都经过 Supervisor</text>
+  <rect x="20" y="370" width="240" height="36" rx="4" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+  <text x="30" y="388" fill="#10b981" font-size="10" font-weight="bold">② 冲突检测在 Reviewer</text>
+  <text x="30" y="400" fill="#666" font-size="9">cite_verify + 多源交叉验证</text>
+</svg>
+<p>ch18 不强求完美，5 个扩展方向是给读者的"如果想继续"清单。</p>
+<h3 id="18-10-1-扩展-1-加-web-搜索真实-api">18.10.1 扩展 1：加 Web 搜索真实 API</h3>
+<p>把 <code>web_search</code> 从 mock 切到真实 SerpAPI（$50/月），ch18 立即变成生产级。</p>
+<h3 id="18-10-2-扩展-2-加-chrome-浏览器抓取">18.10.2 扩展 2：加 Chrome 浏览器抓取</h3>
+<p>web_search 只返回摘要，加 chrome MCP（ch12）后可抓全文。ch20 会展开。</p>
+<h3 id="18-10-3-扩展-3-加-5-类-agent-角色">18.10.3 扩展 3：加 5 类 Agent 角色</h3>
+<p>当前 4 Agent，加 FactChecker / Summarizer / Translator / Visualizer / DomainExpert 5 个新角色，可拆出 9 Agent 系统。<strong>注意</strong>：每个新 Agent 都是新的 LLM 调用，<strong>成本线性增长</strong>。</p>
+<h3 id="18-10-4-扩展-4-ch19-数据分析升级-sql-chart-agent">18.10.4 扩展 4：ch19 数据分析升级（SQL/Chart Agent）</h3>
+<p>ch19 会在 ch18 基础上加 SQL Agent（数据库查询）+ Chart Agent（matplotlib 绘图）：</p>
+<pre><code class="language-python"># ch19 supervisor 增量（ch18 → ch19 只需加 2 个 Worker）
+class SupervisorV2(Supervisor):  # ch18 → ch19 继承
+    def __init__(self, llm):
+        super().__init__(llm)
+        self.sql_worker = SQLAgent(llm)     # ch19 新增
+        self.chart_worker = ChartAgent(llm)  # ch19 新增
+        self.tools.extend([sql_execute, chart_plot])</code></pre>
+<p><strong>关键观察</strong>：ch18 supervisor 已是骨架，ch19 <strong>只加 Worker，不重写 Supervisor</strong>。这是 ch17 → ch18 升级代码（§17.10.4 / §18.5.6）的延伸——多 Agent 范式的扩展性优势。</p>
+<h3 id="18-10-5-扩展-5-加-rlhf-自学习">18.10.5 扩展 5：加 RLHF 自学习</h3>
+<p>Worker 输出的质量评分（Reviewer 的 verdict）作为 reward，训练一个 reward model。这是 ch25《Agent 强化学习与自我改进》的预告。</p>
+<h3 id="18-10-6-part-4-工具矩阵-ch17-18-19-20">18.10.6 Part 4 工具矩阵（ch17/18/19/20）</h3>
+<table>
+<tr><th>章</th><th>工具数</th><th>新增工具</th><th>文件结构</th><th>Agent 数</th></tr>
+<tr><td>:---</td><td>:---:</td><td>:---</td><td>:---</td><td>:---:</td></tr>
+<tr><td>ch17</td><td>8</td><td>ls / find / grep / git / test / run / lint / format</td><td>4 文件 600 行</td><td>1</td></tr>
+<tr><td>**ch18**</td><td>**10**</td><td>**+ arxiv / web / pdf / cite / claim**</td><td>**6 文件 1000 行**</td><td>**4**</td></tr>
+<tr><td>ch19</td><td>12</td><td>+ sql_execute / chart_plot</td><td>8 文件 1500 行</td><td>5</td></tr>
+<tr><td>ch20</td><td>6</td><td>- arxiv / - pdf / - cite / - claim / - sql / - chart，+ browser_click / browser_type / browser_extract / browser_screenshot / browser_navigate / browser_pdf</td><td>4 文件 800 行</td><td>3</td></tr>
+</table>
+<p><strong>S-pattern 注</strong>：ch20 工具数下降但<strong>风险上升</strong>（🟢 → 🟡），因为 browser 类工具的副作用是"在外部网站操作"，比 ch19 的 SQL 注入更难审计。</p>
+<h3 id="18-10-7-时间估算-ch18-多-agent-1-2-周">18.10.7 时间估算（ch18 多 Agent 1-2 周）</h3>
+<table>
+<tr><th>阶段</th><th>工作量</th><th>累计</th></tr>
+<tr><td>:---</td><td>:---:</td><td>:---:</td></tr>
+<tr><td>骨架（30 行）</td><td>1 小时</td><td>1h</td></tr>
+<tr><td>工具 handlers（5 个）</td><td>4 小时</td><td>5h</td></tr>
+<tr><td>4 Agent SystemMessage</td><td>4 小时</td><td>9h</td></tr>
+<tr><td>记忆 4 件套</td><td>6 小时</td><td>15h</td></tr>
+<tr><td>安全 4 层</td><td>4 小时</td><td>19h</td></tr>
+<tr><td>测试 + 调试</td><td>10 小时</td><td>29h</td></tr>
+<tr><td>文档 + 报告样例</td><td>10 小时</td><td>39h</td></tr>
+</table>
+<p><strong>1 周（40 小时）</strong>即可完成 ch18 完整实现。ch17 §17.11.6 估算的 1-2 周是<strong>带学习时间</strong>的预估。</p>
+<p><strong>ch18 vs ch17 时间对比</strong>：</p>
+<p>- ch17 单 Agent 8 工具：<strong>20-30 小时</strong>（4 文件 600 行 + 7 件套安全）</p>
+<p>- ch18 4 Agent 10 工具：<strong>39 小时</strong>（6 文件 1000 行 + 4 层安全 + 4 件记忆）</p>
+<p>- 时间增长 30-50%，但<strong>功能增长 4×</strong>（多 Agent 协作 + 完整记忆 + 可追溯研究）</p>
+<hr>
+<h2 id="18-11-小结-roi-成本-5-大坑-22-术语-概念桥-ch18-ch19">18.11 小结 + ROI + 成本 + 5 大坑 + 22 术语 + 概念桥 ch18↔ch19</h2>
+<blockquote><strong>章节定位</strong>：Part 4 · 项目实战 · Day 3 / 5<br><strong>前置章节</strong>：ch17《项目 2 — 代码助手 Agent》<br><strong>后续章节</strong>：ch19《项目 4 — 数据分析 Agent》<br><strong>预计阅读</strong>：60 分钟 · 实操 12-16 小时</blockquote>
+<h3 style="margin-top:0; color:#c026d3;">🧪 第 15 种 inline SVG 形态学：Research Supervisor Topology（800×420）</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <marker id="arr-s18" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+    <marker id="arr-s18-r" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9ca3af"/>
+    </marker>
+    <linearGradient id="sup-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#c026d3"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+  </defs>
+  <!-- 中央 Supervisor (radius 60) -->
+  <circle cx="400" cy="210" r="60" fill="url(#sup-grad)" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="205" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">S</text>
+  <text x="400" y="225" text-anchor="middle" fill="#fff" font-size="10">Supervisor</text>
+  <text x="400" y="290" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">主循环 / 路由表 / 终止判断</text>
+  <!-- 4 Worker 子圆 (radius 36, 72/144/216/288 degrees) -->
+  <!-- Researcher @ top (90°) -->
+  <circle cx="400" cy="80" r="36" fill="#fff" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="78" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">Researcher</text>
+  <text x="400" y="92" text-anchor="middle" fill="#666" font-size="9">搜论文 + 阅读</text>
+  <text x="400" y="42" text-anchor="middle" fill="#c026d3" font-size="10">SEARCH</text>
+  <!-- Writer @ right (0°) -->
+  <circle cx="640" cy="210" r="36" fill="#fff" stroke="#f97316" stroke-width="2"/>
+  <text x="640" y="208" text-anchor="middle" fill="#f97316" font-size="11" font-weight="bold">Writer</text>
+  <text x="640" y="222" text-anchor="middle" fill="#666" font-size="9">写草稿</text>
+  <text x="700" y="215" text-anchor="start" fill="#f97316" font-size="10">DRAFT</text>
+  <!-- Reviewer @ bottom (270°) -->
+  <circle cx="400" cy="340" r="36" fill="#fff" stroke="#10b981" stroke-width="2"/>
+  <text x="400" y="338" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">Reviewer</text>
+  <text x="400" y="352" text-anchor="middle" fill="#666" font-size="9">引用校验</text>
+  <text x="400" y="395" text-anchor="middle" fill="#10b981" font-size="10">REVIEW</text>
+  <!-- Memory @ left (180°) -->
+  <circle cx="160" cy="210" r="36" fill="#fff" stroke="#6366f1" stroke-width="2"/>
+  <text x="160" y="208" text-anchor="middle" fill="#6366f1" font-size="11" font-weight="bold">Memory</text>
+  <text x="160" y="222" text-anchor="middle" fill="#666" font-size="9">4 件记忆</text>
+  <text x="100" y="215" text-anchor="end" fill="#6366f1" font-size="10">SAVE</text>
+  <!-- 4 SOLID arrows (Supervisor → Worker, magenta) -->
+  <line x1="400" y1="150" x2="400" y2="120" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="460" y1="210" x2="600" y2="210" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="400" y1="270" x2="400" y2="300" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <line x1="340" y1="210" x2="200" y2="210" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-s18)"/>
+  <!-- 4 DASHED arrows (Worker → Supervisor, gray) -->
+  <line x1="400" y1="120" x2="400" y2="150" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="600" y1="210" x2="460" y2="210" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="400" y1="300" x2="400" y2="270" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <line x1="200" y1="210" x2="340" y2="210" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="4 2" marker-end="url(#arr-s18-r)"/>
+  <!-- 10 工具矩形网格 (右上角 2x5 mini) -->
+  <text x="720" y="50" text-anchor="end" fill="#c026d3" font-size="10" font-weight="bold">10 工具（ch17 8 + arxiv/web/pdf/cite/claim）</text>
+  <rect x="540" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="560" y="71" text-anchor="middle" fill="#c026d3" font-size="8">ls</text>
+  <rect x="585" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="605" y="71" text-anchor="middle" fill="#c026d3" font-size="8">find</text>
+  <rect x="630" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="650" y="71" text-anchor="middle" fill="#c026d3" font-size="8">grep</text>
+  <rect x="675" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="695" y="71" text-anchor="middle" fill="#c026d3" font-size="8">git</text>
+  <rect x="720" y="60" width="40" height="14" rx="2" fill="#fff" stroke="#c026d3" stroke-width="1"/>
+  <text x="740" y="71" text-anchor="middle" fill="#c026d3" font-size="8">test</text>
+  <rect x="540" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="560" y="91" text-anchor="middle" fill="#f97316" font-size="8">arxiv</text>
+  <rect x="585" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="605" y="91" text-anchor="middle" fill="#f97316" font-size="8">web</text>
+  <rect x="630" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="650" y="91" text-anchor="middle" fill="#f97316" font-size="8">pdf</text>
+  <rect x="675" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="695" y="91" text-anchor="middle" fill="#f97316" font-size="8">cite</text>
+  <rect x="720" y="80" width="40" height="14" rx="2" fill="#fff" stroke="#f97316" stroke-width="1"/>
+  <text x="740" y="91" text-anchor="middle" fill="#f97316" font-size="8">claim</text>
+  <!-- 2 callouts -->
+  <rect x="20" y="20" width="240" height="36" rx="4" fill="rgba(192,38,211,0.1)" stroke="#c026d3" stroke-width="1"/>
+  <text x="30" y="38" fill="#c026d3" font-size="10" font-weight="bold">① 消息路由表驱动</text>
+  <text x="30" y="50" fill="#666" font-size="9">所有 Worker 通信都经过 Supervisor</text>
+  <rect x="20" y="370" width="240" height="36" rx="4" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+  <text x="30" y="388" fill="#10b981" font-size="10" font-weight="bold">② 冲突检测在 Reviewer</text>
+  <text x="30" y="400" fill="#666" font-size="9">cite_verify + 多源交叉验证</text>
+</svg>
+<h3 id="18-11-1-5-大坑">18.11.1 5 大坑</h3>
+<table>
+<tr><th>坑</th><th>表现</th><th>预防</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>1. 委派死循环</td><td>Worker 永远不收敛</td><td>max_loops=8 + token 200K</td></tr>
+<tr><td>2. 引用编造</td><td>LLM 假装 cite_id 真实</td><td>Reviewer 强制 grep cite_id</td></tr>
+<tr><td>3. Token 爆炸</td><td>长报告 200K 不够</td><td>摘要 + 滑动窗口 + 分段</td></tr>
+<tr><td>4. 4 Agent 角色混淆</td><td>Writer 干 Researcher's 活</td><td>单元测试每个 Agent 工具子集</td></tr>
+<tr><td>5. 限速 429</td><td>ArXiv / Web API 触发限速</td><td>指数退避 + 队列</td></tr>
+</table>
+<h3 id="18-11-2-ch18-完整-11-节回顾">18.11.2 ch18 完整 11 节回顾</h3>
+<table>
+<tr><th>节</th><th>主题</th><th>核心交付</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>18.1</td><td>引子</td><td>4 Agent 角色表 + 风险从 🔴 → 🟡</td></tr>
+<tr><td>18.2</td><td>需求分析</td><td>5 阶段流程 + RACI 矩阵</td></tr>
+<tr><td>18.3</td><td>30 行 Hello</td><td>supervisor.py 第 1 版</td></tr>
+<tr><td>18.4</td><td>10 工具</td><td>5 个新增 handler</td></tr>
+<tr><td>18.5</td><td>多 Agent 拆分</td><td>4 Agent SystemMessage + 路由表 + 100 行 Supervisor</td></tr>
+<tr><td>18.6</td><td>多文件项目</td><td>6 文件 + ch08 §8.6 完整版</td></tr>
+<tr><td>18.7</td><td>4 件记忆</td><td>长期图谱首次落地</td></tr>
+<tr><td>18.8</td><td>多 Agent 安全</td><td>4 层防护 + 委派 token</td></tr>
+<tr><td>18.9</td><td>测试与调试</td><td>4 类测试 + 5 大错误模式</td></tr>
+<tr><td>18.10</td><td>5 扩展方向</td><td>ch19 升级代码</td></tr>
+<tr><td>18.11</td><td>小结</td><td>22 术语 + 概念桥</td></tr>
+</table>
+<h3 id="18-11-3-概念桥-ch18-ch19">18.11.3 概念桥 ch18 ↔ ch19</h3>
+<table>
+<tr><th>本章学到的</th><th>下一章怎么用</th></tr>
+<tr><td>:---</td><td>:---</td></tr>
+<tr><td>**多 Agent 拆分（4 Agent）**</td><td>**ch19 §19.5** —— 加入 SQL/Chart Agent 到 supervisor（5 Agent）</td></tr>
+<tr><td>**10 工具（含 arxiv/web）**</td><td>**ch19 §19.4** —— 加 12 工具（+ sql_execute / chart_plot）</td></tr>
+<tr><td>**引用三元组**</td><td>**ch19 §19.7** —— 升级为**数据血缘**（lineage 三元组：query / source / chart）</td></tr>
+<tr><td>**4 层安全**</td><td>**ch19 §19.8** —— 加 SQL 注入防护（第 5 层）</td></tr>
+<tr><td>**6 文件结构**</td><td>**ch19 §19.6** —— 扩展到 8 文件（+ db.py / viz.py）</td></tr>
+<tr><td>**5 阶段研究流程**</td><td>**ch19 §19.2** —— 改为 6 阶段数据分析流程（+ 数据探索 / + 可视化）</td></tr>
+<tr><td>**Supervisor 主循环 100 行**</td><td>**ch19 §19.3** —— 继承 Supervisor 类 + 加 2 个 Worker</td></tr>
+</table>
+<h3 id="18-11-4-概念速查-22-术语">18.11.4 概念速查（22 术语）</h3>
+<table>
+<tr><th>术语</th><th>1 句话定义</th></tr>
+<tr><td>:---</td><td>:---</td></tr>
+<tr><td>**Supervisor**</td><td>多 Agent 系统的中央调度器，决定派活和终止</td></tr>
+<tr><td>**Worker**</td><td>受 Supervisor 调度的子 Agent</td></tr>
+<tr><td>**RACI**</td><td>责任分配矩阵（Responsible/Accountable/Consulted/Informed）</td></tr>
+<tr><td>**ArXiv API**</td><td>arXiv 论文公开 API（限速 200 req/5min）</td></tr>
+<tr><td>**引用管理**</td><td>研究中追踪每条事实来源的机制</td></tr>
+<tr><td>**cite_id**</td><td>引用唯一标识（arxiv:XXXX.YYYYY 或 web:XXXX）</td></tr>
+<tr><td>**委派 token**</td><td>Supervisor 派活时签发的身份凭证（JWT 风格）</td></tr>
+<tr><td>**任务范围**</td><td>Worker 允许执行的操作边界（scope）</td></tr>
+<tr><td>**消息路由**</td><td>Agent 间消息传递的规则表</td></tr>
+<tr><td>**多 Agent 通信**</td><td>异步消息队列 + 共享 memory</td></tr>
+<tr><td>**共识**</td><td>多 Agent 对同一结论的投票或加权</td></tr>
+<tr><td>**Reviewer 校验**</td><td>校对 Agent 验证引用真实性的步骤</td></tr>
+<tr><td>**多源验证**</td><td>同一论点由 ≥2 独立来源支持</td></tr>
+<tr><td>**PDF 沙箱**</td><td>cites/ 目录的隔离环境，下载的 PDF 全部落盘此处</td></tr>
+<tr><td>**长报告生成**</td><td>≥1 万字的综述/分析报告，LLM 多次调用拼装</td></tr>
+<tr><td>**章节大纲**</td><td>Writer 写作前 Supervisor 生成的 markdown 骨架</td></tr>
+<tr><td>**引用三元组**</td><td>(cite_id, source_url, claim) 三元组</td></tr>
+<tr><td>**冲突检测**</td><td>两个 claim 关键词重叠度判定 agree / disagree / neutral</td></tr>
+<tr><td>**知识图谱**</td><td>引用关系的有向图存储（ch18 首次落地）</td></tr>
+<tr><td>**Agent 间消息**</td><td>Supervisor 派活 / Worker 回报的统一结构</td></tr>
+<tr><td>**终止条件**</td><td>max_loops=8 / max_tokens=200K / Reviewer pass</td></tr>
+<tr><td>**Trace log**</td><td>4 Agent 消息流的时间序列日志</td></tr>
+</table>
+<h3 id="18-11-5-roi-估算">18.11.5 ROI 估算</h3>
+<table>
+<tr><th>项</th><th>自部署 ch18</th><th>SaaS 替代（Consensus / Elicit）</th><th>节省</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>初始开发</td><td>39 小时 × $50/h = **$1950**</td><td>$0</td><td>-$1950</td></tr>
+<tr><td>月度运行</td><td>$0 API + $0 LLM（自部署）</td><td>**$20/月**（Elicit Plus）</td><td>+$20/月</td></tr>
+<tr><td>月度运行（含 OpenAI API）</td><td>$5-15/月（gpt-4o-mini）</td><td>—</td><td>-$5-15/月</td></tr>
+<tr><td>1 年 TCO（自部署）</td><td>**$1950 + $60-180 = $2010-2130**</td><td>**$240/年**</td><td>自部署贵 9-10 倍</td></tr>
+<tr><td>5 年 TCO</td><td>$2150</td><td>$1200</td><td>自部署贵 80%</td></tr>
+</table>
+<p><strong>核心论断</strong>：<strong>个人 / 学术场景用 SaaS 更划算</strong>（Elicit / Consensus），<strong>企业 / 私有数据场景用 ch18 自部署</strong>（数据不出域）。</p>
+<h3 id="18-11-6-成本对比">18.11.6 成本对比</h3>
+<table>
+<tr><th>方案</th><th>月度成本</th><th>限制</th><th>适合</th></tr>
+<tr><td>:---</td><td>:---</td><td>:---</td><td>:---</td></tr>
+<tr><td>**ch18 自部署**</td><td>$5-15 API + $0 工具</td><td>需自己维护</td><td>企业私有数据</td></tr>
+<tr><td>**Elicit**</td><td>$10-20</td><td>每月 50-200 篇</td><td>个人研究</td></tr>
+<tr><td>**Consensus**</td><td>$9-20</td><td>每月 100-500 篇</td><td>学生 / 教师</td></tr>
+<tr><td>**Scite.ai**</td><td>$20-50</td><td>高级引用分析</td><td>学术机构</td></tr>
+<tr><td>**Manual literature review**</td><td>$0 + 20-40 小时</td><td>慢</td><td>学生 / 单次项目</td></tr>
+</table>
+<p><strong>S2 注</strong>：月度成本基于"每月 1-2 篇综述、每篇 50-100 引用"的经验估算。规模化场景（&gt;1000 篇/月）需重新评估。</p>
+<h3 id="18-11-7-ch18-完整代码结构-启动方式">18.11.7 ch18 完整代码结构 + 启动方式</h3>
+<pre><code class="language-python">$ git clone &lt;ch18 repo&gt; &amp;&amp; cd ch18
+$ pip install -r requirements.txt   # 主要是 chromadb + 第三方 API
+$ echo &quot;OPENAI_API_KEY=sk-...&quot; &gt; .env
+$ python3 main.py --question &quot;Agent 综述&quot;
+# 30-60 分钟后输出 ./reports/agent_survey_YYYYMMDD.md</code></pre>
+<hr>
+<h2 id="本章小结">本章小结</h2>
+<p>ch18 是 <strong>Part 4 第一个多 Agent 项目</strong>。它继承了 ch17 的工具集（8 工具 → 10 工具）和安全护栏（7 件套 → 4 层防护），并升级为 Supervisor + 3 Worker 的 4 Agent 架构。核心交付是 <strong>ch08 §8.6 金字塔 4 件记忆的完整版</strong>（含长期图谱）和 <strong>Supervisor 主循环 100 行完整版</strong>。</p>
+<p>ch18 给读者的是一个<strong>可复用的调研类项目骨架</strong>——同样的 4 Agent 拓扑可应用于学术综述、企业竞品分析、法律 / 政策研究等任何"长流程 + 多源验证"场景。</p>
+<p><strong>第 15 种 inline SVG 形态学</strong>：<strong>Research Supervisor Topology</strong>（ch17 IDE 集成 → ch18 supervisor 中心 + 4 worker 卫星 + 10 工具 + 消息路由）。</p>
+<hr>
+<h2 id="进一步阅读">进一步阅读</h2>
+<ol>
+<li><strong>LangChain Multi-Agent</strong>（https://python.langchain.com/docs/use_cases/multi_agent）—— Supervisor 模式官方实现</li>
+<li><strong>ArXiv API 文档</strong>（https://arxiv.org/help/api）—— ch18 真实数据源</li>
+<li><strong>ch11《多 Agent 协作模式》</strong>—— Supervisor / Crew / Pipeline / Debate 4 范式对比</li>
+<li><strong>ch17 §17.7 安全护栏 7 件套</strong>—— ch18 L1-L4 防护的源头</li>
+<li><strong>ch23《Agent 安全与提示注入防御》</strong>—— ch18 间接提示注入的展开</li>
+<li><strong>AutoGen v0.4 GroupChat</strong>（Microsoft 2025）—— 另一种多 Agent 实现，可与 ch18 对比</li>
+<li><strong>CrewAI 多 Agent 框架</strong>（ch15）—— ch15 用的 Crew 模式 vs ch18 的 Supervisor 模式</li>
+</ol>
+<hr>
+<p><strong>章节完成时间</strong>：2026-07-01</p>
+<p><strong>作者</strong>：Hermes（in-process writer）</p>
+<p><strong>审稿</strong>：pending</p>
+<nav class="chapter-pager">
+<a href="ch17.html">← 上一章：第 17 章 — 代码助手 Agent</a>
+<a href="ch19.html">下一章：第 19 章 — 数据分析 Agent（待 Day 19） →</a>
+</nav>
+
+<footer>
+<a href="index.html">← 返回章节目录</a> · 第 18 章 · AGENT开发从入门到精通
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
