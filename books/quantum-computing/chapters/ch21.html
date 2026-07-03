@@ -1,0 +1,2069 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第21章：离子阱量子计算机 (Trapped Ion Quantum Computers) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第21章：离子阱量子计算机 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第五部分 · 量子硬件 · Day 2</span>
+        <span class="chapter-day-tag">Day 25 · 2026-07-03</span>
+      </div>
+      <h1 class="chapter-title">第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</h1>
+      <p class="chapter-subtitle">Paul 阱物理 + 激光门 + MS gate + 全连接 + 99.99% 门保真度 + Quantinuum H3 56 离子 + 第五部分 Day 2</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~7,100 字</span>
+        <span class="stat">🔢 10 节 · 3 附录 · 78 子节</span>
+        <span class="stat">📑 Paul 阱 / 激光门 / MS gate / 全连接 / 99.99% 保真度</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                                                <article class="chapter-content">
+          <h1>第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</h1>
+          <blockquote><strong>第五部分 · 量子硬件</strong> — Day 2 <strong>目标</strong>: Paul 阱 + 激光门 + MS gate + 全连接 + 25 年里程碑 <strong>里程碑</strong>: 21/28 章 = 75%</blockquote>
+          <hr>
+<h1>第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</h1>
+<blockquote><p><strong>第五部分 · 量子硬件</strong> — Day 2  <strong>目标</strong>: Paul 阱物理 + 激光门 + MS gate + 全连接 + 25 年里程碑  <strong>里程碑</strong>: 21/28 章 = 75%</p></blockquote>
+<hr>
+<h1>第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</h1>
+<blockquote><p><strong>本章定位</strong>: 第五部分 Day 2 —— 从"超导规模"到"离子阱保真度"</p></blockquote>
+<blockquote><p><strong>核心问题</strong>: ch20 的超导平台已经 100+ qubit, 为什么 IonQ 和 Quantinuum 还要选离子阱? 离子阱"慢"在哪里, "强"在哪里?</p></blockquote>
+<blockquote><p><strong>本章答案</strong>: Paul 阱电磁囚禁 → 激光门 → 集体振动模耦合 → 全连接 → 99.99% 两 qubit 门保真度 → 56 离子 H3 量子体积 2^20</p></blockquote>
+<hr>
+<h2 id="21-0">21.0 引言:离子阱的"工业现实"</h2>
+<h3>21.0.1 五种平台的"位置"</h3>
+<p>ch20 给了我们 5 种量子硬件平台的全景。<strong>离子阱</strong>在其中占据了<strong>独特</strong>的位置:</p>
+<table class="chapter-table">
+<thead><tr>
+<th>平台</th>
+<th>规模</th>
+<th>门速度</th>
+<th>门保真度</th>
+<th>操控方式</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>超导 (ch20)</td>
+<td>1000+ qubit</td>
+<td>10-100 ns</td>
+<td>99.5-99.9%</td>
+<td>微波脉冲</td>
+</tr>
+<tr>
+<td><strong>离子阱 (ch21)</strong></td>
+<td><strong>36-56 qubit</strong></td>
+<td><strong>1-10 μs</strong></td>
+<td><strong>99.99%</strong></td>
+<td><strong>激光</strong></td>
+</tr>
+<tr>
+<td>光量子 (ch22)</td>
+<td>100-1000 光子</td>
+<td>ns</td>
+<td>99%</td>
+<td>线性光学</td>
+</tr>
+<tr>
+<td>拓扑 (ch23)</td>
+<td>8 qubit (2025)</td>
+<td>ns</td>
+<td>99% (预期)</td>
+<td>微波 + 编织</td>
+</tr>
+<tr>
+<td>中性原子 (ch24)</td>
+<td>100-1180 qubit</td>
+<td>100 ns-1 μs</td>
+<td>99.5%</td>
+<td>激光 + Rydberg</td>
+</tr>
+</tbody>
+</table>
+<p><strong>一眼看出</strong>:</p>
+<ul>
+<li>离子阱规模<strong>最小</strong> (36-56 vs 超导 1000+)</li>
+<li>离子阱门<strong>最慢</strong> (μs vs 超导 ns)</li>
+<li><strong>但</strong>离子阱保真度<strong>最高</strong> (99.99% vs 超导 99.5-99.9%)</li>
+</ul>
+<h3>21.0.2 离子阱的"卖点" — 全连接</h3>
+<p>ch20 的超导芯片是<strong>平面 2D 网格</strong>或 <strong>heavy-hex</strong> 拓扑, 远距 qubit 需要 <strong>SWAP 链</strong> (10-20 门) 才能<strong>间接</strong>纠缠。</p>
+<p><strong>离子阱的"绝活"</strong>: <strong>全连接</strong> (all-to-all connectivity)。</p>
+<ul>
+<li>$N$ 个离子排成一条链 → <strong>任意</strong>两离子<strong>直接</strong>通过共享振动模耦合</li>
+<li><strong>1 个 MS gate = 任意两 qubit 纠缠</strong> (vs SWAP 链 10-20 门)</li>
+</ul>
+<p><strong>对比</strong>: 实现 50 qubit 之间的 GHZ 态</p>
+<ul>
+<li>超导 (2D grid): 至少 ~50 × 10 = 500 CNOT (考虑 SWAP)</li>
+<li>离子阱 (链): <strong>49 个 MS gate</strong> (1 个中心离子 + 48 个邻居)</li>
+</ul>
+<h3>21.0.3 25 年关键节点</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>年份</th>
+<th>事件</th>
+<th>意义</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>1953</strong></td>
+<td>Wolfgang Paul 发明四极阱</td>
+<td>诺贝尔物理学奖 1989</td>
+</tr>
+<tr>
+<td><strong>1995</strong></td>
+<td>Cirac &amp; Zoller 提出第一个两 qubit 门方案</td>
+<td>离子阱量子计算的"创世纪"</td>
+</tr>
+<tr>
+<td><strong>1999</strong></td>
+<td>Mølmer &amp; Sørensen 提出 MS gate</td>
+<td>革命性简化, 现代离子阱标准</td>
+</tr>
+<tr>
+<td><strong>2003</strong></td>
+<td>Innsbruck 实验组实现 Cirac-Zoller 门</td>
+<td>第一个实验性两 qubit 门</td>
+</tr>
+<tr>
+<td><strong>2016</strong></td>
+<td>Innsbruck 14 离子通用 QC</td>
+<td>第一次多 qubit 通用计算</td>
+</tr>
+<tr>
+<td><strong>2020</strong></td>
+<td>Quantinuum H1 商业化 (10 离子)</td>
+<td>第一台商业离子阱</td>
+</tr>
+<tr>
+<td><strong>2021</strong></td>
+<td>Quantinuum H1-1 量子体积 2^10</td>
+<td>跨越 QV 100 门槛</td>
+</tr>
+<tr>
+<td><strong>2022</strong></td>
+<td>Quantinuum H1-2 QCCD 架构</td>
+<td>分区量子电荷耦合</td>
+</tr>
+<tr>
+<td><strong>2023</strong></td>
+<td>Quantinuum H2-1 量子体积 2^20</td>
+<td>量子体积翻 1024 倍</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td>Quantinuum H3 (56 离子, 99.99%)</td>
+<td>当前最强离子阱系统</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td>Quantinuum + Microsoft 12 logical qubits</td>
+<td>离子阱第一个 logical qubit 实验</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td>IonQ Forte (36 离子, AQ 35)</td>
+<td>IonQ 第二代商业机</td>
+</tr>
+</tbody>
+</table>
+<h3>21.0.4 商业代表</h3>
+<ul>
+<li><strong>IonQ</strong> (美国, 2015) — Yale 大学 Chris Monroe 创立</li>
+<li><strong>Quantinuum</strong> (美国/英国, 2021) — Honeywell + Cambridge Quantum 合并</li>
+<li><strong>Alpine Quantum Technologies (AQT)</strong> (奥地利/美国, 2018) — Innsbruck 大学 Rainer Blatt 团队</li>
+<li><strong>eleQtron</strong> (德国, 2020) — 工业 + 学术</li>
+<li><strong>Universal Quantum</strong> (英国, 2019) — Sussex 大学 Winfried Hensinger 团队</li>
+<li><strong>中国</strong>: 本源量子 (Origin Quantum), 启科量子 (Qike Quantum)</li>
+</ul>
+<h3>21.0.5 本章的"先验"</h3>
+<ul>
+<li>量子比特 / Bloch 球 / 张量积 (ch06)</li>
+<li>量子门 (H, X, Y, Z, CNOT) (ch07)</li>
+<li>量子电路模型 (ch08)</li>
+<li>量子测量 / 反作用 (ch05)</li>
+<li>超导硬件基础 (ch20) — <strong>核心对比对象</strong></li>
+<li>量子噪声 / 退相干 (ch16)</li>
+<li>表面码 / 容错 (ch18, ch19)</li>
+</ul>
+<h3>21.0.6 本章路线图</h3>
+<pre><code>21.1 Paul 阱物理 (RF 场 + 赝势 + 离子链振动模)
+  ↓
+21.2 内态编码 + Doppler 冷却 + 边带冷却 + Lamb-Dicke 条件
+  ↓
+21.3 单 qubit 门 (激光 Rabi + AC Stark)
+  ↓
+21.4 两 qubit 门: Cirac-Zoller (1995) → MS gate (1999)
+  ↓
+21.5 全连接 vs 超导 SWAP 链 (1 MS vs 50 SWAP×CNOT)
+  ↓
+21.6 态依赖荧光读出 (EMCCD)
+  ↓
+21.7 扩展 (1D 链 → Penning 2D → 模块化)
+  ↓
+21.8 25 年里程碑系统
+  ↓
+21.9 优势 / 劣势 / 未来 + 5 平台对比
+  ↓
+21.10 ch22-24 铺路 + 总结</code></pre>
+<hr>
+<h2 id="21-1-paul">21.1 离子阱物理:Paul 阱</h2>
+<h3>21.1.1 为什么需要"阱"?</h3>
+<p>要让一个离子<strong>当 qubit 用</strong>, 必须<strong>先</strong>把它<strong>固定</strong>在空间某个位置 (不撞容器壁, 不飞走), <strong>再</strong>用它做量子操作。</p>
+<p><strong>经典办法 (Penning 阱, 1936)</strong>:</p>
+<ul>
+<li>静磁场 (B 方向) + 静电场 (端盖电极)</li>
+<li>B 让离子在 xy 平面做<strong>回旋运动</strong>, 端盖电场在 z 方向<strong>囚禁</strong></li>
+<li><strong>问题</strong>: 静电场不能同时囚禁<strong>三维</strong> — Earnshaw 定理 (无静电场的稳定平衡点)</li>
+</ul>
+<p><strong>革命 (Paul 阱, 1953, 1989 诺奖)</strong>:</p>
+<ul>
+<li><strong>射频 (RF) 电场</strong> 替代<strong>静</strong>电场</li>
+<li>利用 RF 场的<strong>时间平均</strong>效果产生<strong>赝势</strong> (pseudopotential) 囚禁</li>
+</ul>
+<h3>21.1.2 Paul 阱的几何与电场</h3>
+<p><strong>最简</strong>模型: <strong>线性 Paul 阱</strong> (4 根平行电极, 离子链沿轴排列)。</p>
+<pre><code>   顶部: +U_RF·cos(Ωt)
+    ↑     ↑     ↑     ↑
+    |     |     |     |       4 根棒状电极
+    |     |     |     |
+   ─────────────────────  ← 离子链 (沿 z 轴)
+    |     |     |     |
+    |     |     |     |
+    ↓     ↓     ↓     ↓
+   底部: -U_RF·cos(Ωt)</code></pre>
+<p><strong>电场</strong> (在离子位置附近近似为四极场):</p>
+<p>$$\Phi(x, y, z, t) = \frac{U_{RF} \cos(\Omega t)}{2 r_0^2}(x^2 - y^2)$$</p>
+<ul>
+<li>$U_{RF}$: RF 电压幅度 (~100-1000 V)</li>
+<li>$\Omega$: RF 频率 (~10-100 MHz)</li>
+<li>$r_0$: 离子到电极的距离 (~0.5-2 mm)</li>
+<li><strong>关键</strong>: 电场在 xy 平面<strong>旋转</strong> (从 +x 方向 → +y 方向 → -x → -y → ...), 周期为 $2\pi/\Omega$</li>
+</ul>
+<h3>21.1.3 赝势 (Pseudopotential) 近似</h3>
+<p>把离子<strong>长时间平均</strong>的运动 (远长于 $1/\Omega$) 看成一个<strong>有效</strong>势阱里的简谐振动。</p>
+<p><strong>马修方程 (Mathieu equation)</strong> 描述离子在 RF 场中的运动。在 $|a|, |q| \ll 1$ 的稳定区:</p>
+<p>$$m \ddot{x} + m \omega_x^2 x \approx 0, \quad \omega_x = \frac{q U_{RF}}{2 m \Omega r_0^2}$$</p>
+<p><strong>有效赝势</strong> (沿径向):</p>
+<p>$$V_{\text{eff}}(r) = \frac{1}{2} m \omega^2 r^2, \quad \omega \sim \frac{q U_{RF}}{m \Omega r_0^2}$$</p>
+<p><strong>物理直觉</strong>: RF 场在快速时间尺度 (ns) 上"踢"离子, 在慢时间尺度 (μs-ms) 上<strong>平均</strong>成一个<strong>弹簧</strong>。</p>
+<p><strong>典型参数</strong>:</p>
+<ul>
+<li>径向频率 $\omega_r/(2\pi) \sim$ 1-5 MHz</li>
+<li>轴向频率 $\omega_z/(2\pi) \sim$ 0.1-1 MHz</li>
+<li>阱深 ~1-10 eV (室温 $k_B T \sim 25$ meV → 阱深 100× 大, 离子不会<strong>热</strong>逃逸)</li>
+</ul>
+<h3>21.1.4 离子链 — N 离子集体振动</h3>
+<p><strong>最关键的多体物理</strong>: $N$ 个带电离子被同一个 Paul 阱囚禁 → 库仑斥力让它们<strong>等距</strong>排列成一条<strong>一维链</strong>。</p>
+<pre><code> 离子 1    离子 2   离子 3   ...   离子 N
+  ●        ●        ●              ●
+  ↑        ↑        ↑              ↑
+  |←─ℓ─→|←─ℓ─→|←─ℓ─→|       (ℓ ≈ 2-5 μm)</code></pre>
+<p><strong>库仑 + 阱</strong> 平衡:</p>
+<p>$$m \omega_z^2 z_0 = \frac{e^2}{4 \pi \epsilon_0 (2 z_0)^2}, \quad z_0 = \left(\frac{e^2}{16 \pi \epsilon_0 m \omega_z^2}\right)^{1/3}$$</p>
+<p>典型离子间距 $\ell \sim 2-5 \ \mu\text{m}$。</p>
+<p><strong>集体振动模</strong> ($N$ 离子 → $N$ 振动模):</p>
+<table class="chapter-table">
+<thead><tr>
+<th>模</th>
+<th>物理</th>
+<th>频率</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>COM (质心) 模</strong></td>
+<td>全部离子<strong>同步</strong>在 z 方向振动</td>
+<td>$\omega_z$</td>
+</tr>
+<tr>
+<td><strong>Stretch (拉伸) 模</strong></td>
+<td>离子<strong>反对称</strong>振动</td>
+<td>$\sqrt{3} \omega_z$</td>
+</tr>
+<tr>
+<td><strong>内模</strong> ($N-2$ 个)</td>
+<td>离子之间<strong>相对</strong>振动</td>
+<td>$\omega_p = \sqrt{p(p+1)/2} \cdot \omega_z$</td>
+</tr>
+</tbody>
+</table>
+<p><strong>类比</strong>: 就像一根有 $N$ 个原子的"弹簧链", 弹性力 + 库仑力 → $N$ 个简正模。</p>
+<p><strong>实验意义</strong> (ch21.4 见):</p>
+<ul>
+<li><strong>COM 模</strong>是<strong>第一个</strong>被用来做两 qubit 门的媒介</li>
+<li><strong>MS gate</strong> 实际上是<strong>同时</strong>驱动<strong>多个</strong>集体模 → <strong>更鲁棒</strong></li>
+</ul>
+<h3>21.1.5 2D 与 3D Paul 阱</h3>
+<p><strong>1D 链</strong>只能容纳 ~50-100 离子 (因为链会"变软", 模频率接近, 串扰严重)。</p>
+<p><strong>进一步扩展</strong>:</p>
+<ul>
+<li><strong>2D 阵列</strong>: 用 5 根电极 (4 侧面 + 1 中心) 构成表面 Paul 阱</li>
+<li><strong>3D 阵列</strong>: 多层电极 + 复杂 RF 场</li>
+<li><strong>Penning 阱</strong>: 静磁场 + 静电场 → 2D 平面排列, 可达 1000+ 离子 (但<strong>难</strong>单独寻址)</li>
+</ul>
+<p><strong>本章 21.7</strong> 详细讨论扩展挑战。</p>
+<h3>21.1.6 Paul 阱的"祖先"</h3>
+<ul>
+<li><strong>Penning 阱 (1936, Dehmelt 1989 诺奖)</strong>: 静磁 + 静端盖, 离子做回旋运动</li>
+<li><strong>Paul 阱 (1953, Paul 1989 诺奖)</strong>: RF 四极场, 离子在赝势中振动</li>
+<li><strong>表面 Paul 阱 (2006, NIST)</strong>: 平面电极, 集成在芯片上 → <strong>可扩展</strong></li>
+</ul>
+<hr>
+<h2 id="21-2">21.2 内态编码与冷却</h2>
+<h3>21.2.1 用什么离子?</h3>
+<p><strong>主流选择</strong>:</p>
+<table class="chapter-table">
+<thead><tr>
+<th>离子</th>
+<th>质量</th>
+<th>跃迁</th>
+<th>波长</th>
+<th>优点</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>$^{40}$Ca$^+$</strong></td>
+<td>40</td>
+<td>$^2S_{1/2} \to ^2P_{1/2}$</td>
+<td>397 nm</td>
+<td>可见光, 容易</td>
+</tr>
+<tr>
+<td><strong>$^{171}$Yb$^+$</strong></td>
+<td>171</td>
+<td>$^2S_{1/2} \to ^2D_{3/2}$</td>
+<td>411 nm + 935 nm</td>
+<td>超精细, 商业 (IonQ)</td>
+</tr>
+<tr>
+<td><strong>$^{88}$Sr$^+$</strong></td>
+<td>88</td>
+<td>多种</td>
+<td>422 nm</td>
+<td>Innsbruck 常用</td>
+</tr>
+<tr>
+<td><strong>$^{9}$Be$^+$</strong></td>
+<td>9</td>
+<td>$^2S_{1/2} \to ^2P_{3/2}$</td>
+<td>313 nm</td>
+<td>轻 → <strong>快</strong>振动, NIST</td>
+</tr>
+<tr>
+<td><strong>$^{137}$Ba$^+$</strong></td>
+<td>137</td>
+<td>$^2S_{1/2} \to ^2P_{1/2}$</td>
+<td>493 nm + 650 nm</td>
+<td>可见光, AQT</td>
+</tr>
+</tbody>
+</table>
+<p><strong>典型超精细结构</strong> (以 $^{171}$Yb$^+$ 为例):</p>
+<pre><code>        ↑ F=1  ↑ F=0
+        |       |
+        |       |
+        └───────┘  ^2S_{1/2} (基态, 4f^{14} 6s)</code></pre>
+<ul>
+<li>基态 $^2S_{1/2}$ 有两个超精细能级 $F=0$ 和 $F=1$ (12.6 GHz 分裂)</li>
+<li>选择 $\lvert 0\rangle = \lvert F=0\rangle$ 和 $\lvert 1\rangle = \lvert F=1\rangle$ 作 qubit</li>
+<li><strong>优点</strong>: 12.6 GHz 微波<strong>可驱动</strong> → 也可用拉曼激光 (355 nm)</li>
+</ul>
+<h3>21.2.2 Doppler 冷却 — 第一步</h3>
+<p><strong>问题</strong>: 刚被 Paul 阱<strong>捕获</strong>的离子温度 ~1000 K (远远<strong>热</strong>于振动基态, 室温已经很高)。</p>
+<p><strong>Doppler 冷却原理</strong>:</p>
+<pre><code>离子速度 v → 吸收光子 hν' = h(ν₀ - kv)  ←  失谐 Δ = ν_laser - ν₀ &lt; 0
+     ↓
+ 散射光子 hν  (各向同性)
+     ↓
+每次"吸收-发射"循环, 离子损失动能 = h·(ν' - ν) ≈ h·kv</code></pre>
+<p><strong>结果</strong>: 离子<strong>减</strong>速, 温度降到 <strong>Doppler 极限</strong>:</p>
+<p>$$T_D = \frac{\hbar \Gamma}{2 k_B}$$</p>
+<ul>
+<li>$\Gamma$: 跃迁自然线宽 (典型 10-30 MHz)</li>
+<li><strong>$T_D$ ~ 0.5-1 mK</strong> (对于可见光跃迁)</li>
+</ul>
+<p><strong>但</strong>: 1 mK 仍然<strong>高</strong>于振动量子 $\hbar \omega_z / k_B \sim 50 \ \mu\text{K}$ → <strong>需要边带冷却</strong>。</p>
+<h3>21.2.3 边带冷却 (Sideband Cooling) — 第二步</h3>
+<p><strong>核心思想</strong>: 在 Lamb-Dicke 区 ($\eta \ll 1$), 离子的<strong>振动量子态</strong>会被<strong>激光</strong>分辨。</p>
+<p><strong>激光调到一阶红边带</strong> ($\omega_l = \omega_0 - \omega_z$):</p>
+<pre><code>振动能级:  |n+1⟩ ──── ω_z
+           |n⟩   ──── 0
+电子能级:  |e⟩   ──── ω_0</code></pre>
+<ul>
+<li>吸收红边带光子: $\lvert g, n\rangle \to \lvert e, n-1\rangle$ (减少 1 个振动量子)</li>
+<li>自发辐射回基态: $\lvert e, n-1\rangle \to \lvert g, n-1\rangle$ (振动不变)</li>
+<li><strong>净效果</strong>: 振动量子<strong>减 1</strong>!</li>
+</ul>
+<p><strong>重复 ~10-100 次</strong>: $\lvert n=0\rangle$ 概率 &gt; 99%。</p>
+<p><strong>极限</strong>: $\bar{n} < 0.01$ (亚<strong>基态</strong>)。</p>
+<h3>21.2.4 Lamb-Dicke 条件</h3>
+<p><strong>边带冷却</strong>要求<strong>激光</strong>能<strong>分辨</strong>振动边带, 即 $\omega_z \gg \Gamma$ (电子跃迁线宽)。</p>
+<p><strong>等价条件</strong>: <strong>Lamb-Dicke 参数</strong>:</p>
+<p>$$\eta = k \cdot x_0 = \sqrt{\frac{E_r}{\hbar \omega_z}} \ll 1$$</p>
+<ul>
+<li>$k$: 激光波矢</li>
+<li>$x_0 = \sqrt{\hbar / 2 m \omega_z}$: 振动基态<strong>涨落</strong></li>
+<li>$E_r = \hbar^2 k^2 / 2m$: 反冲能量</li>
+</ul>
+<p><strong>物理意义</strong>: 离子的振动<strong>涨落</strong>比光波长<strong>短得多</strong> → 离子在 Lamb-Dicke 区内被"冻结"在<strong>空间固定点</strong>。</p>
+<p><strong>典型值</strong>: $\eta \sim 0.1$ (边带可分辨) → 边带冷却<strong>有效</strong>。</p>
+<h3>21.2.5 冷却流程总结</h3>
+<pre><code>室温 (~300 K)
+  ↓ Doppler 冷却 (~ms, 激光调谐到 -Γ/2)
+mK 量级
+  ↓ 边带冷却 (~100 μs, 红边带)
+振动基态 (n̄ &lt; 0.01)
+  ↓ 进入"量子操作"阶段 (coherent dynamics)</code></pre>
+<p><strong>"准备时间"代价</strong>: ~10-100 ms (Doppler + 边带), 占<strong>总</strong>算法时间的 ~10-30% (因门时间短)。</p>
+<hr>
+<h2 id="21-3-qubit">21.3 单 qubit 门:激光驱动</h2>
+<h3>21.3.1 Rabi 振荡</h3>
+<p><strong>共驱动 (Coherent Drive)</strong>: 把<strong>激光</strong>调谐到 qubit 频率 ($\omega_l = \omega_{01}$), 持续时间 $t$。</p>
+<p><strong>哈密顿量</strong> (旋转波近似):</p>
+<p>$$H = \frac{\hbar \Omega_R}{2} (\sigma_+ e^{-i\phi} + \sigma_- e^{i\phi})$$</p>
+<ul>
+<li>$\Omega_R$: Rabi 频率 (与激光强度成正比)</li>
+<li>$\phi$: 激光相位 (控制旋转轴)</li>
+</ul>
+<p><strong>演化</strong>: $\lvert \psi(t)\rangle = \cos(\Omega_R t / 2) \lvert 0\rangle - i e^{i\phi} \sin(\Omega_R t / 2) \lvert 1\rangle$</p>
+<p><strong>特殊点</strong>:</p>
+<ul>
+<li>$\Omega_R t = \pi$ → <strong>X 门</strong> ($\lvert 0\rangle \leftrightarrow \lvert 1\rangle$)</li>
+<li>$\Omega_R t = \pi/2$ → <strong>Hadamard 门</strong> (叠加态)</li>
+<li>任意 $\theta$ 加上任意 $\phi$ → 任意 $SU(2)$ 单 qubit 门</li>
+</ul>
+<h3>21.3.2 典型参数</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>平台</th>
+<th>频率</th>
+<th>门时间</th>
+<th>保真度</th>
+<th>备注</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>离子阱 (拉曼)</td>
+<td>~12.6 GHz (微波等价)</td>
+<td>1-10 μs</td>
+<td>99.99%</td>
+<td>Quantinuum H3</td>
+</tr>
+<tr>
+<td>离子阱 (微波)</td>
+<td>~12.6 GHz</td>
+<td>10-50 μs</td>
+<td>99.9%</td>
+<td>不需激光</td>
+</tr>
+<tr>
+<td>超导 (ch20)</td>
+<td>4-8 GHz</td>
+<td>10-100 ns</td>
+<td>99.5-99.9%</td>
+<td>快 100×</td>
+</tr>
+</tbody>
+</table>
+<p><strong>直觉</strong>: 离子阱<strong>慢</strong> 100×, 但保真度<strong>高</strong> 10-100× (因为离子是<strong>孤立</strong>的, <strong>没有</strong>超导的衬底缺陷)。</p>
+<h3>21.3.3 AC Stark Shift (AC 斯塔克移位)</h3>
+<p><strong>问题</strong>: 激光不是<strong>严格</strong>单色 → AC Stark 效应使 qubit 频率 $\omega_{01}$ <strong>漂移</strong>。</p>
+<p>$$\Delta \omega_{AC} \propto I / \Delta$$</p>
+<ul>
+<li>$I$: 激光强度</li>
+<li>$\Delta$: 激光失谐</li>
+</ul>
+<p><strong>结果</strong>: Rabi 频率不准 → 门<strong>不</strong>保形 (over-/under-rotation)。</p>
+<p><strong>补偿</strong>:</p>
+<ul>
+<li>选<strong>大</strong>失谐 $\Delta$ (减小 Stark shift, 但减小<strong>拉比</strong>频率)</li>
+<li>用 <strong>"复合脉冲"</strong> (BB1, SK1, CORPSE) — 多脉冲组合, 抵消<strong>一阶</strong> AC Stark</li>
+<li>用 <strong>"自校准"</strong> 序列 — 实时测量 + 反馈</li>
+</ul>
+<h3>21.3.4 拉曼 vs 直接微波</h3>
+<p><strong>两种</strong>实现单 qubit 门的方法:</p>
+<p><strong>A) 拉曼 (Raman) 激光</strong>:</p>
+<ul>
+<li>两束激光, 频率差 = qubit 频率 (~12.6 GHz)</li>
+<li>激光<strong>只</strong>差频起作用 (不直接共振)</li>
+<li>优点: 激光<strong>窄线宽</strong> + <strong>空间寻址</strong>容易 (光斑小)</li>
+<li>缺点: 复杂光学, AC Stark shift</li>
+</ul>
+<p><strong>B) 直接微波</strong>:</p>
+<ul>
+<li>微波 (~12.6 GHz) 直接驱动 qubit</li>
+<li>优点: 简单, Stark shift 小</li>
+<li>缺点: <strong>波长 ~ cm</strong>, 难做<strong>单</strong>离子寻址 (要多个电极)</li>
+</ul>
+<p><strong>商业</strong>:</p>
+<ul>
+<li>Quantinuum 用<strong>微波</strong> (H3 是微波门) → 简化</li>
+<li>IonQ 用<strong>拉曼</strong>激光</li>
+</ul>
+<h3>21.3.5 门保真度的"瓶颈"</h3>
+<p><strong>为什么 99.99% 不容易再提高</strong>?</p>
+<table class="chapter-table">
+<thead><tr>
+<th>误差源</th>
+<th>大小</th>
+<th>改进</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>激光强度涨落</strong></td>
+<td>~$10^{-4}$</td>
+<td>稳定 + 反馈</td>
+</tr>
+<tr>
+<td><strong>激光频率漂移</strong></td>
+<td>~$10^{-4}$</td>
+<td>锁相环</td>
+</tr>
+<tr>
+<td><strong>AC Stark shift 残余</strong></td>
+<td>~$10^{-4}$</td>
+<td>复合脉冲</td>
+</tr>
+<tr>
+<td><strong>自发辐射</strong></td>
+<td>~$10^{-4}$</td>
+<td>选<strong>长寿命</strong> qubit 态</td>
+</tr>
+<tr>
+<td><strong>磁场涨落</strong></td>
+<td>~$10^{-5}$</td>
+<td>磁屏蔽</td>
+</tr>
+<tr>
+<td><strong>离子加热</strong> (振动激发)</td>
+<td>~$10^{-4}$</td>
+<td>表面阱设计</td>
+</tr>
+</tbody>
+</table>
+<p><strong>当前最高</strong>: 99.999% (Kielpinski 2019, NIST 2021) — <strong>接近</strong>理论极限。</p>
+<hr>
+<h2 id="21-4-qubit-cirac-zoller-vs-m-lmer-s-rensen">21.4 两 qubit 门:Cirac-Zoller vs Mølmer-Sørensen</h2>
+<h3>21.4.1 为什么两 qubit 门难?</h3>
+<p><strong>关键挑战</strong>: 离子<strong>没有</strong>直接 dipole-dipole 相互作用 (不像超导的电容/电感耦合)。</p>
+<p><strong>唯一</strong>的<strong>天然</strong>相互作用: 离子<strong>共享</strong>集体振动模 (phonon)。</p>
+<p><strong>所以</strong>: 任何两 qubit 门都必须:</p>
+<ol>
+<li><strong>驱动</strong>集体振动模</li>
+<li>让两个 qubit <strong>同时</strong>与振动模作用</li>
+<li><strong>解耦</strong> 振动模 (回到基态)</li>
+</ol>
+<h3>21.4.2 Cirac-Zoller 门 (1995) — 第一个方案</h3>
+<p><strong>核心思想</strong>: 用<strong>单个</strong>集体模 (COM 模) 作为"数据总线", 一步一步纠缠两个 qubit。</p>
+<p><strong>协议 (CNOT on ions 1, 2)</strong>:</p>
+<ol>
+<li>把 ion 1 的<strong>叠加</strong>映射到 COM 模:</li>
+</ol>
+<p>$\alpha \lvert 0\rangle_1 + \beta \lvert 1\rangle_1 \to \alpha \lvert 0, 0\rangle_{1, COM} + \beta \lvert 1, 1\rangle_{1, COM}$</p>
+<ol>
+<li>用 COM 模的<strong>激发</strong>做<strong>受控</strong>操作 ion 2:</li>
+</ol>
+<p>$\lvert 0\rangle_1 \lvert 0\rangle_2 \to \lvert 0\rangle_1 \lvert 0\rangle_2$</p>
+<p>$\lvert 0\rangle_1 \lvert 1\rangle_2 \to \lvert 0\rangle_1 \lvert 1\rangle_2$</p>
+<p>$\lvert 1\rangle_1 \lvert 0\rangle_2 \to \lvert 1\rangle_1 \lvert 1\rangle_2$</p>
+<p>$\lvert 1\rangle_1 \lvert 1\rangle_2 \to \lvert 1\rangle_1 \lvert 0\rangle_2$ (翻转!)</p>
+<ol>
+<li>解除 ion 1 与 COM 模的耦合 (回到 ion 1 <strong>自身</strong>态)</li>
+</ol>
+<p><strong>结果</strong>: CNOT(1, 2) 门</p>
+<p><strong>问题</strong>:</p>
+<ul>
+<li>必须<strong>精确</strong>控制<strong>单个</strong>集体模 → <strong>难</strong> (因为离子链有 N 个模)</li>
+<li>必须冷却到 COM 模<strong>基态</strong> → 反复冷却</li>
+<li>门时间 ~100 μs (慢)</li>
+<li><strong>实验实现</strong>: Innsbruck 2003, 第一个 CNOT 离子门</li>
+</ul>
+<h3>21.4.3 Mølmer-Sørensen 门 (1999, MS gate) — 革命</h3>
+<p><strong>核心思想</strong>: <strong>不</strong>用<strong>单个</strong>模, <strong>不</strong>用<strong>单个</strong>qubit 控制, 而是<strong>同时</strong>驱动<strong>所有</strong>离子和<strong>所有</strong>集体模。</p>
+<p><strong>协议</strong>:</p>
+<ol>
+<li>在<strong>红失谐</strong> ($\omega_l = \omega_0 - \omega_z + \delta$, $\delta$ 小) 双向<strong>同时</strong>照射 ion 1 和 ion 2</li>
+<li>激光与<strong>集体</strong>振动的耦合 → <strong>虚拟</strong>激发集体模</li>
+<li><strong>积累</strong> 几何相位 (Berry 相位, 见 21.4.5)</li>
+<li>当 $\delta T = 2\pi$ 时, 集体模<strong>解耦</strong> (回基态), <strong>净</strong>效果是两 qubit 纠缠</li>
+</ol>
+<p><strong>哈密顿量</strong> (简化):</p>
+<p>$$H_{MS} = \hbar \Omega J_x^{(12)} \otimes \bar{a}^\dagger \bar{a} \cdot ...$$</p>
+<p><strong>结果</strong>: $\text{MS}(\pi/2) = \exp(-i \pi/4 \cdot X \otimes X)$ 类的<strong>纠缠</strong>门</p>
+<p><strong>门时间</strong>: 10-100 μs (比 Cirac-Zoller <strong>快</strong> ~10×)</p>
+<p><strong>保真度</strong>: 99.9-99.99% (Quantinuum H3 99.99%)</p>
+<h3>21.4.4 MS gate 的"魔法"</h3>
+<p><strong>为什么 MS 不需要</strong>单模分辨**?</p>
+<p><strong>A) Cirac-Zoller</strong> 必须区分<strong>激发</strong>哪个模 → 需要 $\omega_z \gg$ 模间间隔 → 难</p>
+<p><strong>B) MS</strong> 是<strong>双光子</strong>过程, 失谐 $\delta$ <strong>同时</strong>覆盖<strong>多个</strong>模 → <strong>所有</strong>模<strong>一起</strong>演化 → 模<strong>不分辨</strong>也没事</p>
+<p><strong>为什么 MS 更</strong>快**?</p>
+<p><strong>A) Cirac-Zoller</strong> 必须<strong>精确</strong>等到 COM 模完成 1 个循环 → $\pi/\omega_z$ 量级</p>
+<p><strong>B) MS</strong> 用<strong>几何相位</strong>, 只关心<strong>封闭</strong>路径, 不必等到<strong>谐振</strong> → 10× 短</p>
+<p><strong>为什么 MS 更</strong>容错**?</p>
+<p><strong>A) Cirac-Zoller</strong> 对<strong>单</strong>模的<strong>初态</strong>和<strong>末态</strong>都敏感 (必须<strong>基态</strong>)</p>
+<p><strong>B) MS</strong> 对<strong>热</strong>初态更<strong>容错</strong> (几何相位部分<strong>抵消</strong>热噪声)</p>
+<h3>21.4.5 几何相位 (Berry Phase) 机制</h3>
+<p><strong>MS gate 的深层物理</strong>: 激光 + 集体振动 + 离子 → <strong>相空间</strong> (Re, Im of $\alpha$) 中的<strong>圆</strong>轨迹。</p>
+<pre><code>    Im(α)
+      ↑
+      |     ● 起点 (t=0, α=0)
+      |    /  \
+      |   /    \
+      |  /  →→  \    ← 圆 (半径 ~ Ω/δ)
+      |  \  ←←  /
+      |   \    /
+      |    \  /
+      |     ● 终点 (t=2π/δ, α=0)  ← 回到原点
+      |
+      └──────────────→ Re(α)</code></pre>
+<ul>
+<li>离子<strong>周期</strong> = $2\pi/\delta$ (激光失谐决定)</li>
+<li>在<strong>一个</strong>周期后, 振动模<strong>回到</strong>基态 (因为 $\alpha(T) = 0$)</li>
+<li><strong>但</strong>离子积累了<strong>几何相位</strong> (面积) → <strong>两 qubit 纠缠</strong>!</li>
+</ul>
+<p><strong>关键</strong>: <strong>不</strong>依赖中间<strong>具体</strong>路径, 只看<strong>包围</strong>的<strong>面积</strong> → 几何相位是<strong>拓扑</strong>的 → <strong>对</strong>小扰动<strong>鲁棒</strong>。</p>
+<h3>21.4.6 两类门对比</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>维度</th>
+<th>Cirac-Zoller (1995)</th>
+<th>Mølmer-Sørensen (1999)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>媒介</td>
+<td>单个 COM 模</td>
+<td>所有集体模</td>
+</tr>
+<tr>
+<td>控制复杂度</td>
+<td>高 (单模分辨)</td>
+<td>中 (单束激光)</td>
+</tr>
+<tr>
+<td>门时间</td>
+<td>100 μs</td>
+<td>10-100 μs</td>
+</tr>
+<tr>
+<td>对热初态敏感性</td>
+<td>高</td>
+<td>低</td>
+</tr>
+<tr>
+<td>保真度</td>
+<td>99% (历史)</td>
+<td>99.99% (现代)</td>
+</tr>
+<tr>
+<td>实用性</td>
+<td>实验性</td>
+<td><strong>现代标准</strong></td>
+</tr>
+<tr>
+<td>发现者</td>
+<td>Cirac, Zoller (Innsbruck)</td>
+<td>Mølmer, Sørensen (Aarhus)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>结论</strong>: 几乎所有现代离子阱都<strong>只</strong>用 MS gate。</p>
+<hr>
+<h2 id="21-5">21.5 全连接:离子链的"超级武器"</h2>
+<h3>21.5.1 离子链 = 天然全连接</h3>
+<p><strong>关键观察</strong>: $N$ 个离子排成一条链, <strong>每个</strong>离子<strong>都</strong>与<strong>每一个</strong>集体模<strong>有非零</strong>耦合。</p>
+<p><strong>结果</strong>: <strong>任何</strong>两离子<strong>直接</strong>通过<strong>共享</strong>的集体模相互作用。</p>
+<p><strong>数学</strong>: 集体模 $m$ 的位置是 $\lvert m\rangle = \sum_i b_{i,m} \lvert i\rangle$, 其中 $b_{i,m}$ 是<strong>正交</strong>矩阵的元素 → 任意两离子<strong>总能找到</strong>一个或多个模<strong>同时</strong>耦合两者。</p>
+<p><strong>vs 超导</strong> (ch20.5):</p>
+<ul>
+<li>超导: heavy-hex (IBM) / 2D grid (Google)</li>
+<li>远距 qubit → SWAP 链 (10-20 门) 间接纠缠</li>
+<li>100 qubit 全纠缠 = O($N^2$) CNOT = ~5000 门</li>
+</ul>
+<p><strong>vs 离子阱</strong>:</p>
+<ul>
+<li>离子链 → 1 MS gate 纠缠<strong>任意</strong>两 qubit</li>
+<li>100 qubit 全纠缠 = $N(N-1)/2 = 4950$ MS gate (但<strong>每个</strong> MS 是 1 门, 不是 10 门)</li>
+</ul>
+<p><strong>对比</strong>:</p>
+<ul>
+<li>超导 100 qubit 全纠缠 = 5000 × 10 (SWAP 链) = 50000 <strong>单</strong>门操作</li>
+<li>离子阱 100 qubit 全纠缠 = 4950 MS (1 门) = 4950 <strong>两</strong>门操作</li>
+</ul>
+<p><strong>虽然离子阱门慢 100×</strong>, <strong>但</strong>门数少 10×, <strong>总时间</strong>还是短 (但<strong>优势</strong>主要是<strong>保真度</strong>, 见 21.5.4)。</p>
+<h3>21.5.2 离子链的"瓶颈":模拥挤 (Mode Crowding)</h3>
+<p><strong>问题</strong>: 离子链越长 → 集体模<strong>频率越接近</strong> (模间隔 $\Delta \omega \sim 1/N$)。</p>
+<pre><code>N = 2:  ω_COM, ω_stretch   (间隔 100%)
+N = 4:  ω_1, ω_2, ω_3, ω_4  (间隔 30%)
+N = 10: 间隔 ~10%
+N = 50: 间隔 ~2%  ← 模**几乎简并**
+N = 100: 间隔 ~1% ← **严重**拥挤</code></pre>
+<p><strong>后果</strong>:</p>
+<ul>
+<li>MS gate 失谐 $\delta$ 必须<strong>避开</strong>所有模 → 难</li>
+<li>模<strong>串扰</strong> → 门<strong>不</strong>保形</li>
+<li><strong>实际</strong> 离子链<strong>通常</strong> ≤ 50 离子 (Quantinuum H3 是 56)</li>
+</ul>
+<h3>21.5.3 QCCD 架构 (Quantinuum 2022+)</h3>
+<p><strong>思想</strong>: 把<strong>大</strong>链<strong>分</strong>成<strong>多</strong>个<strong>小</strong>链 (5-10 离子/链), 用<strong>电极</strong>把离子<strong>搬运</strong>到<strong>一起</strong>做两 qubit 门, 然后<strong>搬</strong>回去。</p>
+<pre><code>   链 1    链 2    链 3    ...
+   ●●●     ●●●     ●●●
+    ↓       ↓       ↓
+   ←─ 电极搬运 (10-100 μs) ─→
+    ↓
+   临时合并链: ●●●●●●●●●●●  (做 1 个 MS)
+    ↓
+   拆分 (10-100 μs)</code></pre>
+<p><strong>优点</strong>:</p>
+<ul>
+<li>链<strong>小</strong> → 模<strong>不</strong>拥挤 → 高保真度</li>
+<li>总体<strong>可</strong>扩展 (理论上 1000+ 离子, Quantinuum 路线图)</li>
+</ul>
+<p><strong>代价</strong>:</p>
+<ul>
+<li><strong>搬运</strong> 时间 ~10-100 μs (搬一个离子 = 几个门时间)</li>
+<li><strong>搬运</strong> 加热 → 必须<strong>冷却</strong> (增加时间)</li>
+</ul>
+<p><strong>QCCD</strong> = <strong>Quantum Charge-Coupled Device</strong> — 类比经典电子学的 CCD。</p>
+<h3>21.5.4 全连接的"实际"优势</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>指标</th>
+<th>离子阱 (全连接)</th>
+<th>超导 (heavy-hex)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1 个远距纠缠</td>
+<td>1 MS (~50 μs)</td>
+<td>~10-20 CNOT (~5 μs)</td>
+</tr>
+<tr>
+<td>100 qubit GHZ</td>
+<td>99 MS (~5 ms)</td>
+<td>~5000 CNOT (~5 ms)</td>
+</tr>
+<tr>
+<td>100 qubit 全纠缠</td>
+<td>~5000 MS (~250 ms)</td>
+<td>~50000 CNOT (~50 ms)</td>
+</tr>
+<tr>
+<td>远距门保真度</td>
+<td>99.99%</td>
+<td>99.5% × 10 = 95%!</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键</strong>: 在<strong>保真度</strong>上, 离子阱<strong>完胜</strong> (因为没有 SWAP 链<strong>累积</strong>错误)。</p>
+<p><strong>这就是为什么 Quantinuum 报告的 QV (量子体积) 比 IBM 高</strong>:</p>
+<ul>
+<li>IBM 127 量子 QV 2^8 = 256 (大量 SWAP 拉低)</li>
+<li>Quantinuum 56 量子 QV 2^20 = 1,048,576 (全连接, 高保真)</li>
+</ul>
+<h3>21.5.5 5 种硬件"连接性"对比</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>平台</th>
+<th>连接性</th>
+<th>原因</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>超导 (ch20)</strong></td>
+<td>2D 网格 / heavy-hex</td>
+<td>平面芯片, 邻居耦合</td>
+</tr>
+<tr>
+<td><strong>离子阱 (ch21)</strong></td>
+<td><strong>全连接</strong></td>
+<td>共享集体振动模</td>
+</tr>
+<tr>
+<td><strong>光量子 (ch22)</strong></td>
+<td>概率性, 通过光子</td>
+<td>远距纠缠</td>
+</tr>
+<tr>
+<td><strong>拓扑 (ch23)</strong></td>
+<td>局部 (Ising anyon) 或近全 (Fibonacci)</td>
+<td>编织路径</td>
+</tr>
+<tr>
+<td><strong>中性原子 (ch24)</strong></td>
+<td>可<strong>重排</strong> (光镊移动)</td>
+<td>Rydberg 块内 ~5-10</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="21-6">21.6 读出:态依赖荧光</h2>
+<h3>21.6.1 核心方法</h3>
+<p><strong>经典办法</strong>: 用激光区分两个 qubit 态。</p>
+<pre><code>|1⟩  → 共振激光 → 散射荧光 → 探测器测到光子
+|0⟩  → 暗态      → 不散射  → 探测器测到 0</code></pre>
+<p><strong>物理</strong>: 选 $|1\rangle$ 与<strong>强</strong>跃迁 $\lvert 1\rangle \to \lvert e\rangle$ <strong>共</strong>振, $|0\rangle$ <strong>不</strong>与任何激光<strong>共</strong>振。</p>
+<p><strong>典型</strong>:</p>
+<ul>
+<li>$^{40}$Ca$^+$: $\lvert 1\rangle = D_{5/2}$ (亚稳, τ ~ 1 s) → 397 nm 散射</li>
+<li>$^{171}$Yb$^+$: $\lvert 1\rangle = F=1$ → 369 nm 散射, $|0\rangle = F=0$ → 暗</li>
+</ul>
+<h3>21.6.2 收集光子的"工程"</h3>
+<p><strong>挑战</strong>: 1 个离子散射的<strong>总</strong>光子数 $\sim \Gamma \times t$ (线宽 × 时间)。</p>
+<ul>
+<li>散射率 $\Gamma/(2\pi) \sim 10-30$ MHz → 1 ms 散 $\sim 10^7$ 光子</li>
+<li>物镜 NA ~0.4 → 收集<strong>立体角</strong> ~2-5% → 实际收集 $\sim 10^5-10^6$ 光子</li>
+<li>测 ms 即可 <strong>99.9%</strong> 区分 $|0\rangle$ vs $|1\rangle$</li>
+</ul>
+<p><strong>成像</strong>:</p>
+<ul>
+<li><strong>单</strong>离子: 1 个 PMT (光电倍增管)</li>
+<li><strong>多</strong>离子 (N=50): 1 个 <strong>EMCCD</strong> (电子倍增 CCD) 相机, 空间分辨 ~1 μm → 同时测 50 离子</li>
+</ul>
+<h3>21.6.3 串扰问题</h3>
+<p><strong>问题</strong>: 测 ion 1 时, <strong>邻居</strong> ion 2 也<strong>散射</strong>荧光 → <strong>误读</strong>。</p>
+<p><strong>解法 1</strong>: 空间分辨 (EMCCD)</p>
+<ul>
+<li>物镜<strong>成像</strong>到 EMCCD → 空间上<strong>分开</strong> → 串扰 &lt; 0.1%</li>
+</ul>
+<p><strong>解法 2</strong>: 频率分辨</p>
+<ul>
+<li>用<strong>不同</strong> Zeeman 子能级 → 不同跃迁频率 → <strong>频率</strong>滤波</li>
+<li>但<strong>慢</strong>, 因为要<strong>扫</strong>频</li>
+</ul>
+<p><strong>解法 3</strong>: 时间分辨</p>
+<ul>
+<li>先测 ion 1 (ms 量级), 再测 ion 2 → 慢</li>
+<li>Quantinuum 用<strong>空间</strong>分辨 + <strong>短</strong>测量</li>
+</ul>
+<h3>21.6.4 读出保真度</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>平台</th>
+<th>单 qubit 读出保真度</th>
+<th>备注</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>离子阱</strong></td>
+<td><strong>99.99%</strong></td>
+<td>散射<strong>大量</strong>光子, 高信噪比</td>
+</tr>
+<tr>
+<td>超导 (ch20)</td>
+<td>99%</td>
+<td>色散读出, 信噪比有限</td>
+</tr>
+<tr>
+<td>光量子 (ch22)</td>
+<td>95-99%</td>
+<td>单光子探测</td>
+</tr>
+<tr>
+<td>中性原子 (ch24)</td>
+<td>99%</td>
+<td>荧光</td>
+</tr>
+</tbody>
+</table>
+<p><strong>原因</strong>: 离子阱的"亮态 vs 暗态"对比<strong>极强</strong> (有光 vs 无光), 而超导的"色散移位"是<strong>小信号</strong> → 信噪比<strong>低</strong>。</p>
+<h3>21.6.5 量子非破坏 (QND) 读出</h3>
+<p><strong>重要性质</strong>: 离子阱读出<strong>通常</strong>是 QND 的:</p>
+<ul>
+<li>测量 $\lvert 1\rangle$ 后, 离子<strong>还是</strong> $\lvert 1\rangle$ (在 $|1\rangle$ 散射完光子后<strong>仍然</strong>回到 $|1\rangle$)</li>
+<li>测量 $\lvert 0\rangle$ 后, 离子<strong>还是</strong> $\lvert 0\rangle$ (不散射)</li>
+</ul>
+<p><strong>与 ch20.6.1 的超导读出对比</strong>:</p>
+<ul>
+<li>超导: 测量<strong>破坏</strong> qubit (resonator 拿走 1 个光子 → T_2 ↓)</li>
+<li>离子阱: 测量<strong>不破坏</strong> qubit (散射后<strong>回到</strong>原态)</li>
+</ul>
+<p><strong>代价</strong>: 离子阱读出<strong>慢</strong> (ms) vs 超导<strong>快</strong> (ns), 但<strong>无反作用</strong> → 适合<strong>反馈</strong>。</p>
+<hr>
+<h2 id="21-7-50-1000">21.7 扩展挑战:从 50 到 1000+ 离子</h2>
+<h3>21.7.1 1D 链的极限</h3>
+<p><strong>为什么 1D 链不能</strong>直接<strong>到 100+ 离子</strong>?</p>
+<p><strong>A) 模拥挤</strong> (21.5.2): 模频率间隔 $\sim 1/N$ → N=100 时 1% → MS 难选 $\delta$</p>
+<p><strong>B) 链"软化"</strong>: 长链中间离子<strong>约束弱</strong> (端帽电场衰减) → 离子间距<strong>变化大</strong></p>
+<p><strong>C) 寻址困难</strong>: 激光<strong>光斑</strong> ~1 μm, 离子间距 2-5 μm → 邻离子<strong>串扰</strong></p>
+<p><strong>D) 加热率</strong>: 表面 Paul 阱的<strong>电极</strong>表面有<strong>噪声</strong>电场 → 离子<strong>异常加热</strong> (Einfeld 加热)</p>
+<p><strong>经验</strong>: 1D 链<strong>实际</strong>上限 ~ 50-100 离子。</p>
+<h3>21.7.2 2D Paul 阱 (表面阱)</h3>
+<p><strong>思想</strong>: 在<strong>芯片</strong>表面做 Paul 阱 → 离子被<strong>悬浮</strong>在表面 ~50-100 μm 上方。</p>
+<p><strong>优点</strong>:</p>
+<ul>
+<li><strong>可扩展</strong>: 类似超导, 在<strong>同一芯片</strong>上做 2D 阵列</li>
+<li><strong>集成</strong>: 电极 + 激光<strong>集成</strong>在芯片</li>
+<li><strong>QCCD</strong> 容易实现</li>
+</ul>
+<p><strong>缺点</strong>:</p>
+<ul>
+<li><strong>加热率</strong>比宏观阱<strong>高 100×</strong> (表面噪声)</li>
+<li>需复杂<strong>电极</strong>几何</li>
+</ul>
+<p><strong>代表</strong>: MIT Lincoln Lab, Sandia, Duke, U. Sussex (Universal Quantum)</p>
+<h3>21.7.3 Penning 阱 (2D 离子晶体)</h3>
+<p><strong>完全不同的思路</strong>: 用<strong>强静磁场</strong> + <strong>静电端盖</strong> → 离子在 xy 平面做<strong>回旋</strong>运动 → 排列成<strong>2D 圆环</strong>或<strong>盘</strong>。</p>
+<pre><code>        _____
+      /  o o  \
+     /  o o o  \      ← 2D 离子晶体
+     \  o o o  /          (数十到数千离子)
+      \  o o  /
+        ‾‾‾‾‾
+        ← B 方向</code></pre>
+<p><strong>代表</strong>: U. Maryland (Bollinger 组), Imperial College (Home 组)</p>
+<p><strong>优点</strong>:</p>
+<ul>
+<li><strong>规模大</strong>: 数百到<strong>数千</strong>离子</li>
+<li><strong>稳定</strong>: 静场 → 无 RF 加热</li>
+</ul>
+<p><strong>缺点</strong>:</p>
+<ul>
+<li><strong>旋转</strong>: 整个晶体<strong>在转</strong> → Doppler 移位<strong>大</strong></li>
+<li><strong>寻址难</strong>: 离子<strong>都在</strong>转, 激光<strong>跟</strong>离子<strong>相对运动</strong>复杂</li>
+<li>门保真度<strong>比</strong> 1D 链<strong>低</strong> (旋转效应难校准)</li>
+</ul>
+<h3>21.7.4 模块化:光子互连</h3>
+<p><strong>终极想法</strong>: <strong>多</strong>个离子阱, <strong>每个</strong>阱 5-50 离子, 用<strong>光子</strong>在阱<strong>间</strong>纠缠。</p>
+<pre><code>  [5 离子]      [5 离子]      [5 离子]
+      |             |             |
+   激光+光纤     激光+光纤     激光+光纤
+      |             |             |
+      └──── 光子分束器 ────┘
+              ↓
+      远距离纠缠 (10-100 km)</code></pre>
+<p><strong>机制</strong>:</p>
+<ul>
+<li>每个离子<strong>发射</strong>单光子 (与电子态<strong>纠缠</strong>)</li>
+<li>两个离子<strong>各自</strong>发射的光子在<strong>分束器</strong>干涉</li>
+<li>干涉结果<strong>投影</strong>到两离子<strong>纠缠</strong>态</li>
+</ul>
+<p><strong>代表</strong>: U. Oxford (Lucas 组), U. Maryland (Monroe 组), IonQ</p>
+<p><strong>距离</strong>:</p>
+<ul>
+<li>短距 (m): 实验演示</li>
+<li>中距 (km): 城域量子网络</li>
+<li>长距 (100+ km): 卫星-地面 (中国墨子号已演示)</li>
+</ul>
+<p><strong>结合 ch22 (光量子)</strong>: 离子阱 = 量子<strong>节点</strong> (计算), 光子 = <strong>量子总线</strong> (通信)。</p>
+<h3>21.7.5 当前最大离子阱系统</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>系统</th>
+<th>离子数</th>
+<th>架构</th>
+<th>全连接?</th>
+<th>量子体积</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Quantinuum H1-1 (2021)</td>
+<td>10</td>
+<td>1D 链</td>
+<td>✓</td>
+<td>2^10</td>
+</tr>
+<tr>
+<td>Quantinuum H1-2 (2022)</td>
+<td>12</td>
+<td>1D 链</td>
+<td>✓</td>
+<td>2^12</td>
+</tr>
+<tr>
+<td>Quantinuum H2-1 (2023)</td>
+<td>32</td>
+<td>1D 链</td>
+<td>✓</td>
+<td>2^20</td>
+</tr>
+<tr>
+<td><strong>Quantinuum H3 (2024)</strong></td>
+<td><strong>56</strong></td>
+<td><strong>1D 链</strong></td>
+<td><strong>✓</strong></td>
+<td><strong>2^20+</strong></td>
+</tr>
+<tr>
+<td>IonQ Forte (2023)</td>
+<td>36</td>
+<td>1D 链</td>
+<td>✓</td>
+<td>AQ 35</td>
+</tr>
+<tr>
+<td>IonQ Tempo (2024, 计划)</td>
+<td>64</td>
+<td>1D 链</td>
+<td>✓</td>
+<td>TBD</td>
+</tr>
+<tr>
+<td>IonQ Aria (2022)</td>
+<td>25</td>
+<td>1D 链</td>
+<td>✓</td>
+<td>AQ 25</td>
+</tr>
+<tr>
+<td>U. Maryland Penning</td>
+<td>300+</td>
+<td>2D Penning</td>
+<td>难</td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="21-8-2016-2024">21.8 里程碑系统:2016-2024</h2>
+<h3>21.8.1 关键系统时间线</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>年份</th>
+<th>系统</th>
+<th>离子数</th>
+<th>关键指标</th>
+<th>意义</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>2016</strong></td>
+<td>Innsbruck 14 离子</td>
+<td>14</td>
+<td>通用 QC</td>
+<td>第一次多 qubit 通用算法</td>
+</tr>
+<tr>
+<td><strong>2018</strong></td>
+<td>IonQ 11 qubit</td>
+<td>11</td>
+<td>AQ 11</td>
+<td>第一台商业</td>
+</tr>
+<tr>
+<td><strong>2019</strong></td>
+<td>Quantinuum H0</td>
+<td>6</td>
+<td>QV 2^4</td>
+<td>商业化起点</td>
+</tr>
+<tr>
+<td><strong>2020</strong></td>
+<td>Quantinuum H1</td>
+<td>10</td>
+<td>QV 2^10</td>
+<td>商业级</td>
+</tr>
+<tr>
+<td><strong>2021</strong></td>
+<td>Quantinuum H1-1</td>
+<td>10</td>
+<td>QV 2^10</td>
+<td>跨阈值</td>
+</tr>
+<tr>
+<td><strong>2022</strong></td>
+<td>Quantinuum H1-2</td>
+<td>12</td>
+<td>QV 2^12</td>
+<td>QCCD</td>
+</tr>
+<tr>
+<td><strong>2023</strong></td>
+<td>Quantinuum H2-1</td>
+<td>32</td>
+<td><strong>QV 2^20</strong></td>
+<td>量子体积翻 1024×</td>
+</tr>
+<tr>
+<td><strong>2023</strong></td>
+<td>IonQ Forte</td>
+<td>36</td>
+<td>AQ 35</td>
+<td>IonQ 第二代</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td><strong>Quantinuum H3</strong></td>
+<td><strong>56</strong></td>
+<td><strong>99.99% 两 qubit</strong></td>
+<td>当前最强</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td>Quantinuum + Microsoft</td>
+<td>12</td>
+<td><strong>12 logical qubits</strong></td>
+<td>离子阱 logical qubit</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td>IonQ Tempo (计划)</td>
+<td>64</td>
+<td>AQ 64?</td>
+<td>更大规模</td>
+</tr>
+<tr>
+<td><strong>2024</strong></td>
+<td>QuEra (中性原子)</td>
+<td>256</td>
+<td>模拟专用</td>
+<td>跨平台比较</td>
+</tr>
+</tbody>
+</table>
+<h3>21.8.2 "量子体积" (Quantum Volume, QV)</h3>
+<p><strong>定义</strong> (IBM, 2019):</p>
+<p>$$QV = 2^d$$</p>
+<p>其中 $d$ 是<strong>最大</strong>的<strong>正方形</strong>电路 (深度 = 宽度 = $d$), 输出<strong>保真度</strong> &gt; 2/3。</p>
+<p><strong>为什么离子阱 QV 高</strong>:</p>
+<ul>
+<li>全连接 (无 SWAP)</li>
+<li>99.99% 门保真度</li>
+<li>1 门等效 ~1 门 (不需 SWAP 链)</li>
+</ul>
+<p><strong>对比</strong> (2024):</p>
+<ul>
+<li>Quantinuum H3: QV ~2^20</li>
+<li>IBM 127 qubit (超导): QV ~2^8 = 256</li>
+<li>Google Sycamore 53: QV ~2^6 (类似)</li>
+</ul>
+<p><strong>关键</strong>: 离子阱<strong>用 56 量子</strong>就<strong>超</strong>过<strong>IBM 127 量子</strong> (因为<strong>全连接</strong>+<strong>高保真</strong>)。</p>
+<h3>21.8.3 Quantinuum H3 (2024) — 当前最强</h3>
+<p><strong>官方数据</strong> (2024):</p>
+<ul>
+<li><strong>56 离子</strong> 1D 链</li>
+<li><strong>99.99%</strong> 两 qubit 门保真度</li>
+<li><strong>QV ~2^20</strong> 量子体积</li>
+<li><strong>~5 ms</strong> 单门 (估计)</li>
+<li><strong>~50 μs</strong> MS 两 qubit 门</li>
+<li><strong>微波门</strong> (不用激光) → 简化</li>
+</ul>
+<p><strong>里程碑意义</strong>:</p>
+<ul>
+<li>第一个<strong>逼近</strong> 99.99% 理论极限的系统</li>
+<li>第一个<strong>逻辑</strong>qubit 实验 (12 logical qubits)</li>
+<li><strong>化学模拟</strong>: 用 12 logical qubits 模拟分子</li>
+</ul>
+<h3>21.8.4 IonQ Forte / Tempo (2023-2024)</h3>
+<p><strong>IonQ 路线</strong>:</p>
+<ul>
+<li><strong>Aria</strong> (2022): 25 离子, AQ 25</li>
+<li><strong>Forte</strong> (2023): 36 离子, AQ 35, 拉曼门</li>
+<li><strong>Tempo</strong> (2024 计划): 64 离子, "<strong>AQ 64+</strong>" (Algorithmic Qubits, IonQ 自创指标)</li>
+</ul>
+<p><strong>IonQ vs Quantinuum 竞争</strong>:</p>
+<ul>
+<li>IonQ: 拉曼激光门, 商业<strong>云</strong>服务 (AWS/Azure/GCP)</li>
+<li>Quantinuum: 微波门, 自有<strong>硬件</strong>, 量子体积<strong>领先</strong></li>
+<li>两家<strong>不同</strong>指标, <strong>不</strong>完全可比</li>
+</ul>
+<h3>21.8.5 Quantinuum + Microsoft: 12 Logical Qubits (2024)</h3>
+<p><strong>关键成果</strong> (2024-12):</p>
+<ul>
+<li>Quantinuum H2 硬件 + Microsoft 错误纠正码</li>
+<li>编码 <strong>12 logical qubits</strong> (用物理 qubit 编码)</li>
+<li>跑了<strong>多</strong>种<strong>纠错</strong>算法</li>
+<li>化学模拟 (4 个分子反应)</li>
+</ul>
+<p><strong>意义</strong>:</p>
+<ul>
+<li>离子阱<strong>第一</strong>个<strong>多</strong> logical qubit 实验</li>
+<li>验证<strong>硬件级</strong> QEC 在离子阱<strong>可行</strong></li>
+<li>为 100+ logical qubits 铺路</li>
+</ul>
+<hr>
+<h2 id="21-9">21.9 优势、劣势与未来</h2>
+<h3>21.9.1 5 大优势</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>优势</th>
+<th>量化</th>
+<th>对比 (ch20 超导)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>1. 全连接</strong></td>
+<td>任意 2 qubit 1 门</td>
+<td>远距 10-20 SWAP</td>
+</tr>
+<tr>
+<td><strong>2. 长 T1</strong></td>
+<td><strong>秒-小时</strong></td>
+<td><strong>100 μs</strong></td>
+</tr>
+<tr>
+<td><strong>3. 高保真度</strong></td>
+<td><strong>99.99%</strong></td>
+<td>99.5-99.9%</td>
+</tr>
+<tr>
+<td><strong>4. 离子一致</strong></td>
+<td>天然<strong>全同</strong></td>
+<td>fabrication 偏差</td>
+</tr>
+<tr>
+<td><strong>5. QND 读出</strong></td>
+<td>不破坏 qubit</td>
+<td>读出破坏</td>
+</tr>
+</tbody>
+</table>
+<p><strong>长 T1 的物理原因</strong>: 离子<strong>被囚禁在真空中</strong> (Pauli 阻塞), <strong>没有</strong>超导的<strong>衬底</strong>二能级系统 (TLS) 引起弛豫。</p>
+<p><strong>离子一致的物理原因</strong>: 离子是<strong>天然</strong>原子, <strong>没有</strong> fabrication 偏差 (不像超导的<strong>每个</strong>qubit 都略<strong>不同</strong>)。</p>
+<h3>21.9.2 5 大劣势</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>劣势</th>
+<th>量化</th>
+<th>对比 (ch20 超导)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>1. 慢门</strong></td>
+<td>1-10 μs</td>
+<td>10-100 ns</td>
+</tr>
+<tr>
+<td><strong>2. 少 qubit</strong></td>
+<td>36-56</td>
+<td>1000+</td>
+</tr>
+<tr>
+<td><strong>3. 激光复杂</strong></td>
+<td>多波长 + 稳频</td>
+<td>微波简单</td>
+</tr>
+<tr>
+<td><strong>4. 1D 链扩展</strong></td>
+<td>N ≤ 50-100</td>
+<td>2D 容易</td>
+</tr>
+<tr>
+<td><strong>5. 搬运 + 冷却时间</strong></td>
+<td>ms 级</td>
+<td>无</td>
+</tr>
+</tbody>
+</table>
+<p><strong>慢门的原因</strong>: 集体振动频率 $\omega_z \sim$ MHz, 门<strong>至少</strong> 1 个周期 (μs)。<strong>超</strong> ns 困难。</p>
+<p><strong>少 qubit 的原因</strong>: 1D 链<strong>长</strong> → 模拥挤 + 加热 + 寻址困难。</p>
+<h3>21.9.3 3 大未来方向</h3>
+<p><strong>A) 模块化 + 光子互连</strong></p>
+<ul>
+<li>短期 (3-5 年): 100-1000 离子<strong>分布式</strong>网络</li>
+<li>中期 (5-10 年): 1000+ 离子 + 量子互联网</li>
+<li>长期: 全球量子计算网络</li>
+</ul>
+<p><strong>B) 微波门替代激光门</strong></p>
+<ul>
+<li>优势: 简化控制 + 减小 AC Stark</li>
+<li>现状: Quantinuum H3 已用微波</li>
+<li>短期: 99.99% 保真度<strong>稳定</strong>达到</li>
+</ul>
+<p><strong>C) 混合架构 (离子-光子)</strong></p>
+<ul>
+<li>离子 = 量子节点 (长相干 + 高保真)</li>
+<li>光子 = 量子总线 (远距离纠缠)</li>
+<li>代表: U. Oxford 离子-光子模块</li>
+</ul>
+<h3>21.9.4 与超导的"哲学对比"</h3>
+<p><strong>超导</strong> = "<strong>快</strong>而<strong>多</strong>"</p>
+<ul>
+<li>1 GHz 操作 → <strong>快</strong>迭代</li>
+<li>1000 qubit → <strong>多</strong>问题并行</li>
+<li><strong>但</strong>: 短 T1 + 串扰 + 制造差异</li>
+</ul>
+<p><strong>离子阱</strong> = "<strong>慢</strong>而<strong>精</strong>"</p>
+<ul>
+<li>μs 操作 → <strong>慢</strong>但<strong>稳</strong></li>
+<li>50 qubit → <strong>少</strong>但<strong>全连</strong></li>
+<li><strong>但</strong>: 长 T1 + 一致 + 高保真</li>
+</ul>
+<p><strong>未来</strong>: 两者<strong>可能</strong>通过<strong>光子互连</strong>融合</p>
+<ul>
+<li>离子节点 (精) + 超导芯片 (快) + 光子 (远距)</li>
+<li>"<strong>异构</strong>量子计算"</li>
+</ul>
+<h3>21.9.5 5 种硬件对比 (完整)</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>维度</th>
+<th>超导 (ch20)</th>
+<th>离子阱 (ch21)</th>
+<th>光 (ch22)</th>
+<th>拓扑 (ch23)</th>
+<th>中性原子 (ch24)</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>物理</strong></td>
+<td>Josephson 结</td>
+<td>电磁囚禁</td>
+<td>单光子</td>
+<td>Majorana</td>
+<td>光镊 + Rydberg</td>
+</tr>
+<tr>
+<td><strong>规模 (2024)</strong></td>
+<td>1000+</td>
+<td>56</td>
+<td>100-1000 光子</td>
+<td>8</td>
+<td>100-1180</td>
+</tr>
+<tr>
+<td><strong>门速度</strong></td>
+<td>10-100 ns</td>
+<td>1-10 μs</td>
+<td>ns</td>
+<td>ns (预期)</td>
+<td>100 ns-1 μs</td>
+</tr>
+<tr>
+<td><strong>门保真度</strong></td>
+<td>99.5-99.9%</td>
+<td><strong>99.99%</strong></td>
+<td>99%</td>
+<td>99% (预期)</td>
+<td>99.5%</td>
+</tr>
+<tr>
+<td><strong>T1</strong></td>
+<td>100 μs</td>
+<td><strong>秒-小时</strong></td>
+<td><strong>N/A</strong> (光子飞行, 不存储)</td>
+<td>长 (拓扑)</td>
+<td>秒</td>
+</tr>
+<tr>
+<td><strong>连接</strong></td>
+<td>2D / heavy-hex</td>
+<td><strong>全连接</strong></td>
+<td>概率</td>
+<td>局部</td>
+<td>可重排</td>
+</tr>
+<tr>
+<td><strong>操控</strong></td>
+<td>微波</td>
+<td>激光/微波</td>
+<td>线性光学</td>
+<td>微波 + 编织</td>
+<td>激光</td>
+</tr>
+<tr>
+<td><strong>温度</strong></td>
+<td>10 mK</td>
+<td>室温 (阱) + 真空</td>
+<td><strong>室温</strong></td>
+<td>10 mK</td>
+<td>室温 (原子) + 激光冷却</td>
+</tr>
+<tr>
+<td><strong>代表公司</strong></td>
+<td>IBM, Google</td>
+<td>IonQ, Quantinuum</td>
+<td>PsiQuantum, Xanadu</td>
+<td>Microsoft</td>
+<td>QuEra, Pasqal, Atom Computing</td>
+</tr>
+<tr>
+<td><strong>当前里程碑</strong></td>
+<td>Willow 105 跨阈值</td>
+<td>H3 56 ion 99.99%</td>
+<td>九章/Borealis 玻色采样</td>
+<td>Majorana 1 8 qubit</td>
+<td>Aquila 256 / Atom 1180</td>
+</tr>
+<tr>
+<td><strong>主要挑战</strong></td>
+<td>短 T1 + 串扰</td>
+<td>规模</td>
+<td>概率门</td>
+<td>实验早期</td>
+<td>重排 + 串扰</td>
+</tr>
+<tr>
+<td><strong>容错前景</strong></td>
+<td>良好 (表面码)</td>
+<td>优秀 (逻辑 qubit)</td>
+<td>良好</td>
+<td>理论完美</td>
+<td>良好</td>
+</tr>
+</tbody>
+</table>
+<h3>21.9.6 5 任务 vs 最优平台</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>任务</th>
+<th>最优平台</th>
+<th>原因</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>大数因式分解 (Shor, ch11)</strong></td>
+<td><strong>超导</strong> + 离子阱</td>
+<td>大规模 + 高保真</td>
+</tr>
+<tr>
+<td><strong>量子化学模拟 (VQE, ch13)</strong></td>
+<td><strong>超导</strong> + 离子阱</td>
+<td>静态电路 + 深度电路</td>
+</tr>
+<tr>
+<td><strong>量子机器学习 (ch14)</strong></td>
+<td><strong>超导</strong></td>
+<td>大规模并行</td>
+</tr>
+<tr>
+<td><strong>玻色采样 (ch22)</strong></td>
+<td><strong>光量子</strong></td>
+<td>天然</td>
+</tr>
+<tr>
+<td><strong>量子模拟 (Ising, Hubbard)</strong></td>
+<td><strong>中性原子</strong></td>
+<td>大规模可调耦合</td>
+</tr>
+<tr>
+<td><strong>量子纠错演示 (ch17-19)</strong></td>
+<td><strong>离子阱</strong> + 超导</td>
+<td>长 T1 + 高保真</td>
+</tr>
+<tr>
+<td><strong>量子互联网节点 (ch26)</strong></td>
+<td><strong>离子阱</strong></td>
+<td>长 T1 + 光子互连</td>
+</tr>
+<tr>
+<td><strong>容错 (ch19)</strong></td>
+<td><strong>超导</strong></td>
+<td>表面码成熟</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键</strong>: <strong>没有</strong>单一平台<strong>通吃</strong>所有任务。<strong>异构</strong>量子计算是未来。</p>
+<hr>
+<h2 id="21-10-ch22-24">21.10 ch22-24 铺路 + 总结</h2>
+<h3>21.10.1 ch22 光量子 — 玻色采样与室温</h3>
+<p><strong>与 ch21 的对比</strong>:</p>
+<ul>
+<li>离子阱 = 真空 + 激光</li>
+<li><strong>光量子 = 室温 + 线性光学</strong> (Xanadu Borealis, PsiQuantum)</li>
+</ul>
+<p><strong>衔接</strong>:</p>
+<ul>
+<li>ch22 详细讲<strong>光子</strong>作为 qubit (偏振/路径/时间)</li>
+<li><strong>KLM 方案</strong> (Knill-Laflamme-Milburn): 用<strong>辅助</strong>光子<strong>+</strong>分束器<strong>实现</strong>概率性**两 qubit 门</li>
+<li><strong>玻色采样</strong>: 用<strong>多光子</strong>干涉<strong>采样</strong> → 量子优势 (九章)</li>
+</ul>
+<h3>21.10.2 ch23 拓扑量子计算 — 抗错愿景</h3>
+<p><strong>与 ch21 的对比</strong>:</p>
+<ul>
+<li>离子阱 = "<strong>长 T1 + 外部</strong>纠错"</li>
+<li><strong>拓扑 = "</strong>天然<strong>抗错 (拓扑保护)"</strong></li>
+</ul>
+<p><strong>衔接</strong>:</p>
+<ul>
+<li>ch23 讲 <strong>Majorana 费米子</strong> + <strong>任意子</strong>编织</li>
+<li><strong>Microsoft Station Q</strong> 路线</li>
+<li><strong>天然容错</strong> 的<strong>理论</strong>优势 (但<strong>实验</strong>早期)</li>
+</ul>
+<h3>21.10.3 ch24 中性原子 — 可扩展性</h3>
+<p><strong>与 ch21 的对比</strong>:</p>
+<ul>
+<li>离子阱 = 1D 链 + 激光门</li>
+<li><strong>中性原子 = 2D/3D 光镊 + Rydberg 阻塞</strong></li>
+</ul>
+<p><strong>衔接</strong>:</p>
+<ul>
+<li>ch24 讲 <strong>光镊</strong> (optical tweezer) 阵列</li>
+<li><strong>Rydberg 阻塞</strong>: 5-10 邻近原子<strong>强</strong>耦合</li>
+<li><strong>可重排</strong>: 原子<strong>移动</strong> → 动态连接</li>
+<li><strong>QuEra 256, Atom Computing 1180</strong> (2024)</li>
+</ul>
+<h3>21.10.4 概念速查表 (20 行)</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>#</th>
+<th>概念</th>
+<th>英文</th>
+<th>核心</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Paul 阱</td>
+<td>Paul trap</td>
+<td>RF 四极场 + 赝势</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Penning 阱</td>
+<td>Penning trap</td>
+<td>静磁 + 静电 + 回旋</td>
+</tr>
+<tr>
+<td>3</td>
+<td>赝势近似</td>
+<td>Pseudopotential</td>
+<td>$V_{\text{eff}} = \frac{1}{2} m \omega^2 r^2$</td>
+</tr>
+<tr>
+<td>4</td>
+<td>集体振动模</td>
+<td>Collective mode</td>
+<td>COM + Stretch + 内模</td>
+</tr>
+<tr>
+<td>5</td>
+<td>库仑耦合</td>
+<td>Coulomb coupling</td>
+<td>$N$ 离子 → $N$ 模</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Doppler 冷却</td>
+<td>Doppler cooling</td>
+<td>mK 量级</td>
+</tr>
+<tr>
+<td>7</td>
+<td>边带冷却</td>
+<td>Sideband cooling</td>
+<td>振动基态 ($\bar{n} < 0.01$)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Lamb-Dicke 参数</td>
+<td>Lamb-Dicke parameter</td>
+<td>$\eta = k x_0 \ll 1$</td>
+</tr>
+<tr>
+<td>9</td>
+<td>共驱动 / Rabi</td>
+<td>Coherent drive</td>
+<td>$\Omega_R$ 旋转</td>
+</tr>
+<tr>
+<td>10</td>
+<td>AC Stark 移位</td>
+<td>AC Stark shift</td>
+<td>激光强度涨落 → 频率漂移</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Cirac-Zoller 门</td>
+<td>CZ gate</td>
+<td>1995, 单个 COM 模媒介</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Mølmer-Sørensen 门</td>
+<td>MS gate</td>
+<td>1999, 集体模 + 几何相位</td>
+</tr>
+<tr>
+<td>13</td>
+<td>几何相位 / Berry</td>
+<td>Geometric phase</td>
+<td>相空间圆面积</td>
+</tr>
+<tr>
+<td>14</td>
+<td>拉曼激光</td>
+<td>Raman laser</td>
+<td>双光子差频驱动</td>
+</tr>
+<tr>
+<td>15</td>
+<td>微波门</td>
+<td>Microwave gate</td>
+<td>直接驱动 (Quantinuum H3)</td>
+</tr>
+<tr>
+<td>16</td>
+<td>态依赖荧光</td>
+<td>State-dep. fluor.</td>
+<td>$</td>
+<td>1\rangle$ 散, $</td>
+<td>0\rangle$ 暗</td>
+</tr>
+<tr>
+<td>17</td>
+<td>EMCCD</td>
+<td>EMCCD camera</td>
+<td>空间分辨多离子</td>
+</tr>
+<tr>
+<td>18</td>
+<td>QND 读出</td>
+<td>QND readout</td>
+<td>不破坏 qubit</td>
+</tr>
+<tr>
+<td>19</td>
+<td>QCCD 架构</td>
+<td>QCCD</td>
+<td>离子搬运 + 分区</td>
+</tr>
+<tr>
+<td>20</td>
+<td>离子-光子模块</td>
+<td>Ion-photon module</td>
+<td>光子互连远距纠缠</td>
+</tr>
+</tbody>
+</table>
+<h3>21.10.5 4 个关键人物</h3>
+<table class="chapter-table">
+<thead><tr>
+<th>人物</th>
+<th>贡献</th>
+<th>机构</th>
+<th>年份</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><strong>Wolfgang Paul</strong></td>
+<td>Paul 阱</td>
+<td>U. Bonn</td>
+<td>1953 (1989 诺奖)</td>
+</tr>
+<tr>
+<td><strong>Hans Dehmelt</strong></td>
+<td>Penning 阱</td>
+<td>U. Washington</td>
+<td>1936 (1989 诺奖)</td>
+</tr>
+<tr>
+<td><strong>Juan Ignacio Cirac</strong></td>
+<td>Cirac-Zoller 门</td>
+<td>U. Innsbruck → MPQ</td>
+<td>1995</td>
+</tr>
+<tr>
+<td><strong>Peter Zoller</strong></td>
+<td>Cirac-Zoller 门</td>
+<td>U. Innsbruck</td>
+<td>1995</td>
+</tr>
+<tr>
+<td><strong>Klaus Mølmer</strong></td>
+<td>MS gate</td>
+<td>U. Aarhus</td>
+<td>1999</td>
+</tr>
+<tr>
+<td><strong>Anders Sørensen</strong></td>
+<td>MS gate</td>
+<td>U. Aarhus → NBI</td>
+<td>1999</td>
+</tr>
+<tr>
+<td><strong>David Wineland</strong></td>
+<td>离子阱量子操控</td>
+<td>NIST</td>
+<td>1995 (2012 诺奖)</td>
+</tr>
+<tr>
+<td><strong>Chris Monroe</strong></td>
+<td>离子阱 + 光子互连</td>
+<td>U. Maryland → IonQ</td>
+<td>2013+</td>
+</tr>
+<tr>
+<td><strong>Rainer Blatt</strong></td>
+<td>Innsbruck 实验</td>
+<td>U. Innsbruck</td>
+<td>2003+</td>
+</tr>
+<tr>
+<td><strong>Mark Saffman</strong></td>
+<td>离子阱 (部分)</td>
+<td>U. Wisconsin</td>
+<td>持续</td>
+</tr>
+</tbody>
+</table>
+<h3>21.10.6 4 道思考题</h3>
+<p><strong>A1</strong>: 为什么离子阱的 T1 (秒-小时) <strong>比</strong>超导的 T1 (~100 μs) <strong>长得多</strong>? 物理根源是什么?</p>
+<p><strong>A2</strong>: MS gate 的"几何相位"是什么? 为什么它让 MS 比 Cirac-Zoller <strong>容错</strong>?</p>
+<p><strong>A3</strong>: Quantinuum H3 有 56 离子, 1D 链. <strong>为什么</strong> 1D 链的离子数<strong>通常</strong> ≤ 50-100? 给出 3 个物理原因.</p>
+<p><strong>A4</strong>: 假设你想构造 1 个 100 logical qubit 量子计算机, <strong>2 种选择</strong>:</p>
+<ul>
+<li><strong>A</strong>: 1000 物理 qubit, 单门保真度 99.9%, 连接 heavy-hex, 2 个 <strong>逻辑</strong>qubit 之间需要 10 个物理门</li>
+<li><strong>B</strong>: 5000 物理 qubit, 单门保真度 99.99%, 连接<strong>全连</strong>, 1 个 MS = 1 个<strong>逻辑</strong>门</li>
+</ul>
+<p><strong>问</strong>: 哪种<strong>更优</strong>? 量化 (用 21.9.4 节).</p>
+<p><strong>详细答案见 21.10.7</strong>.</p>
+<h3>21.10.7 思考题详细答案</h3>
+<p><strong>A1</strong>: <strong>长 T1 的物理根源</strong>:</p>
+<ul>
+<li>离子<strong>被囚禁在真空中</strong> (~$10^{-11}$ Torr), <strong>没有</strong>碰撞</li>
+<li>离子<strong>没有</strong>衬底 (不像超导在 chip 上), <strong>没有</strong> TLS (二能级系统) 引起弛豫</li>
+<li>离子<strong>被屏蔽</strong>于外界电磁场 (Paul 阱是 RF 场, 对<strong>电子</strong>态<strong>影响</strong>小)</li>
+<li>qubit 态<strong>通常</strong>选<strong>长寿命</strong>能级 (e.g., 超精细 $F=0, F=1$ → 寿命<strong>秒-小时</strong>)</li>
+<li>离子是<strong>同位素纯净</strong>的 (e.g., $^{171}$Yb$^+$ <strong>单一</strong>同位素) → <strong>没有</strong>核自旋噪声</li>
+</ul>
+<p><strong>A2</strong>: <strong>MS gate 几何相位的"容错"机制</strong>:</p>
+<ul>
+<li>几何相位 = $\oint A \cdot d\ell$ (相空间中的<strong>面积</strong>)</li>
+<li>只依赖<strong>封闭</strong>路径的<strong>形状</strong>, <strong>不</strong>依赖<strong>具体</strong>演化<strong>时间</strong>或<strong>速度</strong></li>
+<li>即使<strong>失谐</strong> $\delta$ 有<strong>小</strong>扰动 $\delta \to \delta + \epsilon$, <strong>净</strong>面积变化<strong>只是二阶</strong> ($\sim \epsilon^2$)</li>
+<li>而<strong>动力学</strong>相位 (Cirac-Zoller) 对<strong>单</strong>模<strong>精确共振</strong>敏感 → <strong>一阶</strong>误差</li>
+<li><strong>结论</strong>: MS = 几何 (容错), CZ = 动力学 (敏感)</li>
+</ul>
+<p><strong>A3</strong>: <strong>1D 链 ≤ 50-100 离子的 3 个物理原因</strong>:</p>
+<ol>
+<li><strong>模拥挤</strong>: 模频率间隔 $\sim 1/N$ → $N=100$ 时 1% → MS 难选 $\delta$</li>
+<li><strong>链"软化"</strong>: 端帽电场随距离衰减 → 中间离子<strong>约束弱</strong> → 离子间距<strong>变化大</strong> → 振动<strong>不均匀</strong></li>
+<li><strong>寻址困难</strong>: 激光<strong>光斑</strong> ~1 μm, 离子间距 2-5 μm → 邻离子<strong>串扰</strong> ~1%</li>
+</ol>
+<p><strong>A4</strong>: <strong>100 logical qubit 选哪个</strong>:</p>
+<ul>
+<li><strong>A</strong> (超导, heavy-hex): 1 个<strong>逻辑</strong>门 = 10 个<strong>物理</strong>门, 物理保真度 99.9%</li>
+<li>逻辑门保真度 = $0.999^{10} = 0.990$ = <strong>99.0%</strong></li>
+<li>100 logical qubit 纠缠 (类似 21.5.4 估算): ~100×10 = 1000 物理门 → 0.999^1000 = <strong>37%</strong> (灾难)</li>
+<li>实际: 需<strong>纠错</strong>码 → <strong>Surface code</strong> 阈值 ~1%, 物理 99.9% 在阈值<strong>外</strong> → 失败</li>
+</ul>
+<ul>
+<li><strong>B</strong> (离子阱, 全连): 1 个<strong>逻辑</strong>门 = 1 MS (50 μs), 物理保真度 99.99%</li>
+<li>逻辑门保真度 = 0.9999 (≈ 1 个门)</li>
+<li>100 logical qubit 纠缠: ~100 MS (因为全连) → 0.9999^100 = <strong>99.0%</strong> ✓</li>
+<li>实际: 5000 物理 → 50 logical (1 logical = 100 物理) → 仍可<strong>容错</strong></li>
+</ul>
+<ul>
+<li><strong>结论</strong>: <strong>B (离子阱) 大胜</strong>:</li>
+<li><strong>全连</strong> → 门数<strong>少 10×</strong> (关键!)</li>
+<li><strong>保真度高 10×</strong> (99.99% vs 99.9%)</li>
+<li><strong>T1 长 10000×</strong> (秒 vs 100 μs)</li>
+<li><strong>总</strong>操作<strong>数</strong> + <strong>总</strong>累积<strong>错误</strong>, B 优势<strong>大</strong></li>
+</ul>
+<p><strong>但</strong>: A 有 1000 qubit (vs B 5000), 规模优势.</p>
+<p><strong>深层</strong>: 容错的"逻辑 qubit" = <strong>资源</strong>问题:</p>
+<ul>
+<li>离子阱: 1 logical ≈ 100 物理 (因为全连, 1:1 码距)</li>
+<li>超导: 1 logical ≈ 1000-10000 物理 (表面码距离 d=10-30, 物理数 $d^2$)</li>
+</ul>
+<h3>21.10.8 推荐阅读</h3>
+<p><strong>经典论文</strong>:</p>
+<ol>
+<li>Cirac &amp; Zoller (1995), "Quantum Computations with Cold Trapped Ions", <em>Phys. Rev. Lett.</em> <strong>74</strong>, 4091 — 离子阱 QC 的"创世纪"</li>
+<li>Mølmer &amp; Sørensen (1999), "Multiparticle Entanglement of Hot Trapped Ions", <em>Phys. Rev. Lett.</em> <strong>82</strong>, 1835 — MS gate</li>
+<li>Kielpinski, Monroe, Wineland (2002), "Architecture for a large-scale ion-trap quantum computer", <em>Nature</em> <strong>417</strong>, 709 — 离子阱 QC 架构</li>
+<li>Wineland et al. (1998), "Experimental issues in coherent quantum-state manipulation of trapped atomic ions", <em>J. Res. NIST</em> <strong>103</strong>, 259 — 离子阱实验综述</li>
+</ol>
+<p><strong>综述</strong>:</p>
+<ol>
+<li>Monroe &amp; Kim (2013), "Scaling the Ion Trap Quantum Processor", <em>Science</em> <strong>339</strong>, 1164</li>
+<li>Bruzewicz, Chiaverini, McConnell, Sage (2019), "Trapped-ion quantum computing: Progress and challenges", <em>Appl. Phys. Rev.</em> <strong>6</strong>, 021314 — <strong>强烈推荐</strong></li>
+<li>Wineland (2013), "Nobel Lecture: Superposition, entanglement, and raising Schrödinger's cat", <em>Rev. Mod. Phys.</em> <strong>85</strong>, 1103</li>
+</ol>
+<p><strong>教科书</strong>:</p>
+<ol>
+<li>Leibfried, Blatt, Monroe, Wineland (2003), "Quantum dynamics of single trapped ions", <em>Rev. Mod. Phys.</em> <strong>75</strong>, 281 — <strong>必读</strong></li>
+<li>Nielsen &amp; Chuang, "Quantum Computation and Quantum Information" — ch7.6 离子阱</li>
+</ol>
+<p><strong>最新 (2024)</strong>:</p>
+<ol>
+<li>Moses et al. (Quantinuum, 2024), "A Race-Track Trapped-Ion Quantum Processor", <em>Phys. Rev. X</em> <strong>13</strong>, 041052 — H3 详细</li>
+<li>da Silva et al. (IonQ, 2024), "Demonstration of Logical qubits and Repetition Code", <em>Phys. Rev. X</em> <strong>14</strong>, 011020 — IonQ logical qubit</li>
+<li>Reichel &amp; Vuletić (eds, 2011), "Atom Chips", Wiley — 表面 Paul 阱</li>
+</ol>
+<hr>
+<h2 id="21-a-a-paul-rf">21.A 附录 A: Paul 阱 RF 场与赝势推导</h2>
+<h3>21.A.1 Paul 阱的几何</h3>
+<p>考虑 4 根平行电极 (沿 z 轴), 离子链沿 z 轴。</p>
+<p>电势 (理想四极):</p>
+<p>$$\Phi(\mathbf{r}, t) = \frac{U + V \cos(\Omega t)}{2 r_0^2}(x^2 - y^2) + \frac{\kappa U}{z_0^2}(z^2 - \frac{x^2 + y^2}{2})$$</p>
+<ul>
+<li>$U$: 直流电压 (端帽)</li>
+<li>$V$: RF 电压幅度</li>
+<li>$\Omega$: RF 频率</li>
+<li>$r_0$: 离子到电极距离</li>
+<li>$\kappa$: 几何因子 (~0.1-0.3)</li>
+</ul>
+<h3>21.A.2 离子在 RF 场中的运动</h3>
+<p><strong>x 方向运动方程</strong> (简化为 1D):</p>
+<p>$$m \ddot{x} = -e \frac{\partial \Phi}{\partial x} = -\frac{e (U + V \cos \Omega t)}{r_0^2} x$$</p>
+<p>引入无量纲参数:</p>
+<p>$$a = \frac{4 e U}{m \Omega^2 r_0^2}, \quad q = \frac{2 e V}{m \Omega^2 r_0^2}$$</p>
+<p>得到<strong>马修方程</strong>:</p>
+<p>$$\frac{d^2 x}{d \tau^2} + (a - 2 q \cos 2 \tau) x = 0, \quad \tau = \frac{\Omega t}{2}$$</p>
+<h3>21.A.3 稳定区</h3>
+<p><strong>Floquet 定理</strong>: 方程的解是 $x(\tau) = e^{i \mu \tau} P(\tau)$, 其中 $P$ 是周期函数。</p>
+<p><strong>稳定条件</strong>: $\mu$ 必须是<strong>实数</strong> (不是虚数)。</p>
+<p><strong>最简稳定区</strong> ($a = 0$): $|q| < 0.908$</p>
+<p><strong>典型操作</strong>: $a \approx 0$, $q \approx 0.3-0.5$ (深稳区)</p>
+<h3>21.A.4 赝势近似</h3>
+<p>在 $|q| \ll 1$ 区, 离子做<strong>快速微振动</strong> (微运动, micromotion), <strong>叠加</strong>在<strong>慢</strong>的<strong>赝</strong>运动 (secular motion) 上。</p>
+<p><strong>微运动</strong> (周期 $2\pi/\Omega$): 振幅 $\sim q x_0$, 频率 $\Omega$。</p>
+<p><strong>赝运动</strong> (频率 $\omega$): $\omega \approx \frac{q \Omega}{2 \sqrt{2}}$</p>
+<p><strong>有效赝势</strong>:</p>
+<p>$$V_{\text{eff}}(x) = \frac{1}{2} m \omega^2 x^2$$</p>
+<p><strong>等价</strong>: 离子在"看不见的"弹簧 ($k = m \omega^2$) 势阱中<strong>慢</strong>振动。</p>
+<h3>21.A.5 离子链平衡间距</h3>
+<p>$N$ 离子平衡间距 (1D 链):</p>
+<p>$$z_0 = \left(\frac{e^2}{16 \pi \epsilon_0 m \omega_z^2}\right)^{1/3}$$</p>
+<p><strong>典型值</strong>: $\omega_z/(2\pi) \sim$ 1 MHz, $m \sim 100$ amu → $z_0 \sim$ 2-5 μm</p>
+<p><strong>N 离子总长度</strong>: $L = (N-1) z_0$ → $N=50$ → $L \sim 100$ μm (合理)</p>
+<h3>21.A.6 库仑耦合 + 集体振动模</h3>
+<p>$N$ 离子的 Lagrangian (在 $z$ 方向, 简化):</p>
+<p>$$L = \sum_i \frac{1}{2} m \dot{z}_i^2 - \sum_i \frac{1}{2} m \omega_z^2 z_i^2 - \sum_{i < j} \frac{e^2}{4 \pi \epsilon_0 |z_i - z_j|}$$</p>
+<p><strong>集体坐标</strong> (正交变换): $q_m = \sum_i b_{i,m} z_i$, 其中 $b_{i,m}$ 是<strong>正交</strong>矩阵的元素。</p>
+<p><strong>结果</strong>: $N$ 个<strong>独立</strong>简谐振子, 频率 $\omega_p = \sqrt{p(p+1)/2} \cdot \omega_z$ ($p = 1, ..., N$)</p>
+<ul>
+<li>$p=1$: COM 模 ($\omega_1 = \omega_z$)</li>
+<li>$p=2$: Stretch 模 ($\omega_2 = \sqrt{3} \omega_z$)</li>
+<li>$p=N$: 最高频内模</li>
+</ul>
+<hr>
+<h2 id="21-b-b-m-lmer-s-rensen">21.B 附录 B: Mølmer-Sørensen 门详细推导</h2>
+<h3>21.B.1 设定</h3>
+<p>两离子 ($i = 1, 2$), 单集体模 (简化).</p>
+<p><strong>哈密顿量</strong> (双光子失谐 $\delta$):</p>
+<p>$$H = \hbar \omega_z a^\dagger a + \frac{\hbar \omega_0}{2} \sigma_z^{(1)} + \frac{\hbar \omega_0}{2} \sigma_z^{(2)} + \hbar g (\sigma_+^{(1)} + \sigma_+^{(2)}) (a + a^\dagger) \cos(\omega_l t)$$</p>
+<p><strong>激光频率</strong>: $\omega_l = \omega_0 - \omega_z + \delta$ (红失谐 + 小失谐)</p>
+<h3>21.B.2 Lamb-Dicke 极限 + 旋转波近似</h3>
+<p>在 $\eta \ll 1$ 下, 哈密顿量<strong>简化</strong>为 (详细计算见 Leibfried 2003):</p>
+<p>$$H_{MS} = \hbar \frac{\Omega}{2} (\sigma_+^{(1)} + \sigma_+^{(2)}) a e^{i \delta t} + \text{h.c.}$$</p>
+<ul>
+<li>$\Omega$: 单光子 Rabi 频率</li>
+<li>$\delta$: 失谐 (≪ $\omega_z$)</li>
+<li>$a$: 集体模湮灭算符</li>
+</ul>
+<h3>21.B.3 求解</h3>
+<p><strong>两离子算符</strong>: $S_+ = \sigma_+^{(1)} + \sigma_+^{(2)}$, $S_- = S_+^\dagger$</p>
+<p><strong>集体模算符</strong>: $a$, $a^\dagger$</p>
+<p><strong>有效两 qubit 算符</strong> (在 $\delta$ 失谐下):</p>
+<p>$$H_{eff} = \hbar \frac{\Omega^2}{2 \delta} (S_x^2 - S_y^2 - S_z) = \hbar \frac{\Omega^2}{4 \delta} (S_x^2 - S_y^2)$$</p>
+<ul>
+<li>演化算符: $U_{MS}(t) = \exp(-i H_{eff} t / \hbar)$</li>
+</ul>
+<p><strong>当 $t = 2\pi / \delta$</strong>:</p>
+<ul>
+<li>集体模<strong>完全解耦</strong> (回到基态)</li>
+<li><strong>净效果</strong>: 离子间<strong>纠缠</strong> (几何相位)</li>
+</ul>
+<p><strong>纠缠类型</strong>:</p>
+<p>$$U_{MS}(\pi/2) = \exp\left(-i \frac{\pi}{4} (X_1 X_2 + Y_1 Y_2)\right)$$</p>
+<ul>
+<li>产生<strong>两 qubit Bell 态</strong> (类似两比特门)</li>
+</ul>
+<h3>21.B.4 几何相位的图像</h3>
+<p><strong>相空间</strong> (Re($a$), Im($a$)):</p>
+<ul>
+<li>起点: $a(0) = 0$</li>
+<li>演化: $a(t) = \frac{\Omega}{\delta} (1 - e^{i \delta t}) (\sigma_+^{(1)} + \sigma_+^{(2)})$</li>
+<li>当 $t = 2\pi/\delta$: $a(2\pi/\delta) = 0$ (回到起点)</li>
+<li><strong>净</strong>几何相位: $\gamma = \pi \Omega^2 / \delta^2$</li>
+</ul>
+<p><strong>关键</strong>: 几何相位只依赖<strong>圆的面积</strong> ($\propto \Omega^2 / \delta^2$), <strong>不</strong>依赖<strong>中间</strong>具体<strong>形状</strong> → <strong>容错</strong>。</p>
+<h3>21.B.5 容错性的"量化"</h3>
+<p><strong>小扰动</strong>: $\delta \to \delta + \epsilon$, $\Omega \to \Omega + \eta$。</p>
+<p><strong>几何相位误差</strong>: $\Delta \gamma \sim O(\epsilon^2, \eta^2, \epsilon \eta)$ — <strong>二阶</strong>!</p>
+<p><strong>对比动力学相位</strong> (Cirac-Zoller 类型): 误差<strong>一阶</strong>。</p>
+<p><strong>结论</strong>: MS 几何相位<strong>对</strong>失谐<strong>涨落</strong>容错**10-100×。</p>
+<hr>
+<h2 id="21-c-c">21.C 附录 C: 离子链振动模详细分析</h2>
+<h3>21.C.1 矩阵方法</h3>
+<p>$N$ 离子的振动哈密顿量 (在 $z$ 方向, 简化为<strong>纵向</strong>振动):</p>
+<p>$$H = \sum_i \frac{p_i^2}{2m} + \frac{1}{2} m \omega_z^2 \sum_i z_i^2 + \frac{e^2}{8 \pi \epsilon_0} \sum_{i \neq j} \frac{1}{|z_i - z_j|}$$</p>
+<p><strong>平衡位置</strong>: $z_i^{(0)} = (i - (N+1)/2) \cdot z_0$</p>
+<p><strong>偏离平衡</strong>: $z_i = z_i^{(0)} + q_i$</p>
+<p><strong>展开到二阶</strong>:</p>
+<p>$$H = \sum_i \frac{p_i^2}{2m} + \frac{1}{2} \sum_{ij} V_{ij} q_i q_j$$</p>
+<p><strong>势能矩阵</strong> (对称):</p>
+<p>$$V_{ii} = m \omega_z^2 + 2 \sum_{j \neq i} \frac{e^2}{4 \pi \epsilon_0 m (z_i^{(0)} - z_j^{(0)})^3}$$</p>
+<p>$$V_{ij} = -\frac{e^2}{4 \pi \epsilon_0 m (z_i^{(0)} - z_j^{(0)})^3}, \quad i \neq j$$</p>
+<h3>21.C.2 简正模求解</h3>
+<p><strong>特征方程</strong>: $V \mathbf{b}_p = \omega_p^2 \mathbf{b}_p$</p>
+<p><strong>结果</strong>: $N$ 个<strong>正交</strong>特征向量 $\mathbf{b}_p$, 频率 $\omega_p$ ($p = 1, ..., N$)</p>
+<p><strong>简正坐标</strong>: $Q_p = \sum_i b_{i,p} q_i$</p>
+<p><strong>独立简谐振子</strong>: $H = \sum_p \hbar \omega_p (a_p^\dagger a_p + 1/2)$</p>
+<h3>21.C.3 典型模 (N = 4 例子)</h3>
+<pre><code>p=1 (COM):    [1, 1, 1, 1] / 2      频率 ω_1 = ω_z
+p=2 (Stretch): [3, 1, -1, -3] / √20  频率 ω_2 = √3 ω_z
+p=3 (内模):   [1, -1, -1, 1] / 2    频率 ω_3 = √(29/5) ω_z
+p=4 (内模):   [1, -3, 3, -1] / √20  频率 ω_4 = √(29/5) ω_z</code></pre>
+<p><strong>对称性</strong>: COM ($p=1$) 是<strong>完全均匀</strong>的, 拉伸 ($p=2$) 是<strong>反对称</strong>的, 内模 ($p \geq 3$) 是<strong>更复杂</strong>的相对运动。</p>
+<h3>21.C.4 大 N 极限</h3>
+<p><strong>模频率</strong> (连续近似):</p>
+<p>$$\omega_p \approx \omega_z \sqrt{\frac{p(p+1)}{2}}, \quad p = 1, 2, ..., N$$</p>
+<p><strong>关键问题 (21.5.2 节)</strong>: 频率间隔 $\omega_{p+1} - \omega_p \to 0$ (大 $N$)</p>
+<p><strong>定量</strong> ($N = 50$):</p>
+<ul>
+<li>$\omega_1 = \omega_z$ (1 MHz)</li>
+<li>$\omega_{50} \approx \omega_z \sqrt{50 \cdot 51 / 2} \approx 36 \omega_z$ (36 MHz)</li>
+<li>平均间隔: $35/49 \approx 0.7 \omega_z = 0.7$ MHz</li>
+<li>相对间隔: $0.7 / 36 \approx 2\%$</li>
+</ul>
+<p><strong>结论</strong>: $N = 50$ 时<strong>接近</strong>模拥挤 → <strong>难</strong>做高保真 MS。</p>
+<h3>21.C.5 与 ch21.4 MS gate 的衔接</h3>
+<p><strong>MS gate 的"模无关性"</strong>:</p>
+<ul>
+<li>失谐 $\delta$ 是<strong>任意</strong>小 (≪ $\omega_z - \omega_{z-1}$)</li>
+<li>双光子过程<strong>累加</strong> $\sum_p \frac{g_p^2}{\omega_p - \omega_l}$ (所有模<strong>一起</strong>)</li>
+<li><strong>净</strong>效果: <strong>不</strong>依赖<strong>单</strong>模的<strong>精确</strong>参数 → <strong>容错</strong></li>
+</ul>
+<p><strong>代价</strong>: 门<strong>比</strong>单模 CZ 慢 (因为要<strong>遍历</strong>多个模) → 10-50 μs 量级。</p>
+<hr>
+<p><strong>第 21 章完。21/28 章完成 (75%)。第五部分 2/5 章完成 (40%)。</strong></p>
+<blockquote><p><strong>下一步</strong>: 第 22 章《光量子计算》—— 玻色采样 + KLM + PsiQuantum / Xanadu</p></blockquote>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+</body>
+</html>
