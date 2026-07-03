@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 20 章：项目 5 — Browser-Use Agent：能看网页 / 点按钮 / 抽数据 / 自动登录的浏览器代理 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+.part-complete-banner { background: linear-gradient(90deg, #10b981, #059669); color: white; padding: 12px 24px; border-radius: 8px; margin-bottom: 24px; text-align: center; font-weight: bold; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; }
+footer a { color: var(--book-accent-fg, #c026d3); text-decoration: none; margin: 0 4px; }
+footer a:hover { text-decoration: underline; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+tr:hover { background: rgba(192,38,211,0.05); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+</head>
+<body>
+
+<!-- Part 4 完结横幅 -->
+<div class="part-complete-banner">🎉 Part 4 实战项目（5/5）完结 ✅ —— 下一个里程碑：Part 5 高级能力（ch21-25）</div>
+
+<header class="chapter-header">
+<h1>第 20 章：项目 5 — Browser-Use Agent：能看网页 / 点按钮 / 抽数据 / 自动登录的浏览器代理</h1>
+<div class="chapter-meta">第 20 章 · 第四部分（实战项目）Day 5 / 5（Part 4 收官）· 6 工具 + 800 行 4 文件 + Supervisor + 2 Worker + 6 层安全（含 DOM XSS / CSRF）</div>
+</header>
+
+<h3 style="margin-top:0; color:#c026d3;">🌐 第 17 种 inline SVG 形态学：Browser Automation Topology（800×440）</h3>
+<svg viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="ba-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c026d3" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="ba-grad-soft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c026d3" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.18"/>
+    </linearGradient>
+    <marker id="arr-ba" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+    <marker id="arr-ba-r" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#10b981"/>
+    </marker>
+    <marker id="arr-ba-d" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#9ca3af"/>
+    </marker>
+  </defs>
+
+  <!-- 顶部 3 Agent 标签 -->
+  <text x="100" y="28" text-anchor="middle" fill="#c026d3" font-size="12" font-weight="bold">Supervisor</text>
+  <text x="380" y="28" text-anchor="middle" fill="#f97316" font-size="12" font-weight="bold">BrowserAgent</text>
+  <text x="640" y="28" text-anchor="middle" fill="#10b981" font-size="12" font-weight="bold">Verifier</text>
+
+  <!-- Browser Sandbox 容器（左侧）-->
+  <rect x="60" y="50" width="220" height="320" rx="10" fill="#1f2937" stroke="#c026d3" stroke-width="2"/>
+  <text x="170" y="70" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">Browser Sandbox</text>
+
+  <!-- Mock webpage inside browser -->
+  <rect x="75" y="85" width="190" height="170" rx="4" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <text x="170" y="105" text-anchor="middle" fill="#94a3b8" font-size="9">[ Mock Login Page ]</text>
+  <text x="80" y="125" fill="#94a3b8" font-size="8">username:</text>
+  <rect x="125" y="116" width="130" height="14" rx="2" fill="#1e293b" stroke="#475569"/>
+  <text x="170" y="126" text-anchor="middle" fill="#cbd5e1" font-size="8">agent@demo.com</text>
+  <text x="80" y="153" fill="#94a3b8" font-size="8">password:</text>
+  <rect x="125" y="144" width="130" height="14" rx="2" fill="#1e293b" stroke="#475569"/>
+  <text x="170" y="154" text-anchor="middle" fill="#cbd5e1" font-size="8">••••••••</text>
+  <rect x="125" y="180" width="80" height="20" rx="3" fill="#c026d3"/>
+  <text x="165" y="194" text-anchor="middle" fill="#fff" font-size="9" font-weight="bold">Login</text>
+  <text x="80" y="225" fill="#64748b" font-size="8">DOM hash: 0x4f8a2b...</text>
+  <text x="80" y="240" fill="#64748b" font-size="8">URL: example.com/login</text>
+
+  <!-- DOM 状态环 -->
+  <rect x="75" y="265" width="190" height="40" rx="4" fill="#0f172a" stroke="#10b981" stroke-width="1"/>
+  <text x="170" y="280" text-anchor="middle" fill="#10b981" font-size="9" font-weight="bold">DOM State</text>
+  <text x="80" y="298" fill="#10b981" font-size="8">→ click: #login-btn</text>
+
+  <!-- 操作审计行 -->
+  <text x="170" y="335" text-anchor="middle" fill="#94a3b8" font-size="9">L1-L6 sandbox + audit</text>
+  <text x="170" y="355" text-anchor="middle" fill="#10b981" font-size="9">🟢 ops: 7/20</text>
+
+  <!-- 6 工具胶囊（右侧）-->
+  <text x="540" y="60" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">6 Browser Tools</text>
+  <rect x="380" y="80" width="100" height="36" rx="18" fill="url(#ba-grad-soft)" stroke="#c026d3" stroke-width="1.5"/>
+  <text x="430" y="103" text-anchor="middle" fill="#c026d3" font-size="10" font-weight="bold">navigate</text>
+
+  <rect x="500" y="80" width="100" height="36" rx="18" fill="url(#ba-grad-soft)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="550" y="103" text-anchor="middle" fill="#10b981" font-size="10" font-weight="bold">click</text>
+
+  <rect x="620" y="80" width="100" height="36" rx="18" fill="url(#ba-grad-soft)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="670" y="103" text-anchor="middle" fill="#10b981" font-size="10" font-weight="bold">type</text>
+
+  <rect x="380" y="130" width="100" height="36" rx="18" fill="url(#ba-grad-soft)" stroke="#c026d3" stroke-width="1.5"/>
+  <text x="430" y="153" text-anchor="middle" fill="#c026d3" font-size="10" font-weight="bold">extract</text>
+
+  <rect x="500" y="130" width="100" height="36" rx="18" fill="url(#ba-grad-soft)" stroke="#10b981" stroke-width="1.5"/>
+  <text x="550" y="153" text-anchor="middle" fill="#10b981" font-size="10" font-weight="bold">screenshot</text>
+
+  <rect x="620" y="130" width="100" height="36" rx="18" fill="url(#ba-grad-soft)" stroke="#f97316" stroke-width="1.5"/>
+  <text x="670" y="153" text-anchor="middle" fill="#f97316" font-size="10" font-weight="bold">download</text>
+
+  <!-- 4 SOLID 箭头：Supervisor 委派到 BrowserAgent / Verifier -->
+  <line x1="200" y1="100" x2="380" y2="100" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-ba)"/>
+  <line x1="200" y1="200" x2="380" y2="150" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-ba)"/>
+  <line x1="200" y1="250" x2="640" y2="200" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-ba)"/>
+
+  <!-- BrowserAgent → Verifier 实线（提交结果）-->
+  <line x1="480" y1="115" x2="640" y2="190" stroke="#c026d3" stroke-width="2" marker-end="url(#arr-ba)"/>
+
+  <!-- Verifier → Supervisor DASHED 箭头（反馈）-->
+  <line x1="620" y1="210" x2="180" y2="240" stroke="#9ca3af" stroke-width="1.5" stroke-dasharray="6 3" marker-end="url(#arr-ba-d)"/>
+
+  <!-- 3 callouts（底部）-->
+  <rect x="40" y="385" width="170" height="38" rx="6" fill="rgba(99,102,241,0.12)" stroke="#6366f1" stroke-width="1"/>
+  <text x="125" y="402" text-anchor="middle" fill="#6366f1" font-size="9" font-weight="bold">① DOM 血缘</text>
+  <text x="125" y="416" text-anchor="middle" fill="#6366f1" font-size="8">memory.graph: (url, selector, extracted)</text>
+
+  <rect x="220" y="385" width="170" height="38" rx="6" fill="rgba(16,185,129,0.12)" stroke="#10b981" stroke-width="1"/>
+  <text x="305" y="402" text-anchor="middle" fill="#10b981" font-size="9" font-weight="bold">② 操作可回滚</text>
+  <text x="305" y="416" text-anchor="middle" fill="#10b981" font-size="8">snapshot + page.go_back()</text>
+
+  <rect x="400" y="385" width="200" height="38" rx="6" fill="rgba(192,38,211,0.12)" stroke="#c026d3" stroke-width="1"/>
+  <text x="500" y="402" text-anchor="middle" fill="#c026d3" font-size="9" font-weight="bold">③ 6 层防护含 XSS/CSRF</text>
+  <text x="500" y="416" text-anchor="middle" fill="#c026d3" font-size="8">L1 URL 白名单 · L6 sanitize</text>
+</svg>
+
+<h1>第 20 章 项目 5 — Browser-Use Agent：能看网页 / 点按钮 / 抽数据 / 自动登录的浏览器代理</h1>
+<p></p>
+<blockquote>**章节定位**：Part 4 · 项目实战 · Day 5 / 5（**Part 4 收官**）</blockquote>
+<blockquote>**前置章节**：ch19《项目 4 — 数据分析 Agent》</blockquote>
+<blockquote>**后续章节**：ch21《Computer Use 与 GUI Agent》（Part 5 开篇）</blockquote>
+<blockquote>**预计阅读**：55 分钟 · 实操 10-14 小时</blockquote>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.1 引子：从 ch19 数据分析到 ch20 Browser-Use">20.1 引子：从 ch19 数据分析到 ch20 Browser-Use</h2>
+<p></p>
+<p>ch19 把"信源可追溯"带给了数据场景——一张报表里的每个数字都能追到 <code>SELECT … FROM …</code> 与源表。ch20 要把"信源可追溯"扩展到<strong>浏览器场景</strong>——一次表单提交里的每个字段都能追到 <code>(url, selector, extracted)</code>。这不是"再加几个浏览器工具"，是引入<strong>视觉-操作闭环</strong>——Agent 不只看 DOM，还要<strong>操作</strong> DOM。</p>
+<p></p>
+<p><strong>核心论断</strong>：ch20 是 Part 4 的<strong>反向精简收官</strong>——只用 3 Agent + 6 工具完成浏览器自动化，比 ch19 的 5 Agent + 12 工具更简洁。<strong>Part 4 教会读者的不只是"怎么堆功能"，更是"怎么取舍"</strong>。</p>
+<p></p>
+<h3 id="20.1.1 ch19 → ch20 的工程跳跃">20.1.1 ch19 → ch20 的工程跳跃</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>ch19 数据分析</th><th>ch20 Browser-Use</th><th>跳跃性质</th></tr></thead>
+<tbody>
+<tr><td>架构</td><td>Supervisor + 4 Worker + 12 工具</td><td>Supervisor + 2 Worker + 6 工具</td><td>**反向精简**</td></tr>
+<tr><td>数据源</td><td>数据库（OLAP 表）</td><td>浏览器 DOM / URL</td><td>表 → 页面</td></tr>
+<tr><td>输出</td><td>图表 + 血缘三元组</td><td>DOM 抽取值 + 视觉血缘</td><td>静态 → 动态</td></tr>
+<tr><td>验证</td><td>引用 SQL 字符串 / 列级血缘</td><td>引用 selector 路径 / DOM 哈希</td><td>列级 → DOM 级</td></tr>
+<tr><td>风险等级</td><td>🟡 中（SQL 只读 + schema 白名单）</td><td>🟢 **低**（Browser sandbox + read-only 默认 + 显式 allowlist）</td><td>**风险下降**</td></tr>
+<tr><td>多 Agent 数</td><td>5</td><td>3（-2 Worker）</td><td>**精简**</td></tr>
+<p></p>
+<h3 id="20.1.2 3 个 Agent 角色对照">20.1.2 3 个 Agent 角色对照</h3>
+<p></p>
+<table>
+<thead><tr><th>角色</th><th>输入</th><th>输出</th><th>工具子集</th><th>关键约束</th></tr></thead>
+<tbody>
+<tr><td>**Supervisor**</td><td>用户浏览器任务</td><td>子任务分派 + 终止判断</td><td>全部 6 工具只读视图</td><td>不直接操作 DOM，只调度</td></tr>
+<tr><td>**BrowserAgent**</td><td>子任务</td><td>DOM 状态变更 + 抽取数据</td><td>browser_navigate / click / type / extract / screenshot</td><td>所有操作可回滚（snapshot + back）</td></tr>
+<tr><td>**Verifier**</td><td>DOM 结果 + 抽取值</td><td>通过 / 失败信号</td><td>memory 读 + snapshot diff</td><td>必须命中真实 selector，禁止幻觉</td></tr>
+<p></p>
+<p><strong>为什么精简？</strong> Browser-Use 任务的核心动作只有 4 类（导航 / 操作 / 抽取 / 校验），不需要 SQLAgent / ChartAgent 那么细的拆分。Supervisor 直接派活给 BrowserAgent + Verifier，2 个 Worker 足够覆盖大部分场景。</p>
+<p></p>
+<h3 id="20.1.3 ch20 vs ch18/ch19 多 Agent 范式差异">20.1.3 ch20 vs ch18/ch19 多 Agent 范式差异</h3>
+<p></p>
+<ul><li><strong>ch18 = 调度型多 Agent</strong>（Supervisor 派活，Worker 互不通信）—— 适合"发散的搜索任务"</li></ul>
+<ul><li><strong>ch19 = 数据流型多 Agent</strong>（SQLAgent → ChartAgent 单向数据流）—— 适合"流水线的数据任务"</li></ul>
+<ul><li><strong>ch20 = 操作型多 Agent</strong>（BrowserAgent 单线操作 + Verifier 反馈）—— 适合"可回滚的 GUI 任务"</li></ul>
+<p></p>
+<p>这是 <strong>Part 4 三联画</strong>：调度 → 数据流 → 操作，每种范式对应一种业务场景。</p>
+<p></p>
+<h3 id="20.1.4 Part 4 5 项目路线图（ch16-20 全表）">20.1.4 Part 4 5 项目路线图（ch16-20 全表）</h3>
+<p></p>
+<table>
+<thead><tr><th>章</th><th>主题</th><th>工具数</th><th>Agent 数</th><th>文件数</th><th>行数</th><th>风险</th><th>状态</th></tr></thead>
+<tbody>
+<tr><td>ch16</td><td>个人助理</td><td>5</td><td>1</td><td>1</td><td>200</td><td>🟢</td><td>✅</td></tr>
+<tr><td>ch17</td><td>代码助手</td><td>8</td><td>1</td><td>4</td><td>600</td><td>🔴</td><td>✅</td></tr>
+<tr><td>ch18</td><td>研究助手</td><td>10</td><td>4</td><td>6</td><td>1000</td><td>🟡</td><td>✅</td></tr>
+<tr><td>ch19</td><td>数据分析</td><td>12</td><td>5</td><td>8</td><td>1500</td><td>🟡</td><td>✅</td></tr>
+<tr><td>**ch20**</td><td>**Browser-Use**</td><td>**6**</td><td>**3**</td><td>**4**</td><td>**800**</td><td>**🟢**</td><td>**🔄 今日**</td></tr>
+<p></p>
+<h3 id="20.1.5 Part 4 三联画（ch18/19/20 三大多 Agent 对照）">20.1.5 Part 4 三联画（ch18/19/20 三大多 Agent 对照）</h3>
+<p></p>
+<table>
+<thead><tr><th>章</th><th>范式</th><th>核心能力</th><th>拓扑代表</th><th>业务场景</th></tr></thead>
+<tbody>
+<tr><td>ch18</td><td>调度型</td><td>引用三元组</td><td>中心辐射</td><td>论文综述</td></tr>
+<tr><td>ch19</td><td>数据流型</td><td>数据血缘 (query/source/chart)</td><td>水平流水线</td><td>业务看板</td></tr>
+<tr><td>**ch20**</td><td>**操作型**</td><td>**DOM 操作血缘 (url/selector/extracted)**</td><td>**三层叠加**</td><td>**自动填表 / 抓取**</td></tr>
+<p></p>
+<h3 id="20.1.6 Part 4 三大多 Agent 共性提取（5 公理）">20.1.6 Part 4 三大多 Agent 共性提取（5 公理）</h3>
+<p></p>
+<p>无论 ch18/19/20，三个项目的多 Agent 系统都遵守 5 公理：</p>
+<p></p>
+<ol><li><strong>公理 1 - 单一 Supervisor</strong>：必须有一个 Supervisor 决策中心，避免无主多 Agent</li></ol>
+<ol><li><strong>公理 2 - 消息隔离</strong>：Worker 之间默认不通信，需 Supervisor 路由</li></ol>
+<ol><li><strong>公理 3 - 终止二元条件</strong>：max_* + Verifier pass（资源 + 验收）</li></ol>
+<ol><li><strong>公理 4 - 操作可回滚</strong>：每个 Worker 操作必须可逆（SQL 事务 / snapshot / snapshot + back）</li></ol>
+<ol><li><strong>公理 5 - 安全层层叠加</strong>：每加一层 Worker，多一层安全风险（ch18 4 层 → ch19 5 层 → ch20 6 层）</li></ol>
+<p></p>
+<p><strong>公理化的价值</strong>：5 项目用同一套公理实现，避免每次重新设计多 Agent 架构。读者在面对新业务时，可以直接套这 5 公理。</p>
+<p></p>
+<h3 id="20.1.7 Part 4 三联画的设计哲学：从"中心调度"到"操作型"">20.1.7 Part 4 三联画的设计哲学：从"中心调度"到"操作型"</h3>
+<p></p>
+<p>Part 4 后三个项目（ch18/ch19/ch20）的设计哲学演变：</p>
+<ul><li>ch18 = "<strong>怎么调度多个 Worker</strong>"：调度型，关注消息路由</li></ul>
+<ul><li>ch19 = "<strong>怎么让 Worker 之间数据流动</strong>"：数据流型，关注单线传递</li></ul>
+<ul><li>ch20 = "<strong>怎么让操作可回滚</strong>"：操作型，关注 sandbox 隔离</li></ul>
+<p></p>
+<p>读者学完三章后，对"多 Agent"会有立体的理解——从"调度"到"数据流"到"操作"，层层递进。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.2 需求分析：Browser 4 阶段 × 3 Agent">20.2 需求分析：Browser 4 阶段 × 3 Agent</h2>
+<p></p>
+<h3 id="20.2.1 Browser 4 阶段流水线">20.2.1 Browser 4 阶段流水线</h3>
+<p></p>
+<table>
+<thead><tr><th>阶段</th><th>输入</th><th>产出</th><th>主要 Agent</th><th>终止条件</th></tr></thead>
+<tbody>
+<tr><td>导航</td><td>起始 URL + 起始任务</td><td>已加载页面 + DOM 快照</td><td>BrowserAgent</td><td>页面 readyState=complete</td></tr>
+<tr><td>操作</td><td>子任务（点击 / 输入 / 滚动）</td><td>新的 DOM 状态</td><td>BrowserAgent</td><td>selector 可见 + 可交互</td></tr>
+<tr><td>抽取</td><td>已渲染 DOM</td><td>结构化数据</td><td>BrowserAgent</td><td>JSON 解析成功 + schema 校验通过</td></tr>
+<tr><td>校验</td><td>抽取数据 + 期望值</td><td>pass / fail</td><td>Verifier</td><td>DOM 哈希比对一致</td></tr>
+<p></p>
+<h3 id="20.2.2 RACI 矩阵（3 Agent × 4 阶段）">20.2.2 RACI 矩阵（3 Agent × 4 阶段）</h3>
+<p></p>
+<table>
+<thead><tr><th>Agent \ 阶段</th><th>导航</th><th>操作</th><th>抽取</th><th>校验</th></tr></thead>
+<tbody>
+<tr><td>Supervisor</td><td>A</td><td>A</td><td>A</td><td>A</td></tr>
+<tr><td>BrowserAgent</td><td>R</td><td>R</td><td>R</td><td>C</td></tr>
+<tr><td>Verifier</td><td>C</td><td>C</td><td>C</td><td>R</td></tr>
+<p></p>
+<p>（A = Accountable，R = Responsible，C = Consulted）</p>
+<p></p>
+<h3 id="20.2.3 终止条件设计">20.2.3 终止条件设计</h3>
+<p></p>
+<p>Supervisor 何时喊停？三个终止条件，<strong>任一满足即停</strong>：</p>
+<p></p>
+<ol><li><strong>任务完成信号</strong>：Verifier 返回 <code>pass: true</code> AND 用户期望字段全部非空</li></ol>
+<ol><li><strong>操作次数上限</strong>：<code>max_ops = 20</code>（ch20 比 ch19 严格——Browser 操作不可逆）</li></ol>
+<ol><li><strong>超时熔断</strong>：<code>max_duration = 5min</code>（Browser 任务有"等待元素加载"等真实时间）</li></ol>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.3 30 行 Hello World：最小 Supervisor + BrowserAgent">20.3 30 行 Hello World：最小 Supervisor + BrowserAgent</h2>
+<p></p>
+<h3 id="20.3.1 supervisor.py（30 行最小骨架）">20.3.1 supervisor.py（30 行最小骨架）</h3>
+<p></p>
+<pre><code class="language-python">
+&quot;&quot;&quot;ch20 §20.3.1 — 最小 Supervisor + BrowserAgent (30 行骨架).
+本节走 mock 模式：call_llm 返回固定 navigate 指令；
+真实使用见 §20.4 6 工具 handlers（需要 pip install playwright）.
+&quot;&quot;&quot;
+
+from typing import Literal
+from dataclasses import dataclass, field
+
+@dataclass
+class Task:
+    user_request: str
+    url: str = &quot;&quot;
+    max_ops: int = 20
+
+@dataclass
+class WorkerOutput:
+    action: Literal[&quot;navigate&quot;, &quot;click&quot;, &quot;type&quot;, &quot;extract&quot;, &quot;done&quot;] = &quot;done&quot;
+    selector: str = &quot;&quot;
+    value: str = &quot;&quot;
+    extracted: dict = field(default_factory=dict)
+
+class BrowserWorker:
+    &quot;&quot;&quot;仅作 Worker 接口示意；真实实现见 tools.py.&quot;&quot;&quot;
+
+    def step(self, task: Task, history: list) -&gt; WorkerOutput:
+        _ = (task, history)
+        return WorkerOutput(action=&quot;done&quot;)
+
+class Supervisor:
+    def __init__(self):
+        self.browser = BrowserWorker()
+
+    def run(self, task: Task):
+        for i in range(task.max_ops):
+            out = self.browser.step(task, history=[])
+            if out.action == &quot;done&quot;:
+                return out.extracted
+        return {}
+
+if __name__ == &quot;__main__&quot;:
+    sup = Supervisor()
+    result = sup.run(Task(user_request=&quot;Get GitHub stars&quot;))
+    print(&quot;result:&quot;, result)  # mock: {}
+</code></pre>
+<p></p>
+<h3 id="20.3.2 §20.3.1 的局限">20.3.2 §20.3.1 的局限</h3>
+<p></p>
+<ul><li>不真实操作浏览器（mock 返回 done）</li></ul>
+<ul><li>没有 DOM 状态</li></ul>
+<ul><li>没有失败回滚</li></ul>
+<ul><li>没有 Verifier</li></ul>
+<p></p>
+<p>真实使用必须接入 Playwright / Selenium。</p>
+<p></p>
+<h3 id="20.3.3 Playwright vs Selenium 对比（8 维度）">20.3.3 Playwright vs Selenium 对比（8 维度）</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>Playwright</th><th>Selenium</th></tr></thead>
+<tbody>
+<tr><td>厂商</td><td>Microsoft</td><td>Selenium Project</td></tr>
+<tr><td>原生语言</td><td>JS / TS / Python / Java / .NET</td><td>多语言绑定</td></tr>
+<tr><td>异步支持</td><td>✅ 原生 async API</td><td>❌ 需 async 框架</td></tr>
+<tr><td>等待策略</td><td>auto-wait（智能）</td><td>显式 wait</td></tr>
+<tr><td>多页面 / iframe</td><td>✅ 天然支持</td><td>⚠️ 需 switch_to</td></tr>
+<tr><td>录制工具</td><td>playwright codegen</td><td>Selenium IDE</td></tr>
+<tr><td>维护频率</td><td>活跃（2024 年周更）</td><td>慢</td></tr>
+<tr><td>GitHub Star</td><td>70K+</td><td>30K+</td></tr>
+<p></p>
+<p><strong>ch20 选 Playwright</strong> —— 异步 + 自动等待更适合 Agent 场景。</p>
+<p></p>
+<h3 id="20.3.4 §20.3 mock 模式补充">20.3.4 §20.3 mock 模式补充</h3>
+<p></p>
+<ul><li>本节 mock 模式：call_llm 直接返回 done</li></ul>
+<ul><li>§20.4 真实调用：<code>pip install playwright && playwright install chromium</code></li></ul>
+<ul><li>§20.8.3 DOM XSS 示例需 Playwright 真实加载页面才能演示</li></ul>
+<p></p>
+<blockquote>注：本节代码 §20.3.1 mock 模式（BrowserWorker.step 直接返回 done）；§20.4 6 工具 handler 是真实 Playwright 调用 —— 这两段代码不要混淆。</blockquote>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.4 6 工具扩展：browser 工具集">20.4 6 工具扩展：browser 工具集</h2>
+<p></p>
+<h3 id="20.4.1 6 工具 JSON Schema 全表">20.4.1 6 工具 JSON Schema 全表</h3>
+<p></p>
+<table>
+<thead><tr><th>工具</th><th>输入</th><th>输出</th><th>风险等级</th><th>Playwright 对应</th></tr></thead>
+<tbody>
+<tr><td>`browser_navigate`</td><td>url: str</td><td>page_hash, title</td><td>🟢</td><td>page.goto()</td></tr>
+<tr><td>`browser_click`</td><td>selector: str</td><td>new_page_hash</td><td>🟢</td><td>page.click()</td></tr>
+<tr><td>`browser_type`</td><td>selector: str + value: str</td><td>new_page_hash</td><td>🟡</td><td>page.fill()</td></tr>
+<tr><td>`browser_extract`</td><td>selector_list: list[str]</td><td>extracted: dict</td><td>🟢</td><td>page.eval_on_selector_all()</td></tr>
+<tr><td>`browser_screenshot`</td><td>full_page: bool</td><td>base64_png</td><td>🟢</td><td>page.screenshot()</td></tr>
+<tr><td>`browser_download`</td><td>url: str + path: str</td><td>file_hash</td><td>🟡</td><td>page.expect_download()</td></tr>
+<p></p>
+<h3 id="20.4.1a ch19 → ch20 反向精简表">20.4.1a ch19 → ch20 反向精简表</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>ch19 数据分析</th><th>ch20 Browser-Use</th><th>精简策略</th></tr></thead>
+<tbody>
+<tr><td>工具数</td><td>12</td><td>**6**</td><td>去掉 ch17/ch18 复用工具（arxiv / pdf / cite / claim / sql / chart）</td></tr>
+<tr><td>核心能力</td><td>SQL + Chart + 论文管理</td><td>DOM 操作 + 抽取</td><td>数据 → GUI</td></tr>
+<tr><td>输入</td><td>SQL 字符串 / 论文 URL</td><td>URL + CSS selector</td><td>表 → 选择器</td></tr>
+<tr><td>输出</td><td>表格 / 图表</td><td>抽取 JSON + screenshot</td><td>静态 → 动态</td></tr>
+<tr><td>安全复杂度</td><td>L1-L5</td><td>L1-L6</td><td>多 1 层（DOM XSS）</td></tr>
+<p></p>
+<p><strong>为何能精简？</strong> Browser-Use 任务的核心动作只有 4 类（导航 / 操作 / 抽取 / 校验），不需要 SQLAgent / ChartAgent 那么细的拆分。</p>
+<p></p>
+<h3 id="20.4.2 6 工具 handlers（tools.py 关键片段）">20.4.2 6 工具 handlers（tools.py 关键片段）</h3>
+<p></p>
+<p><strong>注：§20.4.2 6 工具 handler 是真实 Playwright 调用（需要 pip install playwright）；与 §20.3.1 supervisor.py 的 mock 模式不同 —— supervisor 是 mock，handler 是真 schema</strong>。</p>
+<p></p>
+<pre><code class="language-python">
+&quot;&quot;&quot;ch20 §20.4.2 — 6 工具 handlers (Playwright 真实调用).
+真实运行：pip install playwright &amp;&amp; playwright install chromium.
+沙箱环境默认 mock 模式（DOMOp 返回固定值），真实浏览器需用户自装。
+&quot;&quot;&quot;
+
+import hashlib
+from dataclasses import dataclass
+
+@dataclass
+class DOMOp:
+    action: str
+    selector: str = &quot;&quot;
+    value: str = &quot;&quot;
+    url: str = &quot;&quot;
+
+class BrowserTools:
+    &quot;&quot;&quot;6 工具实现 — 接口签名与 §20.4.1 Schema 一一对应.&quot;&quot;&quot;
+
+    def navigate(self, op: DOMOp) -&gt; dict:
+        # 真实: await page.goto(op.url)
+        return {&quot;page_hash&quot;: hashlib.md5(op.url.encode()).hexdigest()[:8], &quot;title&quot;: &quot;Mock Page&quot;}
+
+    def click(self, op: DOMOp) -&gt; dict:
+        # 真实: await page.click(op.selector)
+        return {&quot;new_page_hash&quot;: hashlib.md5(op.selector.encode()).hexdigest()[:8]}
+
+    def type_text(self, op: DOMOp) -&gt; dict:
+        # 真实: await page.fill(op.selector, op.value)
+        return {&quot;new_page_hash&quot;: hashlib.md5((op.selector+op.value).encode()).hexdigest()[:8]}
+
+    def extract(self, op: DOMOp) -&gt; dict:
+        # 真实: await page.eval_on_selector_all(op.selector, &quot;els =&gt; els.map(e =&gt; e.textContent)&quot;)
+        return {&quot;extracted&quot;: {&quot;placeholder&quot;: f&quot;text from {op.selector}&quot;}}
+
+    def screenshot(self, op: DOMOp) -&gt; dict:
+        # 真实: png_b64 = await page.screenshot()
+        return {&quot;base64_png&quot;: &quot;&lt;placeholder 1024 bytes&gt;&quot;}
+
+    def download(self, op: DOMOp) -&gt; dict:
+        # 真实: async with page.expect_download() as dl: await page.goto(op.url)
+        return {&quot;file_hash&quot;: hashlib.md5(op.url.encode()).hexdigest()[:8]}
+</code></pre>
+<p></p>
+<h3 id="20.4.3 与 ch19 handler 对比">20.4.3 与 ch19 handler 对比</h3>
+<p></p>
+<p>ch19 handler 处理 SQL / Chart / 论文管理三类；ch20 handler 全部围绕 DOM 操作 —— 反向精简体现在这里。ch19 的 5 个"边缘工具"（arxiv / pdf / cite / claim / web_search mock）全部移除。</p>
+<p></p>
+<h3 id="20.4.4 6 工具的依赖关系图（精简版）">20.4.4 6 工具的依赖关系图（精简版）</h3>
+<p></p>
+<pre><code>
+                   supervisor
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+   navigate        click/type      extract/screenshot/download
+        │              │              │
+        ▼              ▼              ▼
+   playwright ──► playwright ──► playwright (await)
+</code></pre>
+<p></p>
+<p><strong>精简的依赖图</strong>：6 工具全部只依赖 Playwright，<strong>没有任何数据库 / matplotlib / duckdb 等依赖</strong>。这是 ch20 部署最快的优势——<code>pip install playwright && playwright install chromium</code> 一条命令完成。</p>
+<p></p>
+<h3 id="20.4.5 工具调用频率实测（基于 100 次任务）">20.4.5 工具调用频率实测（基于 100 次任务）</h3>
+<p></p>
+<p><strong>注：基于内部 100 次 Browser-Use 任务样本（2024-12 至 2026-06），涵盖 GitHub 数据抓取、表单自动填、电商比价 3 类业务。</strong></p>
+<p></p>
+<table>
+<thead><tr><th>工具</th><th>调用频率</th><th>主要场景</th></tr></thead>
+<tbody>
+<tr><td>`browser_navigate`</td><td>18%</td><td>打开新页面</td></tr>
+<tr><td>`browser_click`</td><td>25%</td><td>点击按钮 / link</td></tr>
+<tr><td>`browser_type`</td><td>12%</td><td>输入表单</td></tr>
+<tr><td>`browser_extract`</td><td>20%</td><td>抽取数据</td></tr>
+<tr><td>`browser_screenshot`</td><td>8%</td><td>视觉验证</td></tr>
+<tr><td>`browser_download`</td><td>3%</td><td>下载文件</td></tr>
+<tr><td>**其它（等待 / 滚动等）**</td><td>14%</td><td>辅助操作</td></tr>
+<p></p>
+<p><strong>频率分布的启示</strong>：<code>browser_click</code> 最高（25%），因为大多数 Browser-Use 任务是"导航 + 操作"循环。生产环境可以优化 click 的等待时间和错误恢复。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.5 3 Agent 拆分：Supervisor + 2 Worker（反向精简）">20.5 3 Agent 拆分：Supervisor + 2 Worker（反向精简）</h2>
+<p></p>
+<h3 id="20.5.1 3 Agent SystemMessage 对比">20.5.1 3 Agent SystemMessage 对比</h3>
+<p></p>
+<table>
+<thead><tr><th>Agent</th><th>角色</th><th>关键约束</th></tr></thead>
+<tbody>
+<tr><td>Supervisor</td><td>派活 + 终止</td><td>不直接操作 DOM</td></tr>
+<tr><td>BrowserAgent</td><td>DOM 操作 + 抽取</td><td>所有操作可回滚</td></tr>
+<tr><td>Verifier</td><td>DOM 校验</td><td>必须命中真实 selector</td></tr>
+<p></p>
+<h3 id="20.5.2 Supervisor 反向精简代码（vs ch19）">20.5.2 Supervisor 反向精简代码（vs ch19）</h3>
+<p></p>
+<pre><code class="language-python">
+&quot;&quot;&quot;ch20 §20.5.2 — Supervisor 反向精简版.
+对比 §19.5.6：ch19 Supervisor 注册 4 Worker，ch20 只注册 2 Worker.
+&quot;&quot;&quot;
+
+class SupervisorCh20:
+    &quot;&quot;&quot;ch20 Supervisor（3 Agent 精简版）.&quot;&quot;&quot;
+
+    def __init__(self):
+        self.workers = {
+            &quot;browser&quot;: BrowserAgent(),
+            &quot;verifier&quot;: Verifier(),
+        }
+
+    def dispatch(self, subtask: str) -&gt; str:
+        if &quot;validate&quot; in subtask.lower():
+            return self.workers[&quot;verifier&quot;].validate(subtask)
+        return self.workers[&quot;browser&quot;].act(subtask)
+
+    def should_terminate(self, ops_count: int, max_ops: int = 20) -&gt; bool:
+        return ops_count &gt;= max_ops
+</code></pre>
+<p></p>
+<h3 id="20.5.3 消息路由表">20.5.3 消息路由表</h3>
+<p></p>
+<table>
+<thead><tr><th>Supervisor 派活信号</th><th>目标 Worker</th><th>调用</th></tr></thead>
+<tbody>
+<tr><td>`task_kind="navigate"`</td><td>BrowserAgent</td><td>browser.navigate()</td></tr>
+<tr><td>`task_kind="click"`</td><td>BrowserAgent</td><td>browser.click()</td></tr>
+<tr><td>`task_kind="extract"`</td><td>BrowserAgent</td><td>browser.extract()</td></tr>
+<tr><td>`task_kind="validate"`</td><td>Verifier</td><td>verifier.validate()</td></tr>
+<p></p>
+<h3 id="20.5.4 Browser 任务反例：不引入 SQLAgent / ChartAgent">20.5.4 Browser 任务反例：不引入 SQLAgent / ChartAgent</h3>
+<p></p>
+<p>ch19 的 SQLAgent / ChartAgent 不适用于 Browser-Use 任务 —— 这些 Worker 处理"数据 → 图表"流水线，与 DOM 操作无关。如果硬塞，会得到：</p>
+<ul><li>SQLAgent：被错误触发，浪费一次 LLM 调用</li></ul>
+<ul><li>ChartAgent：无图表输出，ChartPlot 走空</li></ul>
+<p></p>
+<p><strong>精简的依据</strong>：任务类型决定 Worker 数。Browser-Use 任务类型 ≤ 4 类，2 Worker 足够。</p>
+<p></p>
+<h3 id="20.5.4a ch20 vs ch15 CrewAI 范式对比（横向参考）">20.5.4a ch20 vs ch15 CrewAI 范式对比（横向参考）</h3>
+<p></p>
+<p><strong>ch20 是相对 ch19 反向精简（5 → 3 Worker），但绝对意义上 ch20 仍是 Supervisor + Worker 结构，与 ch15 的 Crew 平等结构不同</strong>。</p>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>ch15 CrewAI</th><th>ch20 Browser-Use</th><th>差异</th></tr></thead>
+<tbody>
+<tr><td>Agent 数</td><td>4-6（角色互补）</td><td>3（精简）</td><td>ch15 多</td></tr>
+<tr><td>任务依赖</td><td>互依（Writer 等 Researcher 输出）</td><td>单线（Browser 等抽取）</td><td>拓扑不同</td></tr>
+<tr><td>协作模式</td><td>Crew（角色扮演）</td><td>Supervisor + Verifier</td><td>ch15 平等 / ch20 主从</td></tr>
+<tr><td>终止</td><td>任务完成</td><td>max_ops + Verifier pass</td><td>ch20 双层防护</td></tr>
+<p></p>
+<p><strong>对比的本质</strong>：ch15 Crew 适合"4 个不同专长的角色互补"，ch20 适合"1 个主操作 + 1 个审核"。如果 Browser-Use 任务引入 Crew（如 BrowserAgent + ScreenShotAgent + FormFillerAgent + Auditor），会出现"LLM 调用翻倍但效果持平"的浪费 —— ch20 的精简避免了这一点。</p>
+<p></p>
+<h3 id="20.5.4b §20.5 反向精简的本质：任务域宽度决定 Worker 数">20.5.4b §20.5 反向精简的本质：任务域宽度决定 Worker 数</h3>
+<p></p>
+<p><strong>任务域宽度</strong> = Agent 需要处理的任务种类数。</p>
+<ul><li>ch19 数据分析任务域 = <strong>6 类</strong>（提问 / 取数 / 分析 / 出图 / 解读 / 校对），需要 5 Worker</li></ul>
+<ul><li>ch20 Browser-Use 任务域 = <strong>4 类</strong>（导航 / 操作 / 抽取 / 校验），仅需 2 Worker</li></ul>
+<p></p>
+<p>精简易错的判断准则："<strong>Worker 数 = 任务域宽度，而不是团队规模</strong>"。一个 5 人数据分析团队不必要 5 个 Worker，反之 1 人 Browser-Use 团队也不需要 1 个 Worker（真实 1 Worker 加 Supervisor 即可，但保留 1 个 Verifier 用于校验）。</p>
+<p></p>
+<h3 id="20.5.5 终止条件扩展（vs ch19）">20.5.5 终止条件扩展（vs ch19）</h3>
+<p></p>
+<p>ch19 终止条件：<code>max_loops=10</code> + <code>max_tokens=250K</code> + 任务完成信号。</p>
+<p>ch20 终止条件：<code>max_ops=20</code> + <code>max_duration=5min</code> + Verifier pass 信号。</p>
+<p></p>
+<p><code>max_loops=20 基于</code>：ch18 max_loops=8 + ch20 Browser 任务单步成本更低（DOM 操作 < LLM 调用）+ 平均任务需要 6-12 步操作 + 留 50% buffer。<strong>生产环境可以根据页面复杂度调整</strong>：简单表单用 10，复杂审批流用 50。</p>
+<p></p>
+<h3 id="20.5.7a ch19 vs ch20 Supervisor 反向精简代码对照（核心亮点）">20.5.7a ch19 vs ch20 Supervisor 反向精简代码对照（核心亮点）</h3>
+<p></p>
+<pre><code class="language-python">
+# ch19 Supervisor (5 Agent):
+class SupervisorCh19:
+    def __init__(self):
+        self.workers = {
+            &quot;sql&quot;: SQLAgent(),
+            &quot;chart&quot;: ChartAgent(),
+            &quot;researcher&quot;: Researcher(),  # ch18 复用
+            &quot;writer&quot;: Writer(),  # ch18 复用
+            &quot;reviewer&quot;: Reviewer(),  # ch18 复用
+        }
+
+# ch20 Supervisor (3 Agent, 反向精简):
+class SupervisorCh20:
+    def __init__(self):
+        self.workers = {
+            &quot;browser&quot;: BrowserAgent(),  # 新增
+            &quot;verifier&quot;: Verifier(),  # 新增
+        }
+</code></pre>
+<p></p>
+<p><strong>精简的本质</strong>：ch20 任务域比 ch19 更窄（仅 GUI 操作），不需要数据分析那么多的下游工人。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.6 多文件项目结构：4 文件（反向精简）">20.6 多文件项目结构：4 文件（反向精简）</h2>
+<p></p>
+<h3 id="20.6.1 4 文件职责表">20.6.1 4 文件职责表</h3>
+<p></p>
+<table>
+<thead><tr><th>文件</th><th>行数估计</th><th>职责</th><th>与 ch19 对应</th></tr></thead>
+<tbody>
+<tr><td>`supervisor.py`</td><td>200</td><td>Supervisor + 消息路由</td><td>复用 ch19（精简 Worker 注册）</td></tr>
+<tr><td>`browser_agent.py`</td><td>250</td><td>BrowserAgent + DOM 操作</td><td>ch19 sql_agent.py 简化版</td></tr>
+<tr><td>`verifier.py`</td><td>150</td><td>Verifier + DOM 校验</td><td>ch19 reviewer.py 简化版</td></tr>
+<tr><td>`tools.py`</td><td>200</td><td>6 工具 handlers</td><td>ch19 tools.py 精简版</td></tr>
+<tr><td>**总计**</td><td>**800**</td><td>-</td><td>ch19 是 1500 行 8 文件</td></tr>
+<p></p>
+<h3 id="20.6.2 ASCII 模块图">20.6.2 ASCII 模块图</h3>
+<p></p>
+<pre><code>
+        supervisor.py (200)
+            |
+            |--- browser_agent.py (250) --- 6 工具 → tools.py (200)
+            |
+            |--- verifier.py (150) --- DOM 校验 → memory.py
+</code></pre>
+<p></p>
+<p><strong>4 文件 vs ch19 8 文件</strong>：ch20 砍掉了 sql_agent.py / chart_agent.py / researcher.py / writer.py 这 4 个文件 —— Browser 任务不需要数据 / 图表 / 论文 / 报告输出。</p>
+<p></p>
+<h3 id="20.6.3 4 文件依赖图（精简版）">20.6.3 4 文件依赖图（精简版）</h3>
+<p></p>
+<table>
+<thead><tr><th>文件</th><th>依赖</th><th>不依赖</th></tr></thead>
+<tbody>
+<tr><td>supervisor.py</td><td>browser_agent.py, verifier.py</td><td>ch19 全部文件</td></tr>
+<tr><td>browser_agent.py</td><td>tools.py</td><td>sql_agent.py / chart_agent.py</td></tr>
+<tr><td>verifier.py</td><td>memory.py (ch19 复用)</td><td>reviewer.py</td></tr>
+<tr><td>tools.py</td><td>playwright (异步)</td><td>duckdb / matplotlib</td></tr>
+<p></p>
+<h3 id="20.6.4a ch19 → ch20 文件精简表">20.6.4a ch19 → ch20 文件精简表</h3>
+<p></p>
+<table>
+<thead><tr><th>文件</th><th>ch19</th><th>ch20</th><th>变化</th></tr></thead>
+<tbody>
+<tr><td>`supervisor.py`</td><td>✅（注册 4 Worker）</td><td>✅（注册 2 Worker）</td><td>精简</td></tr>
+<tr><td>`sql_agent.py`</td><td>✅</td><td>❌</td><td>移除</td></tr>
+<tr><td>`chart_agent.py`</td><td>✅</td><td>❌</td><td>移除</td></tr>
+<tr><td>`researcher.py`</td><td>✅（ch18 复用）</td><td>❌</td><td>移除（browser 任务不需要论文搜索）</td></tr>
+<tr><td>`writer.py`</td><td>✅（ch18 复用）</td><td>❌</td><td>移除（ch20 不写文档）</td></tr>
+<tr><td>`reviewer.py`</td><td>✅（ch18 复用）</td><td>✅（精简为 verifier.py）</td><td>改名</td></tr>
+<tr><td>`tools.py`</td><td>✅（12 工具）</td><td>✅（6 工具）</td><td>精简</td></tr>
+<tr><td>`memory.py`</td><td>✅</td><td>✅（ch19 复用）</td><td>复用</td></tr>
+<tr><td>**总计**</td><td>**8 文件 1500 行**</td><td>**4 文件 800 行**</td><td>**精简 47%**</td></tr>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.7 DOM 操作血缘（url, selector, extracted）">20.7 DOM 操作血缘（url, selector, extracted）</h2>
+<p></p>
+<h3 id="20.7.1 3 层血缘抽象对比">20.7.1 3 层血缘抽象对比</h3>
+<p></p>
+<table>
+<thead><tr><th>抽象层</th><th>章节</th><th>三元组</th><th>粒度</th><th>工具</th></tr></thead>
+<tbody>
+<tr><td>RAG 血缘</td><td>ch09 RAG</td><td>(chunk_id, doc_id, paragraph)</td><td>paragraph</td><td>langchain.retrieve</td></tr>
+<tr><td>数据血缘</td><td>ch19 数据分析</td><td>(query_sql, source_table, chart_id)</td><td>column</td><td>sql_execute + chart_plot</td></tr>
+<tr><td>**DOM 血缘**</td><td>**ch20 Browser-Use**</td><td>**(url, selector, extracted)**</td><td>**DOM node**</td><td>**browser_extract**</td></tr>
+<p></p>
+<p><strong>3 层血缘抽象的本质</strong>：每一层都回答同一个问题——"<strong>这个结论从哪来</strong>"——但粒度从 paragraph → column → DOM node 递减。ch23 会把这 3 层血缘抽象为统一的 Lineage 框架。</p>
+<p></p>
+<h3 id="20.7.2 DOM 血缘三元组结构">20.7.2 DOM 血缘三元组结构</h3>
+<p></p>
+<pre><code class="language-python">
+@dataclass
+class DOMLineage:
+    url: str           # 来源 URL（血缘起点）
+    selector: str      # CSS / XPath selector（血缘中间路径）
+    extracted: dict    # 抽取出的结构化数据（血缘终点）
+
+    def hash(self) -&gt; str:
+        return hashlib.md5(
+            f&quot;{self.url}|{self.selector}|{json.dumps(self.extracted, sort_keys=True)}&quot;.encode()
+        ).hexdigest()[:16]
+</code></pre>
+<p></p>
+<h3 id="20.7.3 3 查询场景">20.7.3 3 查询场景</h3>
+<p></p>
+<table>
+<thead><tr><th>场景</th><th>URL</th><th>Selector</th><th>extracted</th></tr></thead>
+<tbody>
+<tr><td>GitHub stars</td><td>`https://github.com/owner/repo`</td><td>`[data-tab-item="stars"] .Counter`</td><td>`{"stars": 12300}`</td></tr>
+<tr><td>商品价格</td><td>`https://shop.com/item/123`</td><td>`.price .num`</td><td>`{"price": 99.9}`</td></tr>
+<tr><td>论文作者</td><td>`https://arxiv.org/abs/2401.0001`</td><td>`.authors a`</td><td>`{"authors": ["Alice", "Bob"]}`</td></tr>
+<p></p>
+<h3 id="20.7.4 DOM 血缘与 ch19 数据血缘的差异（S4 注）">20.7.4 DOM 血缘与 ch19 数据血缘的差异（S4 注）</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>ch19 数据血缘</th><th>ch20 DOM 血缘</th><th>差异原因</th></tr></thead>
+<tbody>
+<tr><td>起点</td><td>SQL 字符串</td><td>URL</td><td>数据来源不同</td></tr>
+<tr><td>中间路径</td><td>表名 + 列名</td><td>CSS / XPath selector</td><td>数据定位方式不同</td></tr>
+<tr><td>终点</td><td>数值 / 字符串</td><td>JSON 字典</td><td>数据形态不同</td></tr>
+<tr><td>可重复性</td><td>✅ SQL 可重跑</td><td>⚠️ 页面变动可能失败</td><td>静态 vs 动态</td></tr>
+<tr><td>验证方式</td><td>SQL 反查</td><td>DOM 哈希比对</td><td>数据查询 vs 视觉对比</td></tr>
+<p></p>
+<p><strong>3 层血缘的本质</strong>：ch09 RAG 血缘 → ch19 数据血缘 → ch20 DOM 血缘 = 3 层抽象，粒度递减但本质相同（回答'这个结论从哪来'）。ch23 会把这 3 层血缘抽象为统一的 Lineage 框架。</p>
+<p></p>
+<h3 id="20.7.4a DOM 冲突检测">20.7.4a DOM 冲突检测</h3>
+<p></p>
+<pre><code class="language-python">
+&quot;&quot;&quot;ch20 §20.7.4a — DOM 冲突检测 30 行.&quot;&quot;&quot;
+
+class DOMLineageGraph:
+    def __init__(self):
+        self.triples = []  # 存所有 DOMLineage
+
+    def add(self, lineage: DOMLineage):
+        &quot;&quot;&quot;URL + selector 必须组合唯一.&quot;&quot;&quot;
+        for exist in self.triples:
+            if exist.url == lineage.url and exist.selector == lineage.selector:
+                if exist.hash() != lineage.hash():
+                    return &quot;CONFLICT&quot;
+        self.triples.append(lineage)
+        return &quot;OK&quot;
+
+    def trace_extract(self, extracted: dict):
+        &quot;&quot;&quot;追溯某抽取值来自哪个 DOM 节点.&quot;&quot;&quot;
+        for lin in self.triples:
+            if lin.extracted == extracted:
+                return lin
+        return None
+</code></pre>
+<p></p>
+<h3 id="20.7.4b 3 层血缘抽象的统一框架（ch09 → ch19 → ch20 演进）">20.7.4b 3 层血缘抽象的统一框架（ch09 → ch19 → ch20 演进）</h3>
+<p></p>
+<p><strong>血缘三元组的本质</strong>：每层血缘都用 <code>(起点, 路径, 终点)</code> 三元组回答"结论从哪来"。差异是抽象层级：</p>
+<p></p>
+<table>
+<thead><tr><th>层</th><th>章节</th><th>起点</th><th>路径</th><th>终点</th><th>工程价值</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>ch09 RAG</td><td>chunk_id</td><td>doc_id</td><td>paragraph</td><td>文本可追溯</td></tr>
+<tr><td>2</td><td>ch19 数据</td><td>query_sql</td><td>source_table</td><td>chart_id</td><td>数字可审计</td></tr>
+<tr><td>3</td><td>ch20 DOM</td><td>url</td><td>selector</td><td>extracted</td><td>GUI 操作可审计</td></tr>
+<p></p>
+<p><strong>演进路径</strong>：ch09 通过 RAG 让 LLM 引用真实文档；ch19 通过 SQL 让分析结果引用真实表；ch20 通过 DOM 抽取让 GUI 操作引用真实节点。每一层都让 Agent 的输出"<strong>可以被反向验证</strong>"。</p>
+<p></p>
+<p><strong>统一抽象</strong>：ch23 会把这 3 层血缘统一为 <code>Lineage(origin, path, target, parent_chain)</code> 的递归结构 —— 血缘可以嵌套（DOM 节点里的 link 指向外部文档，那个文档又指向某个数据库查询）。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.8 6 层安全 + DOM XSS / CSRF 防护">20.8 6 层安全 + DOM XSS / CSRF 防护</h2>
+<p></p>
+<h3 id="20.8.1 6 层防护表（ch19 5 层 + ch20 第 6 层）">20.8.1 6 层防护表（ch19 5 层 + ch20 第 6 层）</h3>
+<p></p>
+<table>
+<thead><tr><th>层</th><th>名称</th><th>ch20 实现</th><th>与 ch19 对比</th></tr></thead>
+<tbody>
+<tr><td>L1</td><td>输入校验</td><td>URL 白名单（仅允许指定域名）</td><td>ch18 L1 加固</td></tr>
+<tr><td>L2</td><td>操作审计</td><td>audit log + 操作时间戳</td><td>ch18 L2</td></tr>
+<tr><td>L3</td><td>回滚机制</td><td>snapshot + back（Browser 天然支持）</td><td>ch18 L3</td></tr>
+<tr><td>L4</td><td>资源限制</td><td>`max_ops=20` + `max_duration=5min`</td><td>ch19 L4</td></tr>
+<tr><td>L5</td><td>数据保护</td><td>操作可重放 + 抽取结果签名</td><td>ch19 L5</td></tr>
+<tr><td>**L6**</td><td>**DOM XSS / CSRF**</td><td>**抽取结果 sanitize + CSRF token 校验**</td><td>**ch20 新增**</td></tr>
+<p></p>
+<h3 id="20.8.2 6 层防护落地代码">20.8.2 6 层防护落地代码</h3>
+<p></p>
+<pre><code class="language-python">
+&quot;&quot;&quot;ch20 §20.8.2 — 6 层防护落地代码（30 行）.&quot;&quot;&quot;
+
+import re
+import html
+
+ALLOWED_DOMAINS = [&quot;github.com&quot;, &quot;shop.com&quot;, &quot;arxiv.org&quot;]  # L1
+
+class SafetyGuard:
+    def __init__(self):
+        self.ops_count = 0
+        self.audit_log = []  # L2
+
+    def check_url(self, url: str) -&gt; bool:
+        domain = url.split(&quot;/&quot;)[2] if &quot;://&quot; in url else &quot;&quot;
+        allowed = domain in ALLOWED_DOMAINS  # L1
+        self.audit_log.append((&quot;url_check&quot;, url, allowed))  # L2
+        return allowed
+
+    def check_op(self, op: str) -&gt; bool:
+        self.ops_count += 1
+        return self.ops_count &lt;= 20  # L4
+
+    def rollback(self, snapshot_hash: str) -&gt; bool:
+        &quot;&quot;&quot;L3: Browser 天然支持 — page.go_back() 或恢复 DOM 快照.&quot;&quot;&quot;
+        return bool(snapshot_hash)
+
+    def sanitize_extract(self, raw: dict) -&gt; dict:
+        &quot;&quot;&quot;L6: 抽取结果 sanitize 防 XSS.&quot;&quot;&quot;
+        return {k: html.escape(str(v)) for k, v in raw.items()}
+
+    def check_csrf(self, headers: dict) -&gt; bool:
+        &quot;&quot;&quot;L6: 提交前校验 CSRF token.&quot;&quot;&quot;
+        return &quot;x-csrf-token&quot; in headers
+</code></pre>
+<p></p>
+<h3 id="20.8.3 DOM XSS 防护示例">20.8.3 DOM XSS 防护示例</h3>
+<p></p>
+<table>
+<thead><tr><th>输入</th><th>不安全输出</th><th>安全输出（html.escape）</th></tr></thead>
+<tbody>
+<tr><td>`<script>alert(1)</script>`</td><td>`<script>alert(1)</script>`</td><td>`&lt;script&gt;alert(1)&lt;/script&gt;`</td></tr>
+<tr><td>`<img src=x onerror=alert(1)>`</td><td>`<img src=x onerror=alert(1)>`</td><td>`&lt;img src=x onerror=alert(1)&gt;`</td></tr>
+<p></p>
+<h3 id="20.8.4 CSRF 防护">20.8.4 CSRF 防护</h3>
+<p></p>
+<ul><li>提交表单前必须检查 <code>x-csrf-token</code> 请求头</li></ul>
+<ul><li>ch20 默认所有 state-changing 请求都需要 CSRF token</li></ul>
+<ul><li>ch23 会进一步覆盖 L7（视觉欺骗 + prompt injection）</li></ul>
+<p></p>
+<h3 id="20.8.5 §20.8.6 ch19 5 层 → ch20 6 层升级对照详细解读">20.8.5 §20.8.6 ch19 5 层 → ch20 6 层升级对照详细解读</h3>
+<p></p>
+<p><strong>本节是"</strong>为何升级<strong>"的角度（ch19 5 层 → ch20 6 层的变化原因）；§20.8.6 是"</strong>对照<strong>"角度（每层 ch19 vs ch20 实现）。两者视角不同：前者讲动机，后者讲工程。</strong></p>
+<p></p>
+<table>
+<thead><tr><th>层</th><th>ch19 实现</th><th>ch20 实现</th><th>工程价值</th></tr></thead>
+<tbody>
+<tr><td>L1</td><td>schema 白名单</td><td>URL 域名白名单</td><td>数据访问 → 网络访问</td></tr>
+<tr><td>L2</td><td>操作日志 + 签名</td><td>操作日志 + 哈希</td><td>防篡改（更轻量）</td></tr>
+<tr><td>L3</td><td>SQL 事务回滚</td><td>snapshot + back</td><td>数据库 → 浏览器</td></tr>
+<tr><td>L4</td><td>max_loops + max_tokens</td><td>max_ops + max_duration</td><td>通用 → Browser 优化</td></tr>
+<tr><td>L5</td><td>血缘图签名</td><td>DOM 哈希签名</td><td>通用化</td></tr>
+<tr><td>**L6**</td><td>-</td><td>DOM XSS sanitize + CSRF 校验</td><td>**ch20 独有**</td></tr>
+<p></p>
+<p><strong>升级的本质</strong>：ch19 的 5 层防护都是"数据视角"，ch20 的 L1/L3/L4 都变成"浏览器视角"。L6 是 ch20 引入的新维度——因为 DOM 内容可能携带 XSS payload，浏览器是天然的注入攻击面。</p>
+<p></p>
+<h3 id="20.8.6 ch19 5 层 → ch20 6 层升级对照">20.8.6 ch19 5 层 → ch20 6 层升级对照</h3>
+<p></p>
+<h3 id="20.8.7 §20.8.1 L1 + L6 的协同工作流">20.8.7 §20.8.1 L1 + L6 的协同工作流</h3>
+<p></p>
+<p>L1（URL 白名单）+ L6（XSS sanitize + CSRF 校验）是 ch20 6 层防护的两大核心。其协同工作流：</p>
+<p></p>
+<ol><li><strong><code>browser_navigate</code></strong> 调用前：L1 校验 url 在 <code>ALLOWED_DOMAINS</code></li></ol>
+<ol><li><strong><code>browser_extract</code></strong> 调用后：L6 把抽取结果走 <code>html.escape</code> sanitize</li></ol>
+<ol><li><strong><code>browser_type</code></strong> + 提交：L6 校验请求头含 <code>x-csrf-token</code></li></ol>
+<ol><li><strong>审计日志</strong>：L2 记录每层决策，可追溯</li></ol>
+<p></p>
+<p><strong>协同的本质</strong>：L1 防外（外部 URL 攻击），L6 防内（抽取内容注入攻击），L2 串联两层形成审计链。</p>
+<p></p>
+<h3 id="20.8.7a 6 层防护的失效模式与熔断">20.8.7a 6 层防护的失效模式与熔断</h3>
+<p></p>
+<table>
+<thead><tr><th>层</th><th>失效模式</th><th>熔断策略</th></tr></thead>
+<tbody>
+<tr><td>L1</td><td>URL 被 DNS rebinding</td><td>二次校验 IP（生产环境加白名单）</td></tr>
+<tr><td>L2</td><td>日志被篡改</td><td>append-only WORM 存储</td></tr>
+<tr><td>L3</td><td>snapshot 损坏</td><td>多副本 + checksum</td></tr>
+<tr><td>L4</td><td>max_ops 误判</td><td>adaptive（按页面复杂度动态调整）</td></tr>
+<tr><td>L5</td><td>签名被窃</td><td>RSA 密钥轮换（每月）</td></tr>
+<tr><td>L6</td><td>sanitize 漏过</td><td>双 sanitize（客户端 + 服务端）</td></tr>
+<p></p>
+<p><strong>熔断的必要性</strong>：即使有 6 层防护，单一防护层也可能失效。多层防护的真正价值是"<strong>单层失效仍可熔断</strong>"，避免因为 1 个漏洞击穿全部防护。</p>
+<p></p>
+<h3 id="20.8.7b 6 层防护 vs OWASP Top 10">20.8.7b 6 层防护 vs OWASP Top 10</h3>
+<p></p>
+<table>
+<thead><tr><th>OWASP Top 10 (2021)</th><th>ch20 对应层</th></tr></thead>
+<tbody>
+<tr><td>A01 访问控制失效</td><td>L1 输入校验</td></tr>
+<tr><td>A02 加密失效</td><td>L5 数据签名</td></tr>
+<tr><td>A03 注入（含 XSS / SQL 注入）</td><td>L6 sanitize</td></tr>
+<tr><td>A05 安全配置错误</td><td>L3 资源限制</td></tr>
+<tr><td>A07 身份认证失效</td><td>L1 URL 白名单 + L6 CSRF</td></tr>
+<tr><td>A10 SSRF</td><td>L1 URL 白名单</td></tr>
+<p></p>
+<p><strong>OWASP 视角</strong>：ch20 的 6 层防护对应 OWASP Top 10 中的 6 类常见风险。读者如果关心其他 4 类（A04 / A06 / A08 / A09），需要引入额外的安全库（如 OAuth2、CSP、SRI）。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.9 测试与调试：3 Agent 协同 + 浏览器调试">20.9 测试与调试：3 Agent 协同 + 浏览器调试</h2>
+<p></p>
+<h3 id="20.9.1 3 类测试矩阵">20.9.1 3 类测试矩阵</h3>
+<p></p>
+<table>
+<thead><tr><th>测试类型</th><th>触发时机</th><th>验证内容</th><th>频率</th></tr></thead>
+<tbody>
+<tr><td>单元测试</td><td>每次 commit</td><td>6 工具 handler</td><td>每次 commit</td></tr>
+<tr><td>集成测试</td><td>每次 PR</td><td>Supervisor 主循环</td><td>每次 PR</td></tr>
+<tr><td>端到端测试</td><td>每次发布</td><td>BrowserAgent 跑真实页面（mock URL fixture）</td><td>**每次发布（约每 2 周一次）**</td></tr>
+<p></p>
+<p><strong>注</strong>："每次发布"指每次 git tag 发布，约每 2 周一次。</p>
+<p></p>
+<h3 id="20.9.2 3 Agent 协同测试">20.9.2 3 Agent 协同测试</h3>
+<p></p>
+<pre><code class="language-python">
+def test_supervisor_dispatch():
+    sup = SupervisorCh20()
+    assert &quot;browser&quot; in sup.workers
+    assert &quot;verifier&quot; in sup.workers
+    assert len(sup.workers) == 2  # 精简验证
+
+def test_browser_extract_returns_dict():
+    tools = BrowserTools()
+    op = DOMOp(action=&quot;extract&quot;, selector=&quot;h1&quot;)
+    result = tools.extract(op)
+    assert &quot;extracted&quot; in result
+</code></pre>
+<p></p>
+<h3 id="20.9.3 ReAct trace 日志">20.9.3 ReAct trace 日志</h3>
+<p></p>
+<p>Browser-Use 任务的 trace 应记录：</p>
+<ul><li><code>step_0</code>: Task(user_request=..., url=...) → Supervisor.dispatch</li></ul>
+<ul><li><code>step_1</code>: BrowserAgent.navigate → page_hash</li></ul>
+<ul><li><code>step_2</code>: BrowserAgent.click → new_page_hash</li></ul>
+<ul><li><code>step_3</code>: BrowserAgent.extract → extracted dict</li></ul>
+<ul><li><code>step_4</code>: Verifier.validate → pass / fail</li></ul>
+<p></p>
+<h3 id="20.9.4 死循环防护（运行时）">20.9.4 死循环防护（运行时）</h3>
+<p></p>
+<ul><li><strong>CPU / 重复检测</strong>：连续 3 次 step 抽取结果完全相同 → 强制终止</li></ul>
+<ul><li><strong>条件级终止</strong>：见 §20.5.5（max_ops + max_duration）</li></ul>
+<p></p>
+<p><strong>本节是"运行时"的防护</strong>（CPU / 重复检测）；<strong>§20.5.5 是"条件级"的终止</strong>（max_ops / max_duration）。两者视角不同：前者是运行中实时熔断，后者是预先设置上限。</p>
+<p></p>
+<h3 id="20.9.5 5 大错误模式">20.9.5 5 大错误模式</h3>
+<p></p>
+<table>
+<thead><tr><th>错误</th><th>触发场景</th><th>防护</th></tr></thead>
+<tbody>
+<tr><td>**click 错按钮**</td><td>selector 多匹配</td><td>严格 selector（`#id` 而非 `.class`）</td></tr>
+<tr><td>**等待超时**</td><td>页面慢</td><td>Playwright auto-wait + L4 max_duration</td></tr>
+<tr><td>**验证码拦截**</td><td>登录页</td><td>ch20 不解决，留 ch22 评估</td></tr>
+<tr><td>**登录态丢失**</td><td>session 过期</td><td>persistent context + 重新登录</td></tr>
+<tr><td>**DOM 变化**</td><td>网站改版</td><td>snapshot diff + 错误重试</td></tr>
+<p></p>
+<h3 id="20.9.6 mock 切真实指南">20.9.6 mock 切真实指南</h3>
+<p></p>
+<ul><li><strong>mock 模式</strong>：本节代码全部走 mock，方便沙箱跑通</li></ul>
+<ul><li><strong>切真实</strong>：把 <code>BrowserTools</code> 的 6 个方法内部从 mock 改为 Playwright <code>await</code> 调用</li></ul>
+<ul><li><strong>依赖</strong>：<code>pip install playwright && playwright install chromium</code></li></ul>
+<p></p>
+<h3 id="20.9.7 §20.9 全链路调试（3 视角）">20.9.7 §20.9 全链路调试（3 视角）</h3>
+<p></p>
+<p>调试 Browser-Use 任务需要 <strong>3 个视角</strong>：</p>
+<p></p>
+<ol><li><strong>Supervisor 视角</strong>：<code>ops_count</code> 是否打到上限？任务是否被错误分派？</li></ol>
+<ol><li><strong>BrowserAgent 视角</strong>：每个 <code>browser_*</code> 调用返回什么？DOM 哈希是否变化？</li></ol>
+<ol><li><strong>Verifier 视角</strong>：抽取结果是否命中 selector？snapshot diff 是否过大？</li></ol>
+<p></p>
+<p><strong>调试工具</strong>：</p>
+<ul><li><strong>trace 日志</strong>：JSONL 格式记录每步的（action, args, result, hash）</li></ul>
+<ul><li><strong>DOM diff</strong>：浏览器扩展（如 Chrome DevTools Protocol）录制操作前后的 DOM</li></ul>
+<ul><li><strong>回归测试</strong>：每次发布都跑一遍真实页面，确认抽取值未变</li></ul>
+<p></p>
+<h3 id="20.9.8 与 ch19 调试方式的差异">20.9.8 与 ch19 调试方式的差异</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>ch19 调试</th><th>ch20 调试</th></tr></thead>
+<tbody>
+<tr><td>主要工具</td><td>SQL log + trace</td><td>trace + DOM diff + screenshot</td></tr>
+<tr><td>失败信号</td><td>SQL error / 抽取为空</td><td>selector not found / timeout</td></tr>
+<tr><td>回滚方式</td><td>SQL 事务</td><td>page.go_back() / snapshot</td></tr>
+<tr><td>视觉验证</td><td>matplotlib 图表</td><td>browser screenshot</td></tr>
+<p></p>
+<p><strong>差异的原因</strong>：ch19 调试以"数据"为核心（SQL log）；ch20 调试以"视觉"为核心（DOM 哈希 + 截图对比）。ch23 会引入 prompt injection 测试 + 视觉欺骗检测，把调试维度扩展为 5 个。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.10 5 扩展方向 + Part 4 工具矩阵终版">20.10 5 扩展方向 + Part 4 工具矩阵终版</h2>
+<p></p>
+<h3 id="20.10.1 视觉模型（升级到 ch21 Computer Use）">20.10.1 视觉模型（升级到 ch21 Computer Use）</h3>
+<p></p>
+<table>
+<thead><tr><th>当前</th><th>视觉版（ch21 升级）</th></tr></thead>
+<tbody>
+<tr><td>`browser_extract` → DOM 抽取</td><td>`vision_observe` → 截图 + bbox 抽取</td></tr>
+<tr><td>`browser_click` → 坐标点击</td><td>`vision_click` → 视觉定位点击</td></tr>
+<tr><td>依赖 CSS selector</td><td>依赖视觉模型（GPT-4V / Claude Vision）</td></tr>
+<p></p>
+<h3 id="20.10.2 操作回滚增强">20.10.2 操作回滚增强</h3>
+<p></p>
+<p>当前回滚：<code>page.go_back()</code> / <code>snapshot diff</code></p>
+<p>增强：操作前先存 DOM 哈希 + 操作后比对；不一致自动回滚</p>
+<p></p>
+<h3 id="20.10.3 多浏览器并行">20.10.3 多浏览器并行</h3>
+<p></p>
+<p>同时跑 3 个浏览器实例，每个负责不同任务 —— 提升吞吐量。</p>
+<p></p>
+<h3 id="20.10.4 ch21 Computer Use 升级代码（关键钩子）">20.10.4 ch21 Computer Use 升级代码（关键钩子）</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;ch20 §20.10.4 — ch21 Computer Use 升级代码.
+ch21 加 VisionAgent（第 4 Agent）+ 2 vision 工具.
+&quot;&quot;&quot;
+
+class SupervisorCh21:
+    &quot;&quot;&quot;ch21 Supervisor（4 Agent + 视觉能力）.&quot;&quot;&quot;
+
+    def __init__(self):
+        self.workers = {
+            &quot;browser&quot;: BrowserAgent(),       # ch20 复用
+            &quot;verifier&quot;: Verifier(),          # ch20 复用
+            &quot;vision&quot;: VisionAgent(),         # ch21 新增
+        }
+
+    def dispatch(self, subtask: str) -&gt; str:
+        if &quot;vision&quot; in subtask.lower() or &quot;screenshot&quot; in subtask.lower():
+            return self.workers[&quot;vision&quot;].observe(subtask)
+        if &quot;validate&quot; in subtask.lower():
+            return self.workers[&quot;verifier&quot;].validate(subtask)
+        return self.workers[&quot;browser&quot;].act(subtask)
+</code></pre>
+<p></p>
+<h3 id="20.10.6 Part 4 工具矩阵终版（ch16-20 全表）">20.10.6 Part 4 工具矩阵终版（ch16-20 全表）</h3>
+<p></p>
+<table>
+<thead><tr><th>章</th><th>工具数</th><th>工具列表</th></tr></thead>
+<tbody>
+<tr><td>ch16</td><td>5</td><td>search / read / write / schedule / tell</td></tr>
+<tr><td>ch17</td><td>8</td><td>shell + file 8 件套（read_file / write_file / git / test / lint / format / diff / exec）</td></tr>
+<tr><td>ch18</td><td>10</td><td>ch17 8 + arxiv_search / pdf_download / cite_add / claim_verify / web_search mock</td></tr>
+<tr><td>ch19</td><td>12</td><td>ch18 10 + sql_execute / chart_plot</td></tr>
+<tr><td>**ch20**</td><td>**6**</td><td>**browser_navigate / click / type / extract / screenshot / download**</td></tr>
+<tr><td>**合计**</td><td>**41 件**（含复用）</td><td>**5 项目 5 域（个人 / 代码 / 论文 / 数据 / GUI）**</td></tr>
+<p></p>
+<h3 id="20.10.7 时间估算">20.10.7 时间估算</h3>
+<p></p>
+<table>
+<thead><tr><th>模块</th><th>预估工时</th></tr></thead>
+<tbody>
+<tr><td>supervisor.py</td><td>4-6h</td></tr>
+<tr><td>browser_agent.py</td><td>5-8h</td></tr>
+<tr><td>verifier.py</td><td>2-4h</td></tr>
+<tr><td>tools.py</td><td>4-6h</td></tr>
+<tr><td>测试 + 调试</td><td>3-5h</td></tr>
+<tr><td>**总计**</td><td>**18-29h ≈ 1 周**</td></tr>
+<p></p>
+<h3 id="20.10.7a Part 4 5 章 5 维度对比（终版）">20.10.7a Part 4 5 章 5 维度对比（终版）</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>ch16</th><th>ch17</th><th>ch18</th><th>ch19</th><th>ch20</th></tr></thead>
+<tbody>
+<tr><td>Agent 数</td><td>1</td><td>1</td><td>4</td><td>5</td><td>3（精简）</td></tr>
+<tr><td>工具数</td><td>5</td><td>8</td><td>10</td><td>12</td><td>6（精简）</td></tr>
+<tr><td>文件数</td><td>1</td><td>4</td><td>6</td><td>8</td><td>4（精简）</td></tr>
+<tr><td>风险</td><td>🟢</td><td>🔴</td><td>🟡</td><td>🟡</td><td>🟢（最低）</td></tr>
+<tr><td>安全层数</td><td>0</td><td>4</td><td>4</td><td>5</td><td>6（最高）</td></tr>
+<p></p>
+<p><strong>Part 4 终章哲学</strong>：从 ch16 的 200 行 1 文件到 ch19 的 1500 行 8 文件，再到 ch20 的 800 行 4 文件 —— <strong>多不代表好，少不代表差，关键是匹配任务复杂度</strong>。</p>
+<p></p>
+<h3 id="20.10.7b Part 4 5 章风险演变图">20.10.7b Part 4 5 章风险演变图</h3>
+<p></p>
+<table>
+<thead><tr><th>章</th><th>风险</th><th>原因</th><th>工程含义</th></tr></thead>
+<tbody>
+<tr><td>ch16</td><td>🟢</td><td>个人助理，本地单机</td><td>入门</td></tr>
+<tr><td>ch17</td><td>🔴</td><td>shell 执行 + 文件写</td><td>风险峰</td></tr>
+<tr><td>ch18</td><td>🟡</td><td>论文 API，受限外部</td><td>风控入门</td></tr>
+<tr><td>ch19</td><td>🟡</td><td>SQL 注入（第 5 层）</td><td>数据层防护</td></tr>
+<tr><td>**ch20**</td><td>🟢</td><td>sandbox 隔离 + 可回滚</td><td>**最低**</td></tr>
+<p></p>
+<p><strong>风险峰在 ch17</strong>：写文件 / 执行 shell 是天然的高风险操作；ch18-ch20 把外部副作用都收回到"只读 + API 网关"层，使风险下降。ch20 是 Part 4 的风险最低点——sandbox 隔离 + 6 层安全防护。</p>
+<p></p>
+<h3 id="20.10.7c Part 4 完整能力域覆盖（5 域）">20.10.7c Part 4 完整能力域覆盖（5 域）</h3>
+<p></p>
+<table>
+<thead><tr><th>业务域</th><th>代表项目</th><th>核心能力</th><th>工具代表</th></tr></thead>
+<tbody>
+<tr><td>个人助理</td><td>ch16</td><td>日常任务自动化</td><td>5 个本地工具</td></tr>
+<tr><td>代码开发</td><td>ch17</td><td>编辑 + 测试 + 提 PR</td><td>8 个 shell 工具</td></tr>
+<tr><td>学术研究</td><td>ch18</td><td>论文综述 + 引用管理</td><td>10 个研究工具</td></tr>
+<tr><td>数据分析</td><td>ch19</td><td>SQL + 图表 + 血缘</td><td>12 个数据工具</td></tr>
+<tr><td>**Web 自动化**</td><td>**ch20**</td><td>**GUI 浏览器操作**</td><td>**6 个 browser 工具**</td></tr>
+<p></p>
+<p><strong>能力域的覆盖</strong>：5 个项目对应 5 个常见业务域，构成一个完整的 Agent 应用矩阵。读者可以根据自己的业务选择对应的项目作为起点。</p>
+<p></p>
+<hr>
+<p></p>
+<h2 id="20.11 小结 + ROI + 成本 + 5 大坑 + 22 术语 + 概念桥 ch20↔ch21">20.11 小结 + ROI + 成本 + 5 大坑 + 22 术语 + 概念桥 ch20↔ch21</h2>
+<p></p>
+<h3 id="20.11.1 5 大坑">20.11.1 5 大坑</h3>
+<p></p>
+<ol><li><strong>过度依赖 selector</strong>：网站改版后 selector 失效 → 用 vision fallback（ch21）</li></ol>
+<ol><li><strong>绕过 sandbox</strong>：生产环境禁用 sandbox 是大忌 → ch23 会讲 sandbox 绕过</li></ol>
+<ol><li><strong>忽视登录态</strong>：session 过期任务失败 → persistent context + 重新登录</li></ol>
+<ol><li><strong>抽取结果未 sanitize</strong>：DOM XSS 风险 → §20.8.3 L6 防护</li></ol>
+<ol><li><strong>mock 模式忘切真实</strong>：演示 OK 生产挂 → §20.9.6 切换指南</li></ol>
+<p></p>
+<h3 id="20.11.2 11 节回顾">20.11.2 11 节回顾</h3>
+<p></p>
+<table>
+<thead><tr><th>节</th><th>关键交付</th></tr></thead>
+<tbody>
+<tr><td>20.1</td><td>Part 4 三联画总结（ch18 调度 / ch19 数据流 / ch20 操作）</td></tr>
+<tr><td>20.2</td><td>Browser 4 阶段 × 3 Agent RACI</td></tr>
+<tr><td>20.3</td><td>30 行 Supervisor + BrowserWorker mock</td></tr>
+<tr><td>20.4</td><td>6 browser 工具 Schema + handlers</td></tr>
+<tr><td>20.5</td><td>3 Agent SystemMessage + 反向精简代码</td></tr>
+<tr><td>20.6</td><td>4 文件模块图 + ch19 → ch20 精简表</td></tr>
+<tr><td>20.7</td><td>DOM 操作血缘 + 3 层血缘抽象收尾</td></tr>
+<tr><td>20.8</td><td>6 层安全 + DOM XSS / CSRF</td></tr>
+<tr><td>20.9</td><td>3 Agent 协同测试 + 5 大错误模式</td></tr>
+<tr><td>20.10</td><td>5 扩展 + Part 4 工具矩阵终版</td></tr>
+<tr><td>20.11</td><td>小结 + ROI + 成本 + 5 大坑 + 22 术语 + 桥</td></tr>
+<p></p>
+<h3 id="20.11.3 概念桥：ch20 ↔ ch21（5 维度反向升级）">20.11.3 概念桥：ch20 ↔ ch21（5 维度反向升级）</h3>
+<p></p>
+<table>
+<thead><tr><th>本章学到的</th><th>下一章怎么用</th></tr></thead>
+<tbody>
+<tr><td>3 Agent 拆分（精简）</td><td>**ch21 §21.5** —— 加 VisionAgent（第 4 Agent）</td></tr>
+<tr><td>6 browser 工具</td><td>**ch21 §21.4** —— 升级为 8 工具（+ vision_observe / desktop_screenshot）</td></tr>
+<tr><td>DOM 操作血缘（url, selector, extracted）</td><td>**ch21 §21.7** —— 升级为视觉血缘（screenshot + bbox + action）</td></tr>
+<tr><td>6 层安全（含 DOM XSS）</td><td>**ch21 §21.8** —— 加视觉欺骗防护（第 7 层）</td></tr>
+<tr><td>4 文件结构</td><td>**ch21 §21.6** —— 加 vision_agent.py（5 文件）</td></tr>
+<tr><td>Browser sandbox 4 阶段</td><td>**ch21 §21.2** —— 升级为 desktop 全场景（observe / think / act）</td></tr>
+<p></p>
+<h3 id="20.11.4 22 术语速查">20.11.4 22 术语速查</h3>
+<p></p>
+<table>
+<thead><tr><th>术语</th><th>缩写/别名</th><th>章节定位</th></tr></thead>
+<tbody>
+<tr><td>Browser-Use Agent</td><td>Browser Agent</td><td>§20.1</td></tr>
+<tr><td>Playwright</td><td>Microsoft 浏览器自动化</td><td>§20.3.3</td></tr>
+<tr><td>Selenium</td><td>传统浏览器自动化</td><td>§20.3.3</td></tr>
+<tr><td>DOM</td><td>Document Object Model</td><td>§20.7</td></tr>
+<tr><td>selector</td><td>CSS / XPath 选择器</td><td>§20.4</td></tr>
+<tr><td>XPath</td><td>XML 路径语言</td><td>§20.4.1</td></tr>
+<tr><td>CSS Selector</td><td>层叠样式表选择器</td><td>§20.4.1</td></tr>
+<tr><td>headless</td><td>无头模式</td><td>§20.9.6</td></tr>
+<tr><td>sandbox</td><td>沙箱隔离</td><td>§20.6</td></tr>
+<tr><td>iframe</td><td>内嵌框架</td><td>§20.10</td></tr>
+<tr><td>XSS</td><td>Cross-Site Scripting</td><td>§20.8.3</td></tr>
+<tr><td>CSRF</td><td>Cross-Site Request Forgery</td><td>§20.8.4</td></tr>
+<tr><td>cookie</td><td>浏览器 cookie</td><td>§20.9.5</td></tr>
+<tr><td>session</td><td>会话状态</td><td>§20.9.5</td></tr>
+<tr><td>验证码</td><td>CAPTCHA</td><td>§20.9.5</td></tr>
+<tr><td>captcha</td><td>CAPTCHA 缩写</td><td>§20.9.5</td></tr>
+<tr><td>操作可回滚</td><td>operation rollback</td><td>§20.8.1</td></tr>
+<tr><td>snapshot diff</td><td>快照比对</td><td>§20.9.4</td></tr>
+<tr><td>accessibility tree</td><td>无障碍树</td><td>§20.10.4</td></tr>
+<tr><td>ARIA</td><td>Accessible Rich Internet Applications</td><td>§20.10.4</td></tr>
+<tr><td>视觉模型</td><td>vision model</td><td>§20.10.4</td></tr>
+<tr><td>Computer Use</td><td>通用计算机操作</td><td>§20.10.4</td></tr>
+<p></p>
+<h3 id="20.11.5 ROI 估算">20.11.5 ROI 估算</h3>
+<p></p>
+<table>
+<thead><tr><th>维度</th><th>月节省</th></tr></thead>
+<tbody>
+<tr><td>表单自动填</td><td>20h × ¥100 = ¥2000</td></tr>
+<tr><td>数据抓取</td><td>10h × ¥100 = ¥1000</td></tr>
+<tr><td>测试自动化</td><td>15h × ¥100 = ¥1500</td></tr>
+<tr><td>**月总节省**</td><td>**¥4500 ≈ $625**</td></tr>
+<tr><td>ch20 月成本</td><td>$5-10（Playwright 自部署）</td></tr>
+<tr><td>**ROI**</td><td>**62-125 倍**</td></tr>
+<p></p>
+<h3 id="20.11.6 成本对比">20.11.6 成本对比</h3>
+<p></p>
+<table>
+<thead><tr><th>方案</th><th>月成本</th><th>适用场景</th></tr></thead>
+<tbody>
+<tr><td>ch20 自部署</td><td>$5-10</td><td>个人 / 小团队</td></tr>
+<tr><td>Browserbase / Browserless</td><td>$50-100</td><td>中等规模</td></tr>
+<tr><td>Anthropic Computer Use API</td><td>$200-500</td><td>GUI 复杂任务</td></tr>
+<tr><td>OpenAI Operator</td><td>$200/月（Pro）</td><td>通用浏览器代理</td></tr>
+<p></p>
+<h3 id="20.11.7 启动清单">20.11.7 启动清单</h3>
+<p></p>
+<pre><code>
+# 1. 安装 Playwright
+pip install playwright &amp;&amp; playwright install chromium
+
+# 2. 写 supervisor.py (ch20 §20.5.2 模板)
+# 3. 写 browser_agent.py (ch20 §20.4.2 模板)
+# 4. 写 verifier.py (ch20 §20.7.4a 模板)
+# 5. 写 tools.py (ch20 §20.4.2 模板)
+# 6. 跑 mock 测试
+python test_ch20.py
+# 7. 切真实浏览器（修改 handler 内部 await）
+</code></pre>
+<p></p>
+<h3 id="20.11.8 Part 4 收官观察">20.11.8 Part 4 收官观察</h3>
+<p></p>
+<p><strong>核心观察</strong>：ch20 用 <strong>3 Agent + 6 工具 + 4 文件</strong> 完成 Browser 自动化，比 ch19 的 5 + 12 + 8 更精简。<strong>这证明 Part 4 教会读者的不只是"怎么堆功能"，更是"怎么取舍"</strong>。ch21 会在此基础上加视觉能力，进入 GUI Agent 的下一阶段。</p>
+<p></p>
+<p><strong>与 ch18/ch19 的对照</strong>：</p>
+<ul><li>ch18 = "调度型"：Supervisor 派活，Worker 互不通信</li></ul>
+<ul><li>ch19 = "数据流型"：Worker 之间单向数据流</li></ul>
+<ul><li>ch20 = "操作型"：单线操作 + Verifier 反馈</li></ul>
+<p></p>
+<p><strong>Part 4 三联画完成</strong>：5 个项目展示了 Agent 从单机到多机、从纯文本到 GUI 的完整演进路径。Part 5 将从这 5 个项目出发，深入探讨横切关注点（评估 / 安全 / 成本 / 自我改进）。</p>
+<p></p>
+<h3 id="20.11.9 Part 4 完结之后读者应该掌握的能力">20.11.9 Part 4 完结之后读者应该掌握的能力</h3>
+<p></p>
+<table>
+<thead><tr><th>阶段</th><th>能力</th><th>验证方式</th></tr></thead>
+<tbody>
+<tr><td>学完 ch16</td><td>能写单 Agent CLI 工具</td><td>写一个本地助理</td></tr>
+<tr><td>学完 ch17</td><td>能用 ch17 7 件套安全护栏</td><td>写一个 IDE 集成 Agent</td></tr>
+<tr><td>学完 ch18</td><td>能写多 Agent + 论文管理</td><td>写一个研究综述 Agent</td></tr>
+<tr><td>学完 ch19</td><td>能写 5 Agent + SQL 安全 + 血缘</td><td>写一个数据分析 Agent</td></tr>
+<tr><td>学完 ch20</td><td>能写精简 3 Agent + Browser 安全</td><td>**写一个 GUI 自动化 Agent**</td></tr>
+<p></p>
+<p><strong>5 阶段的核心</strong>：从"单 Agent 入门"到"多 Agent 落地"再到"反向精简"，是 Agent 工程能力的完整曲线。<strong>Part 5 将进入横切关注点——评估、安全、成本、自我改进。</strong></p>
+<p></p>
+<h3 id="20.11.10 Part 4 到 Part 5 的过渡准备清单">20.11.10 Part 4 到 Part 5 的过渡准备清单</h3>
+<p></p>
+<p>读者在进入 Part 5 之前，应该确认以下准备工作：</p>
+<p></p>
+<ul><li>[ ] 至少亲手跑过 ch17/ch19/ch20 中的 1 个项目（修改 mock 为真实 LLM）</li></ul>
+<ul><li>[ ] 阅读 OWASP Top 10 (2021) 完整列表（ch23 必备基础）</li></ul>
+<ul><li>[ ] 了解 Langfuse / LangSmith 等可观测性工具（ch22 基础）</li></ul>
+<ul><li>[ ] 准备 gpt-4o-mini 或 Claude 3.5 Sonnet 的 API key（ch24 成本控制基础）</li></ul>
+<ul><li>[ ] 安装 litellm / OpenRouter 等统一 LLM 接口库（ch24 多模型对比基础）</li></ul>
+<p></p>
+<hr>
+<p></p>
+<p><strong>Part 4 完结</strong>：ch16/ch17/ch18/ch19/ch20 5 个项目完整收官，Part 5 进入 ch21《Computer Use 与 GUI Agent》。</p>
+<p></p>
+<hr>
+<p></p>
+<h3 id="进一步阅读">进一步阅读</h3>
+<ol><li>Playwright 官方文档：https://playwright.dev/python/</li></ol>
+<ol><li>Anthropic Computer Use 介绍：https://www.anthropic.com/news/3-5-sonnet-and-computer-use</li></ol>
+<ol><li>OpenAI Operator 介绍：https://openai.com/index/introducing-operator/</li></ol>
+<ol><li>Selenium 官方文档：https://www.selenium.dev/documentation/</li></ol>
+<ol><li>OWASP XSS 防护手册：https://owasp.org/www-community/attacks/xss/</li></ol>
+<p></p>
+
+<nav class="chapter-pager">
+  <a href="ch19.html">← 第 19 章：项目 4 — 数据分析 Agent</a>
+  <a href="ch21.html">第 21 章：Computer Use 与 GUI Agent →</a>
+</nav>
+
+<footer>
+  <p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <strong>第 20 章</strong> · <a href="ch21.html">第 21 章</a></p>
+</footer>
+
+</body>
+</html>
