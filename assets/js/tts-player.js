@@ -14,7 +14,9 @@
   }
 
   // ---- 常量 ----
-  const STORAGE_KEY = 'agent-dev.tts.progress.v1';
+  // 自动从 URL 识别当前书 slug,使进度数据按书隔离
+  const BOOK_SLUG = (location.pathname.match(/\/books\/([a-z0-9-]+)\//) || [])[1] || 'default';
+  const STORAGE_KEY = `${BOOK_SLUG}.tts.progress.v1`;
   const SEGMENT_SELECTOR = 'main p, main h2, main h3, main h4, main li, main blockquote, article p, article h2, article h3, article li';
   const CHARS_PER_SECOND_BASE = 4.5;  // 中文朗读基线字符/秒(用于段进度估算)
   const SAVE_DEBOUNCE_MS = 3000;
@@ -673,6 +675,8 @@
 
   // ---- 启动 ----
   function bootstrap() {
+    // 把书 slug 暴露到 <html data-book-slug="..."> 让 CSS 可用属性选择器覆盖主题色
+    document.documentElement.setAttribute('data-book-slug', BOOK_SLUG);
     segments = collectSegments();
     injectUI();
   }

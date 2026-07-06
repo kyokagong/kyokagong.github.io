@@ -314,3 +314,32 @@
 
 /* ---------- 章节切换动画 ---------- */
 body.tts-no-scroll { overflow: hidden; }
+
+/* ---------- 跨书主题色适配 ----------
+   agent-dev 用洋红→橙(默认)
+   其他书通过 [data-book-slug="..."] 属性选择器覆盖 CSS 变量
+   这样不污染每本书自己的颜色系统 */
+html[data-book-slug="quantum-computing"] {
+  --tts-accent-1: #00d4ff;
+  --tts-accent-2: #7c3aed;
+  --tts-bg-toggle: linear-gradient(135deg, #00d4ff, #7c3aed);
+  --tts-highlight-bg: linear-gradient(90deg, rgba(0, 212, 255, 0.18) 0%, rgba(124, 58, 211, 0.18) 100%);
+  --tts-highlight-border: #00d4ff;
+  --tts-border: rgba(0, 212, 255, 0.35);
+}
+html[data-book-slug="ml-intro"] {
+  --tts-accent-1: #ec4899;
+  --tts-accent-2: #f97316;
+  --tts-bg-toggle: linear-gradient(135deg, #ec4899, #f97316);
+  --tts-highlight-bg: linear-gradient(90deg, rgba(236, 72, 153, 0.18) 0%, rgba(249, 115, 22, 0.18) 100%);
+  --tts-highlight-border: #ec4899;
+  --tts-border: rgba(236, 72, 153, 0.35);
+}
+html[data-book-slug="information-theory"] {
+  --tts-accent-1: #10b981;
+  --tts-accent-2: #06b6d4;
+  --tts-bg-toggle: linear-gradient(135deg, #10b981, #06b6d4);
+  --tts-highlight-bg: linear-gradient(90deg, rgba(16, 185, 129, 0.18) 0%, rgba(6, 182, 212, 0.18) 100%);
+  --tts-highlight-border: #10b981;
+  --tts-border: rgba(16, 185, 129, 0.35);
+}
