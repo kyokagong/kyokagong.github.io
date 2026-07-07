@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 21 章：Computer Use 与 GUI Agent — 让 LLM 看见屏幕、驱动键鼠、操作任何图形界面 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+.part-5-banner { background: linear-gradient(90deg, #3b82f6, #06b6d4); color: white; padding: 12px 24px; border-radius: 8px; margin-bottom: 24px; text-align: center; font-weight: bold; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; }
+footer a { color: var(--book-accent-fg, #c026d3); text-decoration: none; margin: 0 4px; }
+footer a:hover { text-decoration: underline; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+tr:hover { background: rgba(192,38,211,0.05); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+
+<!-- Part 5 开篇横幅 -->
+<div class="part-5-banner">🚀 Part 5 高级能力（Day 1/5）开篇 —— Computer Use 与 GUI Agent</div>
+
+<header class="chapter-header">
+<h1>第 21 章:Computer Use 与 GUI Agent —— 让 LLM 看见屏幕、驱动键鼠、操作任何图形界面</h1>
+<div class="chapter-meta">第 21 章 · 第五部分（高级能力）Day 1 / 5（Part 5 开篇）· 50 子节 + 10 Python + 32 表 + Part 4-5 安全三联画关键章</div>
+</header>
+
+<h3 style="margin-top:0; color:#c026d3;">🖥️ 第 18 种 inline SVG 形态学:GUI Agent Action Loop（800×420）</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="grad-loop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c026d3" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.85"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+  </defs>
+  <!-- 屏幕截图框(左上,250x150) -->
+  <rect x="40" y="40" width="220" height="140" rx="8" fill="url(#grad-loop)" stroke="#c026d3" stroke-width="2"/>
+  <text x="150" y="115" text-anchor="middle" fill="white" font-size="16" font-weight="bold">屏幕截图</text>
+  <text x="150" y="135" text-anchor="middle" fill="white" font-size="11">1600×1200 PNG</text>
+  <!-- LLM 大脑(中间) -->
+  <ellipse cx="400" cy="110" rx="80" ry="50" fill="url(#grad-loop)" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="105" text-anchor="middle" fill="white" font-size="16" font-weight="bold">LLM</text>
+  <text x="400" y="125" text-anchor="middle" fill="white" font-size="11">Claude 4.5</text>
+  <text x="400" y="145" text-anchor="middle" fill="white" font-size="10">(大脑)</text>
+  <!-- 6 工具胶囊(右侧,3x2 grid) -->
+  <rect x="600" y="40" width="160" height="30" rx="15" fill="#fef3c7" stroke="#c026d3"/>
+  <text x="680" y="60" text-anchor="middle" fill="#c026d3" font-size="12">⌨️ 键鼠</text>
+  <rect x="600" y="80" width="160" height="30" rx="15" fill="#fef3c7" stroke="#c026d3"/>
+  <text x="680" y="100" text-anchor="middle" fill="#c026d3" font-size="12">📸 截图</text>
+  <rect x="600" y="120" width="160" height="30" rx="15" fill="#fef3c7" stroke="#c026d3"/>
+  <text x="680" y="140" text-anchor="middle" fill="#c026d3" font-size="12">🎯 焦点</text>
+  <rect x="600" y="160" width="160" height="30" rx="15" fill="#fef3c7" stroke="#c026d3"/>
+  <text x="680" y="180" text-anchor="middle" fill="#c026d3" font-size="12">🔍 OCR</text>
+  <rect x="600" y="200" width="160" height="30" rx="15" fill="#fef3c7" stroke="#c026d3"/>
+  <text x="680" y="220" text-anchor="middle" fill="#c026d3" font-size="12">⏪ 撤销栈</text>
+  <rect x="600" y="240" width="160" height="30" rx="15" fill="#fef3c7" stroke="#c026d3"/>
+  <text x="680" y="260" text-anchor="middle" fill="#c026d3" font-size="12">🛡️ 7 件套</text>
+  <!-- 3 步循环箭头 -->
+  <path d="M 260 110 Q 320 110 320 110" stroke="#c026d3" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <text x="290" y="100" text-anchor="middle" fill="#c026d3" font-size="12">① 感知</text>
+  <path d="M 480 110 Q 540 110 600 110" stroke="#f97316" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+  <text x="540" y="100" text-anchor="middle" fill="#f97316" font-size="12">② 决策</text>
+  <path d="M 680 280 Q 680 380 280 380 Q 280 380 280 110" stroke="#10b981" stroke-width="3" fill="none" marker-end="url(#arrow)" stroke-dasharray="5,5"/>
+  <text x="400" y="375" text-anchor="middle" fill="#10b981" font-size="12">③ 行动 → 下一轮截图</text>
+  <!-- 底部说明 -->
+  <text x="400" y="408" text-anchor="middle" fill="#888" font-size="11">observe → think → act 持续循环,直到 LLM 输出 action=done</text>
+</svg>
+
+
+<main>
+
+<blockquote><strong>章节定位</strong>:Part 5 · 高级能力 · Day 1 / 5(Part 5 开篇)</blockquote>
+
+<blockquote><strong>前置章节</strong>:ch20《项目 5 — Browser-Use Agent》</blockquote>
+
+<blockquote><strong>后续章节</strong>:ch22《Agent 评估与可观测性》</blockquote>
+
+<blockquote><strong>预计阅读</strong>:45 分钟 · 实操 8-12 小时</blockquote>
+
+<blockquote><strong>核心交付</strong>:三段式架构(感知 → 决策 → 行动)+ 30 行最小 GUI Agent + 7 件套安全护栏 + 三大产品实战 + 概念桥 ch21 ↔ ch22</blockquote>
+<p>---</p>
+
+<h2>21.1 引子:从 ch20 Browser-Use 到 ch21 Computer Use</h2>
+
+<h3>21.1.1 一句话定义</h3>
+<p><strong>Computer Use</strong>(直译"计算机使用")是一种让 LLM <strong>直接驱动键鼠、看见屏幕像素、操作任意 GUI</strong>(桌面应用、移动 App、ERP、SaaS 后台、CAD、IDE、游戏…)的 Agent 范式。它把"对话"扩展为"动作",把"文本输出"扩展为"屏幕输入"——LLM 成为了一双眼睛加一双手的人类代理。</p>
+
+<h3>21.1.2 为什么要写 ch21?ch20 不够吗?</h3>
+<p>ch20(昨日写的 Browser-Use)是 <strong>Computer Use 的 Web 域特例</strong>——只能操作浏览器内的 HTML,而现实工作中 80% 的界面是<strong>桌面软件、移动 App、企业 ERP、SaaS 后台</strong>(它们没有 DOM,只有像素)。这正是 ch21 必须存在的原因。</p>
+<p>举 3 个真实痛点:</p>
+<ul>
+<li><strong>医院 HIS 系统</strong>:护士要查 5 个字段填写到 Excel,而 HIS 是 C++ Win32 客户端,根本没有 DOM</li>
+<li><strong>SAP GUI</strong>:财务对账需要登录 → 输 12 位凭证号 → 选 3 个下拉框 → 点保存,纯桌面操作</li>
+<li><strong>AutoCAD 画图</strong>:设计师要自动插入 200 个标准件,AutoCAD 没 DOM,但有 200 万行 Win32 API</li>
+</ul>
+<p>ch21 解决的正是这类<strong>纯像素级 GUI 控制</strong>问题。</p>
+
+<h3>21.1.3 与 ch20 的 6 维对比(防混淆)</h3>
+<table><thead><tr><th>维度</th><th>ch20 Browser-Use</th><th>ch21 Computer Use</th></tr></thead><tbody><tr><td>输入</td><td>HTML + DOM 树</td><td>屏幕像素 + 截图 + 可选 OCR</td></tr><tr><td>输出</td><td>`click("#id")` / `fill("input", "x")`</td><td>`click(x, y)` / `type("hello")` / `key("Enter")`</td></tr><tr><td>决定论</td><td>高(DOM 稳定,选择器可靠)</td><td>低(像素飘移、动画、焦点漂移)</td></tr><tr><td>通用性</td><td>仅 Web(HTML/CSS/JS)</td><td>任意 GUI(Win/Mac/Linux/Android/iOS/Web)</td></tr><tr><td>失败模式</td><td>选择器失效、弹窗遮挡、CSP 拦截</td><td>误识别坐标、焦点跑掉、OCR 误读、DPI 缩放</td></tr><tr><td>代表产品</td><td>Playwright / Selenium</td><td>Anthropic Computer Use / OpenAI Operator / Manus</td></tr></tbody></table>
+<p><strong>核心论断</strong>:<strong>Browser-Use ⊂ Computer Use</strong>(DOM 操作是 GUI 自动化的一个子集,Web 是 GUI 的一种形态)。</p>
+
+<h3>21.1.4 3 家产品时间线 + 截图</h3>
+<table><thead><tr><th>时间</th><th>公司</th><th>产品</th><th>关键事件</th></tr></thead><tbody><tr><td>2024-10-22</td><td>Anthropic</td><td>Claude 3.5 Sonnet Computer Use</td><td>公测版,首个商业可用 Computer Use API,1600×1200 截图 + tool_use</td></tr><tr><td>2025-01-23</td><td>OpenAI</td><td>Operator</td><td>基于 GPT-4o + 自家浏览器(CUA 模型),独立 App 形态</td></tr><tr><td>2025-03-06</td><td>中国创业</td><td>Manus(Butterfly Effect)</td><td>多模态通用 Agent,2025-03 邀请测试,2025 年底 GA</td></tr><tr><td>2025-09-15</td><td>Anthropic</td><td>Claude Sonnet 4.5 Computer Use</td><td>升级控制精度,扩到 macOS 全屏</td></tr><tr><td>2026-04-22</td><td>Apple</td><td>Apple Intelligence Vision</td><td>Apple 体系内 Computer Use,与 Shortcuts 集成</td></tr><tr><td>2026-06-10</td><td>各大厂</td><td>标准化 MCP-Computer</td><td>MCP 协议族新增 `mcp-computer-server`,跨厂商工具互调开始</td></tr></tbody></table>
+
+<blockquote>注:上表所有公司、产品、价格以 2026 年 H1 公开信息为准;产品形态与定价随业务调整,以官方为准。本表日期为示意,具体时间请以官方公告与公开报道核验。</blockquote>
+
+<h3>21.1.5a 为什么 Part 5 Day 1 必须先讲 Computer Use</h3>
+<p>跳进 ch22 之前必须明白:Computer Use 是过去 18 个月 AI 行业<strong>最贴近 AGI 的落地形态</strong>。Anthropic 把它定义为"通往通用 Agent 的最短路径",OpenAI 把 Operator 列为 2025 年 5 大旗舰功能之一,Gartner 在 2025 H2 报告中将 Computer Use 列为 <strong>5 年内最大的企业 AI 投资方向</strong>。这一章是后续 4 章的<strong>地基</strong>——ch22 评测指标、ch23 提示注入、ch24 成本控制、ch25 自我改进都建立在"屏幕像素 = LLM 的视觉输入"这个事实之上。</p>
+<p>读者画像跃迁:</p>
+<ul>
+<li><strong>初级读</strong>:认知 GUI Agent 是 Browser-Use 的超集</li>
+<li><strong>中级读</strong>:能从 0 写出 30 行最小可运行的 pyautogui + mock LLM</li>
+<li><strong>高级读</strong>:理解 CUA vs VLM+CoT 的可观测性权衡与失败模式</li>
+<li><strong>架构师读</strong>:能用 7 件套安全护栏作为团队 Computer Use 项目的合规准绳</li>
+</ul>
+<h3>21.1.5b Computer Use 与 AGI 的关系</h3>
+<p>Dario Amodei(Anthropic CEO)在 2026-04 公开发言中称:"Computer Use 是 AGI 的<strong>操作性测试场</strong>"。理由有三:</p>
+<ul>
+<li><strong>视觉输入 + 物理输出</strong> = 具身智能(embodied AI)的最简形式</li>
+<li><strong>GUI 任务空间无限</strong> = 测试 LLM 长尾泛化的天然场地</li>
+<li><strong>失败可观测</strong> = 任何一次"点错地方"都是可记录、可复盘的样本</li>
+</ul>
+<p>ch21 不打算给读者 AGI 答案,但希望读者理解:<strong>为什么每一行 pyautogui.click() 都在为 AGI 攒数据</strong>。</p>
+
+<h3>21.1.5 ch21 学习地图</h3>
+<pre><code class="language-text">
+21.2 GUI Agent 范式(三段式观察-思考-行动)
+  ├── 21.3 感知层:Accessibility Tree vs Pixels
+  └── 21.4 行动层:6 大 OS 协议 + Python 绑定
+21.5 决策层:端到端多模态 vs 视觉语言模型 + CoT
+21.6 30 行最小 GUI Agent(可跑)
+21.7 安全护栏 7 件套(Part 5 安全三联画)
+21.8 三产品实战:Operator / Claude Computer Use / Manus
+21.9 5 大失败模式
+21.10 5 大坑 + 自检
+21.11 小结 + 概念桥 ch21 ↔ ch22</code></pre>
+<p>---</p>
+
+<h2>21.2 GUI Agent 范式:看 → 思考 → 行动 三段式</h2>
+
+<h3>21.2.1 人类操作 GUI 的 4 步心路</h3>
+<p>当人类看到一个 Windows 弹窗,大脑执行:</p>
+<pre><code class="language-text">
+眼睛看屏幕 → 注意力集中到按钮 → 大脑判断&quot;这是 OK&quot; → 手指鼠标点
+   (感知)        (注意力/对焦)         (推理)            (行动)</code></pre>
+<p>GUI Agent 复刻这 4 步:</p>
+<table><thead><tr><th>阶段</th><th>人类</th><th>Agent</th><th>工具</th></tr></thead><tbody><tr><td>1. 感知</td><td>眼睛看屏幕</td><td>`screenshot()`</td><td>Pillow / mss / playwright</td></tr><tr><td>2. 注意力</td><td>焦点定位</td><td>`find(target)`</td><td>OCR / 模板匹配 / VLM grounding</td></tr><tr><td>3. 推理</td><td>大脑判断</td><td>LLM CoT</td><td>Claude Sonnet 4.5 / GPT-4o / Qwen3-VL</td></tr><tr><td>4. 行动</td><td>手操作键鼠</td><td>`click(x,y)` / `type(s)` / `key(k)`</td><td>pyautogui / xdotool / pywinauto</td></tr></tbody></table>
+
+<h3>21.2.2 与 ch05 ReAct 的 5 区别</h3>
+<p>ch05 写过 <strong>ReAct 范式</strong>(Reasoning + Acting),它适用于文本环境(搜索 / 数据库 / API);ch21 的 observe-think-act 把"环境观察"从<strong>文本信号</strong>升级为<strong>像素信号</strong>,带来 5 个根本区别:</p>
+<table><thead><tr><th>维度</th><th>ch05 ReAct(文本环境)</th><th>ch21 observe-think-act(像素环境)</th></tr></thead><tbody><tr><td>环境状态</td><td>`result = search(q)` 字符串</td><td>1920×1080 RGB array(6 MB)</td></tr><tr><td>观察信号</td><td>工具返回值</td><td>截图像素 + 可选文本</td></tr><tr><td>决策信号</td><td>LLM 文本</td><td>LLM 多模态输入(图像+文本)</td></tr><tr><td>鲁棒性</td><td>高(文本决定论)</td><td>低(像素飘移、对焦失败)</td></tr><tr><td>失败率</td><td>1-5%</td><td>5-15%(像素 + OCR 误差)</td></tr></tbody></table>
+
+<h3>21.2.3 三段式架构图</h3>
+<pre><code class="language-text">
+┌─────────────────────────────────────────────┐
+│                LLM(大脑)                       │
+│  输入:截图 base64 + 历史截图 + 任务指令           │
+│  输出:{&quot;action&quot;: &quot;click&quot;, &quot;x&quot;: 124, &quot;y&quot;: 567} │
+└───────┬────────────────┬─────────────────────┘
+        │                │
+   ┌────▼─────┐    ┌─────▼──────┐
+   │ 感知层    │    │  行动层     │
+   │ Pillow/  │    │ pyautogui/ │
+   │ mss/OCR  │    │ xdotool/   │
+   │ VLM      │    │ pywinauto  │
+   └──────────┘    └────────────┘</code></pre>
+<p>---</p>
+
+<h2>21.3 感知层:屏幕截图的 6 维度</h2>
+
+<h3>21.3.1 DOM 抽象 vs Pixels(为什么 Browser-Use 失灵)</h3>
+<p>ch20 的核心优势是<strong>DOM 抽象</strong>:浏览器把 HTML 解析成一棵有标签的树,Agent 通过 <code>id="ok-button"</code> 直接锁定元素。而 90% 的桌面应用没有 DOM,只有无差别的 RGB 像素:</p>
+<ul>
+<li><strong>Win32 应用</strong>(记事本、Outlook、AutoCAD、SAP GUI)→ Win32 句柄</li>
+<li><strong>macOS 应用</strong>(Keynote、Numbers)→ Accessibility hierarchy</li>
+<li><strong>X11 应用</strong>(Linux 桌面)→ AT-SPI 节点</li>
+<li><strong>Android 应用</strong> → uiautomator dump 出来的 XML</li>
+<li><strong>iOS 应用</strong> → XCUITest accessibility</li>
+</ul>
+<p>所以 ch21 必须从<strong>像素</strong>开始。</p>
+
+<h3>21.3.2 6 个感知维度</h3>
+<table><thead><tr><th>维度</th><th>工具</th><th>输出</th><th>优点</th><th>缺点</th></tr></thead><tbody><tr><td>1. 像素 RGB</td><td>`mss.grab()`</td><td>numpy[H, W, 3]</td><td>通用、无依赖</td><td>信息密度低</td></tr><tr><td>2. 文本</td><td>`pytesseract.image_to_string`</td><td>字符串</td><td>找文字准</td><td>截图小、易漏读</td></tr><tr><td>3. 控件(accessibility tree)</td><td>`pywinauto` / `atomac`</td><td>元素列表</td><td>精确、可点击</td><td>仅支持部分框架</td></tr><tr><td>4. 焦点</td><td>`pywin32.GetForegroundWindow`</td><td>当前窗口句柄</td><td>找焦点快</td><td>跨平台不一致</td></tr><tr><td>5</td><td>鼠标位置(读取)</td><td>`pyautogui.position()`</td><td>(x, y)</td><td>易</td><td>DPI 缩放失准</td></tr><tr><td>6</td><td>屏幕变化</td><td>`numpy diff()`</td><td>变化区域</td><td>找新弹窗</td><td>阈值难调</td></tr></tbody></table>
+
+<blockquote>注:第 5 项是"读取"当前鼠标位置(用于状态校验),第 1-4 项是"控制"(改变屏幕状态)。两类必须严格区分,GUI Agent 必须在"读取 → 决策 → 控制"三类间可追溯。</blockquote>
+
+<h3>21.3.3 Accessibility Tree vs Pixels 的 4 关键区别</h3>
+<table><thead><tr><th>维度</th><th>Accessibility Tree(可访问性树)</th><th>Pixels(像素)</th></tr></thead><tbody><tr><td>数据量</td><td>100-1000 节点</td><td>2 MB / 帧</td></tr><tr><td>元素定位</td><td>`{"role": "button", "name": "OK", "x": 124}`</td><td>需要 OCR + 坐标推理</td></tr><tr><td>可靠性</td><td>高(结构稳定)</td><td>中(DPI/动效影响)</td></tr><tr><td>跨应用一致</td><td>一般(各 OS 协议不同)</td><td>通用</td></tr></tbody></table>
+<p><strong>经验</strong>:<strong>优先用 Accessibility Tree(可访问性树),失败再回退 Pixels</strong>(chrome devtools 的 ARIA tree、SAP GUI Scripting、Win32 UIA、macOS AXUIElement 都是"白送的 DOM")。</p>
+<p>---</p>
+
+<h3>21.3.3a 像素工程的 3 种主流方案</h3>
+<table><thead><tr><th>方案</th><th>工具</th><th>性能</th><th>成本</th><th>适用</th></tr></thead><tbody><tr><td>**全屏 sreenshot 每步一次**</td><td>`pyautogui.screenshot()`</td><td>简单但慢(每步 200 ms)</td><td>高(网络传输)</td><td>调试期</td></tr><tr><td>**变化区域检测**</td><td>`numpy.diff(前帧, 当前帧) > threshold`</td><td>快(只传 diff)</td><td>低</td><td>生产期</td></tr><tr><td>**ROI 区域**</td><td>`pyautogui.screenshot(region=(x, y, w, h))`</td><td>快</td><td>低</td><td>只关心某区域</td></tr></tbody></table>
+
+<h3>21.3.4 多模态决策与单模态决策的本质差异</h3>
+<p>GUI Agent 与 ch20 Browser-Use 的核心区别不是工具差异,而是<strong>决策空间</strong>。DOM 决策在 HTML 节点结构里,LLM 输出 <code>{"selector": "#ok"}</code> 字符串即可;像素决策在 RGB 三维数组里,LLM 必须先把"看到什么"映射到"行动什么",中间多一道<strong>视觉推理</strong>,失败率从 1-5% 提升到 5-15%。</p>
+
+<h3>21.3.5 屏幕坐标系的 4 个陷阱(写入工程纪要)</h3>
+<table><thead><tr><th>#</th><th>陷阱</th><th>触发</th><th>解决</th></tr></thead><tbody><tr><td>1</td><td>DPI 缩放不匹配</td><td>Windows 125% 缩放时模型训练用 1600×1200,实测用 125% 缩放后的实际像素</td><td>`pyautogui.size()` + `Image.resize()` 对齐</td></tr><tr><td>2</td><td>多屏坐标错乱</td><td>Agent 在 screen 2 控制,LLM 决策给的是 screen 1 坐标</td><td>加 `(screen_id, x, y)` 三元组</td></tr><tr><td>3</td><td>Retina vs 非 Retina</td><td>macOS Retina 截图分辨率大于实际像素</td><td>用 `image.size[0] // 2` 校准</td></tr><tr><td>4</td><td>Active vs Hidden Window</td><td>模型识别到被最小化的窗口,实际点击无响应</td><td>加 `isWindowActive()` 校验</td></tr></tbody></table>
+<p>---</p>
+
+<h2>21.4 行动层:6 大 OS 协议的 Python 绑定</h2>
+
+<h3>21.4.1 协议层分类表</h3>
+<table><thead><tr><th>OS 协议族</th><th>代表平台</th><th>Python 绑定</th><th>备注</th></tr></thead><tbody><tr><td>X11</td><td>Linux 桌面</td><td>`python-xlib` / `xdotool`</td><td>老,新桌面多用 Wayland</td></tr><tr><td>Wayland</td><td>现代 Linux</td><td>`python-wayland-client` / `wtype`</td><td>安全模型更严</td></tr><tr><td>Win32 / WinUI</td><td>Windows</td><td>`pywin32` / `pywinauto`</td><td>Windows 主流</td></tr><tr><td>UIA(UI Automation)</td><td>Windows 现代</td><td>`uiautomation`</td><td>优于 Win32 推荐</td></tr><tr><td>macOS Quartz / AX</td><td>macOS</td><td>`atomac` / `pyatom` / `appscript`</td><td>需开启辅助功能权限</td></tr><tr><td>Android uiautomator2</td><td>Android</td><td>`uiautomator2`</td><td>App 自动化主流</td></tr></tbody></table>
+
+<h3>21.4.2 5 大键鼠工具对比</h3>
+<table><thead><tr><th>工具</th><th>协议</th><th>易用性</th><th>平台</th><th>性能</th><th>备注</th></tr></thead><tbody><tr><td>`pyautogui`</td><td>跨平台(底层调用)</td><td>⭐⭐⭐⭐⭐</td><td>全平台</td><td>中</td><td>**入门首选**,但慢</td></tr><tr><td>`pynput`</td><td>跨平台</td><td>⭐⭐⭐⭐</td><td>全平台</td><td>快</td><td>监听事件好用</td></tr><tr><td>`xdotool`</td><td>X11</td><td>⭐⭐⭐</td><td>Linux</td><td>快</td><td>shell 直接调用</td></tr><tr><td>`pywinauto`</td><td>Win32/UIA</td><td>⭐⭐⭐⭐</td><td>Windows</td><td>快</td><td>后台点击(无前景)</td></tr><tr><td>`uiautomator2`</td><td>Android</td><td>⭐⭐⭐⭐⭐</td><td>Android</td><td>快</td><td>移动 App 首选</td></tr><tr><td>`atomac`</td><td>macOS</td><td>⭐⭐⭐</td><td>macOS</td><td>中</td><td>已停止维护,新项目慎用</td></tr></tbody></table>
+
+<h3>21.4.3 一个跨平台点击动作对比</h3>
+<table><thead><tr><th>工具</th><th>5 行代码</th></tr></thead><tbody><tr><td>`pyautogui`</td><td>`import pyautogui; pyautogui.click(124, 567); pyautogui.typewrite('hello'); pyautogui.press('enter'); time.sleep(0.5); pyautogui.screenshot('out.png')`</td></tr><tr><td>`xdotool`(shell)</td><td>`xdotool mousemove 124 567 click 1; xdotool type hello; xdotool key Return`</td></tr><tr><td>`pywinauto`(Windows 后台)</td><td>`app = pywinauto.Application().connect(title='Untitled'); app.window().click_input(coords=(124, 567));`</td></tr><tr><td>`uiautomator2`(Android)</td><td>`d(text='OK').click(); d.send_keys('hello');`</td></tr></tbody></table>
+
+<blockquote>详见 21.6.1 完整 Python 例子。</blockquote>
+<p>---</p>
+
+<h2>21.5 决策层:轨迹决策 vs 一次性决策(end-to-end 多模态 vs VLM + CoT)</h2>
+
+<h3>21.5.1 两种决策范式</h3>
+<p>GUI Agent 的"大脑"有 2 类范式:</p>
+<table><thead><tr><th>范式</th><th>输入</th><th>输出</th><th>适用</th><th>代表</th></tr></thead><tbody><tr><td>**端到端多模态**(CUA / Computer-Use)</td><td>历史 N 帧截图 + 文本</td><td>直接 action</td><td>长任务、需要全局感知</td><td>OpenAI CUA / Anthropic Computer Use</td></tr><tr><td>**视觉语言模型 + CoT**(VLM+CoT)</td><td>当前帧截图 + 历史动作文本</td><td>文本 + action</td><td>短任务、单步推理</td><td>GPT-4o / Claude Sonnet 4.5 + ReAct</td></tr></tbody></table>
+
+<h3>21.5.2 5 大产品架构对比</h3>
+<table><thead><tr><th>产品</th><th>模型</th><th>范式</th><th>上下文窗口</th><th>是否本地</th><th>价格(2026 H1)</th></tr></thead><tbody><tr><td>Anthropic Claude Computer Use</td><td>Claude Sonnet 4.5</td><td>CUA</td><td>200K 综合 token(视觉 ~64K + 文本 ~136K)</td><td>API only</td><td>$3/MTok 输入 + $15/MTok 输出</td></tr><tr><td>OpenAI Operator</td><td>CUA(o1-CUA)</td><td>CUA</td><td>200K</td><td>仅 SaaS</td><td>$200/月 ChatGPT Pro</td></tr><tr><td>Manus</td><td>Qwen3-VL + 自研</td><td>VLM+CoT</td><td>128K</td><td>可自部署</td><td>公开邀请 + API 按量</td></tr><tr><td>Claude with Computer Use(本地)</td><td>Claude Sonnet 4.5</td><td>VLM+CoT</td><td>200K 综合(视觉 ~64K)</td><td>Bedrock/Azure</td><td>企业价</td></tr><tr><td>Open Interpreter</td><td>开源(GPT-4/本地)</td><td>VLM+CoT</td><td>128K</td><td>完全本地</td><td>开源</td></tr></tbody></table>
+
+<blockquote>注:Anthropic 公布的总 200K token 综合预算中,Computer Use 的视觉上下文根据工具类型和截图分辨率动态计算,典型 1600×1200 截图约 4500 token,表格给出的是经验估值,实际以 Anthropic 官方 token 计算器为准。</blockquote>
+
+<h3>21.5.3 CUA vs VLM+CoT 的 3 关键权衡</h3>
+<table><thead><tr><th>维度</th><th>CUA(端到端)</th><th>VLM+CoT</th></tr></thead><tbody><tr><td>控制精度</td><td>高(直接出 action)</td><td>中(间接,CoT 中可能改主意)</td></tr><tr><td>可观测性</td><td>低(不告诉你为什么)</td><td>高(CoT 文本可审计)</td></tr><tr><td>延迟</td><td>中(单次推理但 token 多)</td><td>低-中(分多步)</td></tr><tr><td>长任务鲁棒性</td><td>高(全局上下文)</td><td>低(每步独立)</td></tr><tr><td>可回放性</td><td>难(无 CoT 痕迹)</td><td>易(全 CoT 日志)</td></tr></tbody></table>
+<p>---</p>
+
+<h2>21.6 30 行最小 GUI Agent Hello World(pyautogui + 截图)</h2>
+
+<h3>21.6.1 完整代码(可运行,Mock 模式)</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;
+ch21.6.1 - 30 行最小 GUI Agent Hello World
+依赖: pip install pillow pyautogui
+       (本演示用 mock 截图,不需真实显示器)
+&quot;&quot;&quot;
+import time, base64, io
+from PIL import Image
+import pyautogui
+
+def take_screenshot():
+    &quot;&quot;&quot;拍一张屏幕(演示用 mock 80×60 像素图)&quot;&quot;&quot;
+    img = Image.new(&quot;RGB&quot;, (80, 60), &quot;white&quot;)
+    # 画一个&quot;OK 按钮&quot;在 (40, 30)
+    for x in range(35, 45):
+        for y in range(27, 33):
+            img.putpixel((x, y), (200, 200, 200))
+    return img
+
+def encode_b64(img):
+    buf = io.BytesIO()
+    img.save(buf, format=&quot;PNG&quot;)
+    return base64.b64encode(buf.getvalue()).decode()
+
+def mock_llm(prompt, screenshot_b64):
+    &quot;&quot;&quot;模拟 LLM 决策:看到 OK 按钮就点&quot;&quot;&quot;
+    if &quot;OK&quot; in prompt or &quot;按钮&quot; in prompt:
+        return {&quot;action&quot;: &quot;click&quot;, &quot;x&quot;: 40, &quot;y&quot;: 30}
+    return {&quot;action&quot;: &quot;noop&quot;}
+
+# ---- 30 行主循环 ----
+img = take_screenshot()                       # 1. 感知
+b64 = encode_b64(img)                         # 2. 编码
+decision = mock_llm(&quot;点击 OK 按钮&quot;, b64)        # 3. 决策
+print(f&quot;[STEP 1] 决策: {decision}&quot;)
+
+if decision[&quot;action&quot;] == &quot;click&quot;:
+    # pyautogui.click(decision[&quot;x&quot;], decision[&quot;y&quot;])  # 真实环境
+    print(f&quot;[STEP 2] (Mock) 在 ({decision[&#x27;x&#x27;]}, {decision[&#x27;y&#x27;]}) 已点击&quot;)
+    img2 = take_screenshot()
+    if img2.getpixel((40, 30)) == (200, 200, 200):
+        print(&quot;[STEP 3] ✅ OK 按钮状态确认&quot;)
+    else:
+        print(&quot;[STEP 3] ❌ 没点中,重试&quot;)
+        time.sleep(0.1)
+print(&quot;✅ GUI Agent 完成一次 observe-think-act 循环&quot;)</code></pre>
+<p><strong>运行输出</strong>:</p>
+<pre><code class="language-text">
+[STEP 1] 决策: {&#x27;action&#x27;: &#x27;click&#x27;, &#x27;x&#x27;: 40, &#x27;y&#x27;: 30}
+[STEP 2] (Mock) 在 (40, 30) 已点击
+[STEP 3] ✅ OK 按钮状态确认
+✅ GUI Agent 完成一次 observe-think-act 循环</code></pre>
+
+<h3>21.6.2 把 mock 替换为真实 Claude Computer Use(扁平结构)</h3>
+<pre><code class="language-python">
+# 把 mock_llm 换成 Anthropic Claude Computer Use
+# 真实 API 用 flat 结构 + tools 枚举类型(非内嵌 input_schema)
+import anthropic
+client = anthropic.Anthropic()
+
+def real_llm(task, screenshot_b64):
+    resp = client.messages.create(
+        model=&quot;claude-sonnet-4.5&quot;,
+        max_tokens=1024,
+        tools=[{
+            &quot;type&quot;: &quot;computer_20241022&quot;,  # Computer Use 工具类型(2024-10 版)
+            &quot;name&quot;: &quot;computer&quot;,
+            &quot;display_width_px&quot;: 1600,
+            &quot;display_height_px&quot;: 1200
+        }],
+        messages=[{
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: [
+                {&quot;type&quot;: &quot;image&quot;,
+                 &quot;source&quot;: {&quot;type&quot;: &quot;base64&quot;, &quot;media_type&quot;: &quot;image/png&quot;, &quot;data&quot;: screenshot_b64}},
+                {&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: task}
+            ]
+        }]
+    )
+    # resp.stop_reason == &quot;tool_use&quot; 时,从 content 块取 input
+    for block in resp.content:
+        if block.type == &quot;tool_use&quot;:
+            return block.input  # 形如 {&quot;action&quot;: &quot;left_click&quot;, &quot;coordinate&quot;: [124, 567]}
+    return {&quot;action&quot;: &quot;done&quot;}</code></pre>
+
+<blockquote>注:Anthropic Computer Use 的工具定义是扁平 <code>type: "computer_20241022"</code> + display 字段,返回的 <code>block.input</code> 是 <code>{action, coordinate?, text?, ...}</code>。截图必须是 <code>image/png</code> 且 base64 后 < 5 MB,否则报 413。</blockquote>
+<p>---</p>
+
+<h3>21.6.3 真实环境部署的 5 步走</h3>
+<p>把 21.6.1 的 mock LLM 接入 Claude Computer Use 的标准步骤:</p>
+<pre><code class="language-text">
+Step 1: 安装依赖 — pip install anthropic pillow pyautogui
+Step 2: 申请 API Key — console.anthropic.com
+Step 3: 安装权限 —
+         macOS: 系统设置 → 辅助功能 → 添加 Terminal
+         Windows: 默认即可,有些需关闭 UAC
+         Linux: 需 xdotool + zenity
+Step 4: 启动 Sandbox —
+         macOS: Sandboxie / Docker Desktop
+         Windows: Windows Sandbox / Hyper-V
+         Linux: docker run -it -v /tmp/.X11-unix:/tmp/.X11-unix
+Step 5: 跑 ch21.6.2 代码(替换 mock_llm)</code></pre>
+
+<h3>21.6.4 常见误读与"为什么我的 Agent 点错了"</h3>
+<table><thead><tr><th>现象</th><th>根因</th><th>修复</th></tr></thead><tbody><tr><td>Agent 老点错位置</td><td>截图分辨率 ≠ 训练分辨率</td><td>resize + 坐标映射</td></tr><tr><td>Agent 输入到错误字段</td><td>焦点飘移</td><td>操作前 click 重新拿焦点</td></tr><tr><td>Agent 卡在登录页</td><td>2FA / 验证码</td><td>切到人值守模式</td></tr><tr><td>Agent 一直"成功"</td><td>LLM 幻觉,声称完成但未做</td><td>加 `image_hash` 校验</td></tr></tbody></table>
+
+<h3>21.6.5 一个调试技巧:trace 持久化(20 行)</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;
+ch21.6.5 - 把整次任务的截图 + 决策存盘,事后回放
+&quot;&quot;&quot;
+import json, hashlib, base64, os
+from datetime import datetime
+
+class GUIAgentTrace:
+    def __init__(self, save_dir=&quot;./gui_trace&quot;):
+        self.dir = save_dir
+        os.makedirs(save_dir, exist_ok=True)
+        self.records = []
+    def record(self, step, screenshot_b64, decision, env_state_hash):
+        ts = datetime.now().isoformat()
+        fname = f&quot;{self.dir}/{step:04d}-{ts}.png&quot;
+        with open(fname, &quot;wb&quot;) as f: f.write(base64.b64decode(screenshot_b64))
+        self.records.append({
+            &quot;step&quot;: step, &quot;ts&quot;: ts, &quot;decision&quot;: decision,
+            &quot;png&quot;: fname, &quot;env_state_hash&quot;: env_state_hash
+        })
+    def save(self):
+        with open(f&quot;{self.dir}/trace.json&quot;, &quot;w&quot;) as f:
+            json.dump(self.records, f, indent=2, ensure_ascii=False)</code></pre>
+<p>---</p>
+
+<h2>21.7 安全与回滚(7 件套)</h2>
+
+<h3>21.7.1 与 ch17 / ch20 形成安全三联画</h3>
+<table><thead><tr><th>章</th><th>域</th><th>7 件套构成</th></tr></thead><tbody><tr><td>ch17 §17.7</td><td>**代码**</td><td>read-only + 黑名单 + audit log + dry-run + 4 种确认 + 5 类必确认场景 + ch23 衔接</td></tr><tr><td>ch20 §20.6.6</td><td>**Web**</td><td>DOM 隔离 + 选择器白名单 + rate-limit + 操作可回滚 + XSS 防护 + 同源策略 + 审计</td></tr><tr><td>**ch21 §21.7**</td><td>**桌面像素**</td><td>人值守 + 桌面隔离 + 操作白名单 + 撤销栈 + 审计 + 速率限制 + 熔断</td></tr></tbody></table>
+
+<h3>21.7.2 7 件套详解</h3>
+<table><thead><tr><th>#</th><th>措施</th><th>说明</th><th>工具</th></tr></thead><tbody><tr><td>1</td><td>**人值守**(Human-in-the-Loop)</td><td>关键操作前弹窗等用户确认</td><td>二次确认 UI / `pyautogui.confirm()`</td></tr><tr><td>2</td><td>**桌面隔离**(Desktop Sandbox)</td><td>在隔离桌面/虚拟机内运行,不影响主桌面</td><td>VirtualBox / Docker Desktop / Windows Sandbox</td></tr><tr><td>3</td><td>**操作白名单**(Operation Whitelist)</td><td>`{"type": "click", "scope": ["button.text=OK"]}`,禁止点击位置未知区域</td><td>自研中间件</td></tr><tr><td>4</td><td>**撤销栈**(Undo Stack)</td><td>每次操作前存盘,失败可回滚</td><td>Git stash / 自研 file history</td></tr><tr><td>5</td><td>**审计日志**(Audit Log)</td><td>全程录屏 + JSONL 动作流</td><td>`ffmpeg` + structlog</td></tr><tr><td>6</td><td>**速率限制**(Rate Limit)</td><td>每秒 ≤ 2 次,避免触发安全拦截</td><td>middleware `await sleep(0.5)`</td></tr><tr><td>7</td><td>**熔断**(Circuit Breaker)</td><td>连续 3 次失败自动停止</td><td>`pybreaker` / 手写 `ConsecutiveFailureError`</td></tr></tbody></table>
+
+<h3>21.7.3 撤销栈代码(15 行)</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;
+ch21.7.3 - 撤销栈演示(配合 21.7 #4)
+&quot;&quot;&quot;
+import shutil, os, time
+class UndoStack:
+    def __init__(self, workdir):
+        self.workdir = workdir
+        self.stack = []
+    def snapshot(self, name):
+        path = f&quot;{self.workdir}/.snapshots/{name}-{int(time.time())}&quot;
+        shutil.copytree(self.workdir, path, ignore=lambda *a: {&quot;.snapshots&quot;})
+        self.stack.append(path)
+    def undo(self):
+        if not self.stack: return False
+        last = self.stack.pop()
+        for f in os.listdir(self.workdir):
+            if not f.startswith(&quot;.snapshots&quot;):
+                os.remove(f&quot;{self.workdir}/{f}&quot;)
+        shutil.copytree(last, self.workdir, dirs_exist_ok=True)
+        return True
+# 用法:
+# u = UndoStack(&quot;/data/erp&quot;); u.snapshot(&quot;before-type-into-account&quot;)
+# type_payroll_id(&quot;...&quot;);  # 误填
+# u.undo()                 # 回滚</code></pre>
+
+<h3>21.7.4 关键场景:必须人值守的 5 类操作</h3>
+<table><thead><tr><th>触发</th><th>必须人值守</th></tr></thead><tbody><tr><td>点击"删除"按钮</td><td>✅</td></tr><tr><td>输入密码 / 密钥</td><td>✅</td></tr><tr><td>点击"提交订单"按钮</td><td>✅</td></tr><tr><td>表单金额 > 1000</td><td>✅</td></tr><tr><td>系统偏好设置</td><td>✅</td></tr></tbody></table>
+
+<blockquote>ch23《Agent 安全与提示注入防御》会系统讲 GUI Agent 被恶意网页诱导到错误位置的风险。</blockquote>
+<p>---</p>
+
+<h2>21.8 Computer Use 三大产品实战</h2>
+
+<h3>21.8.1 OpenAI Operator(SaaS,200/月)</h3>
+<p><strong>特点</strong>:</p>
+<ul>
+<li>完全在 OpenAI 自家浏览器内(沙箱化,主桌面不受影响)</li>
+<li>模型是 <strong>CUA</strong>(专门训练)</li>
+<li>集成 ChatGPT,可用自然语言指令:"帮我订明早 8 点去虹桥的高铁"</li>
+<li><strong>价格</strong>:<strong>$200/月 ChatGPT Pro</strong>(2025-01 首发价);<strong>2025-09 起 ChatGPT Team($30/月用户/月)与 ChatGPT Enterprise 已包含 Operator 用量,不再额外收费</strong>(具体用量上限以 OpenAI 公告为准)</li>
+</ul>
+<p><strong>典型场景</strong>:</p>
+<ul>
+<li>跨 50 个 SaaS 平台数据汇总(Salesforce + HubSpot + Slack + Sheets)</li>
+<li>在线购物 + 票务 + 行政流程</li>
+</ul>
+<p><strong>限制</strong>:</p>
+<ul>
+<li>不支持桌面原生 App</li>
+<li>200/月 价格偏高(企业按量另算)</li>
+<li>不暴露 trace 调试(可观测性差)</li>
+</ul>
+<h3>21.8.2 Anthropic Claude Computer Use(API,按 token 计费)</h3>
+<p><strong>特点</strong>:</p>
+<ul>
+<li>直接发出 <code>tool_use</code> action,可在终端、桌面、API 中嵌入</li>
+<li>1600×1200 截图,支持自定义分辨率</li>
+<li>完整 CoT,可审计每一步推理</li>
+</ul>
+<p><strong>典型场景</strong>:</p>
+<ul>
+<li>IDE 内自动化(配合 <code>pyautogui</code> 后台点击 IDE 按钮)</li>
+<li>自动化测试(SaaS 黑盒测试)</li>
+<li>老旧 ERP 数据迁移(SAP GUI 没有 DOM)</li>
+<li>Mac/Win 应用脚本化(结合 <code>pyatom</code> / <code>pywinauto</code>)</li>
+</ul>
+<p><strong>关键代码(20 行最小可用)</strong>:</p>
+<pre><code class="language-python">
+import anthropic, pyautogui, base64, io
+from PIL import Image
+
+client = anthropic.Anthropic()
+task = &quot;在文档中输入 &#x27;Hello, GUI&#x27; 然后保存&quot;
+
+for step in range(20):  # 最多 20 步
+    img = pyautogui.screenshot()
+    buf = io.BytesIO(); img.save(buf, &quot;PNG&quot;)
+    b64 = base64.b64encode(buf.getvalue()).decode()
+    resp = client.messages.create(
+        model=&quot;claude-sonnet-4.5&quot;,
+        max_tokens=2048,
+        tools=[{
+            &quot;type&quot;: &quot;computer_20241022&quot;,
+            &quot;name&quot;: &quot;computer&quot;,
+            &quot;display_width_px&quot;: img.width,
+            &quot;display_height_px&quot;: img.height,
+        }],
+        messages=[{
+            &quot;role&quot;: &quot;user&quot;,
+            &quot;content&quot;: [
+                {&quot;type&quot;: &quot;image&quot;, &quot;source&quot;: {&quot;type&quot;: &quot;base64&quot;, &quot;media_type&quot;: &quot;image/png&quot;, &quot;data&quot;: b64}},
+                {&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: task}
+            ]
+        }]
+    )
+    action = resp.content[0].input  # {&quot;action&quot;: &quot;left_click&quot;, &quot;coordinate&quot;: [124, 567]}
+    print(f&quot;Step {step}: {action}&quot;)
+    if action.get(&quot;action&quot;) == &quot;left_click&quot;:
+        x, y = action[&quot;coordinate&quot;]
+        pyautogui.click(x, y)
+    elif action.get(&quot;action&quot;) == &quot;type&quot;:
+        pyautogui.typewrite(action[&quot;text&quot;])
+    elif action.get(&quot;action&quot;) == &quot;done&quot;:
+        break</code></pre>
+
+<h3>21.8.3 Manus(中国创业,邀测 + GA)</h3>
+<p><strong>特点</strong>:</p>
+<ul>
+<li>中文场景优化</li>
+<li>多 Agent 协作(规划 + 反思 + 执行三件套)</li>
+<li>2025-03 邀请测试,2025 H2 GA(信息来自 2025 年公开访谈)</li>
+<li><strong>沙箱内计算机</strong>(不需用户主桌面)</li>
+</ul>
+<p><strong>典型场景</strong>:</p>
+<ul>
+<li>中文 SaaS 操作(钉钉 / 飞书 / 1688)</li>
+<li>跨境电商(亚马逊后台中文翻译)</li>
+<li>移动 App 自动化(Android 真机 + uiautomator2)</li>
+</ul>
+<h3>21.8.4 三大产品 7 维对比</h3>
+<table><thead><tr><th>维度</th><th>OpenAI Operator</th><th>Claude Computer Use</th><th>Manus</th></tr></thead><tbody><tr><td>模型</td><td>CUA(专训)</td><td>Claude Sonnet 4.5</td><td>Qwen3-VL + 自研</td></tr><tr><td>部署</td><td>仅 SaaS</td><td>API</td><td>SaaS + 部分自部署</td></tr><tr><td>桌面应用</td><td>❌</td><td>✅</td><td>⚠️</td></tr><tr><td>移动 App</td><td>❌</td><td>⚠️</td><td>✅</td></tr><tr><td>透明度</td><td>低</td><td>高(CoT 全留痕)</td><td>中</td></tr><tr><td>价格(2026 H1)</td><td>$200/月</td><td>$3/$15 per MTok</td><td>按量 + 企业定制</td></tr><tr><td>中文支持</td><td>中</td><td>中</td><td>高</td></tr></tbody></table>
+<p>---</p>
+
+<h3>21.8.5 Antrhopic Claude Computer Use 的 3 个隐藏细节(必须知道)</h3>
+<ul>
+<li><strong><code>tool_use</code> 的 <code>input</code> 是 dict,但 Anthropic 在内部把坐标做了归一化</strong>——给的是 1600×1200 坐标系,你必须按你的屏幕做映射</li>
+<li><strong>截图格式必须是 <code>image/png</code>,且 base64 后 size < 5 MB,否则报错</strong></li>
+<li><strong>Claude Sonnet 4.5 的 token 计算</strong>(2025-10 公告)是按 1600×1200 约 4500 token,极贵——务必提前 resize</li>
+</ul>
+<h3>21.8.6 Manus 的"沙箱内计算机"是什么</h3>
+<p>Manus 的产品形态是"在云端 Linux 虚拟机内跑一个 Chromium 浏览器 + xdotool + VNC"。用户登录自己的桌面后,Manus 在云端有自己的屏幕、网络、文件系统。这意味着:</p>
+<ul>
+<li>✅ 不需要用户授权本机辅助功能</li>
+<li>✅ 任务跨设备可继续(客户端断网也能跑)</li>
+<li>❌ 需要上传个人账号(登录态安全由云端保证)</li>
+<li>❌ 复杂 GUI(老 SAP GUI)可能跑不起来</li>
+</ul>
+<h3>21.8.7 3 产品定价策略对比(2026 H1)</h3>
+<table><thead><tr><th>维度</th><th>OpenAI Operator</th><th>Anthropic Claude</th><th>Manus</th></tr></thead><tbody><tr><td>入门门槛</td><td>$200/月(高)</td><td>$5 起步 token(低)</td><td>邀请制(中)</td></tr><tr><td>长期成本</td><td>不可预测</td><td>完全可控(token)</td><td>按量包月</td></tr><tr><td>适合谁</td><td>普通 SaaS 用户</td><td>开发者 / 团队</td><td>中文用户 / 跨境</td></tr><tr><td>隐藏成本</td><td>无</td><td>截图越多越贵</td><td>网络 + 沙箱占用</td></tr></tbody></table>
+<p>---</p>
+
+<h2>21.9 GUI Agent 的 5 大失败模式</h2>
+
+<h3>21.9.1 5 大失败模式对照表</h3>
+<table><thead><tr><th>#</th><th>失败模式</th><th>触发场景</th><th>症状</th><th>修复</th></tr></thead><tbody><tr><td>1</td><td>**误识别坐标**</td><td>截图分辨率与实际分辨率不一致;多屏时坐标错误</td><td>LLM 说点 (124, 567),实际点击在错的窗口</td><td>用 `pyautogui.size()` 校准 + DPI 感知</td></tr><tr><td>2</td><td>**焦点漂移**</td><td>操作中被弹窗 / 通知 / 自动保存对话框抢走焦点</td><td>输到一半输到别处</td><td>操作前 `pyautogui.click()` 重新拿焦点</td></tr><tr><td>3</td><td>**OCR 错误**</td><td>截图分辨率太小、字体小、相似字符</td><td>读成 "0" 而非 "O" / "l" 而非 "1"</td><td>用 VLM grounding 而非纯 OCR</td></tr><tr><td>4</td><td>**操作时延**</td><td>截图 + 网络往返 + LLM 推理慢,引发"已经过了"、"应用已切走"</td><td>操作错位</td><td>用事件总线 + 异步截图 + 短超时</td></tr><tr><td>5</td><td>**锁屏 / 息屏**</td><td>OS 进入息屏、屏幕保护、锁屏</td><td>完全失明</td><td>启动前禁用息屏 + 检测 + 自动唤醒</td></tr></tbody></table>
+
+<h3>21.9.2 死循环防护代码(15 行)</h3>
+<pre><code class="language-python">
+&quot;&quot;&quot;
+ch21.9.2 - 防止 GUI Agent 进入死循环的关键阈值
+&quot;&quot;&quot;
+class CircuitBreaker:
+    def __init__(self, max_steps=30, no_change_max=5):
+        self.max_steps = max_steps
+        self.no_change_max = no_change_max
+        self.steps = 0
+        self.last_state = None
+        self.no_change_count = 0
+    def step(self, current_state):
+        self.steps += 1
+        if self.steps &gt; self.max_steps:
+            raise RuntimeError(f&quot;超过 {self.max_steps} 步,自动停止&quot;)
+        if current_state == self.last_state:
+            self.no_change_count += 1
+            if self.no_change_count &gt; self.no_change_max:
+                raise RuntimeError(f&quot;连续 {self.no_change_max} 步画面未变化,可能死循环&quot;)
+        else:
+            self.no_change_count = 0
+            self.last_state = current_state
+
+# 用法:
+# cb = CircuitBreaker(max_steps=30, no_change_max=5)
+# while True: cb.step(screenshot_hash())</code></pre>
+<p>---</p>
+
+<h2>21.10 5 大坑(平台差异 / DPI / 安全拦截 / 截图体积 / 隐私)+ 自检清单</h2>
+
+<h3>21.10.1 5 大坑详解</h3>
+<p>#### 坑 1:平台差异(macOS 需要辅助功能权限)</p>
+<pre><code class="language-python">
+# macOS 第一次用 atomac / pyautogui 需要:
+# 系统偏好设置 → 安全性与隐私 → 辅助功能 → 添加 Terminal / iTerm / VS Code
+# 否则 pyautogui.click() 调用直接抛异常
+
+# 坑:Apple silicon 与 Intel 的 atomac 行为略有不同
+# 解决:pyautogui + pyatom vs atomac 二选一,Mac Apple silicon 建议 pyatom</code></pre>
+<p>#### 坑 2:DPI 缩放导致坐标错位</p>
+<pre><code class="language-python">
+# Windows 显示器 125% / 150% 缩放时,截图坐标 ≠ LLM 收到的坐标
+# 修复:把截图 resize 到 1600×1200(模型训练分辨率),坐标按比例映射
+def resize_for_model(img, target=(1600, 1200)):
+    return img.resize(target, Image.LANCZOS)
+def map_coord(x, y, from_size, to_size):
+    fx, fy = from_size
+    tx, ty = to_size
+    return int(x * tx / fx), int(y * ty / fy)</code></pre>
+<p>#### 坑 3:安全拦截(Mac 弹"是否允许控制")</p>
+<pre><code class="language-bash">
+# macOS Catalina+ 需要权限,跨进程 control 会弹系统确认
+# 解法:在打包应用 Info.plist 加 NSAppleEventsUsageDescription
+#      或者干脆手动点&quot;允许&quot;一次后 +10 分钟静默</code></pre>
+<p>#### 坑 4:截图体积(连续截图耗内存)</p>
+<pre><code class="language-python">
+# 不优化:每秒 8 MB × 30 fps = 240 MB/s → 几分钟 OOM
+# 优化:压缩 JPEG + 降帧率 + ROI 裁剪
+def cheap_screenshot():
+    img = pyautogui.screenshot()
+    img = img.resize((1280, 800), Image.LANCZOS)  # 缩到 1280×800
+    buf = io.BytesIO(); img.save(buf, &quot;JPEG&quot;, quality=70)
+    return buf.getvalue()  # ~30 KB 而非 2 MB</code></pre>
+<p>#### 坑 5:隐私与未公开数据(法规风险)</p>
+
+<blockquote>用户截屏包含<strong>应用密码、聊天记录、邮件正文中未公开的数据</strong>,这些图像上传给云端 LLM 涉及 <strong>GDPR / CCPA / 中国个人信息保护法</strong> 合规风险。</blockquote>
+<p>></p>
+
+<blockquote>工业做法:</blockquote>
+
+<blockquote>- <strong>本地 VLM</strong>(Qwen3-VL / InternVL / CogVLM)</blockquote>
+
+<blockquote>- <strong>敏感区域打码</strong>(OCR 检测邮箱 / 身份证号后置灰)</blockquote>
+
+<blockquote>- <strong>同态加密推理</strong>(学术界前沿,2026 H1 仍不成熟)</blockquote>
+
+<h3>21.10.2 自检清单(必跑)</h3>
+<table><thead><tr><th>项</th><th>检查方法</th><th>阈值</th></tr></thead><tbody><tr><td>截图分辨率一致</td><td>`pyautogui.size()` 与训练分辨率一致</td><td>= 1600×1200(偏差 < 5%)</td></tr><tr><td>OCR 准确率</td><td>`pytesseract.image_to_string` + 人工对 100 字</td><td>> 95%</td></tr><tr><td>死循环防护</td><td>见 21.9.2 代码</td><td>≤ 30 步 / 单任务</td></tr><tr><td>审计日志完整性</td><td>每 action 一行 JSONL,含时间戳 + 截图哈希</td><td>必须有</td></tr><tr><td>人值守触发次数</td><td>关键操作前 100% 二次确认</td><td>100%</td></tr></tbody></table>
+
+<h3>21.10.3 ch21 ↔ ch20 横向对比(写入主题色)</h3>
+<pre><code class="language-python">
+# ch20 DOM 操作 vs ch21 像素操作的 5 区别(代码维度)
+def execute_action(action_dict, env):
+    if env == &quot;browser&quot;:        # ch20
+        # 走选择器
+        page.click(action_dict[&quot;selector&quot;])  # DOM 操作
+    elif env == &quot;desktop&quot;:      # ch21
+        # 走坐标
+        pyautogui.click(action_dict[&quot;x&quot;], action_dict[&quot;y&quot;])  # 像素操作
+    elif env == &quot;mobile&quot;:       # ch21 延伸
+        # 走 uiautomator2
+        d.xpath(action_dict[&quot;xpath&quot;]).click()</code></pre>
+<p>---</p>
+
+<h3>21.10.4 GUI Agent 的工程经济账(为什么 2026 是关键年)</h3>
+<p>Operator $200/月,Manus 邀请价不公开,Claude Computer Use 按 token 计费(典型任务 5000-30000 步/月,每月 $20-200)。结合一个普通 SaaS 操作员月薪 5000 元,<strong>ROI 回收期约 3-6 个月</strong>(节省的人工 vs API 费)。</p>
+<p>但<strong>显性成本</strong>之外还有<strong>隐性成本</strong>:</p>
+<ul>
+<li><strong>首次部署人月</strong>(环境/权限/测试用例)</li>
+<li><strong>失败任务审计人月</strong>(每周有 2-5% 任务需要人工复盘)</li>
+<li><strong>失败兜底值班</strong>(7×24 必须有人能 SSH 进 sandbox 救场)</li>
+</ul>
+<h3>21.10.5 与 ch20 / ch17 的"5 大坑"对照</h3>
+<table><thead><tr><th>维度</th><th>ch17 代码助手</th><th>ch20 Browser-Use</th><th>**ch21 Computer Use**</th></tr></thead><tbody><tr><td>平台差异</td><td>少</td><td>浏览器版本多</td><td>**OS 版本 + DPI 多**</td></tr><tr><td>安全拦截</td><td>IDE 插件审批</td><td>CSP/CORS</td><td>**辅助功能权限 + UAC**</td></tr><tr><td>数据隐私</td><td>源代码泄漏</td><td>Cookie 泄漏</td><td>**屏幕截图含密码 / 聊天**</td></tr><tr><td>失败兜底</td><td>commit hash 回滚</td><td>重新打开页面</td><td>**无原子撤销,只能关进程**</td></tr><tr><td>时延</td><td>< 1 s</td><td>< 2 s</td><td>**2-10 s(LLM 推理 + 像素传输)**</td></tr></tbody></table>
+<p>---</p>
+
+<h2>21.11 小结:核心要点 + 8 条速记 + 概念桥 ch21 ↔ ch22</h2>
+
+<h3>21.11.1 核心要点(8 条)</h3>
+<ul>
+<li><strong>Computer Use = ch20 Browser-Use 的超集</strong>:Web 是 GUI 的特例,不是全部</li>
+<li><strong>三段式架构</strong>:<strong>感知 → 决策 → 行动</strong>,每一段都可有 Python 绑定</li>
+<li><strong>优先用 Accessibility Tree</strong>(白送的 DOM),失败回退到 Pixels + OCR</li>
+<li><strong>6 大 OS 协议</strong>:X11 / Wayland / Win32 / UIA / macOS AX / Android uiautomator2</li>
+<li><strong>7 件套安全护栏</strong>:人值守 + 桌面隔离 + 操作白名单 + 撤销栈 + 审计 + 速率限制 + 熔断</li>
+<li><strong>三大产品</strong>:OpenAI Operator / Anthropic Computer Use / Manus,定位不同</li>
+<li><strong>5 大失败模式</strong>:误识别 / 焦点漂移 / OCR 错误 / 操作时延 / 锁屏</li>
+<li><strong>隐私合规</strong>:GUI 截图涉及 GDPR/CCPA,工业做法是本地 VLM + 打码</li>
+</ul>
+<h3>21.11.2 概念速查表(24 术语)</h3>
+<table><thead><tr><th>术语</th><th>含义</th><th>首次出现</th></tr></thead><tbody><tr><td>**Computer Use**</td><td>让 LLM 直接操作任意 GUI 的 Agent 范式</td><td>21.1.1</td></tr><tr><td>**GUI Agent**</td><td>Graphic UI Agent,泛指驱动图界面的 Agent</td><td>21.2</td></tr><tr><td>**Accessibility Tree**</td><td>OS 提供的可访问性树,白送的 DOM</td><td>21.3.3</td></tr><tr><td>**Pixels-based**</td><td>基于像素截图的 Agent 范式</td><td>21.3.1</td></tr><tr><td>**X11**</td><td>Linux 老的图形协议</td><td>21.4.1</td></tr><tr><td>**Wayland**</td><td>Linux 新的图形协议</td><td>21.4.1</td></tr><tr><td>**Win32**</td><td>Windows 老 API 族</td><td>21.4.1</td></tr><tr><td>**UIA(UI Automation)**</td><td>Windows 现代 UI 自动化协议</td><td>21.4.1</td></tr><tr><td>**macOS Quartz / AX**</td><td>macOS 图形与可访问性 API</td><td>21.4.1</td></tr><tr><td>**Android uiautomator2**</td><td>Android UI 自动化主流库</td><td>21.4.1</td></tr><tr><td>**pyautogui**</td><td>跨平台键鼠自动化的最常用 Python 库</td><td>21.4.2</td></tr><tr><td>**pywinauto**</td><td>Windows 后台点击 UI 自动化库</td><td>21.4.2</td></tr><tr><td>**uiautomator2**</td><td>Android UI 自动化的 Python 绑定</td><td>21.4.2</td></tr><tr><td>**atomac / pyatom**</td><td>macOS 自动化 Python 绑定</td><td>21.4.2</td></tr><tr><td>**screen capture**</td><td>屏幕截图(mss / Pillow)</td><td>21.3.2</td></tr><tr><td>**OCR**</td><td>光学字符识别(pytesseract / EasyOCR)</td><td>21.3.2</td></tr><tr><td>**grounding**</td><td>VLM 把自然语言定位到坐标的能力</td><td>21.5.1</td></tr><tr><td>**CUA**</td><td>Computer-Use Agent,OpenAI 自研专训模型</td><td>21.5.1</td></tr><tr><td>**end-to-end 多模态**</td><td>直接截图 → action 的端到端模型</td><td>21.5.1</td></tr><tr><td>**VLM + CoT**</td><td>视觉语言模型 + 推理链</td><td>21.5.1</td></tr><tr><td>**人值守(HITL)**</td><td>Human-in-the-Loop,关键操作前需用户确认</td><td>21.7.2</td></tr><tr><td>**桌面隔离(Desktop Sandbox)**</td><td>隔离桌面/虚拟机运行</td><td>21.7.2</td></tr><tr><td>**撤销栈(Undo Stack)**</td><td>操作前回滚机制</td><td>21.7.2</td></tr><tr><td>**DPI 缩放**</td><td>显示器缩放,常导致坐标失准</td><td>21.10.1</td></tr></tbody></table>
+
+<h3>21.11.3 概念桥 ch21 ↔ ch22(评测难题的临界点)</h3>
+<table><thead><tr><th>上游</th><th>**本章 ch21**</th><th>下游 ch22</th></tr></thead><tbody><tr><td>ch17 §17.7 安全 7 件套</td><td>**ch21 §21.7 桌面像素级 7 件套**</td><td>ch23 §23 注入防御</td></tr><tr><td>ch20 Browser-Use(DOM 操作)</td><td>**ch21 Computer Use(像素操作)**</td><td>ch22 评测(跨模态指标)</td></tr><tr><td>通用 ReAct(ch05)</td><td>**observe-think-act 像素循环**</td><td>ch22 跨模态 trace replay</td></tr></tbody></table>
+<p><strong>核心论断</strong>(为 Day 23 ch22 铺垫):</p>
+
+<blockquote><strong>GUI Agent 让评测从纯文本/代码变成跨模态。</strong></blockquote>
+
+<blockquote>此前 ch01-ch20 写的所有 Agent 评测指标(成功率、步数、成本、鲁棒性)默认工作环境是<strong>纯文本或 DOM</strong>;GUI Agent 的"环境"是<strong>屏幕像素</strong>,意味着:</blockquote>
+<p>></p>
+
+<blockquote>1. <strong>同样的"点击"在截图前后是不同的状态</strong>(像素 diff)</blockquote>
+
+<blockquote>2. <strong>同一任务的"成功"难以形式化定义</strong>(用户接受 ≠ DOM 标记)</blockquote>
+
+<blockquote>3. <strong>鲁棒性测试需要 GUI 状态空间 + 视觉判定</strong></blockquote>
+<p>></p>
+
+<blockquote>Day 23 ch22 会在评测指标小节引入 <strong>Screen Success Rate</strong>(屏幕成功率)、<strong>Pixel-equivalent State Match</strong>(像素等价状态匹配)、<strong>Visual Trace Replay</strong>(可视化回放)三个新指标,直接响应 ch21 提出的"跨模态评测难题"。</blockquote>
+<p>---</p>
+
+<h3>21.11.4 继续阅读路线(给读者 3 个分叉)</h3>
+<p>读完 ch21 后,读者有几个分叉路可以选:</p>
+<ul>
+<li><strong>想立刻动手</strong> → 跳 ch21.6 的 30 行最小 Agent,跑通后再去 21.10 自检清单</li>
+<li><strong>想深入原理</strong> → 读 ch22《Agent 评估与可观测性》,理解 GUI Agent 的评测难题</li>
+<li><strong>想企业落地</strong> → 读 ch23《Agent 安全与提示注入防御》,理解 GUI Agent 被恶意诱导的风险</li>
+</ul>
+<p>---</p>
+
+<h3>21.11.5 ch21 与第一部分(基础与生态)的呼应</h3>
+<p>回看 ch01 提到的"Agent 的 5 大特征"(自主性、反应性、主动性、社会性、进化性),ch21 的 Computer Use 是这 5 个特征的最完整展示:</p>
+<table><thead><tr><th>ch01 特征</th><th>ch21 的实现</th></tr></thead><tbody><tr><td>自主性</td><td>在无人介入的 sandbox 内完成整段 GUI 任务</td></tr><tr><td>反应性</td><td>看到弹窗即时调整下一步行动</td></tr><tr><td>主动性</td><td>自己定位 OK 按钮并主动点击</td></tr><tr><td>社会性</td><td>与桌面其他进程(IDE / 浏览器 / 文件管理器)交互</td></tr><tr><td>进化性</td><td>通过 trace replay 累积改进 CoT 提示词</td></tr></tbody></table>
+<p>读者可以在读完 21.2.3 三段式后,回头思考"这是不是 LLM 第一次完整实现了 ch01 所说的 Agent?"—— 答案是<strong>部分实现了</strong>,因为 Computer Use 还不能从经验中<strong>主动学习</strong>,而是每次任务从零启动(自我改进要等到 ch25)。</p>
+<p>---</p>
+
+<h2>进一步阅读</h2>
+<ul>
+<li>Anthropic Computer Use 官方介绍:<a href="https://www.anthropic.com/news/3-5-sonnet-and-computer-use" target="_blank">https://www.anthropic.com/news/3-5-sonnet-and-computer-use</a></li>
+<li>OpenAI Operator 介绍:<a href="https://openai.com/index/introducing-operator/" target="_blank">https://openai.com/index/introducing-operator/</a></li>
+<li>Microsoft UI Automation 文档:<a href="https://learn.microsoft.com/en-us/windows/win32/winauto/entry-uiautomation-entries" target="_blank">https://learn.microsoft.com/en-us/windows/win32/winauto/entry-uiautomation-entries</a></li>
+<li>pywinauto 官方文档:<a href="https://pywinauto.readthedocs.io/" target="_blank">https://pywinauto.readthedocs.io/</a></li>
+<li>uiautomator2 GitHub:<a href="https://github.com/openatx/uiautomator2" target="_blank">https://github.com/openatx/uiautomator2</a></li>
+<li>Apple Accessibility 概述:<a href="https://developer.apple.com/documentation/accessibility" target="_blank">https://developer.apple.com/documentation/accessibility</a></li>
+<li>Manus 公开案例:<a href="https://manus.im/" target="_blank">https://manus.im/</a></li>
+<li>GDPR 隐私合规:<a href="https://gdpr-info.eu/" target="_blank">https://gdpr-info.eu/</a></li>
+</ul>
+</main>
+
+<nav class="chapter-pager">
+  <a href="ch20.html">← 第 20 章：Browser-Use Agent</a>
+  <a href="ch22.html">第 22 章：Agent 评估与可观测性 →</a>
+</nav>
+
+<footer>
+  <p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <a href="ch20.html">第 20 章</a> · <strong>第 21 章</strong> · <a href="ch22.html">第 22 章</a></p>
+</footer>
+
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
