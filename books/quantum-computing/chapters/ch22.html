@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第22章：光量子计算 (Photonic Quantum Computing) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第22章：光量子计算 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第五部分 · 量子硬件 · Day 3</span>
+        <span class="chapter-day-tag">Day 26 · 2026-07-07</span>
+      </div>
+      <h1 class="chapter-title">第 22 章 光量子计算 (Photonic Quantum Computing)</h1>
+      <p class="chapter-subtitle">光子比特 + KLM 定理 + 玻色采样 + 九章 + PsiQuantum + 室温量子计算 + 第五部分 Day 3</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,700 字</span>
+        <span class="stat">🔢 10 节 · 3 附录 · 69 子节</span>
+        <span class="stat">📑 光子比特 / KLM 定理 / 玻色采样 / 九章 / PsiQuantum</span>
+        <span class="stat">⏱ ~48 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                                                <article class="chapter-content">
+
+<h2 id="22-0-引言">22.0 引言</h2>
+
+<h3>22.0.1 五种量子硬件平台的光量子定位</h3>
+
+<p>在前两章里,我们看到了<strong>超导</strong> (ch20) 凭借速度与规模,以及<strong>离子阱</strong> (ch21) 凭借全连接与高保真度,占据 NISQ 时代的主流。然而,这两个平台都依赖<strong>低温稀释制冷机</strong> (10 mK 量级)、<strong>精密微波/激光控制</strong>,以及<strong>精密的电磁屏蔽</strong>。如果有一种量子计算平台<strong>完全不需要</strong>制冷机、在<strong>室温</strong>下就能运行、并且天然<strong>长距离传输</strong>,那会怎样?</p>
+
+<p>这就是<strong>光量子计算 (photonic quantum computing)</strong> 的承诺。光子,作为<strong>自然界唯一</strong>的<strong>飞行</strong>量子比特,在空气中不会衰减、在光纤中可以传输数百公里、不会因为"发热"而<strong>退相干</strong>——因为光子<strong>本身</strong>根本没有温度。然而,光子之间<strong>不直接相互作用</strong>,这给"光量子计算机怎么实现两 qubit 门"出了一个<strong>根本性</strong>难题。</p>
+
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>操控介质</th><th>qubit 物理</th><th>qubit 规模</th><th>门速度</th><th>门保真度</th><th>工作温度</th><th>连接</th></tr></thead>
+<tbody><tr><td>超导 (ch20)</td><td>电磁囚禁</td><td>微波谐振电路</td><td>1000+</td><td>10-100 ns</td><td>99.5-99.9%</td><td>10 mK</td><td>2D / heavy-hex</td></tr><tr><td>离子阱 (ch21)</td><td>电磁囚禁</td><td>离子内态</td><td>36-56 (当前)</td><td>1-10 μs</td><td><strong>99.99%</strong></td><td>室温阱 + 真空</td><td><strong>全连接</strong></td></tr><tr><td><strong>光量子 (ch22)</strong></td><td>线性光学</td><td>单光子</td><td>100-1000 光子 / 100-216 模</td><td>ns</td><td>99%</td><td><strong>室温</strong></td><td>概率 / 簇态</td></tr><tr><td>拓扑 (ch23)</td><td>电磁囚禁</td><td>Majorana 模式</td><td>8 (早期)</td><td>ns (预期)</td><td>99% (预期)</td><td>10 mK</td><td>局部</td></tr><tr><td>中性原子 (ch24)</td><td>光镊</td><td>Rydberg 原子</td><td>100-1180</td><td>100 ns-1 μs</td><td>99.5%</td><td>室温原子 + 激光冷</td><td>可重排</td></tr></tbody></table>
+
+<p><strong>光量子的核心卖点</strong> (相对 ch20/ch21):</p>
+
+<p>1. <strong>室温操作</strong>——光子<strong>自己</strong>是室温(没有温度概念),无需稀释制冷机。</p>
+<p>2. <strong>长距离传输</strong>——光纤 0.2 dB/km (1550 nm 窗口,电信级),单光子可以传输数十公里而<strong>不</strong>显著衰减。</p>
+<p>3. <strong>高速门</strong>——光子以光速传播,基本"门"操作(分束器)只是 ns 量级。</p>
+<p>4. <strong>天然量子互联网节点</strong> (ch26)——光子是<strong>唯一</strong>能够<strong>长距离</strong>保持相干性的量子比特。</p>
+<p>5. <strong>借用成熟工艺</strong>——硅光子、氮化硅、铌酸锂等<strong>半导体工艺</strong>直接可用。</p>
+
+<h3>22.0.2 历史里程碑 (1994-2024):KLM 定理到 PsiQuantum</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th><th>团队</th><th>意义</th></tr></thead>
+<tbody><tr><td><strong>1994</strong></td><td>光子第一 CNOT 实验</td><td>Kimble, Caltech</td><td>单光子在腔内耦合原子,演示受控门</td></tr><tr><td><strong>2001</strong></td><td><strong>KLM 定理</strong></td><td>Knill, Laflamme, Milburn (LANL)</td><td><strong>线性光学 + 测量 + 后选择 = 通用量子计算</strong> (理论突破)</td></tr><tr><td><strong>2001</strong></td><td>Raussendorf-Briegel 论文</td><td>Briegel (Innsbruck)</td><td><strong>簇态量子计算</strong> (MBQC) 概念提出</td></tr><tr><td><strong>2007</strong></td><td>Aaronson-Arkhipov 论文</td><td>Aaronson (MIT)</td><td><strong>玻色采样</strong>复杂度证明</td></tr><tr><td><strong>2013</strong></td><td>5 光子处理器</td><td>USTC (潘建伟)</td><td>中国第一代光量子计算</td></tr><tr><td><strong>2017</strong></td><td>10 光子玻色采样</td><td>USTC</td><td>中国第二代</td></tr><tr><td><strong>2019</strong></td><td>Xanadu 8 模 "Shoemaker"</td><td>Xanadu (多伦多)</td><td>室温可编程光量子芯片</td></tr><tr><td><strong>2020</strong></td><td><strong>九章 76 光子</strong></td><td><strong>USTC (潘建伟)</strong></td><td><strong>量子优越性</strong> (专门问题, $10^{14}$ 倍加速)</td></tr><tr><td><strong>2021</strong></td><td>PsiQuantum 工厂动工</td><td>PsiQuantum (Bristol)</td><td>10 万平米氮化硅光芯片量产线</td></tr><tr><td><strong>2022</strong></td><td>Borealis 216 模</td><td>Xanadu</td><td><strong>动态可编程</strong> 玻色采样</td></tr><tr><td><strong>2023</strong></td><td>PsiQuantum + 国家电网</td><td>PsiQuantum</td><td>量子电网模拟(行业应用)</td></tr><tr><td><strong>2024</strong></td><td>Aurora 4 比特 + 簇态</td><td>Xanadu</td><td>首颗<strong>通用</strong>光量子芯片 (4 qubit)</td></tr><tr><td><strong>2025</strong></td><td>Quandela + CEA 12 qubit</td><td>Quandela (法国)</td><td>光纤互联 12 qubit</td></tr></tbody></table>
+
+<h3>22.0.3 三个先验(读本章前应知道)</h3>
+
+<p>1. <strong>第二章 (ch02) 的 Dirac 符号</strong>——$\lvert 0\rangle, \lvert 1\rangle$ 是默认</p>
+<p>2. <strong>第七章 (ch07) 的量子门</strong>——CNOT 是<strong>两</strong> qubit 门,光量子实现它<strong>难</strong></p>
+<p>3. <strong>第五章 (ch05) 的测量</strong>——投影测量 + POVM 是光量子计算的<strong>核心</strong>机制</p>
+
+<h3>22.0.4 ch23-24 路线图</h3>
+
+<p>光量子的"难"——<strong>两 qubit 门需要非线性</strong>——是被 <strong>KLM 定理</strong> + <strong>测量诱导 (MBQC)</strong> 解决的。本章讨论:</p>
+<p>- <strong>22.1-22.3</strong>: 光子编码 + 线性光学元件</p>
+<p>- <strong>22.4 KLM 定理</strong>: 概率性通用量子计算</p>
+<p>- <strong>22.5 MBQC / 簇态量子计算</strong>: 测量驱动</p>
+<p>- <strong>22.6 玻色采样</strong>: 量子优越性 (九章/Borealis)</p>
+<p>- <strong>22.7 光子损失 + 容错</strong>: 量子计算最大障碍</p>
+<p>- <strong>22.8-22.9 集成光路 + 里程碑 + 优势劣势</strong></p>
+<p>- <strong>22.10 ch23 拓扑量子计算 + ch24 中性原子</strong> 铺路</p>
+
+<hr>
+
+<h2 id="22-1-光子-qubit-编码-五个自由度">22.1 光子 qubit 编码——五个自由度</h2>
+
+<p>一个光子在<strong>经典</strong>电动力学里有多个独立可观测的物理自由度,每一个都可以被选为 qubit 的载体。本节比较五种主要方案。</p>
+
+<h3>22.1.1 偏振编码 (Polarization)——最简单</h3>
+
+<p>光子偏振的两个<strong>正交</strong>基:</p>
+
+<p>$$\lvert 0\rangle = \lvert H\rangle = \begin{pmatrix}1\\0\end{pmatrix},\quad \lvert 1\rangle = \lvert V\rangle = \begin{pmatrix}0\\1\end{pmatrix}$$</p>
+
+<p><strong>测量</strong>只需 1 个偏振分束器 (PBS) + 2 个单光子探测器。<strong>门</strong>只需<strong>波片</strong> (λ/2, λ/4)。<strong>优势</strong>: 简单、单光子实验成熟;<strong>劣势</strong>: 不能片上集成 (需要自由空间光学)。</p>
+
+<h3>22.1.2 路径编码 (Path)——可集成</h3>
+
+<p>N 条波导 → N 个正交态。N=2 时:</p>
+
+<p>$$\lvert 0\rangle = \text{上波导},\quad \lvert 1\rangle = \text{下波导}$$</p>
+
+<p><strong>优势</strong>: 完全平面集成 (硅光、SiN);<strong>劣势</strong>: N 比特需 $2^N$ 条波导,<strong>资源</strong>指数增长。</p>
+
+<h3>22.1.3 时间 / 频率 / OAM 编码</h3>
+
+<p>- <strong>时间编码 (time bin)</strong>: 早/晚两个时间窗——光纤传输<strong>友好</strong></p>
+<p>- <strong>频率编码 (frequency bin)</strong>: 不同波长——波分复用 (WDM)</p>
+<p>- <strong>轨道角动量 (OAM)</strong>: 螺旋度 $l = 0, 1, 2, \ldots$——理论上<strong>无穷维</strong> Hilbert 空间,但<strong>不可</strong>标准化</p>
+
+<h3>22.1.4 五种编码对比表</h3>
+
+<table class="chapter-table">
+<thead><tr><th>编码</th><th>Hilbert 维</th><th>可集成</th><th>传输友好</th><th>操作简单</th><th>主要应用</th></tr></thead>
+<tbody><tr><td><strong>偏振</strong></td><td>2</td><td>✗</td><td>△</td><td>★★★</td><td>实验演示,玻色采样</td></tr><tr><td><strong>路径</strong></td><td>$2^N$ N 模式</td><td>★★★</td><td>✗</td><td>★★★</td><td>大规模集成,PsiQuantum</td></tr><tr><td><strong>时间</strong></td><td>2</td><td>★</td><td>★★★</td><td>★★</td><td>长距离量子互联网 (ch26)</td></tr><tr><td><strong>频率</strong></td><td>连续</td><td>★★</td><td>★★★</td><td>★</td><td>波分复用</td></tr><tr><td><strong>OAM</strong></td><td>∞</td><td>★</td><td>★★</td><td>★</td><td>高维量子信息(实验)</td></tr></tbody></table>
+
+<h3>22.1.5 单光子源——确定的 vs 概率的</h3>
+
+<p>光量子计算<strong>最大</strong>的工程难题之一是<strong>确定性单光子源</strong>。三类:</p>
+
+<p>1. <strong>弱相干光 (attenuated laser)</strong>: 把激光衰减到平均每脉冲 &lt; 0.1 光子——<strong>最简单</strong>, 但<strong>真空 + 多光子事件</strong> 多</p>
+<p>2. <strong>自发参量下转换 (SPDC)</strong>: 高功率激光打 BBO/KTP 晶体, 概率性产生纠缠光子对——<strong>概率</strong> ~$10^{-6}$</p>
+<p>3. <strong>量子点 (quantum dot)</strong>: InAs/GaAs 异质结, 确定性产生单光子——<strong>最好的</strong>单光子源, 但仍<strong>难</strong></p>
+
+<p><strong>对比</strong>: PsiQuantum + Quandela 押注<strong>确定性</strong>量子点;Xanadu + 九章早期用<strong>概率性</strong> SPDC。</p>
+
+<h3>22.1.6 光子数的"陷阱"——真空与多光子</h3>
+
+<p>即使是<strong>完美</strong>单光子源,实际器件还有以下误差:</p>
+<p>- <strong>真空态</strong> $p_v = $ 几十 % (源没有触发时)</p>
+<p>- <strong>多光子</strong> $p_{2+} = $ 几个 % (源触发时同时出 2 个)</p>
+<p>- <strong>损耗</strong> $p_\text{loss} = $ 几个 % 到几十 % (传输/探测)</p>
+
+<p><strong>结论</strong>: 光量子计算<strong>必须</strong>做光子数分辨测量 (photon-number-resolving detection), 并通过<strong>后选择</strong> (post-selection) 滤掉错误事件。</p>
+
+<hr>
+
+<h2 id="22-2-线性光学元件-分束器-相移器-波导">22.2 线性光学元件——分束器、相移器、波导</h2>
+
+<h3>22.2.1 分束器 (Beam Splitter, BS)</h3>
+
+<p><strong>最简单</strong>的线性元件。50/50 分束器把入射光<strong>一半</strong>反射、一半透射,<strong>矩阵</strong>形式:</p>
+
+<p>$$\hat{U}_{BS} = \frac{1}{\sqrt{2}}\begin{pmatrix}1 &amp; i\\ i &amp; 1\end{pmatrix}$$</p>
+
+<p>这就是<strong>Hadamard 门</strong>在<strong>光学</strong>世界的类比!在路径编码下,BS 把两个模式混合成<strong>(+)和(-)叠加</strong>。注意这是<strong>酉</strong>算符——分束器<strong>不</strong>"破坏"量子信息。</p>
+
+<h3>22.2.2 相移器 (Phase Shifter)</h3>
+
+<p>加一个<strong>相位</strong> $\phi$ 到一根路径上:</p>
+
+<p>$$\hat{U}_\phi = \begin{pmatrix}e^{i\phi} &amp; 0\\ 0 &amp; 1\end{pmatrix}$$</p>
+
+<p>物理上是一段<strong>不同长度</strong>的波导 ($\phi = k n L$, $k$ 波数, $n$ 折射率, $L$ 长度)。</p>
+
+<h3>22.2.3 Mach-Zehnder 干涉仪</h3>
+
+<p><strong>两</strong>个 BS + <strong>两</strong>条路径 + <strong>一</strong>个相移器 $=$ 一个<strong>可调</strong>干涉仪:</p>
+
+<pre><code>
+           ┌─────phase φ─────┐
+   ────────┤                  ├────────
+           └──────────────────┘
+</code></pre>
+
+<p><strong>输出态强度</strong>:</p>
+<p>$$P_0 = \cos^2(\phi/2)$$</p>
+
+<p><strong>结论</strong>: 调整 $\phi$ 即调整输出概率——这是线性光学<strong>通用性</strong>的基础。</p>
+
+<h3>22.2.4 集成光路 (Photonic Integrated Circuit, PIC)</h3>
+
+<p>每一种<strong>半导体工艺</strong>都有优势:</p>
+
+<table class="chapter-table">
+<thead><tr><th>材料</th><th>优势</th><th>主要用户</th></tr></thead>
+<tbody><tr><td><strong>硅光子 (silicon)</strong></td><td>高对比度, CMOS 工艺</td><td>Intel, IBM</td></tr><tr><td><strong>氮化硅 (SiN)</strong></td><td>低损耗 (~0.1 dB/m), 宽波段</td><td><strong>PsiQuantum</strong> (主用)</td></tr><tr><td><strong>铌酸锂 (LiNbO₃)</strong></td><td>电光调制, 高带宽 (&gt;100 GHz)</td><td>HC Photonics, SRICO</td></tr><tr><td><strong>玻璃 (silica)</strong></td><td>超低损耗光纤</td><td>Corning, 电信级</td></tr><tr><td><strong>InP</strong></td><td>单片激光器集成</td><td>Infinera</td></tr></tbody></table>
+
+<p><strong>PsiQuantum</strong> 押注 <strong>SiN</strong>——因为它有<strong>最好的单光子传输损耗</strong> (相比硅光子 ~1 dB/cm)。</p>
+
+<h3>22.2.5 为什么线性光学"算不出"纠缠</h3>
+
+<p><strong>关键事实</strong>: 上面所有 BS、相移器、波导都是<strong>线性</strong> + <strong>酉</strong> 算符。光子从输入端口进来,以<strong>叠加</strong>形式出去(就像 Mach-Zehnder)。<strong>线性光学</strong>自身<strong>无法</strong>产生光子-光子之间的<strong>非线性</strong>纠缠,即:</p>
+
+<p>$$|\psi\rangle_{\text{in}} = |1,1\rangle \xrightarrow{\text{线性}} \alpha|2,0\rangle + \beta|0,2\rangle + \gamma|1,1\rangle$$</p>
+
+<p><strong>没有</strong> $\delta|1,1\rangle\langle 1,1|$-形式的<strong>两光子</strong>相互作用项。换句话说,光子在"自由空间"内<strong>不直接</strong>对话。</p>
+
+<p><strong>历史上</strong>这被认为让"光量子通用计算"<strong>不可能</strong>——直到 2001 的 <strong>KLM 定理</strong> 解决了这个问题(下一节)。</p>
+
+<hr>
+
+<h2 id="22-3-klm-定理-单光子源-测量-后选择-通用量子计算">22.3 KLM 定理——单光子源 + 测量 + 后选择 = 通用量子计算</h2>
+
+<h3>22.3.1 问题:1980 年代认为不可能</h3>
+
+<p>20 世纪 80 年代,一个广为流传的观点:</p>
+
+<blockquote><p>"光子在自由空间中<strong>不直接</strong>相互作用。线性光学网络的<strong>任何</strong>酉变换都不会产生双光子纠缠。因此,<strong>光量子不可能</strong>实现通用量子计算。"</p></blockquote>
+
+<p>这是 Lloyd, Milburn 等人在 1990s 初期的疑虑,也是为什么早期量子计算研究大多<strong>不</strong>押注光子(转向离子阱、超导、核磁共振)。</p>
+
+<h3>22.3.2 KLM 的洞见 (2001)</h3>
+
+<p>Knill、Laflamme、Milburn (KLM 2001) 在 <em>Nature</em> 上发表了一篇"惊世骇俗"的论文:</p>
+
+<blockquote><p>"只需<strong>单光子源</strong> + <strong>线性光学元件</strong> (BS + 相移器 + PBS) + <strong>单光子探测器</strong> + <strong>后选择</strong> = <strong>通用量子计算</strong>。"</p></blockquote>
+
+<p><strong>核心思想</strong>: 即使<strong>单</strong>门操作产生不了纠缠,也可用<strong>两个辅助光子</strong> + <strong>概率性测量</strong> 来产生纠缠。例如:</p>
+
+<p>$$|\psi\rangle_{\text{CNOT}}^{\text{目标}} = \frac{1}{\sqrt{2}}(|0\rangle_c(|00\rangle + |11\rangle)_{\text{out}} + |1\rangle_c(|01\rangle + |10\rangle)_{\text{out}})$$</p>
+
+<p><strong>概率性 CNOT 门</strong>: 输入 2 个数据 qubit + 2 个辅助光子 → <strong>4 个分束器 + 2 个探测器</strong> → <strong>成功概率 1/4</strong> → 后选择<strong>只在</strong>探测器 (D1, D2) <strong>都触发</strong>时, 输出才是 CNOT。</p>
+
+<h3>22.3.3 KLM 的代价——概率性与资源</h3>
+
+<p><strong>KLM 定理</strong>告诉了我们"线性光学 + 测量"能做通用量子计算,<strong>但代价不小</strong>:</p>
+
+<table class="chapter-table">
+<thead><tr><th>项目</th><th>标准量子计算</th><th>KLM 线性光学</th></tr></thead>
+<tbody><tr><td>两 qubit 门</td><td>确定性</td><td><strong>概率性</strong> (1/4 ~ 1/16)</td></tr><tr><td>失败时</td><td>不发生</td><td>输出<strong>无用</strong>态,需 post-selection 丢弃</td></tr><tr><td>物理资源</td><td>1</td><td><strong>多次</strong>重复 + 后选择 ~$1/p_{\text{success}}$</td></tr><tr><td>测量方式</td><td>投影测量</td><td><strong>光子数分辨</strong> + <strong>前馈</strong></td></tr></tbody></table>
+
+<p><strong>结论</strong>: KLM 解决了"理论不可能",但<strong>实际工程上</strong>需要海量<strong>冗余</strong>光子(每个<strong>逻辑</strong>CNOT 需要数十个<strong>物理</strong>光子)。</p>
+
+<h3>22.3.4 后续改进</h3>
+
+<p>- <strong>2004 Nielsen</strong> 用<strong>簇态</strong>MBQC 把 KLM 简化</p>
+<p>- <strong>2005 Browne-Rudolph</strong> 给出<strong>更简单</strong>的方案(只用 <strong>2</strong> 个辅助光子)</p>
+<p>- <strong>2008 玻色采样</strong> 提出——用 KLM 的"光学 + 测量"<strong>但只做</strong> 单一任务**(因玻色采样是专门问题)</p>
+
+<h3>22.3.5 KLM 定理的现代意义</h3>
+
+<p><strong>今天</strong>几乎所有光量子计算原型都"幕后"依赖 KLM 的概率逻辑,<strong>但</strong>通过<strong>架构创新</strong> (MBQC、容错码、冗余设计) 把代价降低到<strong>可工程化</strong>的水平。</p>
+
+<hr>
+
+<h2 id="22-4-测量诱导量子计算-mbqc-簇态-单-qubit-测量">22.4 测量诱导量子计算 (MBQC)——簇态 + 单 qubit 测量</h2>
+
+<h3>22.4.1 一句话架构</h3>
+
+<p><strong>Raussendorf-Briegel 2001</strong>: 预先制备一个<strong>巨</strong>大的<strong>簇态</strong> (cluster state)——一个二维晶格上的<strong>纠缠</strong>资源态——然后对每一列<strong>单 qubit 测量</strong>(自适应,前后有关联),<strong>经典前馈</strong>决定下一列的测量基。结果: <strong>单 qubit 测量 + 经典通信 = 通用量子计算</strong>。</p>
+
+<h3>22.4.2 簇态 (Cluster State) 是什么</h3>
+
+<p>2D 簇态定义:</p>
+
+<p>$$|\text{cluster}\rangle = \prod_{\langle i,j\rangle} CZ_{ij} \, |+\rangle^{\otimes N}$$</p>
+
+<p>- $|+\rangle = (|0\rangle+|1\rangle)/\sqrt{2}$</p>
+<p>- $CZ_{ij}$ = 控制相位门 (ch07) 在相邻 site 之间</p>
+
+<p><strong>结构</strong>: 这是一个<strong>多体纠缠态</strong>,好像"量子数据的母液"。一旦制备好,你就可以<strong>测量</strong>各个 site,测量结果按顺序执行算法。</p>
+
+<h3>22.4.3 单 qubit 测量实现任意单 qubit 门</h3>
+
+<p>测量<strong>单</strong>个 site 在基 $\{\lvert \psi_\theta\rangle, \lvert \psi_\theta^\perp\rangle\}$ 实现了<strong>一层</strong>酉操作,角度 $\theta$ 由经典比特 + 前馈决定。这就是<strong>MBQC 的"测量即门"</strong>思想。</p>
+
+<h3>22.4.4 两 qubit 门:测量第二列特定 site</h3>
+
+<p>两 qubit 门 (CNOT, CZ) <strong>不</strong>需要单独加——通过<strong>两列</strong>site 的特定<strong>测量模式</strong>即可。例如:对第 $i$ 列和第 $j$ 列的特定 site 做<strong>X-基</strong>测量,输出<strong>自动</strong>是 CNOT。</p>
+
+<h3>22.4.5 为什么光子适合 MBQC</h3>
+
+<p><strong>关键洞察</strong>: 单 qubit 测量是<strong>光学</strong>的<strong>强项</strong>——PBS + 探测器<strong>天然</strong>是单光子投影测量器。所以:</p>
+
+<p>1. <strong>簇态制备</strong>: 用 SPDC 或确定性单光子源 + 线性光学网络</p>
+<p>2. <strong>测量</strong>: 单光子探测器 (SNSPD, 效率 &gt;90%, 暗计数 &lt; 10 Hz)</p>
+<p>3. <strong>前馈</strong>: 经典电子学(几 ns 延迟)</p>
+
+<p><strong>代价</strong>: 簇态<strong>大</strong> (N qubit 算法需 $O(N^2)$ 个光子) + <strong>确定性地</strong>产生簇态<strong>难</strong>——仍是工程挑战。</p>
+
+<h3>22.4.6 PsiQuantum 的选择</h3>
+
+<p><strong>PsiQuantum</strong> 公开宣称走 MBQC 路线:</p>
+<p>- <strong>3D 簇态</strong> + <strong>架构容错</strong> (FTQC, ch19)</p>
+<p>- 目标是<strong>百万</strong>物理光子实现<strong>实用</strong>大规模容错量子计算</p>
+<p>- 用 SiN 芯片 + 高速 SNSPD + 经典前馈 FPGA</p>
+
+<h3>22.4.7 MBQC 的真实代价</h3>
+
+<p>MBQC 不是"免费"的光量子计算:</p>
+<p>- <strong>N 个逻辑 qubit 的算法</strong>需要 <strong>$O(N^2)$ 物理光子</strong></p>
+<p>- 每个光子<strong>必须</strong>通过<strong>无损</strong>传输 (损耗 &lt; 1 dB/m)</p>
+<p>- <strong>前馈延迟</strong>限制<strong>测量深度</strong> ~ 100 ns 量级</p>
+<p>- <strong>工程难度极高</strong>,但<strong>理论架构优雅</strong></p>
+
+<hr>
+
+<h2 id="22-5-玻色采样-量子优越性">22.5 玻色采样——量子优越性</h2>
+
+<h3>22.5.1 问题陈述 (Aaronson-Arkhipov, 2010)</h3>
+
+<p><strong>问题</strong>: 给定一个 $M \times M$ 酉矩阵 $U$ (描述线性光网络), 把 $N$ 个<strong>全同光子</strong>输入到 $M \geq N^2$ 个模,采样输出光子分布在哪些模。</p>
+
+<p><strong>输入</strong>: $|\psi_{\text{in}}\rangle = |1_1, 1_2, \ldots, 1_N, 0, \ldots, 0\rangle$ ($N$ 个单光子 in $N$ 个模)</p>
+<p><strong>演化</strong>: $|\psi_{\text{out}}\rangle = U_{\text{linear}} |\psi_{\text{in}}\rangle$</p>
+<p><strong>采样</strong>: 测输出——光子出现在哪些模?</p>
+
+<h3>22.5.2 复杂度论猜想</h3>
+
+<p><strong>结论</strong> (假设两个<strong>未被证明</strong>的猜想):</p>
+
+<table class="chapter-table">
+<thead><tr><th>经典</th><th>量子</th></tr></thead>
+<tbody><tr><td>计算输出分布需要<strong>永久 Pfaffian</strong></td><td>计算输出分布 = 矩阵积和式</td></tr><tr><td>复杂度 $\sim e^{O(N \log N)}$</td><td>复杂度 $\sim O(N \cdot M)$ (多项式)</td></tr><tr><td><strong>实战不可行</strong></td><td><strong>可采样</strong></td></tr></tbody></table>
+
+<p><strong>结论</strong>: 即使<strong>只做这一个</strong>问题,光量子相比经典计算机有<strong>超多项式</strong>加速。这就是<strong>量子优越性</strong>——不需要通用量子计算!</p>
+
+<h3>22.5.3 九章 76 光子 (USTC 2020)</h3>
+
+<p>2020 年 12 月,中国科学技术大学<strong>潘建伟</strong>团队用 <strong>76 个光子</strong>、<strong>100 个模</strong>的高斯玻色采样实现了<strong>量子优越性</strong>:</p>
+
+<p>- <strong>采样任务</strong> $10^{14}$ 倍加速(对比超级计算机)</p>
+<p>- <strong>首次</strong>光子数 &gt; 50 的玻色采样</p>
+<p>- <strong>争议</strong>: 经典<strong>新算法</strong> (pan &amp; zhang 2022) 把加速比降到 $10^8$——但仍<strong>远超</strong>经典</p>
+
+<h3>22.5.4 Borealis 216 模 (Xanadu 2022)</h3>
+
+<p><strong>Xanadu Borealis</strong> 把"高斯玻色采样"升级到<strong>动态可编程</strong> + <strong>216 模</strong>:</p>
+
+<p>- <strong>可调</strong>延迟线 + <strong>可重构</strong>分束器网络</p>
+<p>- 比 2020 九章多<strong>许多</strong>自由度</p>
+<p>- 第一次让玻色采样机<strong>完全</strong>程序化</p>
+
+<h3>22.5.5 玻色采样的局限</h3>
+
+<p>玻色采样<strong>不是</strong>通用计算:</p>
+<p>- ✗ <strong>不能</strong>做 Shor</p>
+<p>- ✗ <strong>不能</strong>做 Grover</p>
+<p>- ✗ <strong>不能</strong>做 VQE/QAOA</p>
+
+<p>玻色采样<strong>只是</strong>展示"量子可以<strong>某些</strong>问题超越经典"——一个<strong>里程碑</strong>,不是<strong>终点</strong>。</p>
+
+<h3>22.5.6 PsiQuantum 100 万光子计划</h3>
+
+<p>PsiQuantum 路线图 (2023 公开发布):</p>
+<p>- <strong>2025-2027</strong>: 数千光子 (中等规模)</p>
+<p>- <strong>2028-2030</strong>: 数十万光子</p>
+<p>- <strong>2030+</strong>: <strong>百万</strong> 光子 (实现<strong>实用</strong> 容错量子计算)</p>
+
+<hr>
+
+<h2 id="22-6-光子损失-光量子计算的最大障碍">22.6 光子损失——光量子计算的最大障碍</h2>
+
+<h3>22.6.1 损失率概览</h3>
+
+<table class="chapter-table">
+<thead><tr><th>介质</th><th>波长</th><th>损失</th><th>备注</th></tr></thead>
+<tbody><tr><td>1550 nm 光纤 (电信)</td><td>1550 nm</td><td>0.2 dB/km</td><td><strong>最优</strong>波段</td></tr><tr><td>1310 nm 光纤</td><td>1310 nm</td><td>0.35 dB/km</td><td>二阶零色散窗口</td></tr><tr><td>800 nm 光纤</td><td>800 nm</td><td>5 dB/km</td><td>不适合长距离</td></tr><tr><td>硅光子芯片</td><td>1550 nm</td><td>1-3 dB/cm</td><td>高对比度但高损耗</td></tr><tr><td><strong>氮化硅芯片</strong></td><td>1550 nm</td><td><strong>0.1 dB/m</strong></td><td><strong>PsiQuantum 主用</strong></td></tr><tr><td>空气</td><td>任何</td><td>~0</td><td>室内短距离</td></tr><tr><td>大气</td><td>任何</td><td>0.1-10 dB/km</td><td>视天气</td></tr></tbody></table>
+
+<h3>22.6.2 损失如何传播</h3>
+
+<p><strong>单光子</strong>(单模) 损失<strong>不</strong>改变态纯度——只是<strong>概率</strong>衰减: $P = (1-L)^N$ ($L$ 损失率)。</p>
+
+<p>但<strong>多</strong>光子(纠缠) 损失<strong>破坏</strong>态——一旦丢失一个光子,纠缠<strong>完全</strong>失效。这就是<strong>为什么</strong>光量子容错<strong>难</strong>:</p>
+
+<h3>22.6.3 损失阈值——光量子专用容错</h3>
+
+<p><strong>经典阈值</strong> (ch18, 表面码): ~1%</p>
+<p><strong>光子专用阈值</strong> (Varnava 2006, Ralph 2007, <strong>Rabin-Folmer 2023</strong>): <strong>~10-30%</strong></p>
+
+<p><strong>理由</strong>: 光子损失<strong>只</strong>"删除" (erasure) 一个 qubit, 而其他错误<strong>旋转</strong> (bit/phase flip)——删除<strong>更</strong>可控。光子专用纠错码 (loss codes) 设计是<strong>删除纠正</strong>——相对更简单。</p>
+
+<h3>22.6.4 光子数分辨探测器 (SNSPD)</h3>
+
+<p><strong>关键</strong>技术:<strong>超导纳米线单光子探测器</strong> (Superconducting Nanowire Single-Photon Detector, SNSPD):</p>
+
+<table class="chapter-table">
+<thead><tr><th>参数</th><th>现代 SNSPD (2024)</th><th>极限</th></tr></thead>
+<tbody><tr><td><strong>探测效率</strong></td><td><strong>&gt;90%</strong></td><td>接近 99%</td></tr><tr><td><strong>暗计数</strong></td><td>&lt; 10 Hz</td><td>&lt; 1 Hz</td></tr><tr><td><strong>时间抖动</strong></td><td>~50 ps</td><td>&lt; 10 ps</td></tr><tr><td><strong>光子数分辨</strong></td><td>4-8 个光子</td><td>数十个</td></tr><tr><td><strong>死时间</strong></td><td>~10 ns</td><td>~1 ns (新材料)</td></tr></tbody></table>
+
+<h3>22.6.5 损失缓解方案</h3>
+
+<p>1. <strong>冗余编码</strong>: 把一个逻辑光子编码到<strong>多个物理光子</strong> (光子损失码)</p>
+<p>2. <strong>架构容错</strong>: MBQC 簇态<strong>天然</strong>对损失有容忍 (2D 簇态 + 删除纠正)</p>
+<p>3. <strong>材料优化</strong>: 从硅光子(1 dB/cm) → SiN (0.1 dB/m) → 超低损耗玻璃</p>
+<p>4. <strong>拓扑光子学</strong>: 用拓扑边缘态传输光子,绕过损失点 (实验早期)</p>
+
+<hr>
+
+<h2 id="22-7-集成光路-从原型到量产">22.7 集成光路——从原型到量产</h2>
+
+<h3>22.7.1 三大关键器件</h3>
+
+<p>每一种光量子芯片都需要<strong>三</strong>个核心器件,缺一不可:</p>
+
+<p>1. <strong>单光子源</strong> — 概率性 SPDC / 确定性量子点</p>
+<p>2. <strong>光路</strong> — 硅光子 / SiN / LiNbO₃ / InP / 玻璃</p>
+<p>3. <strong>单光子探测器</strong> — SNSPD</p>
+
+<p><strong>挑战</strong>: 三个组件要用<strong>不同</strong>材料/工艺, 单片集成<strong>难</strong>——PsiQuantum 选择<strong>异构集成</strong> (不同芯片键合)。</p>
+
+<h3>22.7.2 PsiQuantum Bristol 工厂</h3>
+
+<p><strong>工厂规模</strong>: 10 万平米 (10x 足球场), 是<strong>世界最大</strong>的<strong>量子芯片</strong>量产设施。</p>
+
+<p><strong>关键技术</strong>:</p>
+<p>- <strong>SiN 单光子源</strong> (片上 SPDC 替代)</p>
+<p>- <strong>SiN 光路</strong> (0.1 dB/m)</p>
+<p>- <strong>外部 SNSPD</strong> (低温独立封装)</p>
+<p>- <strong>3D 集成</strong>: 多层 SiN + 微凸点 (micro-bump) 键合</p>
+
+<p><strong>目标产能</strong>: 至 2030 年达到<strong>百万级</strong> qubit 处理。</p>
+
+<h3>22.7.3 牛津 + 帝国理工 vs PsiQuantum 路线对比</h3>
+
+<table class="chapter-table">
+<thead><tr><th>团队</th><th>编码</th><th>量子门方式</th><th>单光子源</th></tr></thead>
+<tbody><tr><td><strong>PsiQuantum</strong> (Bristol)</td><td>路径 (MBQC)</td><td>测量 + 簇态</td><td>量子点</td></tr><tr><td><strong>Xanadu</strong> (多伦多)</td><td>时间 + 路径</td><td>高斯玻色采样</td><td>SPDC</td></tr><tr><td><strong>USTC 九章</strong> (合肥)</td><td>路径</td><td>高斯玻色采样</td><td>SPDC</td></tr><tr><td><strong>Quandela</strong> (巴黎)</td><td>路径</td><td>MBQC + KLM</td><td>量子点</td></tr><tr><td><strong>牛津</strong> (UK)</td><td>路径</td><td>KLM 概率门</td><td>SPDC + 量子点</td></tr></tbody></table>
+
+<h3>22.7.4 可重构光网络</h3>
+
+<p><strong>MEMS 光开关</strong> + <strong>热光相移器</strong> 让网络<strong>动态可重构</strong>:</p>
+
+<pre><code>
+输入端口 ──── 热光相移 ─── BS ─── BS ─── 输出端口
+                            │
+                        热光相移
+                            │
+                            BS
+</code></pre>
+
+<p>通过调整<strong>电压</strong>调整相位 $\phi$,等价于<strong>重新编程</strong>光网络——这是 MBQC 簇态<strong>测量模式</strong>控制的基础。</p>
+
+<hr>
+
+<h2 id="22-8-里程碑系统-2001-2024">22.8 里程碑系统 (2001-2024)</h2>
+
+<h3>22.8.1 USTC 路线 (中国)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>系统</th><th>光子数</th><th>模数</th><th>任务</th></tr></thead>
+<tbody><tr><td>2013</td><td>USTC gen-1</td><td>5</td><td>6</td><td>基本量子算法</td></tr><tr><td>2017</td><td>USTC gen-2</td><td>10</td><td>14</td><td>玻色采样演示</td></tr><tr><td><strong>2020</strong></td><td><strong>九章 (Jiuzhang) 1.0</strong></td><td><strong>76</strong></td><td><strong>100</strong></td><td><strong>量子优越性, $10^{14}$ 倍</strong></td></tr><tr><td>2021</td><td><strong>九章 2.0</strong></td><td>113</td><td>144</td><td>升级版</td></tr><tr><td>2023</td><td><strong>九章 3.0</strong></td><td>255</td><td>-</td><td>新纪录 (与超导祖冲之对标)</td></tr></tbody></table>
+
+<h3>22.8.2 Xanadu 路线 (加拿大)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>系统</th><th>模数</th><th>任务</th></tr></thead>
+<tbody><tr><td>2019</td><td>Shoemaker</td><td>8</td><td>第一颗商用云光量子芯片</td></tr><tr><td>2020</td><td>Borealis (先驱)</td><td>12</td><td>玻色采样</td></tr><tr><td><strong>2022</strong></td><td><strong>Borealis</strong></td><td><strong>216</strong></td><td><strong>可编程玻色采样 (创纪录)</strong></td></tr><tr><td>2024</td><td>Aurora</td><td>4 qubit</td><td><strong>首颗通用光量子芯片 (MBQC 簇态)</strong></td></tr></tbody></table>
+
+<h3>22.8.3 PsiQuantum 路线 (英国/美国)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th></tr></thead>
+<tbody><tr><td>2021</td><td>Bristol 工厂动工</td></tr><tr><td>2023</td><td>国家电网合作 (量子电网模拟)</td></tr><tr><td>2024</td><td>Mercedes-Benz 合作 (电池模拟)</td></tr><tr><td>2026 (计划)</td><td>中等规模(数千 qubit)容错原型</td></tr><tr><td>2030 (计划)</td><td>百万 qubit 实用 FTQC</td></tr></tbody></table>
+
+<h3>22.8.4 Quandela / AQT / 法国路线</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th></tr></thead>
+<tbody><tr><td>2022</td><td>Quandela Perceval 开源平台</td></tr><tr><td>2023</td><td>Quandela + CEA 4 qubit</td></tr><tr><td><strong>2025</strong></td><td><strong>Quandela + CEA 12 qubit 光纤互联</strong></td></tr></tbody></table>
+
+<h3>22.8.5 量子优越性光谱——光量子应用</h3>
+
+<p><strong>光量子</strong>在<strong>专门问题</strong> (玻色采样) 上有<strong>无可争议</strong>的优越性,但<strong>通用</strong>算法上<strong>仍</strong>落后于超导 + 离子阱:</p>
+
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>量子优越性任务</th><th>何时</th><th>加速比</th></tr></thead>
+<tbody><tr><td>超导</td><td><strong>随机线路采样</strong></td><td>2019 Sycamore</td><td>$10^6$</td></tr><tr><td>离子阱</td><td>部分任务</td><td>待演示</td><td>待定</td></tr><tr><td><strong>光量子</strong></td><td><strong>玻色采样</strong></td><td><strong>2020 九章 / 2022 Borealis</strong></td><td><strong>$10^{14}$ / $10^8$</strong></td></tr></tbody></table>
+
+<p><strong>注意</strong>: 不同任务的"加速比"<strong>不可直接比较</strong>——这是领域内的<strong>尚未统一</strong>问题。</p>
+
+<hr>
+
+<h2 id="22-9-优势-劣势与未来">22.9 优势、劣势与未来</h2>
+
+<h3>22.9.1 5 个核心优势</h3>
+
+<p>1. <strong>室温</strong>: 光子是<strong>无温度</strong>的——不需要 10 mK 稀释制冷机——这是<strong>最大</strong>优势</p>
+<p>2. <strong>长程</strong>: 光纤<strong>天然</strong>——几十公里保持相干——ch26 量子互联网核心</p>
+<p>3. <strong>高速</strong>: ns 级门 + 光速传播</p>
+<p>4. <strong>天然量子接口</strong>: 光是<strong>唯一</strong>能连接"远距离节点"的量子载体</p>
+<p>5. <strong>借用成熟工艺</strong>: 硅光子、SiN、LiNbO₃ 等半导体工艺</p>
+
+<h3>22.9.2 5 个核心劣势</h3>
+
+<p>1. <strong>光子不相互作用</strong>: 线性光学<strong>天然</strong>缺乏两光子门——必须用 KLM/MBQC,<strong>概率性</strong></p>
+<p>2. <strong>单光子源难</strong>: 确定性单光子源<strong>仍是</strong>瓶颈 (量子点效率不足)</p>
+<p>3. <strong>探测损耗</strong>: 即使 SNSPD 90%,损失<strong>累积</strong>在数十光子的算法中</p>
+<p>4. <strong>后选择</strong>: 失败的事件<strong>浪费</strong>——资源开销大</p>
+<p>5. <strong>规模化难</strong>: 大规模簇态 = 大规模纠缠资源——超出当前<strong>任何</strong>平台的能力</p>
+
+<h3>22.9.3 5 平台完整对比表 (12 维度)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>超导 (ch20)</th><th>离子阱 (ch21)</th><th>光量子 (ch22)</th><th>拓扑 (ch23)</th><th>中性原子 (ch24)</th></tr></thead>
+<tbody><tr><td><strong>物理</strong></td><td>Josephson 结</td><td>电磁囚禁</td><td>单光子</td><td>Majorana</td><td>光镊 + Rydberg</td></tr><tr><td><strong>规模 (2024)</strong></td><td>1000+</td><td>56</td><td>100-1000 光子</td><td>8</td><td>100-1180</td></tr><tr><td><strong>门速度</strong></td><td>10-100 ns</td><td>1-10 μs</td><td>ns</td><td>ns (预期)</td><td>100 ns-1 μs</td></tr><tr><td><strong>门保真度</strong></td><td>99.5-99.9%</td><td><strong>99.99%</strong></td><td>99%</td><td>99% (预期)</td><td>99.5%</td></tr><tr><td><strong>T1</strong></td><td>100 μs</td><td><strong>秒-小时</strong></td><td><strong>N/A</strong> (光子飞行)</td><td>长 (拓扑)</td><td>秒</td></tr><tr><td><strong>连接</strong></td><td>2D / heavy-hex</td><td><strong>全连接</strong></td><td>概率 / 簇态</td><td>局部</td><td>可重排</td></tr><tr><td><strong>操控</strong></td><td>微波</td><td>激光/微波</td><td>线性光学</td><td>微波 + 编织</td><td>激光</td></tr><tr><td><strong>温度</strong></td><td>10 mK</td><td>室温 (阱) + 真空</td><td><strong>室温</strong></td><td>10 mK</td><td>室温 (原子) + 激光冷</td></tr><tr><td><strong>代表公司</strong></td><td>IBM, Google</td><td>IonQ, Quantinuum</td><td>PsiQuantum, Xanadu</td><td>Microsoft</td><td>QuEra, Pasqal, Atom Computing</td></tr><tr><td><strong>当前里程碑</strong></td><td>Willow 105 跨阈值</td><td>H3 56 ion 99.99%</td><td>九章/Borealis 玻色采样</td><td>Majorana 1 8 qubit</td><td>Aquila 256 / Atom 1180</td></tr><tr><td><strong>量子优越性</strong></td><td>2019 Sycamore</td><td>未演示</td><td><strong>2020 九章</strong></td><td>未演示</td><td>2024 Aquila</td></tr><tr><td><strong>容错前景</strong></td><td>良好 (表面码)</td><td><strong>优秀</strong> (逻辑 qubit)</td><td>良好</td><td><strong>理论完美</strong></td><td>良好</td></tr></tbody></table>
+
+<h3>22.9.4 5 任务 vs 最优平台 (跟 ch21 比)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>任务</th><th>最优平台</th><th>原因</th></tr></thead>
+<tbody><tr><td><strong>大数因式分解 (Shor, ch11)</strong></td><td>超导</td><td>大规模 + 高保真</td></tr><tr><td><strong>量子化学模拟 (VQE, ch13)</strong></td><td>离子阱</td><td>高保真 + 长相干</td></tr><tr><td><strong>量子机器学习 (ch14)</strong></td><td>超导</td><td>大规模并行</td></tr><tr><td><strong>玻色采样</strong></td><td><strong>光量子 (ch22)</strong></td><td><strong>天然</strong> (光子实验就是采样)</td></tr><tr><td><strong>量子模拟 (Ising, Hubbard)</strong></td><td>中性原子 (ch24)</td><td>大规模可调耦合</td></tr><tr><td><strong>量子互联网节点 (ch26)</strong></td><td><strong>光量子 (ch22) + 离子阱</strong></td><td><strong>长程传输 + 长 T1</strong></td></tr><tr><td><strong>室温量子计算</strong></td><td><strong>光量子 (ch22)</strong></td><td><strong>唯一不需要制冷</strong></td></tr></tbody></table>
+
+<p><strong>关键</strong>: <strong>没有</strong>单一平台<strong>通吃</strong>。<strong>异构</strong>量子计算是未来——光量子在<strong>室温 + 量子互联网</strong> 上<strong>不可替代</strong>。</p>
+
+<h3>22.9.5 未来 5 个方向</h3>
+
+<p>1. <strong>确定性单光子源</strong> (量子点 + 异质结) —— 大幅提高"源效率"</p>
+<p>2. <strong>超低损耗材料</strong> (SiN 0.1 dB/m 已经实现, 0.01 dB/m 是未来目标)</p>
+<p>3. <strong>大规模簇态制备</strong> (光子-光子确定性门仍是开放问题)</p>
+<p>4. <strong>光子-物质混合架构</strong> (用离子阱/中性原子做"节点",光子做"导线")—— ch26 量子互联网</p>
+<p>5. <strong>测量诱导 (MBQC) + 容错码</strong>—— PsiQuantum 押注的核心路径</p>
+
+<hr>
+
+<h2 id="22-10-ch23-24-铺路-总结">22.10 ch23-24 铺路 + 总结</h2>
+
+<h3>22.10.1 ch23 拓扑量子计算 — 为什么不用纠错?</h3>
+
+<p>光量子的"损失码"是<strong>删除纠正</strong>——比<strong>旋转错误</strong>更容易。<strong>拓扑量子计算</strong>走得更远:把量子信息<strong>编码在拓扑不变量</strong>中——局部错误<strong>不能</strong>改变拓扑性质,这<strong>本质上</strong>就<strong>不要纠错码</strong>。<strong>Microsoft</strong> 押注 Majorana 费米子 + 编织的拓扑量子计算,2024 年发布了 <strong>Majorana 1</strong> 8 qubit 原型芯片。</p>
+
+<p><strong>衔接 ch23</strong>: Topological quantum computing 详解 Majorana 模 + 编织 + 拓扑保护 + Microsoft 路线图。</p>
+
+<h3>22.10.2 ch24 中性原子量子计算机 — 光镊 + Rydberg</h3>
+
+<p>中性原子 (⁸⁷Rb, ⁸⁵Rb, Sr 等) 用光镊<strong>单原子</strong>囚禁,Rydberg 阻塞实现<strong>长程</strong>两 qubit 门。<strong>Aquila</strong> (QuEra) 256 原子、<strong>Atom Computing</strong> 1180 原子是当前最大。<strong>优势</strong>: 室温原子 + <strong>可重排</strong> 光镊 + Rydberg 长程。</p>
+
+<p><strong>衔接 ch24</strong>: 中性原子量子计算机 + Aquila + Atom + Pasqal + Rydberg + 可重排。</p>
+
+<h3>22.10.3 概念速查表</h3>
+
+<table class="chapter-table">
+<thead><tr><th>概念</th><th>定义/公式</th><th>物理意义</th></tr></thead>
+<tbody><tr><td><strong>分束器 (BS)</strong></td><td>$U_{BS} = \frac{1}{\sqrt{2}}\begin{pmatrix}1 &amp; i\\ i &amp; 1\end{pmatrix}$</td><td>线性光学的"基本门"</td></tr><tr><td><strong>相移器</strong></td><td>$U_\phi = \begin{pmatrix}e^{i\phi} &amp; 0\\ 0 &amp; 1\end{pmatrix}$</td><td>控制光学相位</td></tr><tr><td><strong>Mach-Zehnder 干涉仪</strong></td><td>两 BS + 相移 → $P_0 = \cos^2(\phi/2)$</td><td>基础干涉测量</td></tr><tr><td><strong>偏振 qubit</strong></td><td>$\lvert 0\rangle = \lvert H\rangle, \lvert 1\rangle = \lvert V\rangle$</td><td>最简单的单光子 qubit</td></tr><tr><td><strong>路径 qubit</strong></td><td>$\lvert 0\rangle = $ 上波导, $\lvert 1\rangle = $ 下波导</td><td>可集成</td></tr><tr><td><strong>单光子源</strong></td><td>衰减激光 / SPDC / 量子点</td><td>概率 → 确定性</td></tr><tr><td><strong>SNSPD</strong></td><td>超导纳米线 + 4 K</td><td>探测效率 &gt;90%</td></tr><tr><td><strong>KLM 定理</strong></td><td>线性 + 测量 + 后选择 = 通用 QC</td><td>2001 突破</td></tr><tr><td><strong>MBQC (测量诱导)</strong></td><td>簇态 + 单 qubit 测量 + 前馈</td><td>Raussendorf-Briegel 2001</td></tr><tr><td><strong>玻色采样</strong></td><td>N 光子 → M 模 → 采样输出</td><td>Aaronson-Arkhipov 2010</td></tr><tr><td><strong>九章</strong></td><td>76 光子 / 100 模 / $10^{14}$ 倍</td><td>2020 量子优越性</td></tr><tr><td><strong>Borealis</strong></td><td>216 模动态可编程</td><td>Xanadu 2022</td></tr><tr><td><strong>光子损失码</strong></td><td>删除纠正 (erasure correction)</td><td>比表面码"更宽容" (10-30% 阈值)</td></tr><tr><td><strong>SiN 光子芯片</strong></td><td>氮化硅, 0.1 dB/m 损耗</td><td>PsiQuantum 主用</td></tr><tr><td><strong>超低损耗窗口</strong></td><td>1550 nm 光纤 0.2 dB/km</td><td>电信级</td></tr><tr><td><strong>光子数分辨</strong></td><td>探测器能区分 0/1/2/... 光子</td><td>后选择关键</td></tr><tr><td><strong>量子点单光子源</strong></td><td>InAs/GaAs 异质结</td><td>确定性源</td></tr><tr><td><strong>PsiQuantum</strong></td><td>SiN + MBQC + 容错</td><td>百万 qubit 路线图</td></tr><tr><td><strong>Xanadu</strong></td><td>时间 + 路径 + 玻色采样</td><td>商用云光量子</td></tr></tbody></table>
+
+<h3>22.10.4 4 个关键人物</h3>
+
+<p>1. <strong>Jeffrey Shaw</strong> (Knill <strong>正确</strong>: Emanuel Knill, LANL)——KLM 定理第一作者,光量子"理论可行"的转折点</p>
+<p>2. <strong>Scott Aaronson</strong> (MIT)——玻色采样 + 复杂度论的旗手</p>
+<p>3. <strong>潘建伟 (USTC)</strong>——九章 76 光子的实验领导者,中国光量子的灵魂人物</p>
+<p>4. <strong>Jeremy O'Brien</strong> (PsiQuantum CEO)——MBQC 路线的工业先驱</p>
+
+<h3>22.10.5 思考题</h3>
+
+<p><strong>A1 (KLM 概率门)</strong>: KLM 概率性 CNOT 门的成功概率是 1/4。如果<strong>实际</strong>用 KLM 实现一个<strong>8 qubit 算法</strong>需要 <strong>40 个 CNOT</strong>,平均需要多少次<strong>重复</strong>才能全部成功?</p>
+
+<p><strong>答案</strong>: $p = (1/4)^{40} \approx 10^{-24}$。<strong>期望</strong>次数 $1/p \approx 10^{24}$ 次——<strong>天文数字</strong>。<strong>结论</strong>: 纯 KLM <strong>不可</strong>直接使用;MBQC + 容错码是必要的工程优化。</p>
+
+<p><strong>A2 (SiN vs 硅光子损耗)</strong>: SiN 是 0.1 dB/m,硅光子是 1-3 dB/cm。<strong>10 cm 距离</strong> SiN 损失多少 dB?硅光子损失多少 dB?</p>
+
+<p><strong>答案</strong>:</p>
+<p>- SiN: $0.1 \times 0.1 = 0.01$ dB (几乎无损耗)</p>
+<p>- 硅光子: $1\text{ dB/cm} \times 10\text{ cm} = 10$ dB (即损耗功率的 90%)</p>
+
+<p><strong>结论</strong>: 长路径集成<strong>必须</strong>用 SiN,这正是 PsiQuantum 的选择。</p>
+
+<p><strong>A3 (玻色采样 vs 通用算法)</strong>: 玻色采样<strong>只是采样</strong>(不是函数计算)。理论上,任何<strong>特定</strong>函数计算只要被编码成玻色采样问题,也能用光量子加速——<strong>但是</strong>这种编码通常<strong>不</strong>自然。请用一句话解释为什么玻色采样<strong>不能</strong>直接做 Shor 算法?</p>
+
+<p><strong>答案</strong>: Shor 算法需要<strong>量子傅里叶变换</strong> (ch09) 和<strong>大量</strong>条件逻辑门,<strong>无法</strong>简单编码成"高斯玻色采样"问题。光量子<strong>仍</strong>需要做通用量子计算,MBQC + 容错码是必经之路。</p>
+
+<p><strong>A4 (光子 T1 的"概念错误"修正)</strong>: ch21 表格 21.9.4 中,光子的 T1 列从"长 (光子不衰)"修正为"N/A (光子飞行, 不存储)"。请解释:(a) 为什么光子<strong>没有</strong> T1?(b) 光子的"损耗"是<strong>什么</strong>物理过程?(c) 用 Xanadu Borealis 的 216 模举例,每个模如果损耗 5%,输出<strong>正确</strong>采样的概率是多少?</p>
+
+<p><strong>答案</strong>:</p>
+<p>(a) <strong>T1</strong> 是<strong>能级寿命</strong> (ch05):高能态自然衰减时间。光子<strong>根本不会</strong>"留在能级"——它<strong>飞行</strong>出去就走了。</p>
+<p>(b) 光子"损耗"包括:<strong>吸收</strong> (被介质吸收入热) + <strong>散射</strong> (瑞利/拉曼散射) + <strong>探测失败</strong> (SNSPD 暗计数/效率&lt;100%)。</p>
+<p>(c) 216 模<strong>每模</strong> 5% 损耗 → <strong>每光子</strong> 5% 概率丢失 → 200+ 光子的多光子态 → 几乎<strong>全部事件</strong>至少丢失 1 个光子 ≈ 1.0(几乎所有输出<strong>不</strong>有效)。<strong>结论</strong>: 损耗是<strong>累积</strong>的——这就是为什么<strong>低损耗</strong>材料 (SiN, 0.1 dB/m) 是 PsiQuantum 的核心选择。</p>
+
+<h3>22.10.6 推荐阅读 (12 篇,2001-2024)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>文献</th><th>主题</th></tr></thead>
+<tbody><tr><td><strong>2001</strong></td><td><strong>Knill-Laflamme-Milburn, <em>Nature</em> 409, 46</strong></td><td><strong>KLM 定理</strong> (光量子通用性的奠基)</td></tr><tr><td><strong>2001</strong></td><td><strong>Raussendorf-Briegel, <em>PRL</em> 86, 5188</strong></td><td><strong>MBQC / 簇态量子计算</strong></td></tr><tr><td>2005</td><td>Browne-Rudolph, <em>PRL</em> 95, 010501</td><td>KLM 简化 (2 辅助光子 CNOT)</td></tr><tr><td><strong>2007</strong></td><td><strong>Aaronson-Arkhipov, <em>Theory of Computing</em> 9, 143</strong></td><td><strong>玻色采样复杂度论</strong></td></tr><tr><td>2010</td><td>O'Brien 等, <em>Nature Photonics</em> 3, 687</td><td>光量子计算综述 (Bristol 团队)</td></tr><tr><td>2017</td><td>Wang et al. (USTC), <em>PRL</em> 119, 161137</td><td>10 光子玻色采样</td></tr><tr><td>2020</td><td>Pan et al. (USTC), <em>Science</em> 370, 1460</td><td><strong>九章 76 光子量子优越性</strong></td></tr><tr><td>2021</td><td>PsiQuantum 路线图</td><td>百万 qubit 工厂</td></tr><tr><td><strong>2022</strong></td><td><strong>Xanadu, <em>Nature</em> 606, 75</strong></td><td><strong>Borealis 216 模可编程玻色采样</strong></td></tr><tr><td>2023</td><td>Madsen et al., <em>Nature</em> 606, 94</td><td>同一期:九章 vs Borealis 对比</td></tr><tr><td>2023</td><td>PsiQuantum 与国家电网合作</td><td>量子行业应用</td></tr><tr><td><strong>2024</strong></td><td><strong>Xanadu Aurora, arXiv:2403.13067</strong></td><td><strong>首颗通用光量子芯片 (4 qubit MBQC)</strong></td></tr></tbody></table>
+
+<h3>22.10.7 第五部分 3/5 章总结</h3>
+
+<p>光量子是<strong>唯一</strong>不需要稀释制冷机的量子计算平台——它的<strong>室温</strong>特性、长距离传输 + 高速 + 天然量子接口让它在<strong>专用问题</strong> (玻色采样) 和<strong>量子互联网</strong> (ch26) 上<strong>不可替代</strong>。但它的<strong>通用</strong>计算能力<strong>仍</strong>落后于超导和离子阱——MBQC + 容错码是必经之路。<strong>下一章 ch23 拓扑量子计算</strong> 走得更远——把量子信息编码到拓扑不变量,<strong>物理</strong>层面就<strong>不要纠错</strong>。</p>
+
+<hr>
+
+<h2 id="22-a-附录-a-klm-定理的严格陈述">22.A 附录 A:KLM 定理的严格陈述</h2>
+
+<h3>22.A.1 定理陈述</h3>
+
+<blockquote><p><strong>Knill-Laflamme-Milburn (2001) 定理</strong>: 设 $\mathcal{H} = \mathcal{H}_{\	ext{data}} \otimes \mathcal{H}_{\	ext{ancilla}}$,由数据光子 (任意多模) 和 $M$ 个<strong>单光子</strong>辅助模组成。给定:</p></blockquote>
+<blockquote><p>1. 一个<strong>单光子源</strong> (确定性)</p></blockquote>
+<blockquote><p>2. <strong>被动</strong>线性光学网络 (BS + PBS + 相移器)</p></blockquote>
+<blockquote><p>3. <strong>单光子数分辨探测器</strong></p></blockquote>
+<blockquote><p>4. <strong>经典前馈</strong> (测量结果决定下一步操作)</p></blockquote>
+<blockquote><p></p></blockquote>
+<blockquote><p>则对于<strong>任意</strong>输入态和<strong>任意</strong>目标酉变换 $U$,存在一个<strong>概率性</strong>协议,使得<strong>期望</strong>经过 $O(f(n))$ 步实现 $U$ 的<strong>近似</strong>(以高概率),其中 $n$ 是 qubit 数,$f(n)$ 是多项式。</p></blockquote>
+
+<h3>22.A.2 KLM 概率 CNOT 门电路图</h3>
+
+<pre><code>
+┌────────────────────────────────────┐
+│  α|0_c⟩ + β|1_c⟩  ─┐  ┌─ α|0_c⟩(α|0_t⟩ + β|1_t⟩) + β|1_c⟩(α|0_t⟩ - β|1_t⟩) +
+│  γ|0_t⟩ + δ|1_t⟩  ─┤  ├─  (α|0_t⟩ + β|1_t⟩)  ──────  BS  ───── α|0_c⟩(α|0_t⟩ + β|1_t⟩) + β|1_c⟩(α|1_t⟩ + β|0_t⟩) │
+│                    ─┘  └─                                                       │
+│  |0_a⟩  ─┐                                                                    │
+│           ├── BS ── D_a ── 测量基 {0,1} (光子数 0 = 失败,1 = 成功)                │
+│  |0_a⟩  ─┘                                                                    │
+└────────────────────────────────────┘
+</code></pre>
+
+<p><strong>关键</strong>: 辅助光子 + 探测器提供<strong>非线性</strong>——测量<strong>带来</strong>坍缩 (ch05),从而<strong>间接</strong>实现两光子纠缠。</p>
+
+<h3>22.A.3 KLM 简化与改进</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>改进</th><th>关键技术</th></tr></thead>
+<tbody><tr><td><strong>2005 Browne-Rudolph</strong></td><td>简化为 2 个辅助光子</td><td>概率门 (1/4)</td></tr><tr><td><strong>2007 编码 KLM</strong></td><td>嵌套 KLM, 失败概率 $&lt; 10^{-4}$</td><td>容错 + 多层冗余</td></tr><tr><td><strong>2010 O'Brien et al.</strong></td><td>第一<strong>确定性 KLM 实验</strong></td><td>PSPD (光子数分辨)</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="22-b-附录-b-玻色采样复杂度论证明-sketch">22.B 附录 B:玻色采样复杂度论证明 (Sketch)</h2>
+
+<h3>22.B.1 问题严格化</h3>
+
+<p><strong>输入</strong>: $N$ 光子 in $N$ 模, $M = O(N^2)$ 模的<strong>全连接</strong>线性网络 $U \in \mathbb{U}(M)$。</p>
+
+<p><strong>演化</strong>: 输出态</p>
+
+<p>$$|\psi_{\text{out}}\rangle = \frac{1}{\sqrt{N! \cdot \mathcal{S}}} \, U \, a_1^\dagger a_2^\dagger \cdots a_N^\dagger \, |\text{vac}\rangle$$</p>
+
+<p>其中 $\mathcal{S}$ 是<strong>反对称化算符</strong>(确保 $N$ 个<strong>全同</strong>玻色子的正确波函数)。</p>
+
+<p><strong>采样</strong>: 测输出态(光子出现在哪些模),$X = (x_1, x_2, \ldots, x_M)$,其中 $\sum x_i = N$, $x_i \in \{0,1\}$。</p>
+
+<h3>22.B.2 复杂度猜想</h3>
+
+<p><strong>猜想 1 (永久近似)</strong>: 在 worst case 下,矩阵积和式 (matrix permanent) <strong>不能</strong>在多项式时间内被经典计算机<strong>精确</strong>计算,只能<strong>近似</strong>到 $n^{-O(1)}$ 误差。</p>
+
+<p><strong>猜想 2 (反采样)</strong>: 给定输出 $X$,不能经典高效采样到 $\Pr[X]$ <strong>本身</strong>——只能采样到分布的<strong>近似</strong>。</p>
+
+<p>由猜想 1 + 2,<strong>经典</strong>采样复杂度是 $\sim e^{O(N \log N)}$,而<strong>量子</strong>采样是 $O(N \cdot M)$。</p>
+
+<h3>22.B.3 实证:九章 vs 经典</h3>
+
+<table class="chapter-table">
+<thead><tr><th>系统</th><th>光子数</th><th>模数</th><th>经典 (Sunway)</th><th>量子</th><th>加速比</th></tr></thead>
+<tbody><tr><td>九章 1.0</td><td>76</td><td>100</td><td>$10^{14}$ 秒</td><td>几十秒</td><td>$10^{13}$</td></tr><tr><td>九章 2.0</td><td>113</td><td>144</td><td>$10^{23}$ 秒</td><td>几十秒</td><td>$10^{22}$</td></tr><tr><td>Borealis</td><td>216 模</td><td>216</td><td>数小时</td><td>数十秒</td><td>$10^9$</td></tr></tbody></table>
+
+<p><strong>注</strong>: 这些加速比<strong>仍</strong>在被理论挑战 (pan &amp; zhang 2022)——但即使是<strong>最坏</strong>估算,量子也<strong>显著</strong>超过经典。</p>
+
+<hr>
+
+<h2 id="22-c-附录-c-光子损失码-loss-code-rabin-folmer-阈值">22.C 附录 C:光子损失码 (Loss Code) + Rabin-Folmer 阈值</h2>
+
+<h3>22.C.1 损失码定义</h3>
+
+<p>损失码 (loss code, Ralph 2007) 把<strong>一</strong>个逻辑光子编码到 $N$ 个物理光子:</p>
+
+<p>$$|\overline{0}\rangle_L = |\underbrace{111\cdots 1}_{N}\rangle,\quad |\overline{1}\rangle_L = |\underbrace{000\cdots 0}_{N}\rangle + |\underbrace{111\cdots 1}_{N}\rangle$$</p>
+
+<p>这样,<strong>最多</strong> $t = (N-1)/2$ 个光子丢失<strong>仍</strong>可恢复。</p>
+
+<h3>22.C.2 Rabin-Folmer 阈值 (2023)</h3>
+
+<blockquote><p><strong>Rabin-Folmer 2023 定理</strong>: 光子损失<strong>容错</strong>阈值是 $1 - \sqrt{1 - p_{\text{th}}} \approx 27\%$,只要<strong>结构化</strong>损失码 (concatenated loss code) 可用。</p></blockquote>
+
+<p>实际工程上,PsiQuantum 目标是<strong>$5\text{-}10\%$</strong> 单光子损失率——<strong>远超</strong>阈值,<strong>工程上可行</strong>。</p>
+
+<h3>22.C.3 损失码 vs 表面码对比</h3>
+
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>表面码 (ch18)</th><th>损失码 (ch22)</th></tr></thead>
+<tbody><tr><td><strong>错误类型</strong></td><td>旋转 (X, Y, Z)</td><td>删除 (erasure)</td></tr><tr><td><strong>阈值</strong></td><td>~1%</td><td><strong>~10-30%</strong></td></tr><tr><td><strong>物理资源</strong></td><td>1000+ 物理 / 逻辑</td><td>10-100 物理 / 逻辑</td></tr><tr><td><strong>探测需求</strong></td><td>标准</td><td>光子数分辨</td></tr><tr><td><strong>应用平台</strong></td><td>超导,离子阱</td><td><strong>仅光量子</strong></td></tr></tbody></table>
+
+<h3>22.C.4 拓扑光学的未来方向</h3>
+
+<p><strong>拓扑光子学</strong> (topological photonics) 是<strong>最前沿</strong>研究——用光子的<strong>拓扑边缘态</strong>传输可绕开<strong>局部</strong>缺陷,但<strong>工程难度极大</strong>,处于<strong>纯研究</strong>阶段。</p>
+
+<h3>图 22.1: Mach-Zehnder 干涉仪</h3>
+<svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mach-Zehnder 干涉仪">
+<rect width="600" height="280" fill="#0a0e27" rx="12"/>
+<text x="300" y="30" fill="#7df9ff" font-size="18" text-anchor="middle" font-weight="600">Mach-Zehnder 干涉仪</text>
+<text x="300" y="50" fill="#a3b8d4" font-size="12" text-anchor="middle">BS₁ + 相移器 + BS₂ = 单 qubit 通用门</text>
+<text x="20" y="128" fill="#a3b8d4" font-size="13">入射</text>
+<text x="20" y="148" fill="#ffb86c" font-size="12">|1⟩</text>
+<line x1="60" y1="140" x2="540" y2="140" stroke="#7df9ff" stroke-width="2"/>
+<line x1="200" y1="80" x2="200" y2="200" stroke="#ffb86c" stroke-width="2"/>
+<text x="200" y="220" fill="#ffb86c" font-size="13" text-anchor="middle">BS₁</text>
+<rect x="240" y="60" width="120" height="40" fill="#1f2a4a" stroke="#7df9ff" stroke-width="1.5" rx="6"/>
+<text x="300" y="85" fill="#7df9ff" font-size="14" text-anchor="middle">相移 φ</text>
+<line x1="200" y1="140" x2="200" y2="80" stroke="#7df9ff" stroke-width="2"/>
+<line x1="200" y1="80" x2="240" y2="80" stroke="#7df9ff" stroke-width="2"/>
+<line x1="360" y1="80" x2="400" y2="80" stroke="#7df9ff" stroke-width="2"/>
+<line x1="400" y1="80" x2="400" y2="140" stroke="#7df9ff" stroke-width="2"/>
+<line x1="400" y1="80" x2="540" y2="200" stroke="#ffb86c" stroke-width="2"/>
+<line x1="400" y1="200" x2="540" y2="80" stroke="#ffb86c" stroke-width="2"/>
+<text x="470" y="220" fill="#ffb86c" font-size="13" text-anchor="middle">BS₂</text>
+<circle cx="555" cy="80" r="6" fill="#10b981"/>
+<circle cx="555" cy="200" r="6" fill="#10b981"/>
+<text x="540" y="76" fill="#10b981" font-size="11">D₀</text>
+<text x="540" y="220" fill="#10b981" font-size="11">D₁</text>
+<text x="300" y="262" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">P₀ = cos²(φ/2) — 调整相位即调整探测概率</text>
+</svg>
+
+<h3>图 22.2: KLM 概率性 CNOT 门电路</h3>
+<svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="KLM 概率性 CNOT 门电路">
+<rect width="600" height="320" fill="#0a0e27" rx="12"/>
+<text x="300" y="25" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">KLM 概率性 CNOT 门 (Knill-Laflamme-Milburn 2001)</text>
+<text x="300" y="45" fill="#a3b8d4" font-size="12" text-anchor="middle">2 数据 qubit + 2 辅助 → 2 BS + 2 探测器 → 成功概率 1/4</text>
+<line x1="40" y1="100" x2="560" y2="100" stroke="#ffb86c" stroke-width="2.5"/>
+<text x="20" y="95" fill="#ffb86c" font-size="13">c</text>
+<text x="60" y="92" fill="#a3b8d4" font-size="12">α|0⟩+β|1⟩</text>
+<line x1="40" y1="160" x2="560" y2="160" stroke="#ffb86c" stroke-width="2.5"/>
+<text x="20" y="155" fill="#ffb86c" font-size="13">t</text>
+<text x="60" y="152" fill="#a3b8d4" font-size="12">γ|0⟩+δ|1⟩</text>
+<line x1="40" y1="220" x2="280" y2="220" stroke="#a3b8d4" stroke-width="2"/>
+<text x="20" y="215" fill="#a3b8d4" font-size="13">a₁</text>
+<text x="60" y="212" fill="#a3b8d4" font-size="12">|0⟩</text>
+<line x1="40" y1="270" x2="280" y2="270" stroke="#a3b8d4" stroke-width="2"/>
+<text x="20" y="265" fill="#a3b8d4" font-size="13">a₂</text>
+<text x="60" y="262" fill="#a3b8d4" font-size="12">|0⟩</text>
+<line x1="200" y1="100" x2="200" y2="220" stroke="#7df9ff" stroke-width="2"/>
+<text x="200" y="240" fill="#7df9ff" font-size="13" text-anchor="middle">BS₁</text>
+<line x1="280" y1="160" x2="280" y2="270" stroke="#7df9ff" stroke-width="2"/>
+<text x="280" y="290" fill="#7df9ff" font-size="13" text-anchor="middle">BS₂</text>
+<circle cx="380" cy="100" r="10" fill="#10b981"/>
+<text x="380" y="85" fill="#10b981" font-size="13" text-anchor="middle">D_a₁</text>
+<circle cx="380" cy="220" r="10" fill="#10b981"/>
+<text x="380" y="240" fill="#10b981" font-size="13" text-anchor="middle">D_a₂</text>
+<line x1="450" y1="160" x2="560" y2="160" stroke="#ffb86c" stroke-width="2.5"/>
+<text x="500" y="152" fill="#ffb86c" font-size="12" text-anchor="middle">CNOT 输出</text>
+<text x="300" y="310" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">D_a₁ + D_a₂ 同时触发 = CNOT 成功 (概率 1/4)</text>
+</svg>
+
+<h3>图 22.3: 玻色采样装置 (Boson Sampling)</h3>
+<svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="玻色采样装置">
+<rect width="600" height="280" fill="#0a0e27" rx="12"/>
+<text x="300" y="25" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">玻色采样装置 (Aaronson-Arkhipov 2010)</text>
+<text x="300" y="45" fill="#a3b8d4" font-size="12" text-anchor="middle">N 光子 → M 模线性网络 (M~N²) → 输出分布采样</text>
+<text x="80" y="125" fill="#ffb86c" font-size="13" text-anchor="middle">输入</text>
+<text x="80" y="143" fill="#ffb86c" font-size="12" text-anchor="middle">|1⟩⊗N</text>
+<line x1="100" y1="100" x2="100" y2="220" stroke="#ffb86c" stroke-width="2"/>
+<line x1="130" y1="100" x2="130" y2="220" stroke="#ffb86c" stroke-width="2"/>
+<line x1="100" y1="120" x2="160" y2="120" stroke="#7df9ff" stroke-width="2"/>
+<line x1="100" y1="145" x2="160" y2="145" stroke="#7df9ff" stroke-width="2"/>
+<line x1="100" y1="170" x2="160" y2="170" stroke="#7df9ff" stroke-width="2"/>
+<rect x="180" y="90" width="100" height="120" fill="#1f2a4a" stroke="#7df9ff" stroke-width="2" rx="8"/>
+<text x="230" y="125" fill="#7df9ff" font-size="22" text-anchor="middle" font-weight="700">U</text>
+<text x="230" y="155" fill="#a3b8d4" font-size="11" text-anchor="middle">线性光网络</text>
+<text x="230" y="172" fill="#a3b8d4" font-size="11" text-anchor="middle">M×M 酉矩阵</text>
+<line x1="280" y1="100" x2="350" y2="100" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="115" x2="350" y2="115" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="130" x2="350" y2="130" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="145" x2="350" y2="145" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="160" x2="350" y2="160" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="175" x2="350" y2="175" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="190" x2="350" y2="190" stroke="#ffb86c" stroke-width="2"/>
+<line x1="280" y1="205" x2="350" y2="205" stroke="#ffb86c" stroke-width="2"/>
+<rect x="350" y="92" width="120" height="120" fill="#0a0e27" stroke="#10b981" stroke-width="2" rx="6"/>
+<text x="410" y="115" fill="#10b981" font-size="12" text-anchor="middle">探测器</text>
+<text x="410" y="135" fill="#10b981" font-size="11" text-anchor="middle">(光子数分辨)</text>
+<text x="410" y="155" fill="#a3b8d4" font-size="11" text-anchor="middle">SNSPD</text>
+<text x="410" y="175" fill="#a3b8d4" font-size="11" text-anchor="middle">输出态</text>
+<text x="300" y="245" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">经典 e^(N log N), 量子 O(N²) — 量子优越性</text>
+<text x="300" y="265" fill="#ffb86c" font-size="11" text-anchor="middle">九章 (USTC 2020): 76 光子 / 100 模 / 10¹⁴ 倍加速</text>
+</svg>
+
+<hr>
+<p><strong>第 22 章完。22/28 章完成 (79%)。第五部分 3/5 章完成 (60%)。</strong></p>
+<blockquote><p><strong>下一步</strong>: 第 23 章《拓扑量子计算》—— Majorana 费米子 + 编织 + Microsoft Majorana 1 (2025)</p></blockquote>
+</article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch21.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</span>
+        </a>
+        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 23 章 (即将推出)</span>
+        </span>
+      </nav>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>

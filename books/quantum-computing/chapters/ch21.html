@@ -310,7 +310,7 @@
 <p>$$\Phi(x, y, z, t) = \frac{U_{RF} \cos(\Omega t)}{2 r_0^2}(x^2 - y^2)$$</p>
 <ul>
 <li>$U_{RF}$: RF 电压幅度 (~100-1000 V)</li>
-<li>$\Omega$: RF 频率 (~10-100 MHz)</li>
+<li>$\Omega$: RF 频率 (~10-200 MHz, 实际 30-80 MHz)</li>
 <li>$r_0$: 离子到电极的距离 (~0.5-2 mm)</li>
 <li><strong>关键</strong>: 电场在 xy 平面<strong>旋转</strong> (从 +x 方向 → +y 方向 → -x → -y → ...), 周期为 $2\pi/\Omega$</li>
 </ul>
@@ -373,7 +373,7 @@
 <ul>
 <li><strong>2D 阵列</strong>: 用 5 根电极 (4 侧面 + 1 中心) 构成表面 Paul 阱</li>
 <li><strong>3D 阵列</strong>: 多层电极 + 复杂 RF 场</li>
-<li><strong>Penning 阱</strong>: 静磁场 + 静电场 → 2D 平面排列, 可达 1000+ 离子 (但<strong>难</strong>单独寻址)</li>
+<li><strong>Penning 阱</strong>: 静磁场 + 静电场 → 2D 平面排列, 可达数百到 ~1000 离子 (NIST + Imperial, Bollinger 组 2022), 但<strong>难</strong>单独寻址</li>
 </ul>
 <p><strong>本章 21.7</strong> 详细讨论扩展挑战。</p>
 <h3>21.1.6 Paul 阱的"祖先"</h3>
@@ -567,7 +567,7 @@ mK 量级
 <ul>
 <li>微波 (~12.6 GHz) 直接驱动 qubit</li>
 <li>优点: 简单, Stark shift 小</li>
-<li>缺点: <strong>波长 ~ cm</strong>, 难做<strong>单</strong>离子寻址 (要多个电极)</li>
+<li>缺点: <strong>波长 ~2 cm</strong> ($c/f = 3 \times 10^8 / 12.6 \times 10^9 \approx 2.4$ cm), 难做<strong>单</strong>离子寻址 (要多个电极)</li>
 </ul>
 <p><strong>商业</strong>:</p>
 <ul>
@@ -650,7 +650,7 @@ mK 量级
 <li>必须<strong>精确</strong>控制<strong>单个</strong>集体模 → <strong>难</strong> (因为离子链有 N 个模)</li>
 <li>必须冷却到 COM 模<strong>基态</strong> → 反复冷却</li>
 <li>门时间 ~100 μs (慢)</li>
-<li><strong>实验实现</strong>: Innsbruck 2003, 第一个 CNOT 离子门</li>
+<li><strong>实验实现</strong>: Innsbruck (Schmidt-Kaler et al., Nature <strong>422</strong>, 408, 2003), 第一个 CNOT 离子门</li>
 </ul>
 <h3>21.4.3 Mølmer-Sørensen 门 (1999, MS gate) — 革命</h3>
 <p><strong>核心思想</strong>: <strong>不</strong>用<strong>单个</strong>模, <strong>不</strong>用<strong>单个</strong>qubit 控制, 而是<strong>同时</strong>驱动<strong>所有</strong>离子和<strong>所有</strong>集体模。</p>
@@ -1987,6 +1987,19 @@ p=4 (内模):   [1, -3, 3, -1] / √20  频率 ω_4 = √(29/5) ω_z</code></pre
 <hr>
 <p><strong>第 21 章完。21/28 章完成 (75%)。第五部分 2/5 章完成 (40%)。</strong></p>
 <blockquote><p><strong>下一步</strong>: 第 22 章《光量子计算》—— 玻色采样 + KLM + PsiQuantum / Xanadu</p></blockquote>
+      </article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch20.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 20 章 超导量子比特 (Superconducting Qubits)</span>
+        </a>
+        <a href="ch22.html" class="pager-link pager-next">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 22 章 光量子计算 (Photonic Quantum Computing)</span>
+        </a>
+      </nav>
     </main>
 
     <!-- ==================== SIDEBAR TOC ==================== -->
@@ -2043,6 +2056,7 @@ p=4 (内模):   [1, -3, 3, -1] / √20  频率 ω_4 = √(29/5) ω_z</code></pre
           <li><a href="ch19.html">第 19 章</a></li>
           <li><a href="ch20.html">第 20 章</a></li>
           <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="ch22.html">第 22 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>
