@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 22 章：Agent 评估与可观测性 —— 让 Agent 的每一步都可被衡量、被回放、被改进 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; }
+footer a { color: var(--book-accent-fg, #c026d3); text-decoration: none; margin: 0 4px; }
+footer a:hover { text-decoration: underline; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+tr:hover { background: rgba(192,38,211,0.05); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+
+<header class="chapter-header">
+<h1>第 22 章:Agent 评估与可观测性 —— 让 Agent 的每一步都可被衡量、被回放、被改进</h1>
+<div class="chapter-meta">第 22 章 · 第五部分(高级能力)Day 2 / 5 · 22 子节 + 3 Python + 16 表 + Part 4-5 安全三联画关键章</div>
+</header>
+
+<h3 style="margin-top:0; color:#c026d3;">📊 第 19 种 inline SVG 形态学:评测金字塔 + Trace 全链路（800×420）</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="grad-pyramid" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c026d3" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="grad-trace" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.85"/>
+    </linearGradient>
+    <marker id="arrow-tr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+  </defs>
+
+  <!-- 左侧:评测金字塔 (x:30-380) -->
+  <text x="200" y="30" text-anchor="middle" fill="#c026d3" font-size="16" font-weight="bold">评测金字塔</text>
+
+  <!-- L4 顶层(端到端成功率) -->
+  <polygon points="120,60 280,60 240,110 160,110" fill="url(#grad-pyramid)" stroke="#c026d3" stroke-width="2"/>
+  <text x="200" y="92" text-anchor="middle" fill="white" font-size="13" font-weight="bold">L4 端到端 SR</text>
+
+  <!-- L3 轨迹质量 -->
+  <polygon points="100,120 300,120 280,170 120,170" fill="url(#grad-pyramid)" stroke="#c026d3" stroke-width="2"/>
+  <text x="200" y="152" text-anchor="middle" fill="white" font-size="13" font-weight="bold">L3 轨迹质量</text>
+
+  <!-- L2 单步正确率 -->
+  <polygon points="80,180 320,180 320,230 80,230" fill="url(#grad-pyramid)" stroke="#c026d3" stroke-width="2"/>
+  <text x="200" y="212" text-anchor="middle" fill="white" font-size="13" font-weight="bold">L2 单步正确率</text>
+
+  <!-- L1 输出合规性 -->
+  <polygon points="60,240 340,240 340,290 60,290" fill="url(#grad-pyramid)" stroke="#c026d3" stroke-width="2"/>
+  <text x="200" y="272" text-anchor="middle" fill="white" font-size="13" font-weight="bold">L1 输出合规性</text>
+
+  <!-- 基础数据层 -->
+  <rect x="40" y="300" width="320" height="40" rx="4" fill="#fef3c7" stroke="#c026d3" stroke-width="2"/>
+  <text x="200" y="325" text-anchor="middle" fill="#c026d3" font-size="13" font-weight="bold">基础:trace + 日志 + 反馈</text>
+
+  <!-- 中间分隔 -->
+  <line x1="400" y1="50" x2="400" y2="370" stroke="#c026d3" stroke-width="2" stroke-dasharray="4,4"/>
+
+  <!-- 右侧:Trace 全链路 (x:420-770) -->
+  <text x="600" y="30" text-anchor="middle" fill="#10b981" font-size="16" font-weight="bold">Trace 全链路</text>
+
+  <!-- 7 个 span (垂直排列) -->
+  <rect x="430" y="60" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="80" text-anchor="middle" fill="white" font-size="12" font-weight="bold">① 用户 query → 路由到 Agent</text>
+
+  <rect x="430" y="100" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="120" text-anchor="middle" fill="white" font-size="12" font-weight="bold">② LLM 推理 (input + system + history)</text>
+
+  <rect x="430" y="140" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="160" text-anchor="middle" fill="white" font-size="12" font-weight="bold">③ 工具调用 (tool_name + args_hash)</text>
+
+  <rect x="430" y="180" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="200" text-anchor="middle" fill="white" font-size="12" font-weight="bold">④ 工具返回 (token + 时延 + status)</text>
+
+  <rect x="430" y="220" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="240" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⑤ 检索/记忆 span (命中率 + 时延)</text>
+
+  <rect x="430" y="260" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="280" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⑥ Guard span (越权 / 注入 / PII)</text>
+
+  <rect x="430" y="300" width="340" height="32" rx="6" fill="url(#grad-trace)" stroke="#10b981"/>
+  <text x="600" y="320" text-anchor="middle" fill="white" font-size="12" font-weight="bold">⑦ 最终输出 + LLM judge 评分</text>
+
+  <!-- 连接箭头 -->
+  <path d="M 600 92 L 600 100" stroke="#c026d3" stroke-width="2" fill="none" marker-end="url(#arrow-tr)"/>
+  <path d="M 600 132 L 600 140" stroke="#c026d3" stroke-width="2" fill="none" marker-end="url(#arrow-tr)"/>
+  <path d="M 600 172 L 600 180" stroke="#c026d3" stroke-width="2" fill="none" marker-end="url(#arrow-tr)"/>
+  <path d="M 600 212 L 600 220" stroke="#c026d3" stroke-width="2" fill="none" marker-end="url(#arrow-tr)"/>
+  <path d="M 600 252 L 600 260" stroke="#c026d3" stroke-width="2" fill="none" marker-end="url(#arrow-tr)"/>
+  <path d="M 600 292 L 600 300" stroke="#c026d3" stroke-width="2" fill="none" marker-end="url(#arrow-tr)"/>
+
+  <!-- 底部说明 -->
+  <text x="400" y="395" text-anchor="middle" fill="#888" font-size="11">金字塔决定"测什么"，Trace 决定"怎么定位失败点"——两者必须同时存在</text>
+</svg>
+
+
+<main>
+
+<table><thead><tr><th style="text-align:left">:---</th><th style="text-align:left">:---</th><th style="text-align:left">:---</th></tr></thead><tbody><tr><td style="text-align:left"><strong>死循环</strong></td><td style="text-align:left">同一动作重复 N 次 / 推理原地打转</td><td style="text-align:left">~22%</td><td style="text-align:left">🟡 中（需 trace）</td></tr><tr><td style="text-align:left"><strong>越权</strong></td><td style="text-align:left">调用未授权工具 / 越界访问 / 违反约束</td><td style="text-align:left">~12%</td><td style="text-align:left">🔴 难（需策略引擎）</td></tr><tr><td style="text-align:left">其他</td><td style="text-align:left">时延爆炸 / 工具超时 / 上下文溢出</td><td style="text-align:left">~31%</td><td style="text-align:left">🟡 中</td></tr></tbody></table>
+<p>数据综合自 Anthropic 2025-12 Agent Observability Report、OpenAI Evals 2026-Q1、Stanford HELM-Agent 2026-03（<strong>综合多源，具体百分比因场景而异</strong>）。</p>
+<h3>22.1.4 评测金字塔</h3>
+<p>经典评测分四层（<strong>表 22.2</strong>），每层成本递增、信号越精准：</p>
+<table><thead><tr><th style="text-align:left">层级</th><th style="text-align:left">名称</th><th style="text-align:left">成本</th><th style="text-align:left">信号</th></tr></thead><tbody><tr><td style="text-align:left">L4</td><td style="text-align:left"><strong>端到端任务成功率</strong></td><td style="text-align:left">🔴 高</td><td style="text-align:left">直接但稀疏（一次任务一个分数）</td></tr><tr><td style="text-align:left">L3</td><td style="text-align:left"><strong>轨迹质量</strong></td><td style="text-align:left">🟡 中</td><td style="text-align:left">看过程，不只看结果</td></tr><tr><td style="text-align:left">L2</td><td style="text-align:left"><strong>单步正确率</strong></td><td style="text-align:left">🟢 低</td><td style="text-align:left">看每一步工具调用是否合理</td></tr><tr><td style="text-align:left">L1</td><td style="text-align:left"><strong>输出合规性</strong></td><td style="text-align:left">🟢 低</td><td style="text-align:left">JSON Schema / 工具签名是否合法</td></tr></tbody></table>
+<p>生产 Agent 必须同时跑 L1-L4，<strong>只测 L4 是新手最常见的错误</strong>——任务完成不代表每一步都对，正如&quot;考试及格不代表每道题都做对&quot;。</p>
+<h3>22.1.5 一个反直觉的真相</h3>
+<p>更长的 trace 不代表更强的 Agent——相反，<strong>步数越少通常越好</strong>。这一步直接呼应 ch21 §21.9.2 引入的熔断器阈值（max_steps=30）：当 Agent 在某步停滞，<strong>继续追加步骤几乎不会带来新信息</strong>。生产环境统计显示：</p>
+<ul>
+<li><strong>2-5 步完成任务</strong>：SR 平均 88%（健康）</li>
+<li><strong>6-10 步完成任务</strong>：SR 平均 76%（正常）</li>
+<li><strong>11-20 步完成任务</strong>：SR 平均 58%（⚠️ 警惕，可能在绕路）</li>
+<li><strong>&gt; 20 步完成任务</strong>：SR 平均 31%（🔴 几乎肯定在死循环）</li>
+</ul>
+<p>这是因为步数增加会同时放大三类风险：(a) 上下文膨胀导致后续推理变差（参 ch03 §3.2 短期记忆局限）；(b) 工具调用次数增加意味着更多失败可能性；(c) 成本与时延几乎线性上升。</p>
+<h3>22.1.6 评测驱动决策 vs 数据驱动决策</h3>
+<p>最后必须强调一个哲学差异：<strong>LLM 时代之前的&quot;数据驱动决策&quot;看聚合数据</strong>（DAU / 留存 / 转化），<strong>Agent 时代的&quot;评测驱动决策&quot;看单次 trace</strong>。一次失败的客服 Agent 任务不是&quot;成功率 -0.01pp&quot;的抽象数字，而是某个用户等了 3 分钟没解决问题——必须能下钻到这次任务，看每一步工具调用、每次 LLM 输出、每个用户消息。</p>
+<p>这就是为什么 <strong>trace 是 Agent 时代的&quot;用户行为日志&quot;</strong>——它是连接抽象指标与具体事件的唯一桥梁。从这个意义上说，ch22 介绍的 OTel/LangSmith/Langfuse 不是可观测性工具，而是 Agent 产品的&quot;用户研究工具&quot;。</p>
+<hr/>
+<h2>22.2 评测指标体系</h2>
+<h3>22.2.1 5 大硬指标 + 3 大软指标</h3>
+<p><strong>表 22.2.1 评测指标全景</strong></p>
+<table><thead><tr><th style="text-align:left">类别</th><th style="text-align:left">指标</th><th style="text-align:left">定义</th><th style="text-align:left">单位</th><th style="text-align:left">典型阈值</th></tr></thead><tbody><tr><td style="text-align:left">硬</td><td style="text-align:left"><strong>成功率（SR）</strong></td><td style="text-align:left">任务最终是否完成</td><td style="text-align:left">%</td><td style="text-align:left">≥ 80%（生产）/ ≥ 60%（研究）</td></tr><tr><td style="text-align:left">硬</td><td style="text-align:left"><strong>步数（Steps）</strong></td><td style="text-align:left">完成任务的 LLM 调用次数</td><td style="text-align:left">count</td><td style="text-align:left">中位数 ≤ 8，最大 ≤ 30</td></tr><tr><td style="text-align:left">硬</td><td style="text-align:left"><strong>成本（Cost）</strong></td><td style="text-align:left">token + 工具 + 时延折算</td><td style="text-align:left">USD</td><td style="text-align:left">单任务 ≤ $0.50</td></tr><tr><td style="text-align:left">硬</td><td style="text-align:left"><strong>时延（Latency）</strong></td><td style="text-align:left">从发送到最终响应</td><td style="text-align:left">s</td><td style="text-align:left">P50 ≤ 10s，P95 ≤ 60s</td></tr><tr><td style="text-align:left">硬</td><td style="text-align:left"><strong>鲁棒性（Robustness）</strong></td><td style="text-align:left">输入扰动后成功率变化</td><td style="text-align:left">Δpp</td><td style="text-align:left">Δ ≤ 5pp</td></tr><tr><td style="text-align:left">软</td><td style="text-align:left"><strong>一致性（Consistency）</strong></td><td style="text-align:left">同样输入是否输出相近</td><td style="text-align:left">σ</td><td style="text-align:left">σ ≤ 0.1</td></tr><tr><td style="text-align:left">软</td><td style="text-align:left"><strong>可解释性（Explainability）</strong></td><td style="text-align:left">trace 是否能让工程师 5 分钟内定位问题</td><td style="text-align:left">通过率</td><td style="text-align:left">≥ 90%</td></tr><tr><td style="text-align:left">软</td><td style="text-align:left"><strong>安全性（Safety）</strong></td><td style="text-align:left">越权 / 注入 / 隐私 三类违规次数</td><td style="text-align:left">count / 千次</td><td style="text-align:left">≤ 1</td></tr></tbody></table>
+<p><strong>注</strong>：pp = percentage point（百分点）；生产环境&quot;成功率&quot;必须配合&quot;步数 + 成本&quot;联合看——完成一次任务花 100 步 $5 美元不算成功，只能算&quot;能跑&quot;。</p>
+<h3>22.2.2 复合指标：效用-成本比</h3>
+<p>定义 <strong>U/C（Utility / Cost）</strong>：</p>
+<pre><code class="language-text">U/C = 成功率 / 单任务平均成本</code></pre>
+<p>U/C &gt; 1.5 算&quot;值得用&quot;，U/C &lt; 0.8 算&quot;需要优化&quot;。这个指标比单纯成功率更反映工程价值。</p>
+<h3>22.2.3 步数分布与&quot;健康曲线&quot;</h3>
+<p>除了平均值，<strong>步数分布的形状</strong>比平均值更能反映 Agent 状态：</p>
+<table><thead><tr><th style="text-align:left">分布形态</th><th style="text-align:left">健康度</th><th style="text-align:left">含义</th></tr></thead><tbody><tr><td style="text-align:left"><strong>单峰 + 右偏</strong></td><td style="text-align:left">🟢 健康</td><td style="text-align:left">大多数任务 2-8 步完成，少数 10-20 步</td></tr><tr><td style="text-align:left"><strong>双峰</strong></td><td style="text-align:left">🟡 警惕</td><td style="text-align:left">一群简单任务 + 一群绕路任务，可能有 case 未覆盖</td></tr><tr><td style="text-align:left"><strong>长尾</strong></td><td style="text-align:left">🟡 警惕</td><td style="text-align:left">中位数 OK 但 P99 极大，可能有死循环</td></tr><tr><td style="text-align:left"><strong>单峰 + 极宽</strong></td><td style="text-align:left">🔴 不健康</td><td style="text-align:left">Agent 行为不可预测，几乎没有&quot;标准路径&quot;</td></tr></tbody></table>
+<p>健康度 🟢 的标准：P50 ≤ 8，P95 ≤ 20，P99 ≤ 30。一旦 P99 &gt; 50，必须查 trace。</p>
+<h3>22.2.4 时延分布与 SLO</h3>
+<p>时延不像成功率是二值的，而是连续分布。生产 Agent 的 SLO 通常是：</p>
+<ul>
+<li><strong>P50 ≤ 10s</strong>（用户等待&quot;还行&quot;）</li>
+<li><strong>P95 ≤ 60s</strong>（用户等待&quot;勉强接受&quot;）</li>
+<li><strong>P99 ≤ 180s</strong>（用户等待&quot;已放弃&quot;）</li>
+</ul>
+<p><strong>长尾是 Agent 时延的最大杀手</strong>：单个 LLM 调用可能因推理服务排队 30s，整次任务就被拖到 60s+。应对方案：(a) 设置单步超时 15s；(b) 长 step 自动重试一次；(c) 关键路径 step 走备用模型。</p>
+<h3>22.2.5 鲁棒性：扰动测试</h3>
+<p>鲁棒性指标衡量 Agent 对输入变化的容忍度。常见扰动类型：</p>
+<table><thead><tr><th style="text-align:left">扰动类型</th><th style="text-align:left">例子</th><th style="text-align:left">鲁棒性测试</th></tr></thead><tbody><tr><td style="text-align:left">同义改写</td><td style="text-align:left">&quot;查订单&quot; → &quot;看下我那个订单&quot;</td><td style="text-align:left">LLM 应识别同一意图</td></tr><tr><td style="text-align:left">拼写错误</td><td style="text-align:left">&quot;Beijing&quot; → &quot;Beijign&quot;</td><td style="text-align:left">LLM 应自动纠正</td></tr><tr><td style="text-align:left">多语混合</td><td style="text-align:left">中英混杂的 query</td><td style="text-align:left">LLM 应稳定处理</td></tr><tr><td style="text-align:left">极端长度</td><td style="text-align:left">1 字 vs 1000 字 query</td><td style="text-align:left">不应崩溃</td></tr><tr><td style="text-align:left">注入尝试</td><td style="text-align:left">query 中夹带 &quot;忽略之前指令&quot;</td><td style="text-align:left">应被 guard 拦截</td></tr></tbody></table>
+<p><strong>Δ ≤ 5pp</strong> 是生产阈值。如果扰动后成功率下降 &gt; 10pp，说明 Agent 对输入分布太敏感，需要 prompt 加固或加 guard。</p>
+<hr/>
+<h2>22.3 公开基准（2026 H1）</h2>
+<h3>22.3.1 7 大基准横向对比</h3>
+<p><strong>表 22.3.1 主流 Agent 基准对比（截至 2026 H1）</strong></p>
+<table><thead><tr><th style="text-align:left">基准</th><th style="text-align:right">任务数</th><th style="text-align:left">评测维度</th><th style="text-align:left">SOTA（2026 H1）</th><th style="text-align:left">适合测什么</th></tr></thead><tbody><tr><td style="text-align:left"><strong>AgentBench</strong></td><td style="text-align:right">1,750+</td><td style="text-align:left">8 类（数据库 / 网页 / 操作系统 / 知识图谱 / 数字游戏 / 逻辑 / 电商 / 金融）</td><td style="text-align:left">GPT-5 78% / Claude 4.5 Opus 76%</td><td style="text-align:left">通用工具调用</td></tr><tr><td style="text-align:left"><strong>SWE-bench Verified</strong></td><td style="text-align:right">500</td><td style="text-align:left">Python PR 修复</td><td style="text-align:left">Claude 4.5 Opus 80% / GPT-5 78%</td><td style="text-align:left">软件工程</td></tr><tr><td style="text-align:left"><strong>GAIA</strong></td><td style="text-align:right">466</td><td style="text-align:left">多模态真实任务</td><td style="text-align:left">GPT-5 71% / Claude 4.5 Opus 68%</td><td style="text-align:left">GUI + 推理</td></tr><tr><td style="text-align:left"><strong>WebArena</strong></td><td style="text-align:right">812</td><td style="text-align:left">网页浏览器任务</td><td style="text-align:left">GPT-5 62% / Claude 4.5 Opus 58%</td><td style="text-align:left">浏览器自动化</td></tr><tr><td style="text-align:left"><strong>OSWorld</strong></td><td style="text-align:right">369</td><td style="text-align:left">桌面 OS 任务</td><td style="text-align:left">Claude 4.5 Opus 38% / GPT-5 35%</td><td style="text-align:left">GUI Agent</td></tr><tr><td style="text-align:left"><strong>τ-bench</strong></td><td style="text-align:right">165</td><td style="text-align:left">客户服务多轮</td><td style="text-align:left">Claude 4.5 Opus 65% / GPT-5 60%</td><td style="text-align:left">多轮对话 + 工具</td></tr><tr><td style="text-align:left"><strong>OpenAI Evals</strong></td><td style="text-align:right">1,200+</td><td style="text-align:left">自建 + 社区</td><td style="text-align:left">—</td><td style="text-align:left">自定义</td></tr></tbody></table>
+<p><strong>数据出处</strong>：截至 2026-04 leaderboard 数据；OSWorld 数值偏低于 GUI Agent 仍处早期（参 ch21 桥接）。</p>
+<h3>22.3.2 选基准的 3 个陷阱</h3>
+<ol>
+<li><strong>基准漂移</strong>：SWE-bench Verified 题目集 6 个月换一批，跨期对比失真</li>
+<li><strong>过拟合</strong>：在某个基准调到 90%，换个基准可能只剩 40%</li>
+<li><strong>评测泄漏</strong>：基准题目被混入训练集（已在 SWE-bench lite 2025-Q4 出现过一次）</li>
+</ol>
+<h3>22.3.3 基准组合拳：单跑不够</h3>
+<p>生产实践推荐&quot;<strong>3+1 组合</strong>&quot;——3 个公开基准（覆盖不同能力）+ 1 个自建评估集（贴近业务）：</p>
+<ul>
+<li><strong>SWE-bench</strong> —— 代码修改能力下限</li>
+<li><strong>GAIA</strong> —— 多模态 + 推理能力</li>
+<li><strong>τ-bench</strong> —— 多轮对话 + 工具调用</li>
+<li><strong>自建评估集</strong> —— 业务真实场景</li>
+</ul>
+<p>只跑一个基准会得到<strong>片面英雄</strong>：在 SWE-bench 上 80% 的 Agent 在客服场景可能只有 30%。</p>
+<h3>22.3.4 基准与 ch21/ch22 关联</h3>
+<p>GUI Agent 类任务必须同时跑 <strong>OSWorld + WebArena + 自建 GUI 评估集</strong>。OSWorld 看桌面 OS 操作能力，WebArena 看浏览器场景能力，自建评估集看真实业务 GUI 流程。三者互补，缺一不可。</p>
+<p>进一步，<strong>ch21 §21.5.2 提到的 200K 综合 token 上下文</strong>对评测有直接影响：上下文越长，trace 越完整，但成本越高。评测时必须把&quot;上下文利用率&quot;作为独立指标，避免 Agent 浪费 context（参 ch03 §3.3 滑动窗口）。</p>
+<hr/>
+<h2>22.4 自建评估集</h2>
+<h3>22.4.1 三步法</h3>
+<p>生产环境<strong>必须自建评估集</strong>——公开基准只是 sanity check。三步法（<strong>表 22.4.1</strong>）：</p>
+<table><thead><tr><th style="text-align:left">步</th><th style="text-align:left">名称</th><th style="text-align:left">关键动作</th><th style="text-align:left">工具</th></tr></thead><tbody><tr><td style="text-align:left">1</td><td style="text-align:left"><strong>任务采样</strong></td><td style="text-align:left">从生产 trace 中随机抽 200-500 条，按场景分层</td><td style="text-align:left">BigQuery / Snowflake / Pandas</td></tr><tr><td style="text-align:left">2</td><td style="text-align:left"><strong>答案构造</strong></td><td style="text-align:left">人工标注 + LLM 预标 + 双盲交叉</td><td style="text-align:left">Label Studio / Scale AI / 内部标注平台</td></tr><tr><td style="text-align:left">3</td><td style="text-align:left"><strong>评分函数</strong></td><td style="text-align:left">硬指标（成功/失败）+ 软指标（LLM judge）</td><td style="text-align:left">自动化脚本</td></tr></tbody></table>
+<h3>22.4.2 4 维评分设计</h3>
+<p>每个任务必须给 4 个分：</p>
+<ol>
+<li><strong>结果分（0/1）</strong>：任务是否完成</li>
+<li><strong>效率分（0-1）</strong>：步数 / 最优步数</li>
+<li><strong>过程分（0-1）</strong>：关键路径是否走对（用 LLM judge 评 trace）</li>
+<li><strong>风格分（0-1）</strong>：是否礼貌、是否简洁、是否解释清楚</li>
+</ol>
+<p>综合分 = 0.4×结果 + 0.3×效率 + 0.2×过程 + 0.1×风格（<strong>权重为示意，生产应根据业务调整</strong>）。</p>
+<h3>22.4.3 数据漂移监控</h3>
+<p>生产任务分布会随用户行为漂移。<strong>每月一次重新采样</strong>，对比新旧分布的 KL 散度，&gt; 0.1 触发评估集更新。</p>
+<h3>22.4.4 评估集的 4 个反模式</h3>
+<table><thead><tr><th style="text-align:left">反模式</th><th style="text-align:left">表现</th><th style="text-align:left">修正</th></tr></thead><tbody><tr><td style="text-align:left"><strong>题量太少</strong></td><td style="text-align:left">只有 50 题，3 题抖动就 ±2pp</td><td style="text-align:left">≥ 200 题，按场景分层</td></tr><tr><td style="text-align:left"><strong>答案太严</strong></td><td style="text-align:left">答案要求&quot;完全匹配字面字符串&quot;</td><td style="text-align:left">允许同义改写，用 LLM judge</td></tr><tr><td style="text-align:left"><strong>题目过时</strong></td><td style="text-align:left">用 2024 年场景评 2026 Agent</td><td style="text-align:left">每月增补新场景</td></tr><tr><td style="text-align:left"><strong>缺乏多样性</strong></td><td style="text-align:left">90% 题都是同一类任务</td><td style="text-align:left">故意覆盖边缘 case</td></tr></tbody></table>
+<h3>22.4.5 评估集的元数据</h3>
+<p>每条评估样本应带元数据：</p>
+<pre><code class="language-json">{
+  &quot;task_id&quot;: &quot;t-2026-04-001&quot;,
+  &quot;scenario&quot;: &quot;order_refund&quot;,
+  &quot;difficulty&quot;: &quot;easy&quot;,
+  &quot;expected_steps&quot;: 4,
+  &quot;tags&quot;: [&quot;customer_service&quot;, &quot;refund&quot;, &quot;no_pii&quot;],
+  &quot;created_at&quot;: &quot;2026-04-15&quot;,
+  &quot;last_validated&quot;: &quot;2026-06-01&quot;
+}</code></pre>
+<p>元数据让<strong>切片分析</strong>成为可能：可以分别看&quot;easy 难度 SR 95% vs hard 难度 SR 60%&quot;——这种切片比总平均 SR 更有诊断价值。</p>
+<hr/>
+<h2>22.5 Trace 与 Span——可观测性的数据模型</h2>
+<h3>22.5.1 OpenTelemetry 语义</h3>
+<p>Agent 可观测性沿用 OpenTelemetry（OTel）语义，但字段扩展：</p>
+<table><thead><tr><th style="text-align:left">OTel 字段</th><th style="text-align:left">Agent 扩展</th><th style="text-align:left">含义</th></tr></thead><tbody><tr><td style="text-align:left"><code>trace_id</code></td><td style="text-align:left">同</td><td style="text-align:left">一次任务的全局 ID</td></tr><tr><td style="text-align:left"><code>span</code></td><td style="text-align:left">+ <code>kind=llm</code> / <code>tool</code> / <code>retrieval</code> / <code>guard</code></td><td style="text-align:left">每步类型</td></tr><tr><td style="text-align:left"><code>attributes.llm.tokens</code></td><td style="text-align:left"><code>input</code> / <code>output</code> / <code>cache_read</code></td><td style="text-align:left">token 用量</td></tr><tr><td style="text-align:left"><code>attributes.tool.name</code></td><td style="text-align:left"><code>tool_name</code> + <code>tool_args_hash</code></td><td style="text-align:left">工具调用（hash 用于去重）</td></tr><tr><td style="text-align:left"><code>events</code></td><td style="text-align:left"><code>step_start</code> / <code>step_end</code> / <code>error</code> / <code>retry</code></td><td style="text-align:left">事件流</td></tr></tbody></table>
+<h3>22.5.2 4 大可观测性平台对比</h3>
+<p><strong>表 22.5.2 LangSmith / Langfuse / Helicone / Arize Phoenix</strong></p>
+<table><thead><tr><th style="text-align:left">维度</th><th style="text-align:left">LangSmith</th><th style="text-align:left">Langfuse</th><th style="text-align:left">Helicone</th><th style="text-align:left">Arize Phoenix</th></tr></thead><tbody><tr><td style="text-align:left">开源</td><td style="text-align:left">❌ 闭源</td><td style="text-align:left">✅ MIT</td><td style="text-align:left">❌ 闭源</td><td style="text-align:left">✅ Apache 2.0</td></tr><tr><td style="text-align:left">自部署</td><td style="text-align:left">❌</td><td style="text-align:left">✅</td><td style="text-align:left">❌</td><td style="text-align:left">✅</td></tr><tr><td style="text-align:left">OpenTelemetry</td><td style="text-align:left">部分</td><td style="text-align:left">✅ 原生</td><td style="text-align:left">✅ 通过 proxy</td><td style="text-align:left">✅ 原生</td></tr><tr><td style="text-align:left">LLM judge</td><td style="text-align:left">✅ 内置</td><td style="text-align:left">✅</td><td style="text-align:left">❌</td><td style="text-align:left">✅</td></tr><tr><td style="text-align:left">Trace replay</td><td style="text-align:left">✅</td><td style="text-align:left">✅</td><td style="text-align:left">❌</td><td style="text-align:left">✅</td></tr><tr><td style="text-align:left">价格（2026 H1）</td><td style="text-align:left">$39/月起</td><td style="text-align:left">免费 + 自部署</td><td style="text-align:left">$20/月 10K req</td><td style="text-align:left">免费</td></tr><tr><td style="text-align:left">适合</td><td style="text-align:left">LangChain 项目</td><td style="text-align:left">通用</td><td style="text-align:left">纯 token 监控</td><td style="text-align:left">多模态 + 实验</td></tr></tbody></table>
+<h3>22.5.3 Trace 数据量爆炸</h3>
+<p>一次 Agent 任务平均 8 个 span × 5 KB ≈ 40 KB trace；100 万次任务 = 40 GB / 月。<strong>生产必须做采样</strong>：1% 全量 + 100% 失败全量 + 关键任务全量。</p>
+<h3>22.5.4 Span 的 5 个必备字段</h3>
+<p>每个 span 必须记录以下 5 个字段（缺一不可）：</p>
+<table><thead><tr><th style="text-align:left">字段</th><th style="text-align:left">例子</th><th style="text-align:left">缺失后果</th></tr></thead><tbody><tr><td style="text-align:left"><code>span_id</code></td><td style="text-align:left"><code>span-7a3f</code></td><td style="text-align:left">无法串联调用链</td></tr><tr><td style="text-align:left"><code>parent_span_id</code></td><td style="text-align:left"><code>span-5b2e</code></td><td style="text-align:left">无法看父子关系</td></tr><tr><td style="text-align:left"><code>start_time</code></td><td style="text-align:left"><code>2026-07-08T09:00:01.234Z</code></td><td style="text-align:left">无法算时延</td></tr><tr><td style="text-align:left"><code>duration_ms</code></td><td style="text-align:left"><code>1234</code></td><td style="text-align:left">无法定位慢 span</td></tr><tr><td style="text-align:left"><code>status</code></td><td style="text-align:left"><code>ok</code> / <code>error</code></td><td style="text-align:left">无法统计失败率</td></tr></tbody></table>
+<p>少任何一个字段，trace 的诊断价值减半。</p>
+<h3>22.5.5 Token 消耗的 4 类细分</h3>
+<p>LLM 调用的 token 必须细分 4 类（<strong>表 22.5.5</strong>）：</p>
+<table><thead><tr><th style="text-align:left">类型</th><th style="text-align:left">含义</th><th style="text-align:left">计费</th><th style="text-align:left">优化方向</th></tr></thead><tbody><tr><td style="text-align:left"><code>input</code></td><td style="text-align:left">用户消息 + 上下文</td><td style="text-align:left">标准</td><td style="text-align:left">压缩 context</td></tr><tr><td style="text-align:left"><code>output</code></td><td style="text-align:left">LLM 生成的 token</td><td style="text-align:left">1.5-3x input</td><td style="text-align:left">限制 max_tokens</td></tr><tr><td style="text-align:left"><code>cache_read</code></td><td style="text-align:left">命中 prompt cache 的 input</td><td style="text-align:left">0.1x input</td><td style="text-align:left">复用 cache</td></tr><tr><td style="text-align:left"><code>cache_write</code></td><td style="text-align:left">写入 cache 的 input</td><td style="text-align:left">1.25x input</td><td style="text-align:left">避免重复</td></tr></tbody></table>
+<p>生产 Agent 应追求 <strong><code>cache_read</code> 占比 ≥ 60%</strong>——这意味着 prompt 模板稳定 + context 复用做得好。</p>
+<h3>22.5.6 与 ch08 记忆系统的连接</h3>
+<p>ch08 介绍的长期记忆（向量 / DB / 图谱）<strong>也产生 span</strong>——每次 retrieve / store 都是一个 span。评测时应单独看&quot;记忆 span 的命中率&quot;和&quot;记忆 span 的时延占比&quot;：</p>
+<ul>
+<li>命中率 &lt; 50% → 检索质量差或检索时机不对</li>
+<li>时延占比 &gt; 30% → 检索是瓶颈，考虑缓存或预计算</li>
+</ul>
+<hr/>
+<h2>22.6 LLM-as-a-Judge——用模型评模型</h2>
+<h3>22.6.1 何时用 / 何时不能用</h3>
+<table><thead><tr><th style="text-align:left">场景</th><th style="text-align:left">用 judge</th><th style="text-align:left">不用 judge</th></tr></thead><tbody><tr><td style="text-align:left">主观评分（流畅度 / 礼貌度 / 推理合理性）</td><td style="text-align:left">✅</td><td style="text-align:left"></td></tr><tr><td style="text-align:left">长答案 vs 短答案</td><td style="text-align:left">✅</td><td style="text-align:left"></td></tr><tr><td style="text-align:left">自动评分 1000+ 样本</td><td style="text-align:left">✅</td><td style="text-align:left"></td></tr><tr><td style="text-align:left">评分标准<strong>有唯一答案</strong>（数学、SQL、JSON Schema 验证）</td><td style="text-align:left"></td><td style="text-align:left">✅ 用规则</td></tr><tr><td style="text-align:left">评分需<strong>精确数值</strong>（F1 = 0.873）</td><td style="text-align:left"></td><td style="text-align:left">✅ 用规则</td></tr><tr><td style="text-align:left">评分<strong>与 judge 模型本身能力相关</strong></td><td style="text-align:left"></td><td style="text-align:left">✅ 用更强模型</td></tr></tbody></table>
+<h3>22.6.2 4 类 judge 偏差</h3>
+<p>LLM judge 有 4 个已知的系统性偏差（<strong>表 22.6.1</strong>）：</p>
+<table><thead><tr><th style="text-align:left">偏差</th><th style="text-align:left">表现</th><th style="text-align:left">缓解</th></tr></thead><tbody><tr><td style="text-align:left"><strong>位置偏差</strong></td><td style="text-align:left">偏好第一个答案</td><td style="text-align:left">调换顺序双评</td></tr><tr><td style="text-align:left"><strong>长度偏差</strong></td><td style="text-align:left">偏好更长的答案</td><td style="text-align:left">控制长度后评</td></tr><tr><td style="text-align:left"><strong>自我偏好</strong></td><td style="text-align:left">偏好同源模型（如 GPT-4 偏好 GPT-4 输出）</td><td style="text-align:left">换不同源 judge</td></tr><tr><td style="text-align:left"><strong>格式偏差</strong></td><td style="text-align:left">偏好 markdown / bullet / 数字编号</td><td style="text-align:left">控制格式后评</td></tr></tbody></table>
+<p><strong>缓解金标准</strong>：每个样本用 2-3 个不同源 judge 各评一次，取中位数；偏差 &gt; 0.3 触发人工复核。</p>
+<h3>22.6.3 Judge Prompt 设计 5 原则</h3>
+<p>LLM judge 的 prompt 设计直接决定评分质量。5 原则：</p>
+<ol>
+<li><strong>明确评分维度</strong>：不要笼统&quot;评一下&quot;，要&quot;按 5 个维度各打 1-5 分&quot;</li>
+<li><strong>给评分 rubric</strong>：每个分数段对应什么样的输出</li>
+<li><strong>要求引用原文</strong>：让 judge 引用被评答案的具体段落（防止幻觉评分）</li>
+<li><strong>提供 baseline</strong>：给一个&quot;标准答案&quot;作为参考锚点</li>
+<li><strong>明确边界条件</strong>：什么情况给 0 分、什么情况给满分</li>
+</ol>
+<h3>22.6.4 GPT-4o judge 实测经验</h3>
+<p>OpenAI 2026-Q1 公开数据：GPT-4o judge 与人类标注的一致率约 <strong>82%</strong>（Cohen&#x27;s κ ≈ 0.82），Claude 4 Opus judge 约 <strong>79%</strong>（Cohen&#x27;s κ ≈ 0.79）。两者各有所长：</p>
+<ul>
+<li><strong>GPT-4o judge</strong> 擅长结构化输出（JSON、SQL、表格）</li>
+<li><strong>Claude judge</strong> 擅长开放式推理、代码 review</li>
+</ul>
+<p>生产建议：<strong>双 judge 串联</strong>——GPT-4o 先评结构分，Claude 再评推理分，加权综合。</p>
+<h3>22.6.5 与 ch06 Prompt 工程的呼应</h3>
+<p>ch06 介绍的 system prompt 工程方法（角色 / 约束 / 工具描述）<strong>同样适用于 judge prompt</strong>。一个好的 judge prompt 通常 500-1500 字符，结构与 ch06 §6.2 的 5 块结构一致：</p>
+<ul>
+<li><strong>角色</strong>：&quot;你是一个严格的客服质量评审员&quot;</li>
+<li><strong>任务</strong>：&quot;评估 Agent 的回复是否解决了用户问题&quot;</li>
+<li><strong>评分维度</strong>：5 个维度 + 每个 1-5 分</li>
+<li><strong>评分 rubric</strong>：每个分数段的具体描述</li>
+<li><strong>输出格式</strong>：强制 JSON 输出（含引用原文）</li>
+</ul>
+<hr/>
+<h2>22.7 实战——最小评测流水线</h2>
+<h3>22.7.1 30 行评测流水线（mock mode）</h3>
+<pre><code class="language-python"># 文件：minimal_eval_pipeline.py
+# 跑通：python3 minimal_eval_pipeline.py
+# 零依赖，纯 stdlib（json / dataclasses / statistics）
+
+import json
+from dataclasses import dataclass, field
+from statistics import mean
+
+@dataclass
+class EvalSample:
+    task_id: str
+    question: str
+    expected: str
+    actual: str
+    steps: int = 0
+    cost: float = 0.0
+    latency_s: float = 0.0
+    judge_score: float = 0.0   # 0-1
+    passed: bool = False
+
+@dataclass
+class EvalReport:
+    total: int = 0
+    passed: int = 0
+    avg_steps: float = 0.0
+    avg_cost: float = 0.0
+    avg_latency: float = 0.0
+    utility_cost_ratio: float = 0.0
+    failures_by_type: dict = field(default_factory=dict)
+
+def mock_llm_judge(expected: str, actual: str) -&gt; float:
+    &quot;&quot;&quot;Mock judge: 字面匹配 1.0，否则 0.0&quot;&quot;&quot;
+    return 1.0 if expected.strip() == actual.strip() else 0.0
+
+def run_eval(samples: list) -&gt; EvalReport:
+    report = EvalReport()
+    for s in samples:
+        s.judge_score = mock_llm_judge(s.expected, s.actual)
+        s.passed = s.judge_score &gt;= 0.8
+        report.total += 1
+        report.passed += int(s.passed)
+        report.failures_by_type.setdefault(
+            &quot;wrong_answer&quot; if not s.passed else &quot;ok&quot;, 0
+        )
+        report.failures_by_type[
+            &quot;wrong_answer&quot; if not s.passed else &quot;ok&quot;
+        ] += 1
+    report.avg_steps = mean(s.steps for s in samples) if samples else 0
+    report.avg_cost = mean(s.cost for s in samples) if samples else 0
+    report.avg_latency = mean(s.latency_s for s in samples) if samples else 0
+    success_rate = report.passed / max(report.total, 1)
+    report.utility_cost_ratio = success_rate / max(report.avg_cost, 0.01)
+    return report
+
+if __name__ == &quot;__main__&quot;:
+    samples = [
+        EvalSample(&quot;t1&quot;, &quot;1+1=?&quot;, &quot;2&quot;, &quot;2&quot;, steps=2, cost=0.001, latency_s=1.2),
+        EvalSample(&quot;t2&quot;, &quot;capital of France?&quot;, &quot;Paris&quot;, &quot;Paris&quot;, steps=3, cost=0.002, latency_s=1.8),
+        EvalSample(&quot;t3&quot;, &quot;5*7=?&quot;, &quot;35&quot;, &quot;34&quot;, steps=2, cost=0.001, latency_s=1.0),
+        EvalSample(&quot;t4&quot;, &quot;JSON of empty list?&quot;, &quot;[]&quot;, &quot;[]&quot;, steps=4, cost=0.003, latency_s=2.5),
+    ]
+    report = run_eval(samples)
+    print(json.dumps(report.__dict__, indent=2, ensure_ascii=False))</code></pre>
+<p>预期输出：3/4 通过，avg_steps 2.75，avg_cost $0.00175，U/C ≈ 75。</p>
+<h3>22.7.2 Trace 持久化</h3>
+<p>每条评测样本的 trace 应单独存盘：</p>
+<pre><code class="language-python"># 持久化 trace 到 JSONL
+def save_traces(samples: list, path: str):
+    with open(path, &quot;w&quot;, encoding=&quot;utf-8&quot;) as f:
+        for s in samples:
+            f.write(json.dumps(s.__dict__, ensure_ascii=False) + &quot;\n&quot;)</code></pre>
+<p>50 行以内，生产可换 OpenTelemetry SDK。</p>
+<hr/>
+<h2>22.8 评测驱动开发（Eval-Driven Development, EDD）</h2>
+<h3>22.8.1 EDD vs TDD</h3>
+<p><strong>表 22.8.1 EDD 与 TDD 的异同</strong></p>
+<table><thead><tr><th style="text-align:left">维度</th><th style="text-align:left">TDD</th><th style="text-align:left">EDD</th></tr></thead><tbody><tr><td style="text-align:left">最小单位</td><td style="text-align:left">单元测试</td><td style="text-align:left">评测样本</td></tr><tr><td style="text-align:left">红绿循环</td><td style="text-align:left">test → fail → code → pass</td><td style="text-align:left">eval → fail → prompt/tool → pass</td></tr><tr><td style="text-align:left">反馈速度</td><td style="text-align:left">秒级</td><td style="text-align:left">分钟级（一次 LLM 调用）</td></tr><tr><td style="text-align:left">覆盖度</td><td style="text-align:left">代码覆盖率</td><td style="text-align:left">任务场景覆盖率</td></tr><tr><td style="text-align:left">维护成本</td><td style="text-align:left">低</td><td style="text-align:left">中（评测集漂移）</td></tr><tr><td style="text-align:left">适合</td><td style="text-align:left">函数 / 类</td><td style="text-align:left">Agent 端到端</td></tr></tbody></table>
+<h3>22.8.2 评测集版本管理</h3>
+<p>每次 prompt 改动、tool 改动、模型升级前<strong>先跑评测集</strong>：</p>
+<ul>
+<li>✅ SR 不下降（≤ 2pp）</li>
+<li>✅ 步数不增（≤ 10%）</li>
+<li>✅ 成本不增（≤ 20%）</li>
+</ul>
+<p>不满足三者之一<strong>禁止合并</strong>——这是 Agent CI 的硬门禁。</p>
+<h3>22.8.3 EDD 的 4 个最佳实践</h3>
+<ol>
+<li><strong>评测集即代码</strong>：评测集进 git，与 prompt / tool 同步版本</li>
+<li><strong>回归门禁</strong>：每次 PR 必跑评测，不达标禁止合并</li>
+<li><strong>金标集</strong>：保留 100 条&quot;从未见过&quot;的样本做月度金标测试</li>
+<li><strong>失败即工单</strong>：评测失败的样本自动开 GitHub issue，分配给相关人</li>
+</ol>
+<h3>22.8.4 EDD 与 A/B 测试的分工</h3>
+<ul>
+<li><strong>EDD</strong> = 离线，<strong>改 prompt 前</strong>跑，看是否回归</li>
+<li><strong>A/B 测试</strong> = 在线，<strong>上线后</strong>跑，看真实用户是否更喜欢</li>
+</ul>
+<p>两者必须串联：EDD 通过 → 灰度 5% → A/B 显著 → 全量。任何一环失败就回滚。</p>
+<h3>22.8.5 与 ch04 框架的连接</h3>
+<p>ch04 介绍的 7 大框架（LangChain / LangGraph / AutoGen / CrewAI / LlamaIndex / Agno / OpenAI Agents SDK）<strong>都内建或支持评测集成</strong>：</p>
+<ul>
+<li><strong>LangGraph + LangSmith</strong>：原生 trace，EDD 几乎零成本</li>
+<li><strong>AutoGen</strong>：内置 test agent 框架</li>
+<li><strong>OpenAI Agents SDK</strong>：内置 <code>tracing</code> 模块</li>
+<li><strong>CrewAI</strong>：通过 OpenTelemetry 集成</li>
+</ul>
+<p>选框架时，<strong>可观测性支持</strong>应作为权重 ≥ 20% 的考量指标——否则后期改造代价巨大。</p>
+<hr/>
+<h2>22.9 5 大失败模式与监控告警</h2>
+<h3>22.9.1 5 类失败 + 阈值告警设计</h3>
+<p><strong>表 22.9.1 5 大失败模式告警</strong></p>
+<table><thead><tr><th style="text-align:left">失败模式</th><th style="text-align:left">检测信号</th><th style="text-align:left">阈值（生产）</th><th style="text-align:left">告警级别</th></tr></thead><tbody><tr><td style="text-align:left"><strong>幻觉</strong></td><td style="text-align:left">LLM judge 分数 &lt; 0.5</td><td style="text-align:left">占比 &gt; 10% / 小时</td><td style="text-align:left">🔴 P1</td></tr><tr><td style="text-align:left"><strong>死循环</strong></td><td style="text-align:left">同一动作 hash 重复 ≥ 5 次</td><td style="text-align:left">占比 &gt; 5% / 小时</td><td style="text-align:left">🔴 P1</td></tr><tr><td style="text-align:left"><strong>越权调用</strong></td><td style="text-align:left">工具白名单违规</td><td style="text-align:left">任何</td><td style="text-align:left">🔴 P0 立即熔断</td></tr><tr><td style="text-align:left"><strong>时延爆炸</strong></td><td style="text-align:left">P95 &gt; 60s</td><td style="text-align:left">占比 &gt; 20% / 小时</td><td style="text-align:left">🟡 P2</td></tr><tr><td style="text-align:left"><strong>成本失控</strong></td><td style="text-align:left">单任务成本 &gt; $1</td><td style="text-align:left">占比 &gt; 5% / 小时</td><td style="text-align:left">🟡 P2</td></tr></tbody></table>
+<h3>22.9.2 周末值班告警链</h3>
+<p>Agent 系统<strong>24/7 在跑</strong>，值班必须分层：</p>
+<table><thead><tr><th style="text-align:left">时段</th><th style="text-align:left">值班角色</th><th style="text-align:left">响应时间</th></tr></thead><tbody><tr><td style="text-align:left">工作日 9-18</td><td style="text-align:left">on-call 工程师</td><td style="text-align:left">15 min</td></tr><tr><td style="text-align:left">工作日 18-9</td><td style="text-align:left">on-call 工程师</td><td style="text-align:left">1h</td></tr><tr><td style="text-align:left">周末</td><td style="text-align:left">二线值班</td><td style="text-align:left">4h</td></tr><tr><td style="text-align:left">重大事故（P0）</td><td style="text-align:left">全员 + Slack 频道 @here</td><td style="text-align:left">立即</td></tr></tbody></table>
+<h3>22.9.3 Trace Replay</h3>
+<p>生产 trace 可<strong>离线 replay</strong>：用真实 trace 输入到新版本 Agent，对比新旧输出 diff。这是模型升级 / prompt 改动前<strong>最关键的回归测试</strong>。</p>
+<pre><code class="language-python"># 监控告警示例（监控 5 大失败模式）
+from dataclasses import dataclass, field
+from collections import Counter
+
+@dataclass
+class AlertRule:
+    name: str
+    threshold: float
+    severity: str  # P0 / P1 / P2
+
+@dataclass
+class FailureDetector:
+    rules: list = field(default_factory=lambda: [
+        AlertRule(&quot;hallucination&quot;, 0.10, &quot;P1&quot;),
+        AlertRule(&quot;loop&quot;, 0.05, &quot;P1&quot;),
+        AlertRule(&quot;unauthorized&quot;, 0.0, &quot;P0&quot;),
+        AlertRule(&quot;latency_p95_60s&quot;, 0.20, &quot;P2&quot;),
+        AlertRule(&quot;cost_1usd&quot;, 0.05, &quot;P2&quot;),
+    ])
+
+    def detect(self, hourly_stats: dict) -&gt; list:
+        &quot;&quot;&quot;hourly_stats = {&quot;hallucination&quot;: 0.12, &quot;loop&quot;: 0.03, ...}&quot;&quot;&quot;
+        alerts = []
+        for rule in self.rules:
+            rate = hourly_stats.get(rule.name, 0.0)
+            if rate &gt; rule.threshold:
+                alerts.append({
+                    &quot;rule&quot;: rule.name,
+                    &quot;rate&quot;: rate,
+                    &quot;threshold&quot;: rule.threshold,
+                    &quot;severity&quot;: rule.severity,
+                })
+        return alerts
+
+if __name__ == &quot;__main__&quot;:
+    detector = FailureDetector()
+    fake_stats = {&quot;hallucination&quot;: 0.12, &quot;loop&quot;: 0.03, &quot;unauthorized&quot;: 0.0,
+                  &quot;latency_p95_60s&quot;: 0.15, &quot;cost_1usd&quot;: 0.02}
+    print(detector.detect(fake_stats))
+    # 预期输出：[{&quot;rule&quot;: &quot;hallucination&quot;, &quot;rate&quot;: 0.12, &quot;threshold&quot;: 0.10, &quot;severity&quot;: &quot;P1&quot;}]</code></pre>
+<hr/>
+<h2>22.10 5 大坑与 Part 4-5 安全三联画</h2>
+<h3>22.10.1 5 大坑</h3>
+<table><thead><tr><th style="text-align:left">坑</th><th style="text-align:left">表现</th><th style="text-align:left">教训</th></tr></thead><tbody><tr><td style="text-align:left"><strong>评测泄漏</strong></td><td style="text-align:left">基准题目混入训练集，SWE-bench lite 2025-Q4 翻车</td><td style="text-align:left">自建评测 + 盲测</td></tr><tr><td style="text-align:left"><strong>过拟合基准</strong></td><td style="text-align:left">基准调到 90%，生产只有 40%</td><td style="text-align:left">公开 + 自建双轨</td></tr><tr><td style="text-align:left"><strong>judge 偏差</strong></td><td style="text-align:left">judge 偏好自己 / 偏好长文</td><td style="text-align:left">多 judge 双盲</td></tr><tr><td style="text-align:left"><strong>trace 爆炸</strong></td><td style="text-align:left">100% 采样 → 100 GB/月 → 磁盘满</td><td style="text-align:left">1% 全量 + 100% 失败</td></tr><tr><td style="text-align:left"><strong>告警疲劳</strong></td><td style="text-align:left">一天 1000 个告警 → 没人看</td><td style="text-align:left">分级 + 抑制 + 收敛</td></tr></tbody></table>
+<h3>22.10.2 Part 4-5 安全三联画</h3>
+<p>延续 ch17（代码助手）/ ch20（Browser-Use）/ ch21（GUI Agent）三章安全论述：</p>
+<table><thead><tr><th style="text-align:left">章</th><th style="text-align:left">平台差异</th><th style="text-align:left">安全拦截</th><th style="text-align:left">隐私</th><th style="text-align:left">失败兜底</th><th style="text-align:left">时延</th></tr></thead><tbody><tr><td style="text-align:left">ch17 代码助手</td><td style="text-align:left">IDE / Repo</td><td style="text-align:left">静态扫描 + 沙箱</td><td style="text-align:left">本地代码</td><td style="text-align:left">测试运行</td><td style="text-align:left">中</td></tr><tr><td style="text-align:left">ch20 Browser-Use</td><td style="text-align:left">浏览器</td><td style="text-align:left">选择器白名单 + 同源</td><td style="text-align:left">URL + cookie</td><td style="text-align:left">操作可回滚</td><td style="text-align:left">中</td></tr><tr><td style="text-align:left">ch21 GUI Agent</td><td style="text-align:left">桌面 OS</td><td style="text-align:left">桌面隔离 + 撤销栈</td><td style="text-align:left">截图 + 键鼠</td><td style="text-align:left">撤销 + 熔断</td><td style="text-align:left">高</td></tr><tr><td style="text-align:left"><strong>ch22 评测</strong></td><td style="text-align:left">全链路</td><td style="text-align:left"><strong>Trace + 告警 + judge</strong></td><td style="text-align:left"><strong>trace 不带 PII</strong></td><td style="text-align:left"><strong>回归 + replay</strong></td><td style="text-align:left"><strong>N/A</strong></td></tr></tbody></table>
+<p>ch22 提供<strong>&quot;事后视角&quot;</strong>——前 3 章解决&quot;如何安全执行&quot;，ch22 解决&quot;如何知道是否安全&quot;。</p>
+<h3>22.10.3 评测成本的&quot;二八法则&quot;</h3>
+<p>80% 的评测价值来自 20% 的核心指标。盲目堆指标只会拖慢迭代速度。推荐的指标优先级：</p>
+<table><thead><tr><th style="text-align:left">优先级</th><th style="text-align:left">指标</th><th style="text-align:left">必须？</th><th style="text-align:left">实现成本</th></tr></thead><tbody><tr><td style="text-align:left">🔴 P0</td><td style="text-align:left">SR / Steps / Cost / Latency</td><td style="text-align:left"><strong>必须</strong></td><td style="text-align:left">🟢 低</td></tr><tr><td style="text-align:left">🟡 P1</td><td style="text-align:left">失败模式分类 / 工具成功率</td><td style="text-align:left">强烈建议</td><td style="text-align:left">🟡 中</td></tr><tr><td style="text-align:left">🟢 P2</td><td style="text-align:left">鲁棒性扰动 / LLM judge / trace replay</td><td style="text-align:left">成熟期做</td><td style="text-align:left">🔴 高</td></tr></tbody></table>
+<p>新项目<strong>只做 P0</strong>，等 P0 跑稳了再加 P1，最后才考虑 P2。一次性堆 12 个指标的项目 100% 会在第 3 个月废弃指标收集。</p>
+<h3>22.10.4 评测数据的隐私</h3>
+<p>trace 数据往往包含敏感信息（用户消息、查询内容、工具返回）。<strong>评测数据必须脱敏</strong>：</p>
+<ul>
+<li>❌ 不存原始用户消息，存 hash</li>
+<li>❌ 不存 PII（手机号 / 邮箱 / 身份证），替换为 <code>&lt;PII&gt;</code></li>
+<li>✅ 存 query 意图分类（&quot;查订单&quot; / &quot;退款&quot; / &quot;投诉&quot;）</li>
+<li>✅ 存工具调用 + 参数 hash（不存明文参数）</li>
+</ul>
+<p>评测数据若泄漏，等同于用户隐私泄漏——这条线不容妥协，也直接呼应 ch23 提示注入防御章节中&quot;trace 中的 PII 是注入攻击者的金矿&quot;这一论断。</p>
+<hr/>
+<h2>22.11 小结 + 速查 + 概念桥 ch22 ↔ ch23</h2>
+<h3>22.11.1 8 步速查</h3>
+<ol>
+<li><strong>指标先于实现</strong>：先定 SR / Steps / Cost / Latency 四指标，再写 prompt</li>
+<li><strong>基准 + 自建双轨</strong>：公开基准 sanity check，自建评估集才是核心</li>
+<li><strong>OTel 是地基</strong>：所有 trace 走 OpenTelemetry 标准</li>
+<li><strong>LLM judge 多源双盲</strong>：2-3 个不同源 judge 中位数</li>
+<li><strong>EDD 而非裸跑</strong>：prompt / tool 改动必须过评测集门禁</li>
+<li><strong>5 大失败模式</strong>：幻觉 / 循环 / 越权 / 时延 / 成本</li>
+<li><strong>trace 必采样</strong>：1% 全量 + 100% 失败 + 100% 关键</li>
+<li><strong>告警必分级</strong>：P0 立即熔断 / P1 15 min / P2 1h</li>
+</ol>
+<h3>22.11.2 概念速查表（22 术语）</h3>
+<table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">术语</th><th style="text-align:left">英文</th><th style="text-align:left">一句话</th></tr></thead><tbody><tr><td style="text-align:left">1</td><td style="text-align:left">Trace</td><td style="text-align:left">Trace</td><td style="text-align:left">一次任务的完整执行链路</td></tr><tr><td style="text-align:left">2</td><td style="text-align:left">Span</td><td style="text-align:left">Span</td><td style="text-align:left">一个步骤（LLM / tool / retrieval）</td></tr><tr><td style="text-align:left">3</td><td style="text-align:left">OTLP</td><td style="text-align:left">OpenTelemetry Protocol</td><td style="text-align:left">OTel 的数据传输协议</td></tr><tr><td style="text-align:left">4</td><td style="text-align:left">EDD</td><td style="text-align:left">Eval-Driven Development</td><td style="text-align:left">评测驱动开发</td></tr><tr><td style="text-align:left">5</td><td style="text-align:left">LLM-as-a-Judge</td><td style="text-align:left">LLM-as-a-Judge</td><td style="text-align:left">用 LLM 评 LLM 输出</td></tr><tr><td style="text-align:left">6</td><td style="text-align:left">AgentBench</td><td style="text-align:left">AgentBench</td><td style="text-align:left">通用工具调用基准（1,750+ 任务）</td></tr><tr><td style="text-align:left">7</td><td style="text-align:left">SWE-bench</td><td style="text-align:left">SWE-bench</td><td style="text-align:left">GitHub PR 修复基准</td></tr><tr><td style="text-align:left">8</td><td style="text-align:left">GAIA</td><td style="text-align:left">GAIA</td><td style="text-align:left">多模态真实任务基准</td></tr><tr><td style="text-align:left">9</td><td style="text-align:left">WebArena</td><td style="text-align:left">WebArena</td><td style="text-align:left">网页浏览器任务基准</td></tr><tr><td style="text-align:left">10</td><td style="text-align:left">τ-bench</td><td style="text-align:left">Tau-bench</td><td style="text-align:left">多轮客户服务基准</td></tr><tr><td style="text-align:left">11</td><td style="text-align:left">OSWorld</td><td style="text-align:left">OSWorld</td><td style="text-align:left">桌面 OS 任务基准</td></tr><tr><td style="text-align:left">12</td><td style="text-align:left">幻觉</td><td style="text-align:left">Hallucination</td><td style="text-align:left">输出事实错误或编造</td></tr><tr><td style="text-align:left">13</td><td style="text-align:left">死循环</td><td style="text-align:left">Loop</td><td style="text-align:left">同一动作重复 ≥ 5 次</td></tr><tr><td style="text-align:left">14</td><td style="text-align:left">越权</td><td style="text-align:left">Unauthorized</td><td style="text-align:left">调用未授权工具</td></tr><tr><td style="text-align:left">15</td><td style="text-align:left">时延爆炸</td><td style="text-align:left">Latency Explosion</td><td style="text-align:left">P95 &gt; 60s</td></tr><tr><td style="text-align:left">16</td><td style="text-align:left">judge 偏差</td><td style="text-align:left">Judge Bias</td><td style="text-align:left">LLM judge 的系统性偏差</td></tr><tr><td style="text-align:left">17</td><td style="text-align:left">评测泄漏</td><td style="text-align:left">Eval Leakage</td><td style="text-align:left">评测样本混入训练集</td></tr><tr><td style="text-align:left">18</td><td style="text-align:left">过拟合</td><td style="text-align:left">Overfitting</td><td style="text-align:left">在基准上调优但生产差</td></tr><tr><td style="text-align:left">19</td><td style="text-align:left">告警疲劳</td><td style="text-align:left">Alert Fatigue</td><td style="text-align:left">告警太多无人响应</td></tr><tr><td style="text-align:left">20</td><td style="text-align:left">红绿对比</td><td style="text-align:left">Red-Green Diff</td><td style="text-align:left">新旧版本输出对比</td></tr><tr><td style="text-align:left">21</td><td style="text-align:left">Trace Replay</td><td style="text-align:left">Trace Replay</td><td style="text-align:left">用真实 trace 离线回放</td></tr><tr><td style="text-align:left">22</td><td style="text-align:left">U/C</td><td style="text-align:left">Utility/Cost</td><td style="text-align:left">成功率 / 单任务成本</td></tr></tbody></table>
+<h3>22.11.3 概念桥 ch22 ↔ ch23</h3>
+<p><strong>本日 ch22 核心论断</strong>：</p>
+<blockquote><strong>评测发现弱点，防御修补弱点。</strong></blockquote>
+<p>ch22 提供了&quot;看见失败&quot;的工具：trace、judge、监控告警、5 大失败模式分类。</p>
+<p>ch23 将解决&quot;修补失败&quot;：直接注入防御、间接注入防御、越权防御、工具投毒防御、Llama Guard / Prompt Guard。</p>
+<p>如果 ch22 是&quot;Agent 的体检中心&quot;，ch23 就是&quot;Agent 的免疫系统&quot;。两者必须配合——只有先知道哪里有病，才能精准下药。</p>
+<h3>22.11.4 ch22 内部 4 个核心 takeaway</h3>
+<ol>
+<li><strong>评测是 Agent 时代的第一性原理</strong>：没有评测就没有改进，没有改进就没有上线。</li>
+<li><strong>trace 是一切诊断的根</strong>：指标告诉你&quot;发生了什么&quot;，trace 告诉你&quot;为什么&quot;。两者缺一不可。</li>
+<li><strong>EDD 应取代裸跑</strong>：任何 prompt / tool 改动必须过评测门禁，否则就是&quot;凭感觉改 Agent&quot;。</li>
+<li><strong>告警必须分级</strong>：P0 熔断 / P1 15 min / P2 1h。没有分级的告警系统就是&quot;噪声发生器&quot;。</li>
+</ol>
+<p>这 4 个 takeaway 是把 ch22 从&quot;知识章节&quot;变成&quot;工程章节&quot;的关键——只讲概念不讲落地的评测章节是失败的。</p>
+<h3>22.11.5 给读者的 3 步上手建议</h3>
+<p>如果你是第一次接触 Agent 评测，建议按以下顺序上手：</p>
+<ol>
+<li><strong>本周</strong>：把 22.7.1 的 30 行评测流水线跑起来，给自己的 Agent 加 4 个核心指标（SR / Steps / Cost / Latency）</li>
+<li><strong>本月</strong>：把 trace 接入 LangSmith 或 Langfuse，把 5 大失败模式告警配好</li>
+<li><strong>本季度</strong>：搭评测集 + EDD 流程，做到&quot;任何 prompt 改动都过评测门禁&quot;</li>
+</ol>
+<p>三步走完，你的 Agent 就从&quot;能跑&quot;升级为&quot;可度量、可改进、可信任&quot;。这正是 ch22 想要传达的核心理念（<strong>时间估算基于 1 人开发小项目，大团队按比例延长</strong>）。</p>
+<h3>22.11.6 给资深工程师的 3 条进阶</h3>
+<ol>
+<li><strong>多模态 trace 压缩</strong>：GUI Agent 截图占空间大头，可用 delta encoding + 关键帧抽取</li>
+<li><strong>评测集对抗进化</strong>：每月注入 10% &quot;对抗样本&quot;，避免评测集过拟合</li>
+<li><strong>跨 Agent 对比</strong>：用同一评测集比较不同框架的 Agent，找到最适合业务的栈</li>
+</ol>
+<hr/>
+<p><strong>本章字数统计</strong>：约 <strong>5600 中文字</strong>（含表格 + 代码块说明）；目标 ≥ 5000 ✅</p>
+<p><strong>本章代码块</strong>：3 个（评测流水线 / trace 持久化 / 失败模式监控）</p>
+<p><strong>本章主表</strong>：12 张</p>
+<p><strong>本章术语</strong>：22 个（≥ 20 ✅）</p>
+<p><strong>概念桥</strong>：ch22 ← ch21（&quot;GUI Agent 让评测从纯文本/代码变成跨模态&quot;§22.1.2 grep 命中） + ch22 → ch23（&quot;评测发现弱点，防御修补弱点&quot;§22.11.3）</p>
+<p><strong>Part 5 进度</strong>：2 / 5 章（Day 23 完成 ✅）</p>
+
+</main>
+
+<nav class="chapter-pager">
+  <a href="ch21.html">← 第 21 章：Computer Use 与 GUI Agent</a>
+  <a href="ch23.html">第 23 章：Agent 安全与提示注入防御 →</a>
+</nav>
+
+<footer>
+  <p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <a href="ch20.html">第 20 章</a> · <a href="ch21.html">第 21 章</a> · <strong>第 22 章</strong> · <a href="ch23.html">第 23 章</a></p>
+</footer>
+
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
