@@ -133,7 +133,7 @@
 <p>- <strong>22.4 KLM 定理</strong>: 概率性通用量子计算</p>
 <p>- <strong>22.5 MBQC / 簇态量子计算</strong>: 测量驱动</p>
 <p>- <strong>22.6 玻色采样</strong>: 量子优越性 (九章/Borealis)</p>
-<p>- <strong>22.7 光子损失 + 容错</strong>: 量子计算最大障碍</p>
+<p>- <strong>22.7 光子损失</strong>——贯穿全章的工程难题</p>
 <p>- <strong>22.8-22.9 集成光路 + 里程碑 + 优势劣势</strong></p>
 <p>- <strong>22.10 ch23 拓扑量子计算 + ch24 中性原子</strong> 铺路</p>
 
@@ -277,6 +277,8 @@
 <thead><tr><th>项目</th><th>标准量子计算</th><th>KLM 线性光学</th></tr></thead>
 <tbody><tr><td>两 qubit 门</td><td>确定性</td><td><strong>概率性</strong> (1/4 ~ 1/16)</td></tr><tr><td>失败时</td><td>不发生</td><td>输出<strong>无用</strong>态,需 post-selection 丢弃</td></tr><tr><td>物理资源</td><td>1</td><td><strong>多次</strong>重复 + 后选择 ~$1/p_{\text{success}}$</td></tr><tr><td>测量方式</td><td>投影测量</td><td><strong>光子数分辨</strong> + <strong>前馈</strong></td></tr></tbody></table>
 
+<p><strong>举例</strong>: 对于一个<strong>8 qubit 算法</strong> (如 Shor-15 因式分解, ch11), 约需 <strong>40 个 CNOT</strong> (按 Nielsen-Chuang 资源表)。纯 KLM 概率门每个成功概率 1/4, <strong>整体</strong> 成功概率 $p = (1/4)^{40} \approx 10^{-24}$——这是为什么 KLM <strong>不可直接工程化</strong>, 需要 MBQC + 容错码 (ch17-19) 优化。</p>
+
 <p><strong>结论</strong>: KLM 解决了"理论不可能",但<strong>实际工程上</strong>需要海量<strong>冗余</strong>光子(每个<strong>逻辑</strong>CNOT 需要数十个<strong>物理</strong>光子)。</p>
 
 <h3>22.3.4 后续改进</h3>
@@ -388,12 +390,14 @@
 
 <p>玻色采样<strong>只是</strong>展示"量子可以<strong>某些</strong>问题超越经典"——一个<strong>里程碑</strong>,不是<strong>终点</strong>。</p>
 
-<h3>22.5.6 PsiQuantum 100 万光子计划</h3>
+<h3>22.5.6 PsiQuantum 100 万 qubit 路线图</h3>
 
-<p>PsiQuantum 路线图 (2023 公开发布):</p>
-<p>- <strong>2025-2027</strong>: 数千光子 (中等规模)</p>
-<p>- <strong>2028-2030</strong>: 数十万光子</p>
-<p>- <strong>2030+</strong>: <strong>百万</strong> 光子 (实现<strong>实用</strong> 容错量子计算)</p>
+<blockquote><p><strong>注意</strong>: 以下"qubit"指<strong>逻辑 qubit</strong> (FTQC, ch19), 不是单个光子。1 个<strong>逻辑</strong> qubit 背后通常需要 100-10000 个<strong>物理</strong> qubit (取决于纠错码, ch18 表面码 ~1000)。所以"100 万逻辑 qubit" 实际对应 ~10⁸-10⁹ 物理 qubit。</p></blockquote>
+
+<p>PsiQuantum 路线图 (2023 公开发布, 2024 更新):</p>
+<p>- <strong>2025-2027</strong>: 数千光子 (中等规模, 演示 MBQC 优势)</p>
+<p>- <strong>2028-2030</strong>: 数十万光子 (大规模集成验证)</p>
+<p>- <strong>2030+</strong>: <strong>百万逻辑 qubit</strong> (FTQC 实用化)</p>
 
 <hr>
 
@@ -463,7 +467,7 @@
 
 <table class="chapter-table">
 <thead><tr><th>团队</th><th>编码</th><th>量子门方式</th><th>单光子源</th></tr></thead>
-<tbody><tr><td><strong>PsiQuantum</strong> (Bristol)</td><td>路径 (MBQC)</td><td>测量 + 簇态</td><td>量子点</td></tr><tr><td><strong>Xanadu</strong> (多伦多)</td><td>时间 + 路径</td><td>高斯玻色采样</td><td>SPDC</td></tr><tr><td><strong>USTC 九章</strong> (合肥)</td><td>路径</td><td>高斯玻色采样</td><td>SPDC</td></tr><tr><td><strong>Quandela</strong> (巴黎)</td><td>路径</td><td>MBQC + KLM</td><td>量子点</td></tr><tr><td><strong>牛津</strong> (UK)</td><td>路径</td><td>KLM 概率门</td><td>SPDC + 量子点</td></tr></tbody></table>
+<tbody><tr><td><strong>PsiQuantum</strong> (Bristol)</td><td>路径 (MBQC)</td><td>测量 + 簇态</td><td>量子点</td></tr><tr><td><strong>Xanadu</strong> (多伦多)</td><td>时间 + 路径</td><td>高斯玻色采样</td><td>SPDC</td></tr><tr><td><strong>USTC 九章</strong> (合肥)</td><td>路径</td><td>高斯玻色采样</td><td>SPDC</td></tr><tr><td><strong>Quandela</strong> (巴黎)</td><td>路径</td><td>MBQC + KLM</td><td>量子点</td></tr><tr><td><strong>U. Oxford (pre-PsiQuantum era)</strong></td><td>路径</td><td>KLM 概率门</td><td>SPDC + 量子点</td></tr></tbody></table>
 
 <h3>22.7.4 可重构光网络</h3>
 
@@ -493,7 +497,7 @@
 
 <table class="chapter-table">
 <thead><tr><th>年份</th><th>系统</th><th>模数</th><th>任务</th></tr></thead>
-<tbody><tr><td>2019</td><td>Shoemaker</td><td>8</td><td>第一颗商用云光量子芯片</td></tr><tr><td>2020</td><td>Borealis (先驱)</td><td>12</td><td>玻色采样</td></tr><tr><td><strong>2022</strong></td><td><strong>Borealis</strong></td><td><strong>216</strong></td><td><strong>可编程玻色采样 (创纪录)</strong></td></tr><tr><td>2024</td><td>Aurora</td><td>4 qubit</td><td><strong>首颗通用光量子芯片 (MBQC 簇态)</strong></td></tr></tbody></table>
+<tbody><tr><td>2019</td><td>Shoemaker</td><td>8</td><td>第一颗商用云光量子芯片</td></tr><tr><td>2020</td><td>Borealis v0 (原型)</td><td>12</td><td>玻色采样 (早期原型)</td></tr><tr><td><strong>2022</strong></td><td><strong>Borealis</strong></td><td><strong>216</strong></td><td><strong>可编程玻色采样 (创纪录)</strong></td></tr><tr><td>2024</td><td>Aurora</td><td>4 qubit</td><td><strong>首颗通用光量子芯片 (MBQC 簇态)</strong></td></tr></tbody></table>
 
 <h3>22.8.3 PsiQuantum 路线 (英国/美国)</h3>
 
@@ -818,10 +822,10 @@
           <span class="pager-label">← 上一章</span>
           <span class="pager-title">第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</span>
         </a>
-        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+        <a href="ch23.html" class="pager-link pager-next">
           <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 23 章 (即将推出)</span>
-        </span>
+          <span class="pager-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</span>
+        </a>
       </nav>
     </main>
 

@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第23章：拓扑量子计算 (Topological Quantum Computing) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第23章：拓扑量子计算 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第五部分 · 量子硬件 · Day 3</span>
+        <span class="chapter-day-tag">Day 26 · 2026-07-07</span>
+      </div>
+      <h1 class="chapter-title">第 22 章 光量子计算 (Photonic Quantum Computing)</h1>
+      <p class="chapter-subtitle">光子比特 + KLM 定理 + 玻色采样 + 九章 + PsiQuantum + 室温量子计算 + 第五部分 Day 3</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,700 字</span>
+        <span class="stat">🔢 10 节 · 3 附录 · 58 子节</span>
+        <span class="stat">📑 任意子 / Majorana 费米子 / 编织 / 拓扑保护 / Microsoft Majorana 1</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                                                <article class="chapter-content">
+
+<blockquote><p><strong>承接 ch22</strong>: 在上一章里,我们看到光量子计算通过 KLM 概率门 + MBQC 测量诱导绕过了"光子不直接相互作用"的难题。然而,所有这些方法都<strong>仍然</strong>需要<strong>主动</strong>纠错 (ch17 错误率 ~1%,ch18 表面码阈值 ~1%) —— 表面码的"千倍" qubit overhead 是公认的工程难题。</p></blockquote>
+
+<blockquote><p><strong>本章核心问题</strong>: <strong>有没有一种量子计算,物理层面就"自带抗错"</strong>—— 局部噪声<strong>根本</strong>不能翻转量子态, 不需要纠错码, 不需要大量冗余 qubit?</p></blockquote>
+
+<blockquote><p><strong>答案</strong>: 拓扑量子计算。本章围绕<strong>任意子 + Majorana + 编织 + 拓扑保护</strong>展开, 介绍 Microsoft 押注的 Majorana 路线, 以及为什么这条路线既"前景惊人"又"争议不断"。</p></blockquote>
+
+<hr>
+
+<h2 id="23-0-引言">23.0 引言</h2>
+
+<h3>23.0.1 五种量子硬件平台的拓扑定位</h3>
+
+<p>在前三章里, 我们看到了超导 (ch20)、离子阱 (ch21)、光量子 (ch22) 三种主流硬件平台:</p>
+
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>操控介质</th><th>qubit 规模 (2024)</th><th>门速度</th><th>门保真度</th><th>工作温度</th><th>抗错机制</th></tr></thead>
+<tbody><tr><td>超导 (ch20)</td><td>电磁囚禁</td><td>1000+</td><td>10-100 ns</td><td>99.5-99.9%</td><td>10 mK</td><td><strong>主动</strong>表面码 (ch18)</td></tr><tr><td>离子阱 (ch21)</td><td>电磁囚禁</td><td>36-56</td><td>1-10 μs</td><td><strong>99.99%</strong></td><td>室温阱 + 真空</td><td><strong>主动</strong>表面码 (ch18)</td></tr><tr><td>光量子 (ch22)</td><td>线性光学</td><td>100-216 模</td><td>ns</td><td>99%</td><td><strong>室温</strong></td><td>光子损失码 (ch17)</td></tr><tr><td><strong>拓扑 (ch23)</strong></td><td>电磁囚禁</td><td><strong>8 (早期)</strong></td><td>ns (预期)</td><td>99% (预期)</td><td>10 mK</td><td><strong>物理</strong>拓扑保护 (本章)</td></tr><tr><td>中性原子 (ch24)</td><td>光镊</td><td>100-1180</td><td>100 ns-1 μs</td><td>99.5%</td><td>室温 + 激光冷</td><td>主动表面码</td></tr></tbody></table>
+
+<p><strong>关键区别</strong>: 超导/离子阱/光量子的抗错<strong>都</strong>靠<strong>主动纠错码</strong> (ch17-19)——用 ~100-10000 个物理 qubit 编码 1 个逻辑 qubit, <strong>overhead 千倍</strong>。而<strong>拓扑量子计算</strong>的承诺是:<strong>物理层面就抗错</strong>, 错误率 $p &lt; 10^{-6}$ (vs 超导 $10^{-3}$) → <strong>理论 overhead 大幅降低</strong>。</p>
+
+<h3>23.0.2 历史里程碑 (1997-2025):Kitaev 思想到 Microsoft Majorana 1</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th><th>人物 / 团队</th><th>意义</th></tr></thead>
+<tbody><tr><td><strong>1997</strong></td><td>拓扑量子计算思想</td><td><strong>Alexei Kitaev</strong> (Caltech / LANL)</td><td>任意子 + 编织实现通用量子计算 (理论)</td></tr><tr><td><strong>2001</strong></td><td>Kitaev 链</td><td>Kitaev</td><td>1D 拓扑超导 → 两端 Majorana 零模</td></tr><tr><td><strong>2003</strong></td><td>Fibonacci 任意子通用性证明</td><td>Freedman, Larsen, Wang</td><td>任意子 + 编织 = 通用量子计算 (数学证明)</td></tr><tr><td><strong>2005</strong></td><td>异质结方案</td><td>Fu, Kane (Princeton)</td><td>拓扑绝缘体 + 超导异质结承载 Majorana</td></tr><tr><td><strong>2010</strong></td><td>半导体-超导方案</td><td>Lutchyn, Sau, Das Sarma</td><td>InSb 纳米线 + s-wave 超导 + 磁场 (主流实验方案)</td></tr><tr><td><strong>2012</strong></td><td>零偏压电导峰</td><td>Kouwenhoven (Delft)</td><td><strong>第一次</strong> Majorana 实验证据 (后争议)</td></tr><tr><td><strong>2018</strong></td><td>撤稿争议</td><td>Nature 2018 paper (作者撤回)</td><td>早期证据不足, 学界质疑</td></tr><tr><td><strong>2020-2023</strong></td><td>重新实验</td><td>Microsoft Station Q + Delft</td><td>改进实验, 部分信号重现</td></tr><tr><td><strong>2024-02</strong></td><td><strong>Majorana 1 芯片</strong></td><td><strong>Microsoft (Chetan Nayak)</strong></td><td><strong>8 topological qubits</strong> 原型, <em>Nature</em> 同期</td></tr><tr><td><strong>2025</strong></td><td>验证与路线图</td><td>Microsoft</td><td>巩固 8 qubit + 走向 64 qubit + 1 logical qubit</td></tr></tbody></table>
+
+<h3>23.0.3 四个先验 (读本章前应知道)</h3>
+
+<p>1. <strong>第二章 (ch02) 的 Dirac 符号</strong>——$\lvert 0\rangle, \lvert 1\rangle$ 是默认</p>
+<p>2. <strong>第七章 (ch07) 的量子门</strong>——单 qubit 门 + CNOT 是一切的基础</p>
+<p>3. <strong>第十章 (ch10) 的 Grover 振幅放大</strong>——拓扑等价于"振幅放大"的几何</p>
+<p>4. <strong>第十九章 (ch19) 的容错</strong>——表面码需要 1000 倍 overhead; 拓扑的"承诺"是降低 overhead</p>
+
+<h3>23.0.4 ch24 路线图</h3>
+
+<p>本章讨论:</p>
+<p>- <strong>23.1 拓扑学 + 量子信息</strong>: 拓扑不变量 = 抗错的物理基础</p>
+<p>- <strong>23.2 任意子</strong>: 二维世界特有的粒子; 非阿贝尔任意子 = 量子门载体</p>
+<p>- <strong>23.3 Majorana 费米子</strong>: 自己的反粒子; 凝聚态实现</p>
+<p>- <strong>23.4 编织 = 量子门</strong>: Majorana 世界线交叉 = CNOT 等价</p>
+<p>- <strong>23.5 拓扑保护</strong>: 能隙保护 + 错误率 $p \sim e^{-\Delta/k_BT}$</p>
+<p>- <strong>23.6 Microsoft Majorana 1</strong>: 8 qubit 拓扑原型 + 争议</p>
+<p>- <strong>23.7 拓扑的挑战</strong>: Majorana 制备 + Fibonacci 未实现 + 产业链</p>
+<p>- <strong>23.8 优势劣势未来</strong>: 拓扑 vs 表面码的工程权衡</p>
+<p>- <strong>23.9 ch24 中性原子</strong> 铺路 + 总结</p>
+
+<p><strong>下一章 ch24 中性原子量子计算机</strong>走"光镊 + Rydberg 阻塞 + 可重排"路线——<strong>最像经典计算机</strong>的拓扑 (用激光灵活排布原子), 跟拓扑量子计算形成有趣对比。</p>
+
+<hr>
+
+<h2 id="23-1-拓扑学与量子信息的桥梁">23.1 拓扑学与量子信息的桥梁</h2>
+
+<h3>23.1.1 拓扑不变量的概念——甜甜圈 ≡ 咖啡杯</h3>
+
+<p><strong>拓扑学 (topology)</strong> 研究的是<strong>连续形变</strong>下保持不变的<strong>性质</strong>。最经典的例子:</p>
+
+<blockquote><p><strong>一个甜甜圈 ☕ 和一个咖啡杯</strong>——表面看不同, 但<strong>拓扑等价</strong>: 它们都<strong>有 1 个洞</strong> (handle / 亏格 genus = 1)。你可以连续地把一个变形成另一个, 只要不<strong>撕裂</strong>或<strong>粘合</strong>。</p></blockquote>
+
+<p><strong>核心概念</strong>:</p>
+<p>- <strong>亏格 (genus) $g$</strong>: 表面洞的数量。球面 $g=0$, 甜甜圈 $g=1$, 双洞 $g=2$。</p>
+<p>- <strong>同伦群 (homotopy group) $\pi_n$</strong>: 描述"在表面上画圈有多少种本质不同的方式"——这个抽象数学概念<strong>直接</strong>对应到"任意子的种类"。</p>
+
+<h3>23.1.2 拓扑保护——为什么"局部噪声不能翻转"</h3>
+
+<p><strong>物理类比</strong>: 一只手表扔到泥里, 只要不深过<strong>一定深度</strong> (1 厘米), <strong>还在走</strong>。</p>
+
+<p><strong>为什么?</strong> 经典手表有<strong>能隙</strong>——指针<strong>必须</strong>积累足够能量才能"转一格"。"局部"泥水扰动<strong>不</strong>够能量。</p>
+
+<p><strong>量子对应</strong>:</p>
+<p>- <strong>经典超导</strong>有<strong>超导能隙</strong> $\Delta$ ~ meV: 局部热涨落 &lt; $\Delta$, 不能破坏库珀对 → <strong>超流持续</strong>。</p>
+<p>- <strong>拓扑超导</strong>有<strong>更特殊的能隙</strong>: 不只保护超流, 还保护<strong>量子信息</strong>——量子态的"特征"(拓扑不变量)<strong>不</strong>能被局部扰动翻转。</p>
+
+<p><strong>这是拓扑量子计算的"承诺"的物理基础</strong>: 错误率 $p \sim e^{-\Delta/k_BT}$ 是<strong>指数抑制</strong>的。</p>
+
+<h3>23.1.3 数学工具——同伦群与辫群</h3>
+
+<p><strong>同伦群 $\pi_n$</strong>: 描述"在 $n$ 维空间里画圈有多少种本质不同的方式"。在 3D 我们的"圈"<strong>总能收缩到一个点</strong>——所以 3D <strong>没有</strong>非平凡的圈, <strong>没有</strong>任意子。但在 2D, 圈<strong>可以</strong>缠绕<strong>不可收缩</strong>——这是任意子存在的数学原因。</p>
+
+<p><strong>辫群 (braid group) $B_n$</strong>: 描述"$n$ 条世界线互相缠绕的方式"。在 2D 任意子的世界里, 两条世界线<strong>交换</strong> (braiding) <strong>不</strong>等同于"不交换 + 整体旋转"——这是非阿贝尔任意子<strong>编码量子信息</strong>的数学基础。</p>
+
+<p><strong>关键</strong>: 编织 = $B_n$ 的<strong>非阿贝尔表示</strong> (non-abelian representation) → 量子门!</p>
+
+<hr>
+
+<h2 id="23-2-任意子-anyons-二维世界的奇特粒子">23.2 任意子 (Anyons)——二维世界的奇特粒子</h2>
+
+<h3>23.2.1 3D vs 2D 统计——为什么任意子是 2D 特产</h3>
+
+<p><strong>在 3D 世界里</strong>, 粒子只有两类:</p>
+<p>- <strong>玻色子 (bosons)</strong>: 交换后波函数不变 ($\psi \to +\psi$)。光子、胶子、氦-4。</p>
+<p>- <strong>费米子 (fermions)</strong>: 交换后波函数变号 ($\psi \to -\psi$)。电子、质子、中子。</p>
+
+<p><strong>为什么只有这两类?</strong> 3D 空间里, "交换两个粒子" = "把一条路径变形到另一条" + "整体旋转"。整体旋转<strong>对波函数没影响</strong> (标量场), 所以只有 "不变 / 变号" 两种选择。</p>
+
+<p><strong>在 2D 世界里</strong>, "交换两个粒子" = "把世界线绕在一起"——<strong>可以</strong>不通过"撕裂" + 整体旋转来交换。这意味着:</p>
+<p>- <strong>交换可以累积任意相位</strong> $\psi \to e^{i\theta}\psi$。</p>
+<p>- $\theta$ 可以是<strong>任意值</strong>——<strong>不</strong>只是 0 或 $\pi$!</p>
+
+<p><strong>这就是任意子 (anyons)</strong>——2D 世界的奇特粒子。</p>
+
+<h3>23.2.2 阿贝尔 vs 非阿贝尔任意子</h3>
+
+<p><strong>阿贝尔任意子 (Abelian anyons)</strong>: 交换<strong>只</strong>累积相位, 不改变<strong>内部</strong>量子态。</p>
+<p>- 例: 分数量子霍尔态 $\nu = 1/3$ 的 Laughlin 准粒子 (实验已确认)。</p>
+<p>- 用途: 容错拓扑码 (ch18 的<strong>同伦</strong>版本)——不直接做量子门, 但保护量子信息。</p>
+
+<p><strong>非阿贝尔任意子 (Non-abelian anyons)</strong>: 交换<strong>改变内部量子态</strong>, 且<strong>交换顺序不同 → 末态不同</strong>!</p>
+<p>- 例: $\nu = 5/2$ 量子霍尔态的 Moore-Read 准粒子 (实验争议中); Fibonacci 任意子 (理论, 未实现)。</p>
+<p>- 用途: 量子门的<strong>天然载体</strong>——本章<strong>重点</strong>!</p>
+
+<h3>23.2.3 Fibonacci 任意子——通用量子计算</h3>
+
+<p><strong>Fibonacci 任意子</strong> (理论上, 2003 Freedman-Larsen-Wang 证明) 有<strong>最简单</strong>的非阿贝尔表示:</p>
+<p>- 2 个 Fibonacci 任意子的<strong>融合空间</strong>是 2 维 → 编码 1 个 qubit</p>
+<p>- <strong>编织</strong>可以<strong>实现任意</strong>单 qubit 旋转 + 两 qubit 门 → <strong>通用</strong>量子计算</p>
+<p>- 跟 Ising 任意子不同: Fibonacci <strong>不需要</strong>辅助 π/8 门——<strong>真正</strong>通用</p>
+
+<p><strong>问题</strong>: Fibonacci 任意子<strong>至今</strong>没有实验实现。理论很美, 工程<strong>仍是梦</strong>。</p>
+
+<h3>23.2.4 Ising 任意子——准通用, 工程上更现实</h3>
+
+<p><strong>Ising 任意子</strong> ($\nu = 5/2$ 量子霍尔态中的准粒子) 有<strong>较弱</strong>的非阿贝尔表示:</p>
+<p>- 交换 = 1 qubit 旋转 (例如 $R_x(\pi/4)$)</p>
+<p>- 编织<strong>只能</strong>生成 <strong>Clifford 群</strong> (ch07) → 配合辅助 π/8 门才通用 (Solovay-Kitaev 定理 ch07)</p>
+
+<p><strong>实验状态</strong>:</p>
+<p>- <strong>2012 Kouwenhoven 零偏压电导峰</strong>——<strong>被解读为</strong> Ising Majorana 证据, <strong>后争议</strong> (2018 撤稿)</p>
+<p>- <strong>2024 Microsoft Majorana 1</strong>——<strong>新证据</strong> + 仍存争议</p>
+
+<h3>23.2.5 编织 (Braiding)——任意子的量子门</h3>
+
+<p><strong>编织 (braiding)</strong>: 把任意子<strong>沿世界线</strong>移动, 互相缠绕/解缠, 产生<strong>量子门</strong>。</p>
+
+<p><strong>为什么?</strong> 非阿贝尔任意子的<strong>内部态</strong>取决于<strong>编织的拓扑</strong> (homotopy class)——<strong>只</strong>跟世界线<strong>互相缠绕的方式</strong>有关, <strong>不</strong>依赖具体路径!</p>
+
+<p><strong>类比</strong>: 系鞋带——<strong>鞋带最终怎么缠绕</strong>只跟"我绕了几次"有关, 跟"我绕得快还是慢"无关。<strong>这是几何相位的拓扑版本</strong>。</p>
+
+<hr>
+
+<h2 id="23-3-majorana-费米子-自己的反粒子">23.3 Majorana 费米子——自己的反粒子</h2>
+
+<h3>23.3.1 Majorana 方程 (1937)——反粒子 = 自己</h3>
+
+<p><strong>意大利物理学家 Ettore Majorana 1937 年提出</strong>: 费米子<strong>可以</strong>是自己的反粒子。</p>
+
+<p><strong>方程</strong>:</p>
+<p>$$\gamma = \gamma^\dagger$$</p>
+
+<p>这意味着费米子<strong>没有</strong>独立的反粒子——粒子和反粒子<strong>是同一个</strong>。</p>
+
+<p><strong>粒子物理候选</strong>:</p>
+<p>- <strong>中微子</strong>——可能是 Majorana 粒子, 由 $\beta\beta$ 无中微子双衰变 (NLDBD) 实验测试 (KamLAND-Zen, CUORE, nEXO)</p>
+<p>- <strong>至今未确认</strong></p>
+
+<p><strong>凝聚态对应</strong>——<strong>准粒子</strong> (quasiparticle) 可以是 Majorana:</p>
+<p>- <strong>固体中的集体激发</strong>, 行为像 Majorana 费米子</p>
+<p>- <strong>不受泡利不相容原理</strong>约束 (因为是"准粒子")</p>
+<p>- <strong>可实验操控</strong>——这是拓扑量子计算<strong>走通的物理基础</strong></p>
+
+<h3>23.3.2 Kitaev 链 (2001)——1D 拓扑超导</h3>
+
+<p><strong>Kitaev 2001 思想</strong>: 把一维<strong>自旋极化</strong>超导链<strong>调谐</strong>到拓扑相。</p>
+
+<p><strong>数学模型</strong>:</p>
+<p>- $N$ 个格点的紧束缚哈密顿量: $H = \sum_i [t c_i^\dagger c_{i+1} + \Delta c_i^\dagger c_{i+1}^\dagger + \mu c_i^\dagger c_i] + \text{h.c.}$</p>
+<p>- 当 $|\mu| &lt; 2t$ 时 (链中<strong>化学势</strong> vs <strong>跳跃</strong>): 系统<strong>进入拓扑相</strong>。</p>
+<p>- <strong>拓扑不变量</strong>: 链<strong>两端</strong>各<strong>一个</strong> Majorana 零模 (zero-mode) $\gamma_1, \gamma_2$。</p>
+<p>- 两个端点 Majorana 组合成 1 个<strong>普通费米子</strong> $f = (\gamma_1 + i\gamma_2)/2$——这个费米子<strong>没有能量</strong> (零能)。</p>
+
+<p><strong>拓扑保护</strong>: 局部扰动 (杂质、磁场涨落) <strong>不能</strong>翻转 $\gamma_1, \gamma_2$ 的<strong>缠绕方式</strong>——这是抗错的物理基础。</p>
+
+<h3>23.3.3 半导体-超导异质结 (2010)——可实验方案</h3>
+
+<p><strong>Lutchyn-Sau-Das Sarma 2010</strong> 提出<strong>实际可造</strong>的方案:</p>
+
+<table class="chapter-table">
+<thead><tr><th>组件</th><th>材料</th><th>作用</th></tr></thead>
+<tbody><tr><td><strong>半导体纳米线</strong></td><td><strong>InSb</strong> 或 <strong>InAs</strong></td><td>自旋-轨道耦合强 + g 因子大</td></tr><tr><td><strong>超导邻近</strong></td><td><strong>s-wave 超导</strong> (Al 蒸发)</td><td>在半导体中<strong>诱导</strong> s-wave 超导</td></tr><tr><td><strong>磁场</strong></td><td>沿纳米线方向 ~100 mT</td><td><strong>打开</strong> Zeeman 能隙, 让 Majorana 出现</td></tr><tr><td><strong>测量端</strong></td><td>正常金属电极</td><td>量子点 + 隧穿电导</td></tr></tbody></table>
+
+<p><strong>关键物理</strong>: 当<strong>塞曼能</strong> &gt; 超导能时, 系统进入<strong>拓扑相</strong>, 纳米线<strong>两端</strong>各<strong>一个</strong> Majorana 零模。</p>
+
+<p><strong>2012 年 Kouwenhoven 团队 (Delft) 第一次报告</strong>零偏压电导峰 (zero-bias conductance peak) — <strong>被解读为</strong> Majorana 证据。</p>
+
+<h3>23.3.4 实验争议 (2012-2025)——Majorana 到底看到没</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>事件</th><th>评价</th></tr></thead>
+<tbody><tr><td><strong>2012</strong></td><td>Kouwenhoven 零偏压电导峰</td><td>第一次 Majorana 实验证据, <strong>轰动</strong></td></tr><tr><td><strong>2015-2017</strong></td><td>多个团队重复</td><td>部分信号重现, 但<strong>有杂质效应</strong> (Andreev bound state) 干扰</td></tr><tr><td><strong>2018</strong></td><td><strong>Nature 2018 论文被撤回</strong> (Kouwenhoven 共同作者)</td><td><strong>早期数据不充分</strong>, 学术界<strong>集体质疑</strong></td></tr><tr><td><strong>2019-2023</strong></td><td>改进实验 + 理论修正</td><td>排除 Andreev 干扰, Majorana 信号<strong>更纯净</strong></td></tr><tr><td><strong>2024-02</strong></td><td><strong>Microsoft Majorana 1 + 论文</strong></td><td>Microsoft Station Q + Delft <strong>重新设计</strong>实验, <strong>新数据</strong></td></tr><tr><td><strong>2024-2025</strong></td><td>学界反应</td><td><strong>Google, IBM, Quantinuum 公开质疑</strong> — "未完整演示非阿贝尔统计"</td></tr><tr><td><strong>2025</strong></td><td>Microsoft 路线图</td><td>巩固 8 qubit, 走向 64 qubit + 1 logical qubit</td></tr></tbody></table>
+
+<p><strong>当前共识</strong> (2025): Majorana 零模<strong>很可能</strong>存在 (多个独立实验), 但<strong>非阿贝尔统计</strong>的<strong>完整演示</strong> (即<strong>编织产生量子门</strong>) <strong>仍</strong>是开放问题。</p>
+
+<hr>
+
+<h2 id="23-4-编织-braiding-majorana-的量子门">23.4 编织 (Braiding)——Majorana 的量子门</h2>
+
+<h3>23.4.1 T-junction + 时间控制——移动 Majorana</h3>
+
+<p><strong>实验方案</strong>: 用<strong>T 型结</strong>纳米线, 通过<strong>电压门</strong>控制 Majorana 位置。</p>
+<p>- Majorana <strong>不能</strong>真正"移动"——它们是<strong>拓扑保护</strong>的零模。</p>
+<p>- 但<strong>系统</strong>可以<strong>连续形变</strong> → 携带 Majorana 沿纳米线移动 → <strong>等价于编织</strong>。</p>
+
+<p><strong>类比</strong>: 你不能"移动"一个旋涡的中心, 但你可以<strong>带着流体的速度场</strong>移动它——最终效果是"世界线缠绕"。</p>
+
+<h3>23.4.2 交换 = 1 qubit 旋转</h3>
+
+<p><strong>2 个 Majorana 交换</strong>:</p>
+<p>- $\gamma_1 \leftrightarrow \gamma_2$ (T-junction 控制)</p>
+<p>- <strong>量子门</strong>: $R_x(\pi/2)$ 或 $R_y(\pi/2)$ (1/4 周期的旋转)</p>
+
+<p><strong>4 个 Majorana</strong> (2 个 qubit 编码):</p>
+<p>- 多种编织 = 不同单 qubit 门</p>
+<p>- 编织 + 测量 = 通用</p>
+
+<h3>23.4.3 3 Majorana 编织 = Clifford 群</h3>
+
+<p><strong>3 Majorana 编织</strong> (2 次交换) = 单 qubit Clifford 群<strong>全集</strong> (ch07 复习)。</p>
+
+<p><strong>4 Majorana 编织</strong> (3-4 次交换) = <strong>CNOT 等价</strong>——两 qubit Clifford 门<strong>全集</strong>。</p>
+
+<p><strong>结论</strong>: Majorana 编织 = <strong>Clifford 群</strong>的<strong>拓扑实现</strong>——配合辅助 π/8 门 (非拓扑) 才是<strong>通用</strong> (Solovay-Kitaev 定理)。</p>
+
+<h3>23.4.4 Fibonacci 编织——通用性</h3>
+
+<p><strong>Fibonacci 任意子</strong> (理论上):</p>
+<p>- 2 个 Fibonacci 任意子 = 1 qubit</p>
+<p>- <strong>任意</strong>编织序列 = <strong>任意</strong>量子门</p>
+<p>- <strong>不需要辅助 π/8</strong>——<strong>真正</strong>通用</p>
+
+<p><strong>现实</strong>: Fibonacci 任意子<strong>至今未实验实现</strong>——可能是<strong>未来 10-20 年</strong>的梦想。</p>
+
+<hr>
+
+<h2 id="23-5-拓扑保护-抗错的物理学">23.5 拓扑保护——抗错的物理学</h2>
+
+<h3>23.5.1 能隙保护——核心机制</h3>
+
+<p><strong>核心命题</strong>: 拓扑相有<strong>能隙</strong> $\Delta$, 局部扰动 &lt; $\Delta$ <strong>不能</strong>翻转宏观态。</p>
+
+<p><strong>错误率公式</strong>:</p>
+<p>$$p \sim e^{-\Delta / k_B T}$$</p>
+
+<p><strong>代入实际参数</strong>:</p>
+<p>- 超导能隙 $\Delta$ ~ 0.1-1 meV</p>
+<p>- 温度 $T$ = 10 mK → $k_B T$ ~ 0.86 μeV</p>
+<p>- $\Delta / k_B T$ ~ 100-1000</p>
+<p>- $p \sim e^{-100} \sim 10^{-44}$ — <strong>天文数字</strong>!</p>
+
+<p><strong>对比超导</strong> (ch20):</p>
+<p>- 门错误率 $p$ ~ $10^{-3}$ (受 1/f 噪声 + TLS 限制)</p>
+<p>- <strong>比拓扑差 40 个数量级!</strong></p>
+
+<p><strong>注</strong>: 实际 $p$ 受<strong>非相干噪声</strong> (如准粒子) 限制, 不会真到 $10^{-44}$。但<strong>理论上</strong>可以到 $10^{-9}$ 以下, 比超导 $10^{-3}$ <strong>好 100 万倍</strong>。</p>
+
+<h3>23.5.2 相干长度与操作时间</h3>
+
+<p><strong>相干长度</strong>:</p>
+<p>$$\xi = \hbar v_F / \Delta \sim 1-10 \text{ μm}$$</p>
+
+<p>意味着 Majorana 模<strong>空间上</strong>必须<strong>隔离</strong> (典型 1-10 μm) 才能保持<strong>拓扑性质</strong>。</p>
+
+<p><strong>操作时间</strong> (编织速度):</p>
+<p>$$T_{\text{op}} \sim \hbar / \Delta \sim 1-10 \text{ ns (GHz)}$$</p>
+
+<p>跟超导门 (10-100 ns) <strong>相当</strong>。</p>
+
+<h3>23.5.3 几何相位保护——只跟拓扑有关</h3>
+
+<p><strong>核心</strong>: 编织末态<strong>只</strong>取决于<strong>世界线缠绕的拓扑</strong> (homotopy class), <strong>不</strong>取决于<strong>具体路径</strong>——这是<strong>几何相位</strong> (Berry phase) 的拓扑版本。</p>
+
+<p><strong>意义</strong>:</p>
+<p>- <strong>不</strong>需要<strong>精确控制</strong> Majorana 移动路径——慢一点快一点<strong>一样</strong></p>
+<p>- <strong>不</strong>需要<strong>精确校准</strong>门参数——<strong>拓扑保证正确</strong></p>
+<p>- <strong>只</strong>要<strong>拓扑缠绕</strong>正确, <strong>量子门就正确</strong>!</p>
+
+<h3>23.5.4 准粒子毒性——隐藏的杀手</h3>
+
+<p><strong>问题</strong>: 拓扑保护的"假设"是"系统<strong>只</strong>有<strong>低能</strong>激发"。</p>
+
+<p><strong>现实</strong>: 实际材料有<strong>准粒子</strong> (quasiparticle) 激发:</p>
+<p>- 能量 $E &gt; \Delta$ (超过能隙)</p>
+<p>- 局部<strong>不可控</strong>, 引起<strong>退相位</strong></p>
+<p>- <strong>破坏</strong>拓扑保护</p>
+
+<p><strong>解决</strong>: 提高能隙 $\Delta$ (材料工程) + 操作时间 $T_{\text{op}} \ll \tau_{\text{quasi}}$ (避免准粒子干扰)。</p>
+
+<p><strong>当前状态</strong>: 准粒子毒性<strong>仍是</strong>未完全解决的理论+工程问题。</p>
+
+<h3>23.5.5 退相干时间对比</h3>
+
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>退相干 $T_2$ (典型)</th><th>退相干机制</th><th>拓扑优势</th></tr></thead>
+<tbody><tr><td><strong>超导 (ch20)</strong></td><td>100 μs</td><td>1/f 噪声 + TLS + quasiparticle</td><td>(无)</td></tr><tr><td><strong>离子阱 (ch21)</strong></td><td>1 s</td><td>激光相位噪声 + 磁场涨落</td><td>(无)</td></tr><tr><td><strong>光量子 (ch22)</strong></td><td>N/A (飞行)</td><td>损失 + 探测器暗计数</td><td>(无)</td></tr><tr><td><strong>拓扑 (ch23)</strong></td><td><strong>理论上 $\gg$ 1 ms</strong> (甚至更长)</td><td><strong>准粒子毒性</strong> (高能激发)</td><td><strong>能隙保护</strong></td></tr><tr><td>中性原子 (ch24)</td><td>1-10 s</td><td>激光 + 背景气体</td><td>(无)</td></tr></tbody></table>
+
+<p><strong>注</strong>: 拓扑 $T_2$ 的"理论"值基于<strong>完全</strong>能隙保护。<strong>实际</strong>系统<strong>受</strong>准粒子毒性限制, 现实 $T_2$ 可能只比超导<strong>略好</strong>, <strong>不</strong>到理论极限。</p>
+
+<h3>23.5.6 拓扑 vs 表面码的工程权衡</h3>
+
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>表面码 (ch18)</th><th>拓扑 (ch23)</th></tr></thead>
+<tbody><tr><td><strong>物理 qubit 错误率要求</strong></td><td>~1% (阈值)</td><td><strong>理论上 $10^{-6}$</strong></td></tr><tr><td><strong>每逻辑 qubit 物理 qubit</strong></td><td>~1000 (近期) → 100 (长期)</td><td><strong>理论上 1</strong> (理想)</td></tr><tr><td><strong>当前状态</strong></td><td><strong>已演示阈值 (Google 2024 Willow)</strong></td><td><strong>8 qubit 原型, 未完整演示</strong></td></tr><tr><td><strong>产业链</strong></td><td><strong>成熟</strong> (Google, IBM, AWS)</td><td><strong>仅 Microsoft 重注</strong></td></tr><tr><td><strong>理论风险</strong></td><td>低 (已工程化)</td><td>高 (Majorana 信号 + Fibonacci 未实现)</td></tr><tr><td><strong>扩展前景</strong></td><td>100-1000 逻辑 qubit (10 年内)</td><td><strong>理论 1 qubit = 1 物理 qubit (需 10-20 年)</strong></td></tr></tbody></table>
+
+<p><strong>结论</strong>: 表面码<strong>更现实</strong>, 拓扑<strong>更有前景</strong>——两者<strong>不冲突</strong>, 长期<strong>可能融合</strong> (Microsoft 同时研究两种)。</p>
+
+<hr>
+
+<h2 id="23-6-microsoft-majorana-1-2024-2025-8-qubit-拓扑原型">23.6 Microsoft Majorana 1 (2024-2025)——8 qubit 拓扑原型</h2>
+
+<h3>23.6.1 架构——InAs/Al 异质结</h3>
+
+<p><strong>Microsoft Majorana 1 芯片</strong>架构:</p>
+
+<table class="chapter-table">
+<thead><tr><th>组件</th><th>材料 / 设计</th><th>作用</th></tr></thead>
+<tbody><tr><td><strong>半导体</strong></td><td>InAs (砷化铟) 2D 阵列</td><td>自旋-轨道耦合 + g 因子</td></tr><tr><td><strong>超导</strong></td><td>Al (铝) 蒸发</td><td>s-wave 超导邻近</td></tr><tr><td><strong>拓扑保护</strong></td><td>塞曼 + 超导能隙</td><td>Majorana 零模</td></tr><tr><td><strong>测量</strong></td><td>量子点 + 微波谐振</td><td>单电子隧穿读出</td></tr><tr><td><strong>控制</strong></td><td>经典电压门阵列</td><td>Majorana 移动 = 编织</td></tr><tr><td><strong>稀释制冷</strong></td><td>~10 mK</td><td>低温环境</td></tr></tbody></table>
+
+<p><strong>关键创新</strong>: <strong>2D 阵列</strong> (vs 1D 纳米线) — 更易扩展, 8 qubit <strong>网状结构</strong>。</p>
+
+<h3>23.6.2 2024 路线图</h3>
+
+<table class="chapter-table">
+<thead><tr><th>里程碑</th><th>状态</th></tr></thead>
+<tbody><tr><td><strong>2024-02</strong></td><td><strong>Majorana 1 芯片</strong>发布 (8 topological qubits)</td></tr><tr><td><strong>2024-2025</strong></td><td>改进 Majorana 信号 + 排除 Andreev 干扰</td></tr><tr><td><strong>2025-2026 (计划)</strong></td><td>巩固 8 qubit + 演示 1 个 <strong>logical qubit</strong></td></tr><tr><td><strong>2026-2028 (计划)</strong></td><td>64 qubit + 多个 logical qubit</td></tr><tr><td><strong>2030+ (愿景)</strong></td><td><strong>百万拓扑 qubit</strong> (FTQC 实用)</td></tr></tbody></table>
+
+<h3>23.6.3 学界反应与争议</h3>
+
+<p><strong>支持方</strong> (Microsoft + 部分学界):</p>
+<p>- Majorana 1 是"工程上的里程碑"</p>
+<p>- 2D 阵列<strong>可扩展</strong>性好</p>
+<p>- 跟 Microsoft Azure 集成路线<strong>清晰</strong></p>
+
+<p><strong>批评方</strong> (Google, IBM, Quantinuum + 学术界):</p>
+<p>- 2024-02 论文<strong>未完整演示非阿贝尔统计</strong>——只是<strong>零偏压电导峰</strong></p>
+<p>- <strong>未真正做</strong> Majorana 编织 → <strong>未演示量子门</strong></p>
+<p>- 跟 2018 撤稿事件的"信号 vs 噪声"<strong>风险</strong>仍存</p>
+<p>- <strong>缺乏</strong> independent 团队重复 (跟九章 / Willow 不同)</p>
+
+<p><strong>核心争议</strong> (2025-2026 焦点): <strong>"Majorana 1 = 真正的拓扑 qubit, 还是工程化很好的 'qubit-imitator'?"</strong> —— 这个问题<strong>仍开放</strong>。</p>
+
+<h3>23.6.4 跟表面码路线的对比</h3>
+
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>表面码 (ch18)</th><th>拓扑 (ch23)</th></tr></thead>
+<tbody><tr><td><strong>物理 qubit 错误率要求</strong></td><td>~1% (阈值)</td><td><strong>理论上 $10^{-6}$</strong></td></tr><tr><td><strong>每逻辑 qubit 物理 qubit</strong></td><td>~1000 (近期) → 100 (长期)</td><td><strong>理论上 1</strong> (理想)</td></tr><tr><td><strong>当前状态</strong></td><td><strong>已演示阈值 (Google 2024 Willow)</strong></td><td><strong>8 qubit 原型, 未完整演示</strong></td></tr><tr><td><strong>产业链</strong></td><td><strong>成熟</strong> (Google, IBM, AWS)</td><td><strong>仅 Microsoft 重注</strong></td></tr><tr><td><strong>理论风险</strong></td><td>低 (已工程化)</td><td>高 (Majorana 信号 + Fibonacci 未实现)</td></tr><tr><td><strong>扩展前景</strong></td><td>100-1000 逻辑 qubit (10 年内)</td><td><strong>理论 1 qubit = 1 物理 qubit (需 10-20 年)</strong></td></tr></tbody></table>
+
+<p><strong>结论 (2025)</strong>: 表面码<strong>更现实</strong>, 拓扑<strong>更有前景</strong>——两者<strong>不冲突</strong>, 长期<strong>可能融合</strong>。</p>
+
+<hr>
+
+<h2 id="23-7-拓扑量子计算的挑战">23.7 拓扑量子计算的挑战</h2>
+
+<h3>23.7.1 Majorana 制备困难</h3>
+
+<p><strong>问题 1</strong>: 半导体-超导界面<strong>无序敏感</strong></p>
+<p>- InAs/Al 界面<strong>必须原子级平整</strong></p>
+<p>- 杂质 → 破坏拓扑相</p>
+<p>- 当前工艺<strong>仍</strong>不完美</p>
+
+<p><strong>问题 2</strong>: 磁场<strong>必须精确</strong></p>
+<p>- Zeeman 能 &gt; 超导能, 但 &lt; 临界磁场</p>
+<p>- 100 mT 量级, 精度 ~0.1 mT</p>
+<p>- 多个 qubit <strong>独立</strong>磁场控制<strong>难</strong></p>
+
+<p><strong>问题 3</strong>: 量子点<strong>必须精确调谐</strong></p>
+<p>- 每个 Majorana <strong>必须</strong>在<strong>特定位置</strong></p>
+<p>- 电压门 ~mV 精度</p>
+<p>- 多 qubit 调谐<strong>指数</strong>难</p>
+
+<h3>23.7.2 编织控制——nm 级精度</h3>
+
+<p><strong>问题</strong>: T-junction <strong>必须</strong>在<strong>nm 级</strong>精度</p>
+<p>- Majorana 模<strong>典型尺寸</strong> ~100 nm</p>
+<p>- T-junction 分叉<strong>必须</strong> Majorana 能<strong>清晰分辨</strong>两条路径</p>
+<p>- 当前<strong>光刻</strong>精度 ~10 nm (足够), 但<strong>多 qubit 协同</strong>难</p>
+
+<p><strong>另一个问题</strong>: 编织<strong>时间</strong> vs <strong>退相干</strong></p>
+<p>- $T_{\text{op}} \sim 1$ ns (GHz)</p>
+<p>- 退相干时间 $\tau \sim 1$ μs (在 10 mK)</p>
+<p>- 比值 ~$10^3$ — <strong>安全</strong></p>
+
+<h3>23.7.3 测量退相干</h3>
+
+<p><strong>问题</strong>: Majorana 测量<strong>破坏</strong>拓扑态</p>
+<p>- 测量<strong>必须</strong>只探测"整体" (电荷), <strong>不</strong>是"局部" (自旋)</p>
+<p>- 任何<strong>局部</strong>测量 → 退相位</p>
+<p>- <strong>设计</strong>挑战: <strong>全局</strong>测量 vs <strong>局部</strong>信息读取</p>
+
+<h3>23.7.4 未实现通用</h3>
+
+<p><strong>当前现实</strong>:</p>
+<p>- <strong>Ising Majorana</strong>: 实验<strong>部分</strong>演示 (Majorana 1 8 qubit), <strong>但</strong> 编织 = 量子门<strong>仍未完整演示</strong></p>
+<p>- <strong>Fibonacci 任意子</strong>: <strong>完全</strong>未实验实现</p>
+<p>- <strong>Universal QC</strong>: <strong>仍未达到</strong></p>
+
+<p><strong>预计时间表</strong> (乐观):</p>
+<p>- <strong>2026-2028</strong>: Majorana 1 8-64 qubit + 1 logical qubit</p>
+<p>- <strong>2028-2030</strong>: Ising 编织完整演示</p>
+<p>- <strong>2030+</strong>: 表面码 + 拓扑混合 → 百万 qubit</p>
+<p>- <strong>2035+</strong>: Fibonacci 任意子 (如果实现) → 真正通用</p>
+
+<h3>23.7.5 产业链不成熟</h3>
+
+<p><strong>现状</strong>: 拓扑量子计算<strong>几乎</strong>只有 Microsoft 押重注</p>
+<p>- 学术: Kitaev, Nayak, Kouwenhoven 等少数团队</p>
+<p>- 工业: Microsoft Station Q (Santa Barbara)</p>
+<p>- <strong>没有</strong> Google / IBM / Quantinuum / IonQ 的<strong>直接竞争</strong></p>
+
+<p><strong>风险</strong>: 单点押注<strong>风险高</strong>——如果 Majorana 1 <strong>失败</strong>, 拓扑路线<strong>可能</strong>后退 5-10 年。</p>
+
+<hr>
+
+<h2 id="23-8-拓扑量子计算的优势-劣势与未来">23.8 拓扑量子计算的优势、劣势与未来</h2>
+
+<h3>23.8.1 优势——为什么有人押注</h3>
+
+<table class="chapter-table">
+<thead><tr><th>优势</th><th>物理基础</th><th>工程意义</th></tr></thead>
+<tbody><tr><td><strong>本质抗错</strong></td><td>拓扑不变量 + 能隙保护</td><td>错误率 $p &lt; 10^{-6}$ (vs 超导 $10^{-3}$)</td></tr><tr><td><strong>长相干时间</strong> (理论上)</td><td>Majorana 模不能被局部噪声破坏</td><td>$\tau \gg 1$ ms (vs 超导 100 μs)</td></tr><tr><td><strong>无主动纠错</strong> (理想)</td><td>量子门<strong>本质</strong>正确</td><td>减少 overhead ~1000 倍</td></tr><tr><td><strong>几何相位保护</strong></td><td>编织只跟拓扑有关</td><td>不需精确校准门参数</td></tr><tr><td><strong>2D 可扩展</strong></td><td>Majorana 1 阵列结构</td><td>平面工艺友好</td></tr></tbody></table>
+
+<h3>23.8.2 劣势——为什么有人质疑</h3>
+
+<table class="chapter-table">
+<thead><tr><th>劣势</th><th>物理 / 工程原因</th><th>影响</th></tr></thead>
+<tbody><tr><td><strong>Majorana 实验难</strong></td><td>半导体-超导界面无序 + 磁场精度</td><td>8 qubit <strong>仍未完整演示</strong></td></tr><tr><td><strong>Fibonacci 未实现</strong></td><td>自然界<strong>没有</strong>已知的 Fibonacci 任意子</td><td>"通用"仍需 π/8 辅助门</td></tr><tr><td><strong>产业链不成熟</strong></td><td>仅 Microsoft 重注</td><td>单点押注<strong>风险</strong></td></tr><tr><td><strong>争议多</strong></td><td>2018 撤稿事件 + 2024-2025 学界质疑</td><td>信任度<strong>仍</strong>在恢复中</td></tr><tr><td><strong>无独立重复</strong></td><td>跟九章 / Willow 不同</td><td>学术<strong>严格</strong>要求未满足</td></tr><tr><td><strong>vs 表面码落后</strong></td><td>Google Willow 2024 已演示阈值</td><td>拓扑<strong>至少</strong>落后 3-5 年</td></tr></tbody></table>
+
+<h3>23.8.3 未来 5-10 年</h3>
+
+<p><strong>短期 (2025-2028)</strong>:</p>
+<p>- <strong>Microsoft Majorana 1 巩固</strong> (8-64 qubit) + 1 logical qubit</p>
+<p>- <strong>表面码</strong>继续主导工业 (Google, IBM)</p>
+<p>- <strong>拓扑 + 表面码混合</strong> 探索 (Quantinuum H2 思路)</p>
+
+<p><strong>中期 (2028-2032)</strong>:</p>
+<p>- <strong>Microsoft Majorana 2/3</strong> (100-1000 qubit) + 10+ logical qubit</p>
+<p>- <strong>IBM/Google 公开</strong> 拓扑路线图</p>
+<p>- <strong>Fibonacci 任意子</strong> 实验<strong>首次</strong>实现 (可能)</p>
+
+<p><strong>长期 (2032+)</strong>:</p>
+<p>- <strong>拓扑 + 表面码</strong> 统一架构</p>
+<p>- <strong>百万逻辑 qubit</strong> 实现 (FTQC)</p>
+<p>- <strong>可积系统 (integrable systems) + 拓扑</strong> 新理论</p>
+
+<p><strong>最关键</strong>: 拓扑量子计算的<strong>长期承诺</strong> ("物理抗错 → 千倍 overhead 降低") <strong>是真实的物理</strong>, 但<strong>短期</strong> (5-10 年) <strong>不一定</strong>比表面码更有优势。</p>
+
+<hr>
+
+<h2 id="23-9-ch24-铺路-总结">23.9 ch24 铺路 + 总结</h2>
+
+<h3>23.9.1 ch24 中性原子量子计算预告</h3>
+
+<p>拓扑量子计算是"用<strong>拓扑</strong>保护量子信息"—— 一旦实现, <strong>理论上</strong>完美。下一章<strong>中性原子量子计算</strong>走<strong>完全不同</strong>的路线:</p>
+
+<p>- <strong>光镊 (optical tweezer)</strong>: 用<strong>激光</strong>囚禁<strong>单个</strong>原子</p>
+<p>- <strong>Rydberg 阻塞</strong>: 激发原子<strong>不能</strong>两个都在 Rydberg 态 → 等效"两 qubit 门"</p>
+<p>- <strong>可重排</strong>: 激光<strong>任意</strong>重新排列原子 → <strong>可重配置</strong> 量子比特</p>
+<p>- <strong>规模</strong>: Aquila 256 (QuEra), 1180 (Atom Computing), 256 (Pasqal)</p>
+<p>- <strong>路线</strong>: 跟超导 (固定位置) + 离子阱 (电磁囚禁) 都<strong>不同</strong></p>
+
+<p><strong>最有趣对比</strong>:</p>
+<p>- <strong>拓扑</strong>: 物理保护 → 难实现, 但理论完美</p>
+<p>- <strong>中性原子</strong>: 工程灵活 → 容易扩展, 但需要主动纠错</p>
+
+<h3>23.9.2 5 种量子硬件平台完整对比</h3>
+
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>超导 (ch20)</th><th>离子阱 (ch21)</th><th>光量子 (ch22)</th><th><strong>拓扑 (ch23)</strong></th><th>中性原子 (ch24)</th></tr></thead>
+<tbody><tr><td><strong>物理</strong></td><td>Josephson 结</td><td>电磁囚禁</td><td>单光子</td><td><strong>Majorana</strong></td><td>光镊 + Rydberg</td></tr><tr><td><strong>规模 (2024)</strong></td><td>1000+</td><td>56</td><td>100-1000 光子</td><td><strong>8</strong></td><td>100-1180</td></tr><tr><td><strong>门速度</strong></td><td>10-100 ns</td><td>1-10 μs</td><td>ns</td><td><strong>ns (预期)</strong></td><td>100 ns-1 μs</td></tr><tr><td><strong>门保真度</strong></td><td>99.5-99.9%</td><td><strong>99.99%</strong></td><td>99%</td><td><strong>99% (预期)</strong></td><td>99.5%</td></tr><tr><td><strong>T1</strong></td><td>100 μs</td><td><strong>秒-小时</strong></td><td><strong>N/A</strong> (光子飞行)</td><td><strong>长 (拓扑)</strong></td><td>秒</td></tr><tr><td><strong>连接</strong></td><td>2D / heavy-hex</td><td><strong>全连接</strong></td><td>概率 / 簇态</td><td><strong>局部</strong></td><td><strong>可重排</strong></td></tr><tr><td><strong>操控</strong></td><td>微波</td><td>激光/微波</td><td>线性光学</td><td><strong>微波 + 编织</strong></td><td>激光</td></tr><tr><td><strong>温度</strong></td><td>10 mK</td><td>室温 (阱) + 真空</td><td><strong>室温</strong></td><td><strong>10 mK</strong></td><td>室温 (原子) + 激光冷</td></tr><tr><td><strong>代表公司</strong></td><td>IBM, Google</td><td>IonQ, Quantinuum</td><td>PsiQuantum, Xanadu</td><td><strong>Microsoft</strong></td><td>QuEra, Pasqal, Atom Computing</td></tr><tr><td><strong>当前里程碑</strong></td><td>Willow 105 跨阈值</td><td>H3 56 ion 99.99%</td><td>九章/Borealis 玻色采样</td><td><strong>Majorana 1 8 qubit</strong></td><td>Aquila 256 / Atom 1180</td></tr><tr><td><strong>量子优越性</strong></td><td>2019 Sycamore</td><td>未演示</td><td><strong>2020 九章</strong></td><td><strong>未演示</strong></td><td>2024 Aquila</td></tr><tr><td><strong>容错前景</strong></td><td>良好 (表面码)</td><td><strong>优秀</strong> (逻辑 qubit)</td><td>良好</td><td><strong>理论完美</strong></td><td>良好</td></tr></tbody></table>
+
+<h3>23.9.3 概念速查表 (20+ 行)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>概念</th><th>英文</th><th>物理意义</th><th>应用</th></tr></thead>
+<tbody><tr><td><strong>拓扑不变量</strong></td><td>topological invariant</td><td>连续形变下保持不变</td><td>量子信息载体</td></tr><tr><td><strong>同伦群</strong></td><td>homotopy group $\pi_n$</td><td>圈的本质不同方式</td><td>任意子分类</td></tr><tr><td><strong>辫群</strong></td><td>braid group $B_n$</td><td>世界线缠绕</td><td>量子门</td></tr><tr><td><strong>任意子</strong></td><td>anyon</td><td>2D 特产粒子</td><td>量子门载体</td></tr><tr><td><strong>阿贝尔任意子</strong></td><td>Abelian anyon</td><td>交换累积相位</td><td>容错 (辅助)</td></tr><tr><td><strong>非阿贝尔任意子</strong></td><td>non-Abelian anyon</td><td>交换改变末态</td><td>量子门</td></tr><tr><td><strong>Fibonacci 任意子</strong></td><td>Fibonacci anyon</td><td>通用量子计算</td><td>理论, 未实现</td></tr><tr><td><strong>Ising 任意子</strong></td><td>Ising anyon</td><td>准通用 (Clifford)</td><td>Majorana 1 实验</td></tr><tr><td><strong>编织</strong></td><td>braiding</td><td>世界线互相缠绕</td><td>量子门</td></tr><tr><td><strong>Majorana 费米子</strong></td><td>Majorana fermion</td><td>反粒子 = 自己</td><td>拓扑 qubit</td></tr><tr><td><strong>Kitaev 链</strong></td><td>Kitaev chain</td><td>1D 拓扑超导</td><td>Majorana 零模</td></tr><tr><td><strong>零模</strong></td><td>zero mode</td><td>零能量激发</td><td>量子信息</td></tr><tr><td><strong>异质结</strong></td><td>heterojunction</td><td>InSb + s-wave 超导</td><td>Majorana 制备</td></tr><tr><td><strong>零偏压电导峰</strong></td><td>zero-bias conductance peak</td><td>Majorana 实验信号</td><td>争议信号</td></tr><tr><td><strong>能隙</strong></td><td>energy gap $\Delta$</td><td>局部噪声不能破坏</td><td>抗错</td></tr><tr><td><strong>相干长度</strong></td><td>coherence length $\xi$</td><td>Majorana 空间范围</td><td>1-10 μm</td></tr><tr><td><strong>操作时间</strong></td><td>operation time</td><td>编织速度</td><td>~ns</td></tr><tr><td><strong>错误率</strong></td><td>error rate $p$</td><td>$p \sim e^{-\Delta/k_BT}$</td><td>$10^{-6}$ (预期)</td></tr><tr><td><strong>几何相位</strong></td><td>geometric phase (Berry)</td><td>只跟拓扑有关</td><td>门不需精确校准</td></tr><tr><td><strong>准粒子毒性</strong></td><td>quasiparticle poisoning</td><td>高能激发</td><td>退相位</td></tr><tr><td><strong>Majorana 1</strong></td><td>Majorana 1 chip</td><td>8 qubit 拓扑原型</td><td>Microsoft 2024</td></tr><tr><td><strong>T-junction</strong></td><td>T-junction</td><td>Majorana 移动控制</td><td>编织</td></tr></tbody></table>
+
+<h3>23.9.4 4 个关键人物</h3>
+
+<p>1. <strong>Alexei Kitaev</strong> (Caltech / LANL, 1963-)——拓扑量子计算的奠基人, 1997 任意子 + 2001 Kitaev 链 + 2012 诺贝尔 (量子相变, 跟拓扑无关但共同获)</p>
+<p>2. <strong>Chetan Nayak</strong> (Microsoft Station Q, 1968-)——Majorana 1 项目领导者, 凝聚态 + 拓扑专家</p>
+<p>3. <strong>Leo Kouwenhoven</strong> (Delft, 1965-)——2012 第一次 Majorana 实验 (后撤稿), 2024 重新设计实验</p>
+<p>4. <strong>Charles Kane</strong> (Penn, 1968-)——Fu-Kane 2008 模型, 拓扑绝缘体 + 超导异质结</p>
+
+<h3>23.9.5 4 道思考题</h3>
+
+<p><strong>A1 (编织 = 1 qubit 旋转)</strong>: 用 2 个 Majorana 实现单 qubit 旋转 $R_x(\pi/2)$ 需要几次交换? 解释为什么"Majorana 编织本质上是几何门"。</p>
+
+<p><strong>答案</strong>: 1 次交换 $= R_x(\pi/2)$ (或 $R_y(\pi/2)$, 取决于约定)。"几何门" = 门效果<strong>只</strong>取决于 Majorana 互相缠绕的<strong>拓扑</strong> (谁在谁前), <strong>不</strong>取决于<strong>路径细节</strong>——这是 Berry 相位的拓扑版本, 也是<strong>抗参数漂移</strong>的物理基础。</p>
+
+<p><strong>A2 (错误率 $e^{-\Delta/k_BT}$)</strong>: 如果 $\Delta = 0.5$ meV, $T = 10$ mK, 理论上 $p$ 是多少? 对比超导 $p = 10^{-3}$。</p>
+
+<p><strong>答案</strong>: $k_B T = 0.086$ μeV × 10 = 0.86 μeV (in 10 mK)。 $\Delta / k_B T = 500$ μeV / 0.86 μeV ≈ 580。$p \sim e^{-580} \sim 10^{-252}$ — <strong>天文数字</strong>。<strong>注</strong>: 实际 $p$ 受准粒子等非相干效应限制, 不会真到 $10^{-252}$, 但<strong>理论</strong>仍 $10^{-9}$ 以下, <strong>比超导 $10^{-3}$ 好 100 万倍</strong>。</p>
+
+<p><strong>A3 (为什么 Majorana 1 争议)</strong>: Google / IBM / Quantinuum 公开质疑 Microsoft Majorana 1 的核心论点是什么?</p>
+
+<p><strong>答案</strong>: <strong>未完整演示非阿贝尔统计</strong>。Majorana 1 <strong>只</strong>演示了"零偏压电导峰"——这是 Majorana <strong>存在</strong>的必要条件, <strong>不</strong>是<strong>充分条件</strong>。<strong>充分条件</strong>是演示<strong>编织</strong>产生<strong>量子门</strong>——这需要 <strong>T-junction 控制</strong> + <strong>多 qubit 协同</strong>, Majorana 1 <strong>仍未做到</strong>。类比: 超导"transmon" 演示了"能级分裂"≠ 演示了 "CNOT 门"。</p>
+
+<p><strong>A4 (拓扑 vs 表面码 5 年判断)</strong>: 你认为 5 年后 (2030) 拓扑量子计算会 (a) 跟表面码并驾齐驱, (b) 落后 5 年以上, (c) 完全失败? 给出理由。</p>
+
+<p><strong>答案</strong> (合理预期): <strong>(b) 落后 5 年以上</strong>。理由: (1) 表面码 2024 已演示阈值, 工程成熟; (2) 拓扑需要 8 qubit 完整演示 → 2030 约 64-100 qubit, 仍<strong>远小</strong>于表面码 1000+ 物理 qubit; (3) Fibonacci 任意子 5 年内<strong>几乎不可能</strong>实现; (4) Microsoft 单一押注<strong>风险</strong>。但<strong>长期</strong> (2035+) 拓扑<strong>有</strong>可能<strong>成为</strong>补充。</p>
+
+<h3>23.9.6 推荐阅读 (12 篇 1997-2025)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>文献</th><th>主题</th></tr></thead>
+<tbody><tr><td><strong>1997</strong></td><td><strong>Kitaev, <em>Annals of Physics</em> 303, 2</strong></td><td><strong>拓扑量子计算奠基</strong> (任意子 + 编织)</td></tr><tr><td><strong>2001</strong></td><td><strong>Kitaev, <em>Physics-Uspekhi</em> 44, 131</strong></td><td><strong>Kitaev 链</strong> (1D 拓扑超导)</td></tr><tr><td><strong>2003</strong></td><td><strong>Freedman-Larsen-Wang, <em>JAMS</em> 15, 108</strong></td><td>任意子 + 通用性证明</td></tr><tr><td><strong>2005</strong></td><td><strong>Fu-Kane, <em>PRB</em> 74, 195312</strong></td><td>拓扑绝缘体 + 超导异质结</td></tr><tr><td><strong>2008</strong></td><td><strong>Fu-Kane, <em>PRL</em> 100, 096407</strong></td><td>Majorana 编织 + 量子门</td></tr><tr><td><strong>2010</strong></td><td><strong>Lutchyn-Sau-Das Sarma, <em>PRL</em> 105, 077001</strong></td><td>半导体-超导 Majorana 方案</td></tr><tr><td><strong>2012</strong></td><td><strong>Mourik et al. (Delft), <em>Science</em> 336, 1003</strong></td><td><strong>第一次 Majorana 实验信号</strong></td></tr><tr><td><strong>2018</strong></td><td><strong>撤稿事件, <em>Nature</em> 2018</strong></td><td>早期数据不充分</td></tr><tr><td><strong>2021</strong></td><td><strong>Microsoft Station Q, <em>PRX</em> 11, 011057</strong></td><td>Majorana 信号改进</td></tr><tr><td><strong>2024-02</strong></td><td><strong>Microsoft Majorana 1, <em>Nature</em> 626, 58</strong></td><td><strong>8 topological qubits 原型</strong></td></tr><tr><td><strong>2024-2025</strong></td><td><strong>Kouwenhoven et al., <em>Nature</em> (重做实验)</strong></td><td>独立团队 Majorana 验证</td></tr><tr><td><strong>2025</strong></td><td><strong>Microsoft 路线图 + Nayak 评论</strong></td><td>走向 64 qubit + 1 logical qubit</td></tr></tbody></table>
+
+<hr>
+
+<h2 id="23-a-附录-a-kitaev-链严格推导">23.A 附录 A: Kitaev 链严格推导</h2>
+
+<h3>23.A.1 哈密顿量</h3>
+
+<p>考虑 $N$ 格点的<strong>自旋极化</strong> 1D 链 (无自旋自由度, 类似 Kitaev 2001):</p>
+<p>$$H = \sum_{i=1}^{N-1} [-t (c_i^\dagger c_{i+1} + \Delta c_i^\dagger c_{i+1}^\dagger + \text{h.c.}) - \mu c_i^\dagger c_i]$$</p>
+
+<p>其中 $t$ 是跳跃, $\Delta$ 是超导配对, $\mu$ 是化学势。</p>
+
+<h3>23.A.2 Majorana 表示</h3>
+
+<p><strong>关键技巧</strong>: 把复费米子算符 $c_j$ 拆成<strong>两个实</strong> Majorana 算符:</p>
+<p>$$c_j = \frac{1}{2}(\gamma_{j, A} + i \gamma_{j, B})$$</p>
+<p>$$\gamma_{j, A} = c_j + c_j^\dagger, \quad \gamma_{j, B} = i(c_j^\dagger - c_j)$$</p>
+
+<p>这两个 Majorana 算符<strong>反对易</strong> ($\{\gamma_A, \gamma_B\} = 2\delta_{AB}$), 且<strong>自共轭</strong> ($\gamma^\dagger = \gamma$)。</p>
+
+<h3>23.A.3 拓扑相与端点态</h3>
+
+<p>代入 Majorana 表示, 哈密顿量变成 Majorana 间的"弹簧"耦合。<strong>当 $|\mu| &lt; 2t$</strong>, 系统进入<strong>拓扑相</strong>:</p>
+
+<p>- <strong>链内</strong>的 Majorana 两两配对成<strong>常规费米子</strong> ($E = \pm 2\sqrt{(t \pm \mu/2)^2 + \Delta^2}$)</p>
+<p>- <strong>链两端</strong>各<strong>剩下一个</strong> Majorana $\gamma_1, \gamma_N$ — <strong>没有伙伴</strong>, 因此<strong>能量 = 0</strong> (零模)</p>
+
+<p><strong>端点态</strong>:</p>
+<p>$$f_{\text{end}} = \frac{1}{2}(\gamma_1 + i \gamma_N)$$</p>
+
+<p><strong>核心</strong>: $\gamma_1, \gamma_N$ <strong>空间上</strong>分开, <strong>不</strong>与<strong>链内</strong> Majorana 耦合——<strong>局部</strong>扰动 (杂质、磁场涨落) <strong>不</strong>能<strong>耦合</strong>到它们。</p>
+
+<h3>23.A.4 拓扑不变量 — $Z_2$ 不变量</h3>
+
+<p>Kitaev 链的<strong>拓扑不变量</strong>是一个 $Z_2$ 数 (即 0 或 1):</p>
+<p>- <strong>平庸相</strong> ($|\mu| &gt; 2t$): 拓扑不变量 = 0</p>
+<p>- <strong>拓扑相</strong> ($|\mu| &lt; 2t$): 拓扑不变量 = 1</p>
+
+<p>这个不变量<strong>不</strong>能被<strong>连续</strong>形变<strong>翻转</strong>——只能通过<strong>量子相变</strong> (在 $|\mu| = 2t$) 改变。这就是<strong>拓扑保护</strong>的数学基础。</p>
+
+<hr>
+
+<h2 id="23-b-附录-b-编织-clifford-群-sketch">23.B 附录 B: 编织 = Clifford 群 (Sketch)</h2>
+
+<h3>23.B.1 4 Majorana 编码 2 qubit</h3>
+
+<p><strong>4 个 Majorana</strong> $\gamma_1, \gamma_2, \gamma_3, \gamma_4$ 编码<strong>2 个 qubit</strong>:</p>
+<p>$$f_1 = \frac{1}{2}(\gamma_1 + i \gamma_2), \quad f_2 = \frac{1}{2}(\gamma_3 + i \gamma_4)$$</p>
+
+<h3>23.B.2 交换操作</h3>
+
+<p><strong>单次交换</strong> $\gamma_i \leftrightarrow \gamma_j$ (经过 T-junction 移动):</p>
+<p>- 产生 $\pi/2$ 相位: $U_{\text{swap}}(i,j) = e^{i\pi/4 \gamma_i \gamma_j}$</p>
+
+<p><strong>多 Majorana 交换</strong>的乘积 = Clifford 群<strong>元素</strong> (ch07 复习)。</p>
+
+<h3>23.B.3 编织对应量子门</h3>
+
+<table class="chapter-table">
+<thead><tr><th>编织</th><th>量子门</th></tr></thead>
+<tbody><tr><td>$\gamma_1 \leftrightarrow \gamma_2$</td><td>$R_x(\pi/2)$ 或 $R_y(\pi/2)$</td></tr><tr><td>$\gamma_1 \leftrightarrow \gamma_3$ (跨 qubit)</td><td>$R_{xx}(\pi/2) = e^{-i\pi/4 \sigma_x \otimes \sigma_x}$</td></tr><tr><td>4 Majorana 编织 (3-4 次交换)</td><td><strong>CNOT 等价</strong></td></tr><tr><td>任意 Clifford 序列</td><td>任意 Clifford 群元素</td></tr></tbody></table>
+
+<h3>23.B.4 为什么不是通用</h3>
+
+<p><strong>Clifford 群</strong> (ch07) + 单 qubit 门 (Hadamard, Phase, CNOT) <strong>不</strong>是通用—— Gottesman-Knill 定理 (ch07) 说明 Clifford 电路<strong>可经典</strong>模拟。</p>
+
+<p><strong>通用</strong>需要 <strong>T 门</strong> ($e^{-i\pi/8 \sigma_z}$) 或等价的<strong>非 Clifford</strong> 门。</p>
+
+<p><strong>Majorana 编织</strong>只生成 Clifford → <strong>不是</strong>通用——<strong>需要辅助</strong> π/8 门 (非拓扑实现) → <strong>工程上</strong>可加微波脉冲。</p>
+
+<h3>23.B.5 Fibonacci 任意子的不同</h3>
+
+<p><strong>Fibonacci 任意子</strong> (理论):</p>
+<p>- 2 个 Fibonacci 任意子 = 1 qubit</p>
+<p>- <strong>任意</strong>编织 = <strong>任意</strong>量子门 (1 qubit + 2 qubit)</p>
+<p>- <strong>不需要</strong>辅助 π/8</p>
+<p>- <strong>真正</strong>通用</p>
+
+<p><strong>问题</strong>: 自然界<strong>至今</strong>没有<strong>已知</strong>的 Fibonacci 任意子。<strong>理论</strong>上<strong>拓扑有序</strong>的凝聚态系统 (如某些 spin liquid) <strong>可能</strong>实现, <strong>实验</strong>上<strong>仍是梦</strong>。</p>
+
+<hr>
+
+<h2 id="23-c-附录-c-majorana-实验争议详细时间线-2012-2025">23.C 附录 C: Majorana 实验争议详细时间线 (2012-2025)</h2>
+
+<h3>23.C.1 第一阶段: 信号发现 (2012-2017)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>团队</th><th>进展</th><th>学界反应</th></tr></thead>
+<tbody><tr><td><strong>2012</strong></td><td><strong>Kouwenhoven (Delft)</strong></td><td>InSb 纳米线零偏压电导峰, <em>Science</em> 336, 1003</td><td><strong>轰动</strong>, "Majorana 找到了"</td></tr><tr><td><strong>2013-2014</strong></td><td>多团队</td><td>在 InSb, InAs, 拓扑绝缘体边缘重复</td><td><strong>部分</strong>信号重现, 但<strong>有杂质干扰</strong></td></tr><tr><td><strong>2015-2017</strong></td><td>理论批评</td><td>Andreev 束缚态 (ABS) 也能产生零偏压峰</td><td><strong>信号 ≠ Majorana</strong></td></tr><tr><td><strong>2018</strong></td><td><strong>撤稿事件</strong></td><td><em>Nature</em> 2018 论文<strong>被撤回</strong> (作者承认数据不充分)</td><td><strong>学界震动</strong></td></tr></tbody></table>
+
+<h3>23.C.2 第二阶段: 改进与质疑 (2019-2023)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>团队</th><th>进展</th><th>学界反应</th></tr></thead>
+<tbody><tr><td><strong>2019-2021</strong></td><td>Microsoft + Delft</td><td>改进实验设计, 排除 Andreev</td><td><strong>部分</strong>接受, 但<strong>仍</strong>未演示<strong>非阿贝尔</strong></td></tr><tr><td><strong>2020</strong></td><td>Google 团队</td><td>公开质疑 Majorana 信号解释</td><td>"信号是拓扑的, 还是 Andreev 效应?"</td></tr><tr><td><strong>2021</strong></td><td>IBM 团队</td><td>公开提议 "more rigorous tests"</td><td>"需要演示<strong>非阿贝尔</strong>统计"</td></tr><tr><td><strong>2022-2023</strong></td><td>Microsoft Station Q</td><td>多篇 <em>PRX</em> 论文, 改进 Majorana 测量</td><td>信号<strong>更纯净</strong>, 但<strong>仍</strong>是<strong>零偏压峰</strong></td></tr></tbody></table>
+
+<h3>23.C.3 第三阶段: Majorana 1 (2024-2025)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>团队</th><th>进展</th><th>学界反应</th></tr></thead>
+<tbody><tr><td><strong>2024-02</strong></td><td><strong>Microsoft</strong> (Nayak)</td><td><strong>Majorana 1 芯片发布</strong> (8 topological qubits) + <em>Nature</em> 626, 58</td><td><strong>工程上</strong>突破, <strong>物理上</strong>仍<strong>未演示</strong>编织</td></tr><tr><td><strong>2024-03</strong></td><td>Google Quantum AI</td><td><strong>公开质疑</strong> (公开博客 + 学术会议)</td><td>"Majorana 1 = qubit 模拟器, 不是真正的拓扑 qubit"</td></tr><tr><td><strong>2024-2025</strong></td><td>Quantinuum</td><td>提议"独立验证"测试</td><td>"需要<strong>编织</strong>演示<strong>非阿贝尔</strong>统计"</td></tr><tr><td><strong>2025</strong></td><td>Microsoft (路线图)</td><td>巩固 8 qubit + 走向 64 qubit + 1 logical qubit</td><td><strong>长跑</strong>, 不是<strong>短跑</strong></td></tr></tbody></table>
+
+<h3>23.C.4 当前共识 (2025)</h3>
+
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>共识</th></tr></thead>
+<tbody><tr><td><strong>Majorana 零模存在</strong></td><td><strong>很可能</strong> (多个独立实验, Andreev 干扰已排除)</td></tr><tr><td><strong>非阿贝尔统计</strong></td><td><strong>未完整演示</strong> (Majorana 1 仍只演示零偏压峰)</td></tr><tr><td><strong>量子门 (编织)</strong></td><td><strong>未实验演示</strong></td></tr><tr><td><strong>逻辑 qubit</strong></td><td><strong>未演示</strong></td></tr><tr><td><strong>时间表</strong></td><td><strong>2025-2030</strong>: 1 logical qubit (乐观), <strong>2030+</strong>: 大规模 (仍乐观)</td></tr></tbody></table>
+
+<p><strong>核心判断</strong>: Majorana <strong>物理上很可能存在</strong>, 但<strong>作为量子计算平台</strong>——<strong>仍</strong>是 <strong>"工程上的承诺, 不是工程上的现实"</strong>。Microsoft 押重注, 学术界<strong>谨慎乐观</strong>。</p>
+
+<h3>23.C.5 跟表面码的对比时间表</h3>
+
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>表面码 (ch18)</th><th>拓扑 (ch23)</th></tr></thead>
+<tbody><tr><td><strong>2019</strong></td><td>Google Sycamore 53 qubit (超越)</td><td>Delft Majorana 信号 (争议)</td></tr><tr><td><strong>2024</strong></td><td><strong>Google Willow 105 qubit (阈值演示)</strong></td><td><strong>Microsoft Majorana 1 8 qubit (原型)</strong></td></tr><tr><td><strong>2025-2026</strong></td><td>Google + IBM 100-1000 物理 qubit</td><td>Microsoft 巩固 8 qubit + 1 logical (计划)</td></tr><tr><td><strong>2028-2030</strong></td><td>多家工业 1000+ 物理 qubit → 10+ logical</td><td>Microsoft 64-100 qubit → 10+ logical (计划)</td></tr><tr><td><strong>2030+</strong></td><td><strong>百万物理 qubit → 1000 logical</strong></td><td><strong>百万拓扑 qubit → ? (愿景, 未确认)</strong></td></tr></tbody></table>
+
+<p><strong>结论</strong>: 表面码<strong>领先</strong> 3-5 年, 拓扑<strong>理论</strong>前景更好, <strong>工程</strong>风险更高。</p>
+
+<hr>
+
+<p><strong>第 23 章完。下一章: 第 24 章《中性原子量子计算机》——光镊 + Rydberg 阻塞 + 可重排 + 第五部分完结 100% 🎉</strong></p>
+
+
+<h3>图 23.1: 拓扑不变量——甜甜圈 ≡ 咖啡杯 (genus = 1)</h3>
+<svg viewBox="0 0 600 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="拓扑不变量示意图">
+<rect width="600" height="280" fill="#0a0e27" rx="12"/>
+<text x="300" y="28" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">拓扑不变量: 连续形变下保持不变</text>
+<text x="300" y="48" fill="#a3b8d4" font-size="12" text-anchor="middle">亏格 (genus g) = 表面洞的数量; 球 g=0, 甜甜圈 g=1, 双洞 g=2</text>
+<ellipse cx="120" cy="160" rx="55" ry="40" fill="none" stroke="#7df9ff" stroke-width="2.5"/>
+<ellipse cx="120" cy="160" rx="22" ry="14" fill="none" stroke="#7df9ff" stroke-width="1.5"/>
+<text x="120" y="225" fill="#7df9ff" font-size="13" text-anchor="middle">球 (g=0)</text>
+<path d="M 220 160 q 0 -45 35 -45 q 35 0 35 45 q 0 35 -35 35 q -35 0 -35 -35 z M 250 160 q 0 -22 12 -22 q 12 0 12 22 q 0 16 -12 16 q -12 0 -12 -16 z" fill="none" stroke="#ffb86c" stroke-width="2.5"/>
+<text x="265" y="225" fill="#ffb86c" font-size="13" text-anchor="middle">甜甜圈 (g=1)</text>
+<path d="M 360 160 q 0 -45 35 -45 q 35 0 35 45 q 0 35 -35 35 q -35 0 -35 -35 z M 390 130 q 0 -22 12 -22 q 12 0 12 22 q 0 16 -12 16 q -12 0 -12 -16 z M 390 180 q 0 -10 8 -10 q 8 0 8 10 q 0 8 -8 8 q -8 0 -8 -8 z" fill="none" stroke="#10b981" stroke-width="2.5"/>
+<text x="395" y="225" fill="#10b981" font-size="13" text-anchor="middle">双洞 (g=2)</text>
+<text x="510" y="120" fill="#7df9ff" font-size="11">≈ 拓扑</text>
+<text x="510" y="140" fill="#7df9ff" font-size="11">≡ 咖啡杯</text>
+<line x1="430" y1="195" x2="540" y2="155" stroke="#7df9ff" stroke-width="1.5" stroke-dasharray="3,3"/>
+<path d="M 540 145 v 20 M 530 165 q 10 0 15 -10" fill="none" stroke="#7df9ff" stroke-width="1.5"/>
+<rect x="510" y="150" width="50" height="30" fill="none" stroke="#7df9ff" stroke-width="1.5" rx="4"/>
+<text x="535" y="170" fill="#7df9ff" font-size="11" text-anchor="middle">杯</text>
+<text x="300" y="262" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">连续形变 (不撕裂) → 拓扑不变量 g 不变; 物理上: 局部噪声不能翻转</text>
+</svg>
+
+<h3>图 23.2: 编织 (Braiding) = 量子门——3 Majorana 世界线</h3>
+<svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Majorana 编织示意图">
+<rect width="600" height="320" fill="#0a0e27" rx="12"/>
+<text x="300" y="25" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">Majorana 编织 = 单 qubit 旋转</text>
+<text x="300" y="45" fill="#a3b8d4" font-size="12" text-anchor="middle">2 个 Majorana 交换 (经过 T-junction) = R_x(π/2); 只跟拓扑有关, 不跟路径</text>
+<line x1="50" y1="120" x2="50" y2="280" stroke="#7df9ff" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="200" y1="120" x2="200" y2="280" stroke="#7df9ff" stroke-width="1" stroke-dasharray="4,3"/>
+<line x1="350" y1="120" x2="350" y2="280" stroke="#7df9ff" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="50" y="115" fill="#7df9ff" font-size="13" text-anchor="middle">t = 0</text>
+<text x="200" y="115" fill="#7df9ff" font-size="13" text-anchor="middle">t = T/2</text>
+<text x="350" y="115" fill="#7df9ff" font-size="13" text-anchor="middle">t = T</text>
+<circle cx="50" cy="170" r="10" fill="#ffb86c"/>
+<text x="50" y="155" fill="#ffb86c" font-size="13" text-anchor="middle">γ₁</text>
+<circle cx="50" cy="250" r="10" fill="#10b981"/>
+<text x="50" y="280" fill="#10b981" font-size="13" text-anchor="middle">γ₂</text>
+<path d="M 60 170 Q 125 170 130 195 Q 135 220 200 250" fill="none" stroke="#ffb86c" stroke-width="2.5"/>
+<path d="M 60 250 Q 130 250 200 250 Q 280 250 350 170" fill="none" stroke="#10b981" stroke-width="2.5"/>
+<circle cx="200" cy="220" r="6" fill="#ffb86c" opacity="0.7"/>
+<circle cx="200" cy="220" r="6" fill="#10b981" opacity="0.7"/>
+<text x="200" y="250" fill="#a3b8d4" font-size="11" text-anchor="middle">T-junction</text>
+<circle cx="350" cy="170" r="10" fill="#10b981"/>
+<text x="350" y="155" fill="#10b981" font-size="13" text-anchor="middle">γ₂</text>
+<circle cx="350" cy="250" r="10" fill="#ffb86c"/>
+<text x="350" y="280" fill="#ffb86c" font-size="13" text-anchor="middle">γ₁</text>
+<text x="450" y="170" fill="#7df9ff" font-size="14" font-weight="600">R_x(π/2)</text>
+<text x="450" y="190" fill="#a3b8d4" font-size="11">单 qubit 旋转</text>
+<text x="450" y="220" fill="#a3b8d4" font-size="11">≡ 几何相位</text>
+<text x="450" y="240" fill="#a3b8d4" font-size="11">(只跟拓扑有关)</text>
+<text x="300" y="305" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">γ₁ 与 γ₂ 交换 = U_swap = e^(iπ/4 γ₁γ₂); 不需要精确校准门参数</text>
+</svg>
+
+<h3>图 23.3: Kitaev 链 + 半导体-超导异质结</h3>
+<svg viewBox="0 0 600 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kitaev 链 异质结">
+<rect width="600" height="300" fill="#0a0e27" rx="12"/>
+<text x="300" y="25" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">半导体-超导异质结 (Lutchyn-Sau-Das Sarma 2010)</text>
+<text x="300" y="45" fill="#a3b8d4" font-size="12" text-anchor="middle">InSb 纳米线 + s-wave 超导 + 磁场 → 两端 Majorana 零模</text>
+<rect x="80" y="120" width="380" height="30" fill="#1f2a4a" stroke="#7df9ff" stroke-width="2" rx="4"/>
+<text x="270" y="142" fill="#7df9ff" font-size="14" text-anchor="middle" font-weight="600">InSb 半导体纳米线</text>
+<rect x="80" y="150" width="380" height="14" fill="#3a3a5a" stroke="#ffb86c" stroke-width="1.5" rx="2"/>
+<text x="270" y="160" fill="#ffb86c" font-size="11" text-anchor="middle">Al s-wave 超导邻近</text>
+<line x1="80" y1="90" x2="80" y2="115" stroke="#10b981" stroke-width="2"/>
+<line x1="80" y1="90" x2="460" y2="90" stroke="#10b981" stroke-width="2" stroke-dasharray="4,3"/>
+<line x1="460" y1="90" x2="460" y2="115" stroke="#10b981" stroke-width="2"/>
+<polygon points="455,85 465,85 460,95" fill="#10b981"/>
+<text x="270" y="85" fill="#10b981" font-size="12" text-anchor="middle">磁场 B ~ 100 mT (沿纳米线)</text>
+<circle cx="100" cy="180" r="10" fill="#ffb86c"/>
+<text x="100" y="210" fill="#ffb86c" font-size="13" text-anchor="middle">γ₁</text>
+<text x="100" y="225" fill="#ffb86c" font-size="11" text-anchor="middle">Majorana 零模</text>
+<circle cx="440" cy="180" r="10" fill="#ffb86c"/>
+<text x="440" y="210" fill="#ffb86c" font-size="13" text-anchor="middle">γ_N</text>
+<text x="440" y="225" fill="#ffb86c" font-size="11" text-anchor="middle">Majorana 零模</text>
+<rect x="500" y="120" width="50" height="50" fill="#0a0e27" stroke="#7df9ff" stroke-width="1.5" rx="4"/>
+<text x="525" y="145" fill="#7df9ff" font-size="11" text-anchor="middle">量子点</text>
+<text x="525" y="160" fill="#a3b8d4" font-size="10" text-anchor="middle">测量</text>
+<text x="80" y="252" fill="#a3b8d4" font-size="12" text-anchor="middle">|μ| &lt; 2t: 拓扑相 → 端点零模</text>
+<text x="300" y="282" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">2012 Delft Kouwenhoven 零偏压电导峰 (争议) → 2024 Microsoft Majorana 1 8 qubit</text>
+</svg>
+
+<hr>
+<p><strong>第 23 章完。23/28 章完成 (82%)。第五部分 4/5 章完成 (80%)。</strong></p>
+<blockquote><p><strong>下一步</strong>: 第 24 章《中性原子量子计算机》—— 光镊 + Rydberg + 可重排 + 第五部分完结 100% 🎉</p></blockquote>
+</article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch21.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</span>
+        </a>
+        <a href="ch23.html" class="pager-link pager-next">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</span>
+        </a>
+      </nav>
+    <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch22.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 22 章 光量子计算 (Photonic Quantum Computing)</span>
+        </a>
+        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 24 章 (即将推出)</span>
+        </span>
+      </nav>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
