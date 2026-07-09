@@ -75,14 +75,14 @@
   <section class="chapter-hero">
     <div class="hero-content">
       <div class="chapter-meta">
-        <span class="chapter-badge">第五部分 · 量子硬件 · Day 3</span>
-        <span class="chapter-day-tag">Day 26 · 2026-07-07</span>
+        <span class="chapter-badge">第五部分 · 量子硬件 · Day 4</span>
+        <span class="chapter-day-tag">Day 27 · 2026-07-08</span>
       </div>
-      <h1 class="chapter-title">第 22 章 光量子计算 (Photonic Quantum Computing)</h1>
-      <p class="chapter-subtitle">光子比特 + KLM 定理 + 玻色采样 + 九章 + PsiQuantum + 室温量子计算 + 第五部分 Day 3</p>
+      <h1 class="chapter-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</h1>
+      <p class="chapter-subtitle">任意子 + Majorana 费米子 + 编织 + 拓扑保护 + Microsoft Majorana 1 + 第五部分 Day 4</p>
       <div class="chapter-stats">
-        <span class="stat">📖 ~6,700 字</span>
-        <span class="stat">🔢 10 节 · 3 附录 · 58 子节</span>
+        <span class="stat">📖 ~6,650 字</span>
+        <span class="stat">🔢 10 节 · 3 附录 · 62 子节</span>
         <span class="stat">📑 任意子 / Majorana 费米子 / 编织 / 拓扑保护 / Microsoft Majorana 1</span>
         <span class="stat">⏱ ~50 分钟</span>
       </div>
@@ -332,8 +332,10 @@
 
 <p><strong>核心命题</strong>: 拓扑相有<strong>能隙</strong> $\Delta$, 局部扰动 &lt; $\Delta$ <strong>不能</strong>翻转宏观态。</p>
 
-<p><strong>错误率公式</strong>:</p>
+<p><strong>错误率公式</strong> (热噪声极限):</p>
 <p>$$p \sim e^{-\Delta / k_B T}$$</p>
+
+<p><strong>注</strong>: 此公式<strong>仅</strong>适用于<strong>热噪声</strong>为主系统; 实际<strong>准粒子毒性 (quasiparticle poisoning)</strong> 等<strong>非热噪声</strong>主导时, $p$ 公式<strong>不同</strong>, 实际 $p$ 可能 $10^{-6}$ 至 $10^{-9}$, <strong>远高于</strong>热噪声预测的 $10^{-44}$。</p>
 
 <p><strong>代入实际参数</strong>:</p>
 <p>- 超导能隙 $\Delta$ ~ 0.1-1 meV</p>
@@ -417,6 +419,8 @@
 <thead><tr><th>里程碑</th><th>状态</th></tr></thead>
 <tbody><tr><td><strong>2024-02</strong></td><td><strong>Majorana 1 芯片</strong>发布 (8 topological qubits)</td></tr><tr><td><strong>2024-2025</strong></td><td>改进 Majorana 信号 + 排除 Andreev 干扰</td></tr><tr><td><strong>2025-2026 (计划)</strong></td><td>巩固 8 qubit + 演示 1 个 <strong>logical qubit</strong></td></tr><tr><td><strong>2026-2028 (计划)</strong></td><td>64 qubit + 多个 logical qubit</td></tr><tr><td><strong>2030+ (愿景)</strong></td><td><strong>百万拓扑 qubit</strong> (FTQC 实用)</td></tr></tbody></table>
 
+<p><strong>注</strong>: 严格说 Majorana 1 = 8 个 <strong>Majorana 模 (modes)</strong>, <strong>非</strong> 8 个<strong>完整</strong>逻辑 qubit — 量子门 (编织 + 测量) <strong>未</strong>完整演示, 仅演示了 <strong>Majorana 零模的存在 + 测量一致性</strong>。</p>
+
 <h3>23.6.3 学界反应与争议</h3>
 
 <p><strong>支持方</strong> (Microsoft + 部分学界):</p>
@@ -495,10 +499,10 @@
 
 <h3>23.7.5 产业链不成熟</h3>
 
-<p><strong>现状</strong>: 拓扑量子计算<strong>几乎</strong>只有 Microsoft 押重注</p>
-<p>- 学术: Kitaev, Nayak, Kouwenhoven 等少数团队</p>
-<p>- 工业: Microsoft Station Q (Santa Barbara)</p>
-<p>- <strong>没有</strong> Google / IBM / Quantinuum / IonQ 的<strong>直接竞争</strong></p>
+<p><strong>现状</strong>: <strong>直接工业</strong>押注仅 Microsoft 押重注; <strong>学术</strong>研究<strong>活跃</strong> (Kouwenhoven, Kane, Hasan 等独立团队)</p>
+<p>- 学术: Kitaev, Nayak (MS), Kouwenhoven (Delft), Hasan (Princeton/Bell), Kane (Penn) 等少数团队</p>
+<p>- 工业: <strong>仅</strong> Microsoft Station Q (Santa Barbara) 押注</p>
+<p>- <strong>没有</strong> Google / IBM / Quantinuum / IonQ 的<strong>直接竞争</strong> (Quantinuum 走<strong>离子阱 + 拓扑码</strong>混合路线, <strong>非</strong> Majorana 拓扑)</p>
 
 <p><strong>风险</strong>: 单点押注<strong>风险高</strong>——如果 Majorana 1 <strong>失败</strong>, 拓扑路线<strong>可能</strong>后退 5-10 年。</p>
 
@@ -580,6 +584,8 @@
 
 <p><strong>答案</strong>: 1 次交换 $= R_x(\pi/2)$ (或 $R_y(\pi/2)$, 取决于约定)。"几何门" = 门效果<strong>只</strong>取决于 Majorana 互相缠绕的<strong>拓扑</strong> (谁在谁前), <strong>不</strong>取决于<strong>路径细节</strong>——这是 Berry 相位的拓扑版本, 也是<strong>抗参数漂移</strong>的物理基础。</p>
 
+<p><strong>为什么是 $R_x$ 而非 $R_z$</strong>: $R_x$ 而非 $R_z$ 是因为<strong>编织平面</strong>对应 $x$-$y$ 平面 (Majorana 在 2D 平面内移动); 选 $z$ 是<strong>垂直于</strong>编织平面的轴 (即平面法向), $R_z$ 旋转<strong>不</strong>对应 2D 平面内的<strong>拓扑缠绕</strong>——这是二维拓扑<strong>本质上</strong>只能生成 $\mathfrak{su}(2)$ 子代数 $\sigma_x, \sigma_y$ 而<strong>非</strong> $\sigma_z$ 的几何原因。<strong>注</strong>: Ising 类任意子<strong>无法</strong>通过编织生成 $\sigma_z$ 或 $T$ 门 (π/8 门), 这就是 Ising 任意子<strong>准通用</strong>而非<strong>完全通用</strong>的原因 (需要辅助非拓扑门如 $T$ 门来补全)。</p>
+
 <p><strong>A2 (错误率 $e^{-\Delta/k_BT}$)</strong>: 如果 $\Delta = 0.5$ meV, $T = 10$ mK, 理论上 $p$ 是多少? 对比超导 $p = 10^{-3}$。</p>
 
 <p><strong>答案</strong>: $k_B T = 0.086$ μeV × 10 = 0.86 μeV (in 10 mK)。 $\Delta / k_B T = 500$ μeV / 0.86 μeV ≈ 580。$p \sim e^{-580} \sim 10^{-252}$ — <strong>天文数字</strong>。<strong>注</strong>: 实际 $p$ 受准粒子等非相干效应限制, 不会真到 $10^{-252}$, 但<strong>理论</strong>仍 $10^{-9}$ 以下, <strong>比超导 $10^{-3}$ 好 100 万倍</strong>。</p>
@@ -604,7 +610,9 @@
 
 <h3>23.A.1 哈密顿量</h3>
 
-<p>考虑 $N$ 格点的<strong>自旋极化</strong> 1D 链 (无自旋自由度, 类似 Kitaev 2001):</p>
+<p>考虑 $N$ 格点的<strong>自旋极化</strong> 1D 链 (无自旋自由度, 类似 Kitaev 2001)。</p>
+
+<p><strong>注</strong>: <strong>真实</strong>纳米线 (ch23.3.3, InSb / InAs) <strong>有</strong>自旋, 由 Zeeman 能打开能隙, 模型<strong>略不同</strong>但<strong>拓扑</strong>等价。Kitaev 2001 是简化理论模型, 凝聚态实际由磁场 + 自旋轨道耦合实现类 Kitaev 拓扑相。</p>
 <p>$$H = \sum_{i=1}^{N-1} [-t (c_i^\dagger c_{i+1} + \Delta c_i^\dagger c_{i+1}^\dagger + \text{h.c.}) - \mu c_i^\dagger c_i]$$</p>
 
 <p>其中 $t$ 是跳跃, $\Delta$ 是超导配对, $\mu$ 是化学势。</p>
@@ -820,10 +828,10 @@
           <span class="pager-label">← 上一章</span>
           <span class="pager-title">第 22 章 光量子计算 (Photonic Quantum Computing)</span>
         </a>
-        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+        <a href="ch24.html" class="pager-link pager-next">
           <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 24 章 (即将推出)</span>
-        </span>
+          <span class="pager-title">第 24 章 中性原子量子计算机 (Neutral Atom Quantum Computer)</span>
+        </a>
       </nav>
     </main>
 
@@ -881,6 +889,8 @@
           <li><a href="ch19.html">第 19 章</a></li>
           <li><a href="ch20.html">第 20 章</a></li>
           <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="ch22.html">第 22 章</a></li>
+          <li><a href="ch23.html">第 23 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

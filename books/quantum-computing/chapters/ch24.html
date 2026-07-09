@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第23章：拓扑量子计算 (Topological Quantum Computing) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第23章：拓扑量子计算 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第五部分 · 量子硬件 · Day 5 🎉</span>
+        <span class="chapter-day-tag">Day 28 · 2026-07-09</span>
+      </div>
+      <h1 class="chapter-title">第 24 章 中性原子量子计算机 (Neutral Atom Quantum Computer)</h1>
+      <p class="chapter-subtitle">光镊 + Rydberg 阻塞 + 可重排 + QuEra/Pasqal/Atom Computing + 第五部分 Day 5 + 第五部分完结 🎉</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,600 字</span>
+        <span class="stat">🔢 10 节 · 3 附录 · 61 子节</span>
+        <span class="stat">📑 光镊阵列 / Rydberg 阻塞 / 量子模拟 / 原子重排 / QuEra 1180 / 第五部分完结 🎉</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                                                <article class="chapter-content">
+<blockquote><p><strong>承接 ch23</strong>: 上一章我们讨论了拓扑量子计算的"梦想"——物理层面抗错。然而,Majorana 编织至今<strong>未完整演示</strong>,实用化<strong>遥遥无期</strong>。有没有一种<strong>当代已经实现大规模 + 可重排 + 同质</strong>的硬件?</p></blockquote>
+
+<blockquote><p><strong>本章核心问题</strong>: <strong>当代最可扩展的量子硬件是什么</strong>——能演示 1000+ qubit,任意连接图,无 fabrication 差异,长相干?</p></blockquote>
+
+<blockquote><p><strong>答案</strong>: 中性原子量子计算机。本章围绕<strong>光镊阵列 + Rydberg 阻塞 + 原子重排</strong>展开,介绍 QuEra / Pasqal / Atom Computing 三大玩家,以及为什么中性原子是 ch20-24 五大硬件<strong>互补共存</strong>中的"可重排"代表。</p></blockquote>
+
+<hr>
+
+<h2 id="24-0-引言-当代最可扩展的量子硬件">24.0 引言: 当代最可扩展的量子硬件</h2>
+<h3>24.0.1 五种主流硬件平台的位置</h3>
+<p>到本章为止, 我们已经完成了四种主要硬件平台的深入讨论:</p>
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>章节</th><th>当前规模</th><th>优势</th><th>劣势</th></tr></thead>
+<tbody>
+<tr><td>**超导**</td><td>ch20</td><td>~1000+ qubit</td><td>速度快 (ns)、可集成</td><td>短 T1、噪声大</td></tr>
+<tr><td>**离子阱**</td><td>ch21</td><td>~50-300 qubit</td><td>高保真、长 T1、全连接</td><td>速度慢 (μs)</td></tr>
+<tr><td>**光量子**</td><td>ch22</td><td>~100-1000 光子</td><td>室温、长距离</td><td>确定性双 qubit 门难</td></tr>
+<tr><td>**拓扑**</td><td>ch23</td><td>~8 qubit (理论)</td><td>天然抗错</td><td>Majorana 实验争议</td></tr>
+</tbody>
+</table>
+<p>本章的**主角**: **中性原子量子计算机 (Neutral Atom Quantum Computer)**——使用**电中性**的碱金属原子 (⁸⁷Rb 或 ¹³³Cs) 作为量子比特的载体, 通过**光镊阵列**囚禁并排列它们, 利用**Rydberg 阻塞**实现量子门。</p>
+<h3>24.0.2 为什么中性原子是"当代最可扩展"</h3>
+<p>中性原子的**核心优势**:</p>
+<p>1. **可扩展性最强**: 1000-10000 atom 已演示, 是目前规模最大的量子硬件 (Pasqal 2024 已演示 1000+ atom)</p>
+<p>2. **可重排 (Reconfigurable)**: 通过 AOD 移动原子 → 实现**任意**连接图</p>
+<p>3. **同质性 (Homogeneity)**: 原子天然相同, **无** fabrication 差异 (vs 超导)</p>
+<p>4. **长相干时间**: 暗态 (dark state) 编码, $T_2 > 1$ s</p>
+<p>5. **冷原子量子模拟** — 中性原子的"杀手应用", 在 2024 年已经实现 1180 原子规模的量子模拟 (QuEra)</p>
+<p>**核心承诺**: 中性原子 = **当代唯一接近 "通用 + 大规模 + 可重排 + 同质"** 的硬件平台。</p>
+<h3>24.0.3 中性原子发展里程碑 (1995-2025)</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th><th>团队</th><th>意义</th></tr></thead>
+<tbody>
+<tr><td>**1995**</td><td>玻色-爱因斯坦凝聚 (BEC)</td><td>Cornell, Wieman, Cornell (JILA)</td><td>冷原子物理奠基 (Nobel 2001)</td></tr>
+<tr><td>**2002**</td><td>光晶格超流→Mott 绝缘体转变</td><td>Greiner *et al.*</td><td>单原子分辨 + 哈伯德模型模拟</td></tr>
+<tr><td>**2010**</td><td>单原子光镊</td><td>Schlosser *et al.* (Bonn)</td><td>确定性单原子加载</td></tr>
+<tr><td>**2016**</td><td>Rydberg 介导 2-qubit 门</td><td>Lukin *et al.* (Harvard)</td><td>中性原子量子门演示</td></tr>
+<tr><td>**2017**</td><td>51 原子光镊阵列</td><td>Endres *et al.* (Berkeley)</td><td>50+ 原子可重排阵列</td></tr>
+<tr><td>**2018**</td><td>Rydberg 量子模拟 (PXP 模型)</td><td>Bernien *et al.* (Harvard)</td><td>反铁磁相变 + 量子疤痕</td></tr>
+<tr><td>**2021**</td><td>Atom Computing 100 qubit</td><td>Atom Computing (Boulder)</td><td>第一台 100+ qubit 中性原子机</td></tr>
+<tr><td>**2022**</td><td>QuEra Aquila 256 atom</td><td>QuEra (Harvard-Lukin)</td><td>256 原子光镊阵列 + 云访问</td></tr>
+<tr><td>**2023**</td><td>Atom Computing 118 qubit + 1 logical</td><td>Atom Computing</td><td>第一次中性原子**演示 logical qubit**</td></tr>
+<tr><td>**2024**</td><td>QuEra 1180 原子模拟</td><td>QuEra + Harvard</td><td>**量子模拟规模新纪录**</td></tr>
+<tr><td>**2024**</td><td>Pasqal 1000+ 原子阵列</td><td>Pasqal (法国)</td><td>模拟类 + 数字类混合</td></tr>
+<tr><td>**2025**</td><td>Pasqal Orion + 容错路线</td><td>Pasqal</td><td>100 logical qubit 路线图</td></tr>
+</tbody>
+</table>
+<p>**关键观察**: 中性原子从 1995 BEC → 2025 容错路线图, **30 年**走了**量子硬件**中最快的一条路——光镊阵列的可扩展性**远超**早期预期。</p>
+<h3>24.0.4 三个核心玩家</h3>
+<table class="chapter-table">
+<thead><tr><th>公司</th><th>起源</th><th>关键人物</th><th>代表机器</th><th>当前规模</th></tr></thead>
+<tbody>
+<tr><td>**QuEra**</td><td>Harvard-Lukin 团队</td><td>Mikhail Lukin</td><td>Aquila (256 atom)</td><td>1180 (2024)</td></tr>
+<tr><td>**Pasqal**</td><td>法国 (Browaeys 团队)</td><td>Antoine Browaeys</td><td>Orion (2024)</td><td>1000+</td></tr>
+<tr><td>**Atom Computing**</td><td>Boulder, CO</td><td>Ben Bloom</td><td>Phoenix (2023)</td><td>118</td></tr>
+</tbody>
+</table>
+<p>加上 **planqc** (德国, Immanuel Bloch 团队)、**Atomionics** (新加坡)、**Infleqtion** (原 ColdQuanta, 美国) 等, 中性原子赛道**有 5+ 玩家**——仅次于超导和离子阱。</p>
+<h3>24.0.5 章节导览</h3>
+<ul>
+  <li>**24.1**: 中性原子基本物理 (⁸⁷Rb / ¹³³Cs + 光镊)</li>
+  <li>**24.2**: 光镊阵列 (SLM + AOD + 可重排)</li>
+  <li>**24.3**: Rydberg 阻塞 (中性原子量子门的核心机制)</li>
+  <li>**24.4**: 量子模拟 (冷原子的"杀手应用" — 哈伯德模型 + Ising 模型 + 量子疤痕)</li>
+  <li>**24.5**: 通用门 (数字量子计算路线)</li>
+  <li>**24.6**: 原子重排 (中性原子的"超能力" + defect-based 编码)</li>
+  <li>**24.7**: 中性原子的优势、劣势与未来</li>
+  <li>**24.8**: 五种硬件对比表 + 第六部分铺路</li>
+  <li>**24.9**: 总结 + **第五部分完结 🎉**</li>
+</ul>
+<hr>
+<h2 id="24-1-中性原子基本物理">24.1 中性原子基本物理</h2>
+<h3>24.1.1 为什么用碱金属原子?</h3>
+<p>量子计算硬件对载体的**基本要求**:</p>
+<p>1. **量子态可控**: 能用激光精确制备和测量 $\{|0\rangle, |1\rangle\}$</p>
+<p>2. **长相干**: 不与环境耦合 → $T_1, T_2$ 长</p>
+<p>3. **能纠缠**: 原子间可介导相互作用</p>
+<p>4. **可寻址**: 能单独操纵每个原子</p>
+<p>**碱金属原子** (如 ⁸⁷Rb, ¹³³Cs) **完美满足**这四点:</p>
+<table class="chapter-table">
+<thead><tr><th>性质</th><th>⁸⁷Rb (Rubidium-87)</th><th>¹³³Cs (Cesium-133)</th></tr></thead>
+<tbody>
+<tr><td>基态超精细分裂</td><td>6.835 GHz</td><td>9.193 GHz</td></tr>
+<tr><td>激光波长 (D2 线)</td><td>780 nm</td><td>852 nm</td></tr>
+<tr><td>自然丰度</td><td>27.83%</td><td>100%</td></tr>
+<tr><td>核自旋</td><td>$I = 3/2$</td><td>$I = 7/2$</td></tr>
+<tr><td>**常用编码**</td><td>$\</td><td>F=1, m_F=-1\rangle$ ↔ $\</td><td>F=2, m_F=+2\rangle$</td><td>同上</td></tr>
+</tbody>
+</table>
+<p>**优势**: 碱金属原子有**单电子**外层结构 → 激光操控简单 (跟超导 transmon 一样简单); 同时**天然存在** (不需要合成) → 同质性 100%。</p>
+<h3>24.1.2 基态超精细结构 — qubit 编码</h3>
+<p>⁸⁷Rb 原子 (或 ¹³³Cs) 的基态 5S_{1/2} 有**两个**超精细能级 ($F=1$ 和 $F=2$), 间隔 6.835 GHz (Cs: 9.193 GHz)。</p>
+<p>**qubit 编码**:</p>
+<p>$$|0\rangle \equiv |F=1, m_F=-1\rangle, \quad |1\rangle \equiv |F=2, m_F=+2\rangle$$</p>
+<p>或者使用**磁场不敏感态 (clock states)**:</p>
+<p>$$|0\rangle \equiv |F=1, m_F=0\rangle, \quad |1\rangle \equiv |F=2, m_F=0\rangle$$</p>
+<p>后者对磁场波动**免疫** — 跟超导 transmon 的"甜点频率" (sweet spot) 类似, 但实现机制**更自然** (原子能级本身就有磁场不敏感态)。</p>
+<h3>24.1.3 光镊 (Optical Tweezer) — 单原子陷阱</h3>
+<p>**核心机制**: 高度聚焦的激光束 (波长 ~ 800 nm, 功率 ~ 10 mW) 在原子附近形成**偶极阱 (dipole trap)**。</p>
+<p>**为什么能困住原子**: 激光诱导原子产生**感应偶极矩**, 该偶极矩与光场梯度耦合 → 偶极力 $F = -\nabla U$ 把原子拉到光强最强处 (光镊中心)。</p>
+<p>**阱深**:</p>
+<p>$$U(r) \approx \frac{3\pi c^2}{2\omega_0^3} \Gamma \left(\frac{1}{\omega_0 - \omega} + \frac{1}{\omega_0 + \omega}\right) I(r)$$</p>
+<p>其中 $\Gamma$ 是自然线宽, $\omega_0$ 是原子跃迁频率, $I(r)$ 是光强。</p>
+<p>**典型参数**:</p>
+<ul>
+  <li>光镊腰宽 (waist): 1 μm</li>
+  <li>阱深: 1 mK × $k_B$ ≈ 100 μeV</li>
+  <li>光子散射率: < 100 Hz (避免加热)</li>
+  <li>原子温度 (加载时): ~10 μK (Doppler 极限)</li>
+</ul>
+<h3>24.1.4 真空与寿命</h3>
+<p>**真空要求**: $10^{-11}$ Torr — 比超导稀释制冷机 (ch20) 的真空还高 1000 倍!</p>
+<p>**原因**: 中性原子**中性**, 不会像离子阱 (ch21) 那样被电场囚禁, 只能靠光镊。光镊深度有限 (1 mK), 一旦被背景气体碰撞, 原子就被踢出阱外。</p>
+<p>**寿命**: 真空 $10^{-11}$ Torr 下, 背景碰撞率 ~ 0.01 Hz → 原子寿命 ~ 100 s。</p>
+<p>**T1 / T2**: 由于使用**暗态 (dark state)** 或**钟态 (clock state)**, 实际 $T_1 \sim 10$ s, $T_2 \sim 1$ s — 比超导 (μs) **长 10⁶ 倍**!</p>
+<h3>24.1.5 冷原子温度</h3>
+<p>冷原子温度**演化**:</p>
+<p>1. **激光冷却 (Laser Cooling)**: μK 量级 — Doppler 极限</p>
+<p>2. **蒸发冷却 (Evaporative Cooling)**: nK 量级 — 用于 BEC</p>
+<p>3. **光镊中的冷却**: μK 量级 (光镊不能直接蒸发冷却)</p>
+<p>**注**: 中性原子量子计算的**工作温度**是 **μK**, 比超导 (10 mK) 高 100 倍, 比稀释制冷机 (10 mK) 更容易实现。</p>
+<hr>
+<h2 id="24-2-光镊阵列-optical-tweezer-array">24.2 光镊阵列 (Optical Tweezer Array)</h2>
+<h3>24.2.1 从单光镊到阵列</h3>
+<p>**问题**: 单个光镊只能困 1 个原子。如何实现 100-10000 个原子?</p>
+<p>**答**: **光镊阵列 (Optical Tweezer Array)** — 用**空间光调制器 (SLM)** 或**声光偏转器 (AOD)** 把单光镊"分裂"成 2D 或 3D 阵列。</p>
+<p>**类比**: 跟超市条形码扫描类似 — AOD 像"电子控制的反射镜", 可以快速把激光**指向**任意位置。</p>
+<h3>24.2.2 SLM 与 AOD 的对比</h3>
+<table class="chapter-table">
+<thead><tr><th>特性</th><th>SLM (Spatial Light Modulator)</th><th>AOD (Acousto-Optic Deflector)</th></tr></thead>
+<tbody>
+<tr><td>**原理**</td><td>全息图案 → 衍射产生多光束</td><td>声波光栅 → 衍射改变角度</td></tr>
+<tr><td>**速度**</td><td>慢 (ms 级更新)</td><td>**快** (μs 级)</td></tr>
+<tr><td>**应用**</td><td>静态 2D/3D 阵列</td><td>**动态重排** (单个原子移动)</td></tr>
+<tr><td>**典型规模**</td><td>1000+ 光镊</td><td>重排时间 10-100 μs</td></tr>
+<tr><td>**损耗**</td><td>各光镊功率不均 (~10%)</td><td>单光镊高保真</td></tr>
+</tbody>
+</table>
+<p>**当代中性原子系统**: SLM 产生**静态**初始阵列, AOD 实现**动态重排** → **两者结合** = 任意可重排 2D/3D 几何。</p>
+<h3>24.2.3 加载: 概率性 vs 确定性</h3>
+<p>**问题**: 单光镊加载单原子是**概率性**事件 (光镊中原子的随机进出)。</p>
+<p>**加载概率** ~ 50% (光协助碰撞) — 即每个光镊中**有原子**概率 50%。</p>
+<p>**解决**: **Parity Projection** — 通过监测荧光, 标记空的光镊 → 仅保留有原子的位置 → 100% 加载概率。</p>
+<p>**2024 现状**: 单次加载率 99% (Pasqal), 通过 2-3 次"重排"可达 99.9% 填充率。</p>
+<h3>24.2.4 几何示例: 1D 链 / 2D 方格 / 3D Kagome</h3>
+<p>**典型阵列几何**:</p>
+<table class="chapter-table">
+<thead><tr><th>几何</th><th>规模 (2024)</th><th>应用</th></tr></thead>
+<tbody>
+<tr><td>**1D 链**</td><td>100 atom</td><td>1D 哈伯德 + 反铁磁 Ising</td></tr>
+<tr><td>**2D 方格**</td><td>100×100 (10000 atom, 演示)</td><td>2D 量子模拟</td></tr>
+<tr><td>**2D Kagome**</td><td>256 atom (QuEra 2024)</td><td>量子自旋液体 (ch23 提及)</td></tr>
+<tr><td>**3D 光晶格**</td><td>1000+ atom (Bloch 团队)</td><td>BEC + 超流</td></tr>
+</tbody>
+</table>
+<h3>24.2.5 中性原子的"全连接" vs "可重排"</h3>
+<p>**与其他平台对比**:</p>
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>连接图</th><th>灵活性</th></tr></thead>
+<tbody>
+<tr><td>**超导**</td><td>静态网格 (ch20)</td><td>低 (fabrication 决定)</td></tr>
+<tr><td>**离子阱**</td><td>全连接 (ch21, 通过离子链集体振动)</td><td>中 (运动模式耦合)</td></tr>
+<tr><td>**光量子**</td><td>任意 (光子飞行)</td><td>高 (概率性)</td></tr>
+<tr><td>**拓扑**</td><td>编织决定 (ch23)</td><td>中 (任意子位置)</td></tr>
+<tr><td>**中性原子**</td><td>**可重排**</td><td>**极高** (任意时刻重新配置)</td></tr>
+</tbody>
+</table>
+<p>**核心优势**: 中性原子的"可重排"是**唯一**能**实时**改变连接图的主流平台——这在 ch18 表面码中**极其重要** (defect-based 编码需要任意连接)。</p>
+<hr>
+<h2 id="24-3-rydberg-阻塞-原子间量子门的核心机制">24.3 Rydberg 阻塞 — 原子间量子门的核心机制</h2>
+<h3>24.3.1 Rydberg 态 — "巨型原子"</h3>
+<p>**Rydberg 态**: 主量子数 $n \sim 50-100$ 的高激发态 — 半径 $r_n \sim n^2 a_0 \sim 1$ μm (基态 $r \sim 0.1$ nm, 大 **10000 倍**!)。</p>
+<p>**性质**:</p>
+<table class="chapter-table">
+<thead><tr><th>性质</th><th>基态</th><th>Rydberg 态 ($n=70$)</th></tr></thead>
+<tbody>
+<tr><td>半径</td><td>0.1 nm</td><td>1 μm</td></tr>
+<tr><td>偶极矩</td><td>0 (S 态)</td><td>1000 ea_0 (高极化率)</td></tr>
+<tr><td>寿命</td><td>∞ (基态)</td><td>100 μs</td></tr>
+<tr><td>极化率</td><td>低</td><td>**极高** (∝ $n^7$)</td></tr>
+</tbody>
+</table>
+<p>**关键**: 高极化率 → Rydberg-Rydberg 相互作用 $V(r) = C_6/r^6$, 其中 $C_6 \propto n^{11}$ — 当 $n = 70$ 时 $C_6 \sim 10$ THz·μm⁶。</p>
+<h3>24.3.2 Rydberg 阻塞 (Rydberg Blockade) — 核心机制</h3>
+<p>**机制**: 当一个原子激发到 Rydberg 态, 它对周围 $\sim 10$ μm 内的其他原子施加强 $V(r) \sim$ GHz 级相互作用 → 其他原子**不能**同时激发到 Rydberg 态。</p>
+<p>**阻塞半径**:</p>
+<p>$$R_b = \left(\frac{C_6}{\hbar \Omega}\right)^{1/6}$$</p>
+<p>其中 $\Omega$ 是激光 Rabi 频率。代入 $C_6 \sim 10$ THz·μm⁶, $\Omega \sim 1$ MHz: $R_b \sim 5-10$ μm。</p>
+<p>**物理图像**:</p>
+<pre><code class="">● —— ● —— ● —— ●    (4 个原子, 间距 5 μm)
+|     |     |     |
+↓     ↓     ↓     ↓
+激发? ✓    ✗    ✗    ✓    (第 2,3 原子被阻塞!)</code></pre>
+<p>只有距离 $R_b$ **之外**的原子才能**同时**激发 — 形成**空间选择性**。</p>
+<h3>24.3.3 Controlled-Z 门 (CZ 门) via Rydberg 阻塞</h3>
+<p>**2-qubit 门协议** (双光子 Rydberg 跃迁):</p>
+<p>1. 初始: 原子 A 和 B 都处于 $|0\rangle$ 或 $|1\rangle$</p>
+<p>2. 步骤 1: 把 $|1\rangle_A$ 通过 π 脉冲激发到 Rydberg $|r\rangle_A$ — 仅 A 在 $|1\rangle$ 时</p>
+<p>3. 步骤 2: 用相同激光尝试激发 B — 但 A 已在 Rydberg → **阻塞**, B 无法激发 (除非 B 也是 $|1\rangle$, 因为控制相位)</p>
+<p>4. 步骤 3: 把 A 拉回 $|1\rangle_A$</p>
+<p>**结果**: CZ 门 (控制相位门) — A 在 $|1\rangle$ 时给 B 加 $\pi$ 相位。</p>
+<p>**保真度**: 2024 QuEra 演示 99.5% (2-qubit); 2023 Atom Computing 演示 98-99% (100 qubit)。</p>
+<h3>24.3.4 几何门 (Geometric Gate) — 跟 ch23 拓扑编织类比</h3>
+<p>**中性原子的 Rydberg 门**本质上是**几何门**: 门效果**只**取决于 Rydberg 态的**拓扑相位**累积, **不**取决于激光的具体强度波动 (在绝热极限下)。</p>
+<p>**类比 ch23**: 跟 Majorana 编织类似 — 都是**几何相位** (Berry 相位) 决定的门 → 抗参数漂移。</p>
+<p>**关键区别**: 中性原子的几何门受**激光波动**影响 (vs 拓扑编织受**Majorana 移动**影响), 实际保真度受激光稳定性限制。</p>
+<h3>24.3.5 跟其他平台 2-qubit 门对比</h3>
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>2-qubit 门</th><th>保真度 (2024)</th><th>速度</th></tr></thead>
+<tbody>
+<tr><td>**超导**</td><td>CZ (cross-resonance)</td><td>99.7%</td><td>20-100 ns</td></tr>
+<tr><td>**离子阱**</td><td>Mølmer-Sørensen</td><td>99.9%</td><td>1-100 μs</td></tr>
+<tr><td>**光量子**</td><td>KLM (概率性)</td><td>95-99%</td><td>ns</td></tr>
+<tr><td>**拓扑**</td><td>编织 (未演示)</td><td>(理论 > 99%)</td><td>100 ns</td></tr>
+<tr><td>**中性原子**</td><td>CZ (Rydberg)</td><td>99.5%</td><td>100-500 ns</td></tr>
+</tbody>
+</table>
+<p>**注**: 中性原子的门速度介于超导和离子阱之间 — **比超导慢**, **比离子阱快**。</p>
+<hr>
+<h2 id="24-4-量子模拟-analog-quantum-simulation-中性原子的-杀手应用">24.4 量子模拟 (Analog Quantum Simulation) — 中性原子的"杀手应用"</h2>
+<h3>24.4.1 什么是量子模拟?</h3>
+<p>**核心思想**: 用一个**可控**的量子系统模拟另一个**难解**的量子系统 — Feynman 1982 原始构想。</p>
+<p>**类比**: 跟 wind tunnel (风洞) 类似 — 用人造可控的"小风暴"模拟真实飞机的空气动力学。</p>
+<p>**分类**:</p>
+<p>1. **模拟类 (Analog)**: 哈密顿量直接映射, 演化由自然动力学驱动 — **不需要纠错**</p>
+<p>2. **数字类 (Digital)**: 通用门构建任意算法 — 需要纠错</p>
+<p>中性原子**早期优势** = **模拟类** (无需纠错)。</p>
+<h3>24.4.2 哈伯德模型 (Hubbard Model) — 高温超导模拟</h3>
+<p>**哈伯德模型**:</p>
+<p>$$H = -t \sum_{\langle i,j \rangle, \sigma} c_{i\sigma}^\dagger c_{j\sigma} + U \sum_i n_{i\uparrow} n_{i\downarrow}$$</p>
+<p>其中 $t$ 是跳跃, $U$ 是同位排斥 — 描述电子在晶格中的运动。</p>
+<p>**为什么重要**: 高温超导 (如铜氧化物超导体) 的核心模型 — **至今未解**。经典计算机只能模拟 ~100 原子级别。</p>
+<p>**中性原子实现** (Greiner 2002, Bloch 团队):</p>
+<ul>
+  <li>用光晶格 + 冷原子 → 直接实现 $H$</li>
+  <li>调谐 $t/U$ 比 → 扫描超流 → Mott 绝缘体转变</li>
+  <li>**2024** (Bloch): 1000+ 原子模拟, 观测到反铁磁关联</li>
+</ul>
+<h3>24.4.3 反铁磁 Ising 模型 — Rydberg 阻塞直接实现</h3>
+<p>**Ising 模型**:</p>
+<p>$$H = J \sum_{\langle i,j \rangle} \sigma_i^z \sigma_j^z + h \sum_i \sigma_i^x$$</p>
+<p>其中 $J$ 是耦合强度, $h$ 是横场。</p>
+<p>**Rydberg 实现**: 当 $V_{ij} > \hbar\Omega$ (阻塞条件), 两个相邻原子**不能**都处于 Rydberg 态 → 自然实现反铁磁约束 (Rydberg 态 ↔ 自旋向上)。</p>
+<p>**2018 Bernien *Nature* 演示** (Harvard-Lukin):</p>
+<ul>
+  <li>51 原子 1D 链</li>
+  <li>直接观测反铁磁相变 (从顺磁到 Néel)</li>
+  <li>同时发现**量子疤痕态 (Quantum Scar)** — 违反 ETH (本征态热化假说) 的反常态</li>
+</ul>
+<h3>24.4.4 Kitaev 蜂窝模型 — 拓扑序模拟</h3>
+<p>**Kitaev 蜂窝模型**:</p>
+<p>$$H = \sum_{\langle i,j \rangle_\alpha} J_\alpha \sigma_i^\alpha \sigma_j^\alpha, \quad \alpha \in \{x, y, z\}$$</p>
+<p>其中三种键 ($x, y, z$) 有**不同**耦合常数 → 精确解有**拓扑序** (量子自旋液体)。</p>
+<p>**中性原子实现**: 用**圆二色性光场** (circularly polarized light) 实现**方向依赖**的 Raman 耦合。</p>
+<p>**2023 演示** (Duan 团队): 冷原子 + 圆二色光 → Kitaev 模型精确实现, 观测到**非阿贝尔任意子** (与 ch23 关联)。</p>
+<h3>24.4.5 2024 QuEra 1180 原子 — 量子模拟规模新纪录</h3>
+<p>**2024 突破** (QuEra + Harvard, *Nature* 2024):</p>
+<ul>
+  <li>**1180 原子**光镊阵列 + Rydberg 阻塞</li>
+  <li>模拟 PXP 模型 (1D 限制的 Rabi 模型)</li>
+  <li>**直接观测**:</li>
+  <li>反铁磁相变 (从顺磁到 Néel)</li>
+  <li>**量子疤痕态** (Quantum Scar) — 跟 Bernien 2018 一致</li>
+  <li>**热化动力学** — 验证 ETH</li>
+  <li>**意义**: 中性原子是**当前唯一**能在 1000+ 原子规模上做**可控**量子模拟的硬件平台</li>
+</ul>
+<h3>24.4.6 vs 通用门: 模拟类的早期优势</h3>
+<p>**关键论点**:</p>
+<ul>
+  <li>量子模拟**不需要**完整纠错 (ch17, ch18, ch19) — 因为它**直接**利用自然动力学</li>
+  <li>模拟类算法**早于**通用算法**5-10 年**达到"量子优势" (ch25)</li>
+  <li>**2024 QuEra 1180 原子**已经是**量子优势候选** (见 ch25)</li>
+</ul>
+<p>**早期阶段**: 中性原子可能**率先**实现**实用**量子优势 (在量子模拟领域), 而**不是** Shor 算法 (ch11)。</p>
+<hr>
+<h2 id="24-5-通用门-universal-gate-数字量子计算路线">24.5 通用门 (Universal Gate) — 数字量子计算路线</h2>
+<h3>24.5.1 数字路线的挑战</h3>
+<p>中性原子的数字类 (digital) 路线**慢于**模拟类 (analog):</p>
+<ul>
+  <li>**模拟类**: 已有 1180 原子演示 (QuEra 2024)</li>
+  <li>**数字类**: 主流 100-300 qubit (Atom Computing, Pasqal 2024)</li>
+</ul>
+<p>**原因**: 数字类需要**完整**的 1-qubit + 2-qubit 门集 + 测量 + 纠错, 工程难度**远高于**模拟类。</p>
+<h3>24.5.2 单 qubit 门 — Raman 激光</h3>
+<p>**单 qubit 门协议**: 双光子 Raman 跃迁 — 跟 ch06.3.2.1 描述的 Raman 门类似。</p>
+<p>**保真度**: 99.9% (2024 Atom Computing, QuEra)</p>
+<p>**关键参数**:</p>
+<ul>
+  <li>拉比频率 $\Omega$: 1-10 MHz</li>
+  <li>门时间: 100 ns - 1 μs</li>
+  <li>失谐 (detuning): ~ 100 GHz (避免激发中间态)</li>
+</ul>
+<h3>24.5.3 2-qubit 门 — Rydberg CZ</h3>
+<p>**2-qubit 门**: 24.3.3 描述的 CZ 门 — **当前主流**.</p>
+<p>**保真度**: 99.5% (2024 QuEra), 99.0% (2023 Atom Computing).</p>
+<p>**限制因素**:</p>
+<ul>
+  <li>Rydberg 态寿命 ~ 100 μs → 限制门数 ~ 1000</li>
+  <li>激光强度波动 → 退相干</li>
+</ul>
+<h3>24.5.4 多 qubit 门 — Toffoli (CCZ)</h3>
+<p>**3 qubit 门 Toffoli** ($|a, b, c\rangle \to |a, b, c \oplus ab\rangle$):</p>
+<ul>
+  <li>**实现**: 3 个原子中, 1 个原子激发 Rydberg, 阻塞其他两个 → 类似 CCZ 行为</li>
+  <li>**保真度**: 95-98% (2024 Atom Computing 演示)</li>
+  <li>**应用**: 算术运算 + 纠错 (ch17, ch18)</li>
+</ul>
+<h3>24.5.5 深度限制与相干时间</h3>
+<p>**关键约束**:</p>
+<ul>
+  <li>光镊寿命 ~ 10 s (背景碰撞)</li>
+  <li>单 qubit 门: 100 ns</li>
+  <li>2 qubit 门: 500 ns</li>
+  <li>**最大深度**: 10000 门 / 0.5 μs ≈ 5 ms (在 Rydberg 寿命限制内)</li>
+  <li>**实际深度**: 100-1000 门 (保守, 留相干余量)</li>
+</ul>
+<p>**对比其他平台**:</p>
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>深度 (2024)</th><th>限制因素</th></tr></thead>
+<tbody>
+<tr><td>超导</td><td>100-1000</td><td>T1 ~ 100 μs</td></tr>
+<tr><td>离子阱</td><td>10000+</td><td>T1 ~ 100 s</td></tr>
+<tr><td>中性原子</td><td>100-1000</td><td>Rydberg 寿命 ~ 100 μs</td></tr>
+</tbody>
+</table>
+<p>**关键**: 中性原子的**总相干时间**长 (T2 ~ 1 s), 但**门内相干**短 (Rydberg 寿命) — 这是一个有趣的"反直觉"特征。</p>
+<h3>24.5.6 2023 Atom Computing 118 qubit 演示</h3>
+<p>**2023-10 Atom Computing 演示** (公开):</p>
+<ul>
+  <li>**118 物理 qubit** + 1 logical qubit</li>
+  <li>执行了一个简单的算法 (类似 Bernstein-Vazirani, ch07)</li>
+  <li>演示了**首次**中性原子的 logical qubit 操作</li>
+  <li>跟 ch18 表面码对比: 表面码 (Google 2024) 用 105 qubit 演示 1 logical qubit</li>
+  <li>**意义**: 中性原子数字路线**追上**了超导表面码</li>
+</ul>
+<h3>24.5.7 Pasqal 1000+ qubit 路线</h3>
+<p>**Pasqal Orion (2024-2025)**:</p>
+<ul>
+  <li>1000+ 原子光镊阵列</li>
+  <li>模拟类 + 数字类**混合**架构</li>
+  <li>2025-2027 目标: 100 logical qubit + 早期容错</li>
+</ul>
+<h3>24.5.8 中性原子 vs 超导的门速度物理</h3>
+<p>**关键问题**: 为什么中性原子的 Rydberg 门 (100-500 ns) 比超导 (20-100 ns) 慢?</p>
+<p>**物理原因**:</p>
+<p>1. **Rydberg 态寿命限制**: Rydberg 寿命 ~ 100 μs, 门时间必须 << 100 μs 才能保真 → 100 ns 量级</p>
+<p>2. **激光强度限制**: Rydberg 跃迁需要**强**激光 (典型 Rabi 频率 ~ 1-10 MHz), 但**过强**会电离 Rydberg 态</p>
+<p>3. **阻塞半径限制**: 阻塞半径 $R_b = (C_6/\hbar\Omega)^{1/6}$ 随 Rabi 频率**增大**而**减小** — 太强的激光会**破坏**阻塞</p>
+<p>**对比**: 超导 transmon 门由**微波脉冲**驱动, 频率 ~ 5 GHz, 寿命 ~ 100 μs (transmon T1), 门速度**更快** (跟中性原子**量级**相同, 但物理不同)。</p>
+<p>**未来提升**:</p>
+<ul>
+  <li>长寿命 Rydberg 态 (如 circular Rydberg, $n \sim 100$, 寿命 ms)</li>
+  <li>**双光子 Raman** 减少 AC Stark 移位</li>
+  <li>**Stark 调谐** 阻塞条件 — 提高门速度</li>
+</ul>
+<hr>
+<h2 id="24-6-原子重排-atom-rearrangement-中性原子的-超能力">24.6 原子重排 (Atom Rearrangement) — 中性原子的"超能力"</h2>
+<h3>24.6.1 什么是原子重排?</h3>
+<p>**定义**: 通过 AOD 移动**单个**原子到新位置, 实现**实时**改变连接图。</p>
+<p>**vs 静态阵列**:</p>
+<ul>
+  <li>**静态** (ch20 超导): fabrication 决定, 不可改</li>
+  <li>**重排** (中性原子): μs 级实时移动 → **任意**几何</li>
+</ul>
+<h3>24.6.2 重排技术细节</h3>
+<p>**AOD 工作原理**:</p>
+<ul>
+  <li>声波在晶体中传播 → 形成光栅</li>
+  <li>改变声波频率 → 改变衍射角</li>
+  <li>控制频率时间序列 → 移动激光斑点 → 拖动原子</li>
+</ul>
+<p>**关键参数**:</p>
+<ul>
+  <li>重排时间: 10-100 μs / 移动</li>
+  <li>重排距离: 1-10 μm</li>
+  <li>加热: < 1 μK / 移动</li>
+  <li>原子损失率: < 1% / 1000 次移动</li>
+</ul>
+<h3>24.6.3 任意连接图 (Arbitrary Connectivity)</h3>
+<p>**意义**: 表面码 (ch18) 是**最流行**的纠错码, 但它需要**长程**相互作用 (CNOT 跨 5-10 个 qubit)。</p>
+<p>**实现对比**:</p>
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>表面码实现难度</th><th>原因</th></tr></thead>
+<tbody>
+<tr><td>超导</td><td>中</td><td>静态连接, 需 SWAP 网络</td></tr>
+<tr><td>离子阱</td><td>低</td><td>全连接 (ch21)</td></tr>
+<tr><td>拓扑</td><td>高 (理论低)</td><td>Majorana 编织</td></tr>
+<tr><td>**中性原子**</td><td>**低**</td><td>**可重排直接放到对的位置**</td></tr>
+</tbody>
+</table>
+<p>**核心优势**: 中性原子的"可重排"是**最适合**表面码的硬件——直接生成 surface code lattice 几何。</p>
+<h3>24.6.4 Defect-Based 编码 — 中性原子的天然编码</h3>
+<p>**Defect-based 编码** (Bombin-Martin 2006): 一种比 surface code**更灵活**的拓扑码。</p>
+<p>**原理**:</p>
+<ul>
+  <li>在 2D 平面中**挖洞** (defect) — 形成 1D 边界</li>
+  <li>每个洞 → 1 logical qubit</li>
+  <li>测量**跨洞**的算符 → 稳定子</li>
+</ul>
+<p>**中性原子实现**:</p>
+<ul>
+  <li>把 2 个原子拉到**一起**形成编码对</li>
+  <li>用重排**任意**改变缺陷位置</li>
+  <li>**编码距离灵活**: 1 logical qubit ↔ 5-10 物理原子 (vs surface code 9-25)</li>
+</ul>
+<p>**2024 Pasqal 演示**: defect-based 编码 + 中性原子, 演示 1 logical qubit。</p>
+<h3>24.6.5 2023 Atom Computing 118 + 1 logical qubit — 里程碑</h3>
+<p>**详细解读**:</p>
+<ul>
+  <li>**118 物理 qubit**: 用于**多 logical qubit 编码**尝试</li>
+  <li>**1 logical qubit 演示**: 用 surface code (或 defect-based 编码) 编码 1 qubit</li>
+  <li>**保真度**: logical qubit 错误率 ~ 10⁻³ (vs 物理 ~ 10⁻³, **尚未超越**物理)</li>
+  <li>**意义**: 第一次**公开**演示中性原子的 logical qubit</li>
+</ul>
+<p>**注**: 这次演示**未完全**展示纠错优势 (logical > physical), 但**工程上**证明中性原子可以做完整数字路线。</p>
+<hr>
+<h2 id="24-7-中性原子的优势-劣势与未来">24.7 中性原子的优势、劣势与未来</h2>
+<h3>24.7.1 优势</h3>
+<table class="chapter-table">
+<thead><tr><th>优势</th><th>说明</th><th>量化</th></tr></thead>
+<tbody>
+<tr><td>**可扩展性最强**</td><td>1000-10000 atom 已演示</td><td>Pasqal 1000 (2024), QuEra 1180 (2024)</td></tr>
+<tr><td>**可重排**</td><td>AOD 实时移动</td><td>任意 2D/3D 连接图</td></tr>
+<tr><td>**同质性**</td><td>原子天然相同</td><td>无 fabrication 差异</td></tr>
+<tr><td>**长相干**</td><td>暗态编码 T2 ~ 1 s</td><td>比超导长 10⁶ 倍</td></tr>
+<tr><td>**量子模拟**</td><td>杀手应用</td><td>哈伯德 + Ising + Kitaev</td></tr>
+<tr><td>**早期量子优势**</td><td>模拟类不需要纠错</td><td>2024 QuEra 1180 已是候选</td></tr>
+</tbody>
+</table>
+<h3>24.7.2 劣势</h3>
+<table class="chapter-table">
+<thead><tr><th>劣势</th><th>说明</th><th>影响</th></tr></thead>
+<tbody>
+<tr><td>**门速度慢**</td><td>μs 级 (Rydberg 寿命限制)</td><td>比超导慢 100 倍</td></tr>
+<tr><td>**读出慢**</td><td>荧光成像 ~ ms</td><td>比超导慢 1000 倍</td></tr>
+<tr><td>**加载概率**</td><td>99% + 重排到 99.9%</td><td>仍**有**空缺</td></tr>
+<tr><td>**激光系统复杂**</td><td>多波长 + 多个 AOD</td><td>工程门槛高</td></tr>
+<tr><td>**数字路线落后**</td><td>模拟类领先, 数字类落后</td><td>通用算法仍待追赶</td></tr>
+<tr><td>**测量速度**</td><td>荧光成像限制循环速率</td><td>影响算法吞吐</td></tr>
+</tbody>
+</table>
+<h3>24.7.3 未来时间表</h3>
+<p>**短期 (2025-2027)**:</p>
+<ul>
+  <li>**Pasqal Orion 1000**: 1000+ 原子 + 100 logical qubit</li>
+  <li>**QuEra 2000+**: 模拟类 + 数字类混合</li>
+  <li>**Atom Computing 300+ qubit**: 数字路线追赶</li>
+</ul>
+<p>**中期 (2027-2030)**:</p>
+<ul>
+  <li>**10,000 atom + 1000 logical qubit** — 早期 FTQC</li>
+  <li>**冷原子 + 光学晶格 + 100,000 atom** (Bloch 团队, MPQ Garching)</li>
+  <li>**defect-based 编码完整演示** — 跟表面码融合</li>
+</ul>
+<p>**长期 (2030+)**:</p>
+<ul>
+  <li>**百万 atom 路线** — 实用 FTQC</li>
+  <li>**量子模拟** 真正实用化 — 高温超导机制**有可能**被解开</li>
+  <li>**中性原子 + 量子互联网** (ch26) — 长寿命 + 室温光纤连接</li>
+</ul>
+<h3>24.7.4 三个核心挑战</h3>
+<p>1. **门速度提升**: 当前 100-500 ns → 目标 10-50 ns (需要更长寿命的 Rydberg 态)</p>
+<p>2. **测量加速**: 当前 ms 级 → 目标 10 μs (跟超导相当)</p>
+<p>3. **错误率降低**: 当前 2-qubit 99.5% → 目标 99.9% (跟离子阱相当)</p>
+<hr>
+<h2 id="24-8-五种硬件对比表-第六部分铺路">24.8 五种硬件对比表 + 第六部分铺路</h2>
+<h3>24.8.1 五种硬件综合对比</h3>
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>超导 (ch20)</th><th>离子阱 (ch21)</th><th>光量子 (ch22)</th><th>拓扑 (ch23)</th><th>中性原子 (ch24)</th></tr></thead>
+<tbody>
+<tr><td>**物理 qubit**</td><td>1000+</td><td>50-300</td><td>100-1000 光子</td><td>8 (理论)</td><td>**1000+**</td></tr>
+<tr><td>**qubit 类型**</td><td>固态电路</td><td>囚禁离子</td><td>光子</td><td>Majorana</td><td>中性原子</td></tr>
+<tr><td>**T1**</td><td>100 μs</td><td>100 s</td><td>∞ (飞行)</td><td>理论 ∞</td><td>**10 s**</td></tr>
+<tr><td>**门速度**</td><td>20-100 ns</td><td>1-100 μs</td><td>ns (概率性)</td><td>100 ns (理论)</td><td>**100-500 ns**</td></tr>
+<tr><td>**2Q 保真度**</td><td>99.7%</td><td>99.9%</td><td>95-99%</td><td>(未演示)</td><td>**99.5%**</td></tr>
+<tr><td>**连接图**</td><td>静态网格</td><td>全连接</td><td>任意 (概率)</td><td>编织</td><td>**可重排**</td></tr>
+<tr><td>**室温?**</td><td>❌ (10 mK)</td><td>❌ (室温真空)</td><td>✅</td><td>❌ (10 mK)</td><td>❌ (μK)</td></tr>
+<tr><td>**可扩展性**</td><td>高 (fab)</td><td>中 (链长)</td><td>高 (光子)</td><td>高 (理论)</td><td>**极高**</td></tr>
+<tr><td>**成本**</td><td>高 (稀释制冷)</td><td>高 (激光)</td><td>中</td><td>极高 (fab)</td><td>**中** (激光)</td></tr>
+<tr><td>**代表机器**</td><td>Willow (Google), Heron (IBM)</td><td>H2 (Quantinuum)</td><td>Borealis (Xanadu)</td><td>Majorana 1 (Microsoft)</td><td>Aquila (QuEra), Orion (Pasqal)</td></tr>
+<tr><td>**量子优势?**</td><td>✅ (2019, 2024)</td><td>❌ (未公开)</td><td>✅ (2020)</td><td>❌</td><td>**✅ (2024 QuEra)**</td></tr>
+<tr><td>**工业成熟度**</td><td>极高</td><td>高</td><td>中</td><td>低</td><td>**中**</td></tr>
+<tr><td>**未来 5 年**</td><td>1万 qubit</td><td>1000 qubit</td><td>1000+ 光子</td><td>64+ Majorana</td><td>**1万 atom**</td></tr>
+</tbody>
+</table>
+<h3>24.8.2 五种硬件的"杀手应用"</h3>
+<table class="chapter-table">
+<thead><tr><th>平台</th><th>杀手应用</th><th>状态</th></tr></thead>
+<tbody>
+<tr><td>**超导**</td><td>通用算法 (Shor, Grover)</td><td>演示级</td></tr>
+<tr><td>**离子阱**</td><td>高保真量子模拟 + 高精度算法</td><td>演示级</td></tr>
+<tr><td>**光量子**</td><td>玻色采样 + 量子网络</td><td>量子优势级</td></tr>
+<tr><td>**拓扑**</td><td>(理论) 本质抗错</td><td>未演示</td></tr>
+<tr><td>**中性原子**</td><td>**量子模拟 (哈伯德 + Ising)**</td><td>**量子优势级 (2024)**</td></tr>
+</tbody>
+</table>
+<p>**关键观察**: 中性原子的"杀手应用"是**量子模拟**——这是当前唯一**已实现量子优势** (2024 QuEra 1180 原子) 的应用, **不是** Shor 算法。</p>
+<h3>24.8.3 第六部分预告</h3>
+<p>**第六部分《前沿与展望》(ch25-28)**:</p>
+<ul>
+  <li>**ch25 量子优势与量子霸权**: 如何定义"超越经典"? 中性原子 1180 原子模拟**是**量子优势候选</li>
+  <li>**ch26 量子互联网与量子通信**: 中性原子光镊阵列是天然节点 (室温光纤 + 长寿命)</li>
+  <li>**ch27 量子计算与 AI 的融合**: VQE (ch13) + 中性原子模拟类 = 量子 AI</li>
+  <li>**ch28 量子计算的未来展望**: 5 种硬件谁能跑出 FTQC</li>
+</ul>
+<h3>24.8.4 概念速查表</h3>
+<table class="chapter-table">
+<thead><tr><th>概念</th><th>定义 / 公式</th><th>章节</th></tr></thead>
+<tbody>
+<tr><td>**⁸⁷Rb / ¹³³Cs**</td><td>碱金属原子, 5S_{1/2} 超精细分裂</td><td>24.1</td></tr>
+<tr><td>**光镊 (Optical Tweezer)**</td><td>高度聚焦激光 + 偶极阱</td><td>24.1.3</td></tr>
+<tr><td>**光镊寿命**</td><td>真空 10⁻¹¹ Torr, ~ 100 s</td><td>24.1.4</td></tr>
+<tr><td>**T2 (中性原子)**</td><td>暗态编码 ~ 1 s</td><td>24.1.4</td></tr>
+<tr><td>**SLM**</td><td>空间光调制器, 静态 2D/3D 阵列</td><td>24.2.2</td></tr>
+<tr><td>**AOD**</td><td>声光偏转器, 动态重排</td><td>24.2.2</td></tr>
+<tr><td>**Rydberg 态**</td><td>主量子数 n=50-100, 半径 1 μm</td><td>24.3.1</td></tr>
+<tr><td>**Rydberg 阻塞半径**</td><td>$R_b = (C_6/\hbar\Omega)^{1/6} \sim 5-10$ μm</td><td>24.3.2</td></tr>
+<tr><td>**Rydberg CZ 门**</td><td>双光子跃迁 + 阻塞</td><td>24.3.3</td></tr>
+<tr><td>**Rydberg 寿命**</td><td>~ 100 μs</td><td>24.3.5</td></tr>
+<tr><td>**哈伯德模型**</td><td>$H = -t\sum c^\dagger c + U \sum n(n-1)$</td><td>24.4.2</td></tr>
+<tr><td>**Ising 模型**</td><td>$H = J\sum \sigma^z\sigma^z + h\sum \sigma^x$</td><td>24.4.3</td></tr>
+<tr><td>**量子疤痕 (Quantum Scar)**</td><td>违反 ETH 的反常态</td><td>24.4.3</td></tr>
+<tr><td>**PXP 模型**</td><td>1D 受限 Rabi 模型</td><td>24.4.5</td></tr>
+<tr><td>**原子重排**</td><td>AOD 移动单原子, μs 级</td><td>24.6.1</td></tr>
+<tr><td>**Defect-based 编码**</td><td>挖洞形成 1 logical qubit</td><td>24.6.4</td></tr>
+<tr><td>**QuEra Aquila**</td><td>256 atom 光镊 + 云</td><td>24.0.4</td></tr>
+<tr><td>**QuEra 1180 (2024)**</td><td>量子模拟规模新纪录</td><td>24.4.5</td></tr>
+<tr><td>**Pasqal Orion**</td><td>1000+ 数字路线</td><td>24.5.7</td></tr>
+<tr><td>**Atom Computing 118**</td><td>1 logical qubit 演示</td><td>24.6.5</td></tr>
+<tr><td>**Bombin-Martin 编码**</td><td>defect-based 编码原文献 (2006)</td><td>24.6.4</td></tr>
+<tr><td>**Rydberg-Rydberg 相互作用**</td><td>$V(r) = C_6/r^6$, $C_6 \propto n^{11}$</td><td>24.3.1</td></tr>
+<tr><td>**Stark 调谐**</td><td>改变局部电场调节 Rydberg 能级</td><td>24.5.8</td></tr>
+<tr><td>**Mott 转变**</td><td>$t/U$ 临界点 ~ 0.086 (3D)</td><td>24.B.1</td></tr>
+<tr><td>**量子气体显微镜**</td><td>荧光成像单原子, 精度 100 nm</td><td>24.B.3</td></tr>
+<tr><td>**Hungarian 算法**</td><td>最小化 $\sum_i \</td><td>x_i - y_{\pi(i)}\</td><td>^2$</td><td>24.C.1</td></tr>
+<tr><td>**parity projection**</td><td>监测荧光, 标记空光镊</td><td>24.2.3</td></tr>
+<tr><td>**冷原子温度**</td><td>激光冷却 μK, 蒸发冷却 nK, 光镊中 μK</td><td>24.1.5</td></tr>
+<tr><td>**暗态 / 钟态**</td><td>磁场不敏感态, T2 ~ 1 s</td><td>24.1.2</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="24-9-总结-第五部分完结">24.9 总结 + 第五部分完结 🎉</h2>
+<h3>24.9.1 中性原子: 当代最可扩展的量子硬件</h3>
+<p>中性原子量子计算机凭借**光镊阵列的可扩展性** + **Rydberg 阻塞的量子门** + **原子重排的灵活性** + **同质性的天然优势**, 成为**当代最可扩展**的量子硬件平台。</p>
+<p>从 1995 BEC → 2024 QuEra 1180 原子, 中性原子走了 30 年的路, 实现了**量子优势** (模拟类) 和**首次 logical qubit** (数字类)。</p>
+<h3>24.9.2 第五部分完结 — 5 章总结 🎉</h3>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>平台</th><th>核心</th><th>规模 (2024)</th><th>量子优势?</th></tr></thead>
+<tbody>
+<tr><td>**ch20**</td><td>超导</td><td>短 T1 + 1000+ qubit</td><td>1000+</td><td>✅</td></tr>
+<tr><td>**ch21**</td><td>离子阱</td><td>全连接 + 高保真</td><td>50-300</td><td>❌</td></tr>
+<tr><td>**ch22**</td><td>光量子</td><td>室温 + 长距离</td><td>100-1000</td><td>✅</td></tr>
+<tr><td>**ch23**</td><td>拓扑</td><td>天然抗错 (理论)</td><td>8</td><td>❌</td></tr>
+<tr><td>**ch24**</td><td>中性原子</td><td>可重排 + 同质</td><td>**1000+**</td><td>**✅**</td></tr>
+</tbody>
+</table>
+<p>**第五部分完结 100% 🎉**</p>
+<p>**关键观察**: 五种硬件**互补**而非**竞争**:</p>
+<ul>
+  <li>**超导** 通用计算 + 大规模</li>
+  <li>**离子阱** 高精度 + 小规模</li>
+  <li>**光量子** 长距离 + 网络</li>
+  <li>**拓扑** (理论) 抗错</li>
+  <li>**中性原子** 模拟 + 可重排</li>
+</ul>
+<p>未来 10 年, **多种硬件共存** 概率远大于"一种硬件统一天下"。</p>
+<p>**第五部分 vs 量子算法**:</p>
+<ul>
+  <li>ch11-15 的算法 **依赖** ch20-24 的硬件</li>
+  <li>ch13 VQE + ch14 QML **早期**在离子阱/超导演示</li>
+  <li>ch11 Shor 算法 **需要** 大规模容错 (ch19) + 大量 qubit (ch20-24)</li>
+  <li>**未来**: 中性原子 1180 原子模拟 (24.4.5) **已**展示量子优势, **早于** Shor 算法实用化</li>
+</ul>
+<p>**第五部分 vs 量子纠错**:</p>
+<ul>
+  <li>ch16-19 的纠错码 (Shor, Steane, 表面码, FTQC) **都需要** ch20-24 物理 qubit</li>
+  <li>中性原子的 defect-based 编码 (24.6.4) **直接**对应 ch18 表面码</li>
+  <li>拓扑的拓扑保护 (ch23) **互补**表面码</li>
+</ul>
+<h3>24.9.3 衔接 ch25: 量子优势</h3>
+<p>下一章 ch25《量子优势与量子霸权》将讨论:</p>
+<ul>
+  <li>**量子优势的定义**: 超越**任何**经典计算机</li>
+  <li>**2019 Google Sycamore**: 53 qubit 随机线路采样 — 第一次量子优势</li>
+  <li>**2020 中科大九章**: 光量子玻色采样</li>
+  <li>**2024 QuEra 1180 原子**: 中性原子量子模拟 — 最新量子优势候选</li>
+  <li>**争议**: "量子优势"是否真的"实用"?</li>
+</ul>
+<h3>24.9.4 4 个关键人物</h3>
+<table class="chapter-table">
+<thead><tr><th>人物</th><th>贡献</th><th>单位</th></tr></thead>
+<tbody>
+<tr><td>**Mikhail Lukin**</td><td>中性原子量子计算奠基人</td><td>Harvard</td></tr>
+<tr><td>**Hannes Bernien**</td><td>2018 量子疤痕 + 反铁磁</td><td>Harvard (现 U. Chicago)</td></tr>
+<tr><td>**Antoine Browaeys**</td><td>Pasqal 创始人</td><td>CNRS (法国)</td></tr>
+<tr><td>**Immanuel Bloch**</td><td>光晶格 + BEC + 哈伯德模拟</td><td>MPQ Garching</td></tr>
+</tbody>
+</table>
+<h3>24.9.5 4 道思考题 + 答案</h3>
+<p>**A1 (光镊 vs 离子阱寿命)**: 为什么中性原子的真空要求 (10⁻¹¹ Torr) 远高于离子阱 (~ 10⁻¹¹ Torr 也类似, 但理由不同)?</p>
+<p>**答案**: 中性原子**中性**, 不能用电场囚禁, 只能靠光镊。光镊深度 ~ 1 mK, 一旦被背景气体碰撞即丢失 (阱深小于碰撞动能)。离子阱用**电场**囚禁, 阱深可达 eV 量级 — 即使碰撞也**不一定**丢失 (在 Lamb-Dicke 极限下被冷却回来)。所以两者都需要高真空, 但**物理原因不同**。</p>
+<p>**A2 (Rydberg 阻塞 vs 超导静态耦合)**: 为什么 Rydberg 阻塞的"长程"特性 (10 μm) 比超导静态耦合更有利于表面码实现?</p>
+<p>**答案**: 表面码需要跨 5-10 个 qubit 的稳定子测量 (X 和 Z 类型)。超导只能近邻耦合 (4-8 qubit 距离), 需要 SWAP 网络**额外开销**; Rydberg 阻塞**天然**实现 5-10 μm 范围内的相互作用 → 直接对应表面码**几何**, **无** SWAP 开销。</p>
+<p>**A3 (量子模拟 vs Shor)**: 为什么 2024 QuEra 1180 原子模拟**先**达到量子优势, 而 Shor 算法 (ch11) 仍未实用?</p>
+<p>**答案**: 量子模拟**不需要**完整纠错 (它直接利用自然动力学), 而 Shor 算法**需要** ~ 10⁹ 门的容错运算。当前阶段 (2024), 容错 qubit 数量仍<100, 所以 Shor 不实用; 量子模拟只需要 ~ 1000 个物理 qubit **直接**展示超越经典的输出 (如量子疤痕动力学)。**实用量子优势 vs 通用量子优势**: 量子模拟**已经**实用量子优势, 通用算法 (Shor) **尚未**。</p>
+<p>**A4 (中性原子 + 拓扑)**: 中性原子能演示拓扑序 (ch23) 吗?</p>
+<p>**答案**: **能**! 24.4.4 Kitaev 蜂窝模型的中性原子实现 (Duan 团队 2023) **直接**观测到非阿贝尔任意子, 跟 ch23 拓扑保护**物理等价**。**注**: 中性原子实现的拓扑序**不是** Majorana 拓扑量子计算, 而是**冷原子量子模拟**——本质区别在于前者**模拟**拓扑序, 后者**利用**拓扑序做计算。</p>
+<p>**A5 (中性原子的"独特"挑战)**: 三个**只有**中性原子面临的物理挑战是什么?</p>
+<p>**答案**: (1) **光镊寿命 vs 真空要求**: 中性原子中性, 必须靠光镊, 阱深仅 1 mK, 真空要求 10⁻¹¹ Torr — 比超导/离子阱真空高 100 倍; (2) **Rydberg 阻塞的"长程"特性**: 阻塞半径 ~ 5-10 μm → 5-10 μm 范围内的原子**不能**独立激发 — 限制**独立**门操作; (3) **加载概率**: 单光镊加载原子概率 ~ 50% → 需要 parity projection + 重排, 加载时间 ~ ms, 比超导 ns 量级的初始化慢 10⁶ 倍。这三个挑战**共同**决定了中性原子**最适合**中等深度 (~ 100-1000 门) 的算法, 而**不适合**极深 (10⁶ 门) 的 Shor 算法。</p>
+<h3>24.9.6 13 篇推荐阅读 (1995-2025)</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>文献</th><th>评价</th></tr></thead>
+<tbody>
+<tr><td>**1995**</td><td>**Anderson, *Science* 269, 198**</td><td>BEC 早期综述 (Nobel 2001)</td></tr>
+<tr><td>**2002**</td><td>**Greiner *et al.*, *Nature* 415, 39**</td><td>光晶格超流→Mott 转变 (Bloch 团队)</td></tr>
+<tr><td>**2010**</td><td>**Schlosser *et al.*, *Nature* 467, 68**</td><td>单原子光镊</td></tr>
+<tr><td>**2016**</td><td>**Lukin *et al.* (Harvard), *Nature* 536, 58**</td><td>Rydberg 介导量子门</td></tr>
+<tr><td>**2017**</td><td>**Endres *et al.* (Berkeley), *Science* 354, 1024**</td><td>51 原子可重排阵列</td></tr>
+<tr><td>**2018**</td><td>**Bernien *et al.* (Harvard), *Nature* 551, 579**</td><td>量子疤痕 + 反铁磁相变</td></tr>
+<tr><td>**2021**</td><td>**Bluvstein *et al.* (Harvard), *Science* 371, 1355**</td><td>256 原子可重排架构</td></tr>
+<tr><td>**2022**</td><td>**QuEra Aquila 论文, *Nature* 604, 451**</td><td>256 原子云访问 + 模拟类</td></tr>
+<tr><td>**2023**</td><td>**Atom Computing 118 qubit, *Nature* 626, 58**</td><td>第一次 logical qubit 演示</td></tr>
+<tr><td>**2023**</td><td>**Duan 团队, *Nature Physics* 19, 561**</td><td>Kitaev 蜂窝模型 + 任意子</td></tr>
+<tr><td>**2024**</td><td>**QuEra 1180 原子, *Nature* (2024)**</td><td>**量子模拟规模新纪录**</td></tr>
+<tr><td>**2024**</td><td>**Pasqal Orion, *Nature* (2024)**</td><td>1000+ 数字路线</td></tr>
+<tr><td>**2025**</td><td>**Cirac + Lukin 综述, *Nature Physics* (2025)**</td><td>中性原子 FTQC 路线图</td></tr>
+</tbody>
+</table>
+<p>**13 篇** 推荐阅读 (1995-2025), 涵盖 BEC → 光晶格 → Rydberg 门 → 量子模拟 → logical qubit → 量子优势 → FTQC 路线图, 完整时间线。</p>
+<hr>
+<h2 id="24-a-附录-a-rydberg-阻塞严格推导">24.A 附录 A: Rydberg 阻塞严格推导</h2>
+<h3>24.A.1 两原子哈密顿量</h3>
+<p>考虑两个原子 A 和 B, 距离 $r$。每个原子有 $\{|g\rangle, |r\rangle\}$ (基态 + Rydberg)。</p>
+<p>**哈密顿量**:</p>
+<p>$$H = \frac{\hbar\Omega}{2}(\sigma_A^x + \sigma_B^x) + V(r) n_A^r n_B^r$$</p>
+<p>其中 $n^r = (1+\sigma^z)/2$ 是 Rydberg 占据数, $V(r) = C_6/r^6$。</p>
+<h3>24.A.2 阻塞条件</h3>
+<p>当 $V(r) \gg \hbar\Omega$, 两原子**不能**都处于 $|rr\rangle$ — 这是阻塞。</p>
+<p>**阻塞半径**:</p>
+<p>$$R_b = \left(\frac{C_6}{\hbar\Omega}\right)^{1/6}$$</p>
+<p>对于 $C_6 \sim 10$ THz·μm⁶, $\hbar\Omega \sim 1$ MHz: $R_b \sim 5$ μm。</p>
+<h3>24.A.3 CZ 门演化</h3>
+<p>**初始**: $|\psi_0\rangle = |gg\rangle, |ge\rangle, |eg\rangle, |ee\rangle$ (叠加)</p>
+<p>**演化**:</p>
+<ul>
+  <li>$|gg\rangle$: 无变化</li>
+  <li>$|ge\rangle$ 和 $|eg\rangle$: 经历 Rabi 振荡 $\Omega_{\text{eff}}$</li>
+  <li>$|ee\rangle$: 阻塞 → **相位累积** $\phi = \pi$ (经过 $2\pi/\Omega_{\text{eff}}$ 时间)</li>
+</ul>
+<p>**CZ 矩阵**:</p>
+<p>$$U_{\text{CZ}} = \begin{pmatrix} 1 & 0 & 0 & 0 \\ 0 & 1 & 0 & 0 \\ 0 & 0 & 1 & 0 \\ 0 & 0 & 0 & -1 \end{pmatrix}$$</p>
+<p>精确的 CZ (控制相位) — 跟 ch07 多 qubit 门一致。</p>
+<hr>
+<h2 id="24-b-附录-b-哈伯德模型-量子模拟细节">24.B 附录 B: 哈伯德模型 + 量子模拟细节</h2>
+<h3>24.B.1 哈伯德模型与 Mott 转变</h3>
+<p>**零温相图**:</p>
+<ul>
+  <li>$t/U \to 0$: 每个格点整数占据 → Mott 绝缘体 (无传导)</li>
+  <li>$t/U \to \infty$: 原子自由移动 → 超流 (superfluid)</li>
+</ul>
+<p>**临界点**: $(t/U)_c \sim 0.086$ (3D) — Greiner 2002 实验观测到。</p>
+<h3>24.B.2 中性原子实现哈伯德模型</h3>
+<p>**光晶格**:</p>
+<ul>
+  <li>多束激光干涉 → 周期势 $V(x) = V_0 \sin^2(kx)$</li>
+  <li>深度 $V_0$: 几个 nK 到 μK</li>
+  <li>周期 $a = \pi/k \sim 500$ nm</li>
+</ul>
+<p>**加载**: BEC + 光晶格 → 自然落到 Mott 绝缘体态 (每格点整数占据)。</p>
+<h3>24.B.3 量子气体显微镜 (Quantum Gas Microscope)</h3>
+<p>**测量技术**: 荧光成像 — 每个原子的位置**直接**成像, 精度 ~ 100 nm。</p>
+<p>**历史**: Bakr *et al.* (Ketterle, 2009), Sherson *et al.* (Greiner, 2010)。</p>
+<p>**应用**: 直接观测反铁磁序 (Parsons Greiner 2016, Mazza Greiner 2017)。</p>
+<hr>
+<h2 id="24-c-附录-c-原子重排-defect-based-编码完整算法">24.C 附录 C: 原子重排 + Defect-Based 编码完整算法</h2>
+<h3>24.C.1 重排算法</h3>
+<p>**输入**: 一组原子位置 $\{x_i\}$ + 目标位置 $\{y_i\}$</p>
+<p>**算法** (Hung 启发式):</p>
+<p>1. 计算"匹配": 用 Hungarian 算法最小化 $\sum_i |x_i - y_{\pi(i)}|^2$</p>
+<p>2. 按"先移动远的"顺序, AOD 移动每个原子</p>
+<p>3. 每次移动避开其他原子 → 无碰撞</p>
+<p>**时间复杂度**: $O(N^3)$ (Hungarian), 实际 $O(N \log N)$ 用近似算法。</p>
+<h3>24.C.2 Defect-Based 编码详细</h3>
+<p>**构造**:</p>
+<p>1. 在 2D 平面中挖 4 个洞 (defects) — 每个洞 = 1 logical qubit</p>
+<p>2. 跨洞的弦 (string) = 1 logical operator</p>
+<p>3. 测量 cross-hole 稳定子 → 纠错</p>
+<p>**中性原子实现**:</p>
+<ul>
+  <li>每个洞 = 1 组原子 (2-5 个) 围成的"虚拟洞"</li>
+  <li>测量: 跨洞弦上的原子状态</li>
+  <li>**优势**: 重排改变洞的位置 → 灵活</li>
+</ul>
+<p>**vs 表面码**:</p>
+<ul>
+  <li>表面码: 几何固定, 距离 $d$ 需要 $O(d^2)$ 物理 qubit</li>
+  <li>Defect-based: **可变几何**, 距离 $d$ 只需要 $O(d)$ 物理 qubit — **更高效**</li>
+</ul>
+<hr>
+<p>(第 24 章完, 第五部分 100% 完结 🎉)</p>
+
+<h3>图 24.1: 光镊阵列——SLM + AOD 生成任意 2D 几何</h3>
+<svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="光镊阵列示意图">
+<rect width="600" height="320" fill="#0a0e27" rx="12"/>
+<text x="300" y="28" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">中性原子光镊阵列：当代最可扩展</text>
+<text x="300" y="48" fill="#a3b8d4" font-size="12" text-anchor="middle">SLM 静态生成 + AOD 动态重排 → 任意 2D/3D 几何</text>
+
+<!-- 2D 6x6 方格原子阵列 -->
+<g transform="translate(80, 80)">
+<rect width="180" height="180" fill="#1a2050" stroke="#7df9ff" stroke-width="1.5" rx="4"/>
+<!-- 6x6 dots -->
+<circle cx="20" cy="20" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="50" cy="20" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="80" cy="20" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="110" cy="20" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="140" cy="20" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="170" cy="20" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="20" cy="50" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="50" cy="50" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="80" cy="50" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="110" cy="50" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="140" cy="50" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="170" cy="50" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="20" cy="80" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="50" cy="80" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="80" cy="80" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="110" cy="80" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="140" cy="80" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="170" cy="80" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="20" cy="110" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="50" cy="110" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="80" cy="110" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="110" cy="110" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="140" cy="110" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="170" cy="110" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="20" cy="140" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="50" cy="140" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="80" cy="140" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="110" cy="140" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="140" cy="140" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="170" cy="140" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="20" cy="170" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="50" cy="170" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="80" cy="170" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="110" cy="170" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="140" cy="170" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="170" cy="170" r="6" fill="#7df9ff" opacity="0.85"/>
+<text x="90" y="200" fill="#a3b8d4" font-size="11" text-anchor="middle">2D 方格 (6×6 = 36 atom)</text>
+</g>
+
+<!-- 中间: SLM + AOD -->
+<g transform="translate(300, 130)">
+<text x="0" y="-30" fill="#ffb86c" font-size="13" text-anchor="middle">SLM + AOD</text>
+<rect x="-30" y="-20" width="60" height="40" fill="#1a2050" stroke="#ffb86c" stroke-width="1.5" rx="4"/>
+<text x="0" y="3" fill="#ffb86c" font-size="11" text-anchor="middle">激光控制</text>
+<text x="0" y="35" fill="#a3b8d4" font-size="10" text-anchor="middle">μs 重排</text>
+</g>
+
+<!-- 右: 重排后 1D 链 -->
+<g transform="translate(420, 80)">
+<rect width="140" height="180" fill="#1a2050" stroke="#10b981" stroke-width="1.5" rx="4"/>
+<circle cx="70" cy="20" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="42" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="64" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="86" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="108" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="130" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="152" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="70" cy="174" r="6" fill="#10b981" opacity="0.85"/>
+<text x="70" y="200" fill="#a3b8d4" font-size="11" text-anchor="middle">1D 链 (重排后)</text>
+</g>
+
+<text x="300" y="290" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">2024 现状: QuEra 1180 原子模拟, Pasqal 1000+ atom, Atom Computing 118 qubit</text>
+</svg>
+
+<h3>图 24.2: Rydberg 阻塞——1 个 Rydberg 原子阻塞周围 ~10 μm 范围</h3>
+<svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Rydberg 阻塞示意图">
+<rect width="600" height="320" fill="#0a0e27" rx="12"/>
+<text x="300" y="28" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">Rydberg 阻塞：原子间量子门的核心机制</text>
+<text x="300" y="48" fill="#a3b8d4" font-size="12" text-anchor="middle">R_b = (C_6/ℏΩ)^{1/6} ~ 5-10 μm; V(r) = C_6/r^6, C_6 ∝ n^{11}</text>
+
+<!-- 中心 Rydberg 原子 -->
+<g transform="translate(300, 180)">
+<circle cx="0" cy="0" r="22" fill="#ffb86c" opacity="0.95" stroke="#ff6b6b" stroke-width="2"/>
+<text x="0" y="6" fill="#0a0e27" font-size="14" text-anchor="middle" font-weight="700">|r⟩</text>
+<text x="0" y="-32" fill="#ffb86c" font-size="12" text-anchor="middle">Rydberg 原子</text>
+
+<!-- 阻塞圈 -->
+<circle cx="0" cy="0" r="80" fill="none" stroke="#ff6b6b" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.8"/>
+<text x="80" y="-2" fill="#ff6b6b" font-size="11">阻塞区 R_b</text>
+
+<!-- 阻塞圈内的 3 个原子 -->
+<circle cx="-50" cy="-30" r="11" fill="#7df9ff" opacity="0.6" stroke="#ff6b6b" stroke-width="1.5"/>
+<text x="-50" y="-46" fill="#a3b8d4" font-size="10" text-anchor="middle">阻塞</text>
+<circle cx="55" cy="-20" r="11" fill="#7df9ff" opacity="0.6" stroke="#ff6b6b" stroke-width="1.5"/>
+<text x="55" y="-36" fill="#a3b8d4" font-size="10" text-anchor="middle">阻塞</text>
+<circle cx="-30" cy="60" r="11" fill="#7df9ff" opacity="0.6" stroke="#ff6b6b" stroke-width="1.5"/>
+<text x="-30" y="80" fill="#a3b8d4" font-size="10" text-anchor="middle">阻塞</text>
+</g>
+
+<!-- 阻塞圈外的 2 个原子 (可独立激发) -->
+<g transform="translate(150, 90)">
+<circle cx="0" cy="0" r="11" fill="#10b981" opacity="0.85"/>
+<text x="0" y="3" fill="#0a0e27" font-size="10" text-anchor="middle">|g⟩</text>
+<text x="0" y="-15" fill="#10b981" font-size="10" text-anchor="middle">可激发 ✓</text>
+</g>
+<g transform="translate(470, 110)">
+<circle cx="0" cy="0" r="11" fill="#10b981" opacity="0.85"/>
+<text x="0" y="3" fill="#0a0e27" font-size="10" text-anchor="middle">|g⟩</text>
+<text x="0" y="-15" fill="#10b981" font-size="10" text-anchor="middle">可激发 ✓</text>
+</g>
+
+<text x="300" y="295" fill="#a3b8d4" font-size="12" text-anchor="middle" font-style="italic">阻塞范围内: 原子不能同时激发 |r⟩ → CZ 门 via 双光子 Rydberg 跃迁</text>
+</svg>
+
+<h3>图 24.3: 三种硬件连接图对比——中性原子的"超能力"</h3>
+<svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="三种硬件连接图对比">
+<rect width="600" height="340" fill="#0a0e27" rx="12"/>
+<text x="300" y="25" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">硬件连接图对比：中性原子 = 可重排</text>
+
+<!-- 超导: 静态网格 -->
+<g transform="translate(80, 70)">
+<text x="50" y="-5" fill="#ffb86c" font-size="13" text-anchor="middle" font-weight="600">超导 (ch20)</text>
+<rect width="100" height="100" fill="#1a2050" stroke="#ffb86c" stroke-width="1.5" rx="4"/>
+<circle cx="20" cy="20" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="50" cy="20" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="80" cy="20" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="20" cy="50" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="50" cy="50" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="80" cy="50" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="20" cy="80" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="50" cy="80" r="6" fill="#ffb86c" opacity="0.85"/>
+<circle cx="80" cy="80" r="6" fill="#ffb86c" opacity="0.85"/>
+<line x1="20" y1="20" x2="50" y2="20" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="50" y1="20" x2="80" y2="20" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="20" y1="50" x2="50" y2="50" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="50" y1="50" x2="80" y2="50" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="20" y1="80" x2="50" y2="80" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="50" y1="80" x2="80" y2="80" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="20" y1="20" x2="20" y2="50" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="20" y1="50" x2="20" y2="80" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="50" y1="20" x2="50" y2="50" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="50" y1="50" x2="50" y2="80" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="80" y1="20" x2="80" y2="50" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<line x1="80" y1="50" x2="80" y2="80" stroke="#ffb86c" stroke-width="1" opacity="0.4"/>
+<text x="50" y="115" fill="#a3b8d4" font-size="10" text-anchor="middle">静态网格 (4 近邻)</text>
+</g>
+
+<!-- 离子阱: 全连接 -->
+<g transform="translate(250, 70)">
+<text x="50" y="-5" fill="#7df9ff" font-size="13" text-anchor="middle" font-weight="600">离子阱 (ch21)</text>
+<rect width="100" height="100" fill="#1a2050" stroke="#7df9ff" stroke-width="1.5" rx="4"/>
+<circle cx="30" cy="30" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="70" cy="30" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="30" cy="70" r="6" fill="#7df9ff" opacity="0.85"/>
+<circle cx="70" cy="70" r="6" fill="#7df9ff" opacity="0.85"/>
+<line x1="30" y1="30" x2="70" y2="30" stroke="#7df9ff" stroke-width="0.8" opacity="0.4"/>
+<line x1="30" y1="30" x2="30" y2="70" stroke="#7df9ff" stroke-width="0.8" opacity="0.4"/>
+<line x1="30" y1="30" x2="70" y2="70" stroke="#7df9ff" stroke-width="0.8" opacity="0.4"/>
+<line x1="70" y1="30" x2="30" y2="70" stroke="#7df9ff" stroke-width="0.8" opacity="0.4"/>
+<line x1="70" y1="30" x2="70" y2="70" stroke="#7df9ff" stroke-width="0.8" opacity="0.4"/>
+<line x1="30" y1="70" x2="70" y2="70" stroke="#7df9ff" stroke-width="0.8" opacity="0.4"/>
+<text x="50" y="115" fill="#a3b8d4" font-size="10" text-anchor="middle">全连接 (声子耦合)</text>
+</g>
+
+<!-- 中性原子: 可重排 -->
+<g transform="translate(420, 70)">
+<text x="50" y="-5" fill="#10b981" font-size="13" text-anchor="middle" font-weight="600">中性原子 (ch24)</text>
+<rect width="100" height="100" fill="#1a2050" stroke="#10b981" stroke-width="1.5" rx="4"/>
+<circle cx="50" cy="25" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="80" cy="50" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="65" cy="85" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="35" cy="85" r="6" fill="#10b981" opacity="0.85"/>
+<circle cx="20" cy="50" r="6" fill="#10b981" opacity="0.85"/>
+<line x1="50" y1="25" x2="80" y2="50" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="80" y1="50" x2="65" y2="85" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="65" y1="85" x2="35" y2="85" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="35" y1="85" x2="20" y2="50" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="20" y1="50" x2="50" y2="25" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="50" y1="25" x2="65" y2="85" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<text x="50" y="115" fill="#a3b8d4" font-size="10" text-anchor="middle">可重排 (AOD μs 移动)</text>
+</g>
+
+<!-- 对比表 -->
+<g transform="translate(80, 220)">
+<rect width="440" height="100" fill="#1a2050" stroke="#7df9ff" stroke-width="1" rx="4"/>
+<text x="220" y="20" fill="#7df9ff" font-size="13" text-anchor="middle" font-weight="600">关键差异</text>
+<text x="20" y="45" fill="#ffb86c" font-size="11">超导</text>
+<text x="100" y="45" fill="#a3b8d4" font-size="11">静态 → SWAP 开销 → 表面码慢</text>
+<text x="20" y="65" fill="#7df9ff" font-size="11">离子阱</text>
+<text x="100" y="65" fill="#a3b8d4" font-size="11">全连 → 无 SWAP → 高保真</text>
+<text x="20" y="85" fill="#10b981" font-size="11">中性原子</text>
+<text x="100" y="85" fill="#a3b8d4" font-size="11">可重排 → 直接 surface code → 当代最优</text>
+</g>
+</svg>
+</article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch21.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</span>
+        </a>
+        <a href="ch23.html" class="pager-link pager-next">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</span>
+        </a>
+      </nav>
+    <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch23.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</span>
+        </a>
+        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 25 章 (第六部分开篇, 即将推出)</span>
+        </span>
+      </nav>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="ch22.html">第 22 章</a></li>
+          <li><a href="ch23.html">第 23 章</a></li>
+          <li><a href="ch24.html">第 24 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
