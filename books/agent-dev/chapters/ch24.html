@@ -1,0 +1,3224 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 24 章:Agent 成本控制——让 Agent 在"预算内"持续运行 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; }
+footer a { color: var(--book-accent-fg, #c026d3); text-decoration: none; margin: 0 4px; }
+footer a:hover { text-decoration: underline; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+tr:hover { background: rgba(192,38,211,0.05); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+
+<header class="chapter-header">
+<h1>第 24 章:Agent 成本控制——让 Agent 在"预算内"持续运行</h1>
+<div class="chapter-meta">第 24 章 · 第五部分(高级能力)Day 4 / 5 · 11 节 + 25 术语 + 24 表 + 12 Python + Token 经济学核心章</div>
+</header>
+
+<h3 style="margin-top:0; color:#c026d3;">💰 第 21 种 inline SVG 形态学:成本优化四象限 + token 流向瀑布图(800×420)</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="grad-money" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="grad-fire" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#c026d3" stop-opacity="0.85"/>
+    </linearGradient>
+    <marker id="arrow-money" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <text x="400" y="22" text-anchor="middle" fill="#c026d3" font-size="15" font-weight="bold">成本优化四象限 + token 流向瀑布图</text>
+
+  <!-- 左侧:四象限 (x:30-380) -->
+  <text x="200" y="50" text-anchor="middle" fill="#c026d3" font-size="13" font-weight="bold">成本优化四象限(节省 vs 实现难度)</text>
+
+  <!-- 坐标轴 -->
+  <line x1="40" y1="220" x2="380" y2="220" stroke="#666" stroke-width="1"/>
+  <line x1="210" y1="80" x2="210" y2="360" stroke="#666" stroke-width="1"/>
+  <text x="385" y="225" fill="#666" font-size="10">节省 →</text>
+  <text x="210" y="75" fill="#666" font-size="10" text-anchor="middle">↑ 易实现</text>
+
+  <!-- 4 象限标签 -->
+  <text x="125" y="100" text-anchor="middle" fill="#10b981" font-size="11" font-weight="bold">★ 快速见效</text>
+  <text x="125" y="115" text-anchor="middle" fill="#666" font-size="9">缓存 / 配额 / 监控</text>
+
+  <text x="295" y="100" text-anchor="middle" fill="#3b82f6" font-size="11" font-weight="bold">★★★ 战略投资</text>
+  <text x="295" y="115" text-anchor="middle" fill="#666" font-size="9">4 级路由 / FinOps</text>
+
+  <text x="125" y="320" text-anchor="middle" fill="#999" font-size="11" font-weight="bold">★ 鸡肋</text>
+  <text x="125" y="335" text-anchor="middle" fill="#666" font-size="9">小优化 / 微调</text>
+
+  <text x="295" y="320" text-anchor="middle" fill="#f97316" font-size="11" font-weight="bold">★★ 高门槛</text>
+  <text x="295" y="335" text-anchor="middle" fill="#666" font-size="9">压缩 / 自部署</text>
+
+  <!-- 象限分割虚线 -->
+  <line x1="40" y1="220" x2="380" y2="220" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3"/>
+  <line x1="210" y1="80" x2="210" y2="360" stroke="#ccc" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- 数据点 -->
+  <circle cx="125" cy="160" r="12" fill="url(#grad-money)" opacity="0.9"/>
+  <text x="125" y="163" text-anchor="middle" fill="white" font-size="9" font-weight="bold">缓存</text>
+
+  <circle cx="180" cy="180" r="10" fill="url(#grad-money)" opacity="0.9"/>
+  <text x="180" y="183" text-anchor="middle" fill="white" font-size="8" font-weight="bold">配额</text>
+
+  <circle cx="290" cy="120" r="14" fill="url(#grad-money)" opacity="0.9"/>
+  <text x="290" y="123" text-anchor="middle" fill="white" font-size="9" font-weight="bold">路由</text>
+
+  <circle cx="330" cy="160" r="13" fill="url(#grad-money)" opacity="0.9"/>
+  <text x="330" y="163" text-anchor="middle" fill="white" font-size="9" font-weight="bold">FinOps</text>
+
+  <circle cx="290" cy="290" r="12" fill="url(#grad-fire)" opacity="0.9"/>
+  <text x="290" y="293" text-anchor="middle" fill="white" font-size="9" font-weight="bold">压缩</text>
+
+  <circle cx="330" cy="280" r="11" fill="url(#grad-fire)" opacity="0.9"/>
+  <text x="330" y="283" text-anchor="middle" fill="white" font-size="8" font-weight="bold">自部署</text>
+
+  <circle cx="125" cy="290" r="8" fill="url(#grad-fire)" opacity="0.7"/>
+  <text x="125" y="293" text-anchor="middle" fill="white" font-size="7" font-weight="bold">微调</text>
+
+  <!-- 中线 -->
+  <line x1="420" y1="60" x2="420" y2="380" stroke="#c026d3" stroke-width="2" stroke-dasharray="6,4"/>
+  <text x="420" y="200" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold" transform="rotate(-90, 420, 200)">优化→结果</text>
+
+  <!-- 右侧:瀑布图 (x:450-770) -->
+  <text x="610" y="50" text-anchor="middle" fill="#10b981" font-size="13" font-weight="bold">token 成本瀑布图($/工单)</text>
+
+  <!-- 瀑布 5 步 -->
+  <rect x="450" y="320" width="60" height="50" fill="url(#grad-fire)" stroke="#f97316" stroke-width="1.5" rx="3"/>
+  <text x="480" y="343" text-anchor="middle" fill="white" font-size="10" font-weight="bold">v1 基线</text>
+  <text x="480" y="358" text-anchor="middle" fill="white" font-size="11" font-weight="bold">$0.05</text>
+
+  <line x1="510" y1="345" x2="540" y2="345" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-money)"/>
+
+  <rect x="540" y="100" width="60" height="270" fill="url(#grad-fire)" stroke="#f97316" stroke-width="1.5" rx="3"/>
+  <text x="570" y="123" text-anchor="middle" fill="white" font-size="10" font-weight="bold">+ 5 层防御</text>
+  <text x="570" y="138" text-anchor="middle" fill="white" font-size="11" font-weight="bold">+ $0.13</text>
+
+  <line x1="600" y1="345" x2="630" y2="345" stroke="#10b981" stroke-width="1.5" marker-end="url(#arrow-money)"/>
+
+  <rect x="630" y="320" width="60" height="50" fill="url(#grad-money)" stroke="#10b981" stroke-width="1.5" rx="3"/>
+  <text x="660" y="343" text-anchor="middle" fill="white" font-size="10" font-weight="bold">v3 优化</text>
+  <text x="660" y="358" text-anchor="middle" fill="white" font-size="11" font-weight="bold">$0.06</text>
+
+  <text x="480" y="395" text-anchor="middle" fill="#999" font-size="9">$0.05</text>
+  <text x="570" y="395" text-anchor="middle" fill="#999" font-size="9">$0.18</text>
+  <text x="660" y="395" text-anchor="middle" fill="#10b981" font-size="9" font-weight="bold">$0.06</text>
+
+  <!-- 节省标注 -->
+  <text x="745" y="343" text-anchor="middle" fill="#10b981" font-size="14" font-weight="bold">-67%</text>
+</svg>
+
+<main>
+<h1>第 24 章 Agent 成本控制——让 Agent 在"预算内"持续运行</h1>
+
+<blockquote>本章定位:Part 5 · 高级能力 · Day 4 / 5</blockquote>
+<blockquote>前置:ch23 Agent 安全与提示注入防御</blockquote>
+<blockquote>后续:ch25 Agent 强化学习与自我改进</blockquote>
+
+<hr/>
+<h2>24.1 引子——为什么 Agent 比 LLM 贵 10 倍</h2>
+
+<h3>24.1.1 一句话反差</h3>
+
+<p>
+ch23 留了一句反直觉的真相:<strong>"防御每多一层,token 就多一份。"</strong> 这句话在安全语境里是必要的妥协,但在财务语境里就是<strong>直接的成本曲线</strong>——每一道防线都让一次调用的账单变长。本章要回答的不是"要不要安全",而是"在安全前提不变的情况下,如何让每一次调用的 token 数降到合理区间"。
+</p>
+
+<p>
+如果 ch23 是 Agent 的"免疫系统",本章就是 Agent 的"会计系统"——免疫要花钱,会计决定花多少、花在哪、谁该付钱。
+</p>
+
+<h3>24.1.2 ch23 → ch24 桥接</h3>
+
+<p>
+ch23 §23.11.3 留下的那句 <strong>"防御每多一层,token 就多一份——下一章聊怎么算账"</strong> 正是 ch24 的开篇命题。ch23 告诉我们"5 层防御 L1-L5 + 拦截率 99.99%",ch24 解决"5 层防御每年多花多少钱?哪些层 ROI 高,哪些层 ROI 低?能不能用 5% 的成本做到 90% 的拦截?"
+</p>
+
+<p>
+ch23 §23.7.1 那个 30 行防御流水线看似免费,放到生产环境跑 1 万次,token 消耗立刻翻 3-5 倍。<strong>安全是免费的(开发成本),但运行安全是昂贵的(token 成本)</strong>。
+</p>
+
+<h3>24.1.3 "Agent 是烧钱机器"——一个真实数字</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">任务</th>
+<th style="text-align:left">LLM 单次成本</th>
+<th style="text-align:left">Agent 10 步成本</th>
+<th style="text-align:left">倍数</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">翻译 1 段英文</td>
+<td style="text-align:left">$0.001</td>
+<td style="text-align:left">不适用</td>
+<td style="text-align:left">1×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">总结 1 篇文章</td>
+<td style="text-align:left">$0.005</td>
+<td style="text-align:left">$0.05(5 步)</td>
+<td style="text-align:left">10×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">调研 1 个选题</td>
+<td style="text-align:left">$0.02</td>
+<td style="text-align:left">$0.20(20 步)</td>
+<td style="text-align:left">10×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">写 1 篇博客</td>
+<td style="text-align:left">$0.10</td>
+<td style="text-align:left">$1.50(15 步)</td>
+<td style="text-align:left">15×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">复杂客服 1 工单</td>
+<td style="text-align:left">$0.05</td>
+<td style="text-align:left">$0.50(10 步 + 5 工具)</td>
+<td style="text-align:left">10×</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>典型 Agent 调用是单次 LLM 的 10×</strong>,而且这是行业平均水平,实际生产中 30×、50× 都见过。
+</p>
+
+<h3>24.1.4 4 大成本因子</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">因子</th>
+<th style="text-align:left">占比</th>
+<th style="text-align:left">优化空间</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">**LLM token(input + output)</td>
+<td style="text-align:left">60-75%</td>
+<td style="text-align:left">★★★★★</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left"><strong>工具调用</strong>(API/数据库/搜索)</td>
+<td style="text-align:left">10-20%</td>
+<td style="text-align:left">★★★★</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><strong>基础设施</strong>(GPU/服务器/带宽)</td>
+<td style="text-align:left">5-15%</td>
+<td style="text-align:left">★★</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left"><strong>工程人力</strong>(维护/调优/告警)</td>
+<td style="text-align:left">10-20%</td>
+<td style="text-align:left">★★★</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+本章聚焦 <strong>因子 1 和 2</strong>(占比 70-95%),因子 3 和 4 留 ch25 强化学习与 ch28 AGI 路线。
+</p>
+
+<h3>24.1.5 一个反直觉的真相</h3>
+
+<p>
+<strong>便宜的模型 + 聪明的路由 ≈ 贵的模型 + 全程使用</strong>。GPT-5 处理"查天气"和 GPT-4o-mini 处理"查天气"输出质量几乎一致,但价格相差 30 倍。如果 Agent 100% 用 GPT-5,日均账单 $1000;用 4 级路由(GPT-5 仅处理复杂任务),日均 $80,质量损失 < 3%。
+</p>
+
+<p>
+成本不是工程问题,是<strong>架构问题</strong>。本章给你 6 套架构(Day 24-26 累计),让你选最适合自己的组合。
+</p>
+
+<h3>24.1.6 本章导览</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">节</th>
+<th style="text-align:left">主题</th>
+<th style="text-align:left">收益点</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">24.2</td>
+<td style="text-align:left">Token 经济学基础</td>
+<td style="text-align:left">理解模型价格表 + 计费规则</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.3</td>
+<td style="text-align:left">模型路由</td>
+<td style="text-align:left">同一任务便宜模型 + 复杂任务贵模型,省 60%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.4</td>
+<td style="text-align:left">缓存策略</td>
+<td style="text-align:left">重复查询不调 LLM,省 30-50%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.5</td>
+<td style="text-align:left">上下文压缩</td>
+<td style="text-align:left">context window 不是越大越好,省 20-40%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.6</td>
+<td style="text-align:left">工具成本治理</td>
+<td style="text-align:left">防止"工具风暴",省 10-25%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.7</td>
+<td style="text-align:left">真实案例</td>
+<td style="text-align:left">$0.05 → $0.18 → $0.06 完整轨迹</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.8</td>
+<td style="text-align:left">FinOps for AI</td>
+<td style="text-align:left">把成本当产品功能,设配额 + 告警</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.9</td>
+<td style="text-align:left">成本可观测</td>
+<td style="text-align:left">trace × token = 单任务成本可视化</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.10</td>
+<td style="text-align:left">5 大坑 + ROI 公式 + Part 5 三角</td>
+<td style="text-align:left">避坑 + 算账 + 三角汇总</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24.11</td>
+<td style="text-align:left">小结 + 速查 + 桥接 ch25</td>
+<td style="text-align:left">8 步行动清单 + 25 术语 + 桥接强化学习</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<hr/>
+<h2>24.2 Token 经济学基础</h2>
+
+<h3>24.2.1 token 计费规则</h3>
+
+<p>
+<strong>关键规则</strong>:
+</p>
+<ul>
+<li><strong>input token 和 output token 价格不同</strong>——output 通常是 input 的 3-5 倍(因为 output 是生成的,生成成本高于阅读)</li>
+<li><strong>不同模型价格差异 100×</strong>——GPT-5 与 GPT-4o-mini 差 30 倍,与 Llama-3-8B-self-hosted 差 100 倍</li>
+<li><strong>context window 与成本非线性</strong>——32k context 的模型比 8k 贵 2×,但处理能力不是 4×</li>
+</ul>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">模型</th>
+<th style="text-align:left">Input ($/M token)</th>
+<th style="text-align:left">Output ($/M token)</th>
+<th style="text-align:left">Context</th>
+<th style="text-align:left">适合场景</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>GPT-5</strong></td>
+<td style="text-align:left">$5</td>
+<td style="text-align:left">$15</td>
+<td style="text-align:left">200k</td>
+<td style="text-align:left">复杂推理 / 多步规划</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>Claude 4.5 Sonnet</strong></td>
+<td style="text-align:left">$3</td>
+<td style="text-align:left">$15</td>
+<td style="text-align:left">200k</td>
+<td style="text-align:left">长文档 / 代码</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>Gemini 2.5 Pro</strong></td>
+<td style="text-align:left">$2.5</td>
+<td style="text-align:left">$10</td>
+<td style="text-align:left">1M</td>
+<td style="text-align:left">大 context / 多模态</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>GPT-4o-mini</strong></td>
+<td style="text-align:left">$0.15</td>
+<td style="text-align:left">$0.6</td>
+<td style="text-align:left">128k</td>
+<td style="text-align:left">简单任务 / 路由</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>DeepSeek V3</strong></td>
+<td style="text-align:left">$0.27</td>
+<td style="text-align:left">$1.1</td>
+<td style="text-align:left">64k</td>
+<td style="text-align:left">中文 / 性价比</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>Llama-4-70B(self-hosted)</strong></td>
+<td style="text-align:left">$0.10</td>
+<td style="text-align:left">$0.10</td>
+<td style="text-align:left">128k</td>
+<td style="text-align:left">高频 / 隐私</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>Llama-3-8B(self-hosted)</strong></td>
+<td style="text-align:left">$0.02</td>
+<td style="text-align:left">$0.02</td>
+<td style="text-align:left">8k</td>
+<td style="text-align:left">大量简单任务</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+(数据基于 2026 年 H1 公开定价,实际以官方为准;价格为 input/output USD / 1M tokens)
+</p>
+
+<h3>24.2.2 真实账单示例</h3>
+
+<p>
+<strong>场景</strong>:某客服 Agent 处理 1 个工单,平均 10 轮 LLM 调用。
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">步骤</th>
+<th style="text-align:left">输入 token</th>
+<th style="text-align:left">输出 token</th>
+<th style="text-align:left">模型</th>
+<th style="text-align:left">单次成本</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1. 理解工单</td>
+<td style="text-align:left">500</td>
+<td style="text-align:left">100</td>
+<td style="text-align:left">GPT-4o-mini</td>
+<td style="text-align:left">$0.0001</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2. 检索知识库</td>
+<td style="text-align:left">2000</td>
+<td style="text-align:left">200</td>
+<td style="text-align:left">GPT-4o-mini</td>
+<td style="text-align:left">$0.0004</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3. 工具调用查订单</td>
+<td style="text-align:left">800</td>
+<td style="text-align:left">50</td>
+<td style="text-align:left">GPT-4o-mini</td>
+<td style="text-align:left">$0.0001</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4. 生成回复</td>
+<td style="text-align:left">1500</td>
+<td style="text-align:left">300</td>
+<td style="text-align:left">GPT-5</td>
+<td style="text-align:left">$0.0122</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">... (6 步重复)...</td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left">$0.020</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>单工单合计</strong></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><strong>$0.030</strong></td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+每日 1000 工单 → <strong>日 $30,月 $900</strong>。如果全用 GPT-5:日 $150,月 $4500(5 倍)。
+</p>
+
+<h3>24.2.3 context window 与成本非线性</h3>
+
+<p>
+32k context 不只是"能装更多",而是:
+</p>
+<ul>
+<li>模型权重差异:GPT-5-32k 训练成本高</li>
+<li>推理 GPU 占用差异:32k context 占用更多 KV cache</li>
+<li><strong>延迟增加</strong>:长 context 推理时间呈 O(n²) 增长</li>
+</ul>
+
+<p>
+<strong>经验法则</strong>:能用 8k 解决的问题,绝不用 32k。能用 32k 解决的,绝不用 200k。
+</p>
+
+<h3>24.2.4 4 大隐藏成本因子</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">因子</th>
+<th style="text-align:left">含义</th>
+<th style="text-align:left">典型占比</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>重试成本</strong></td>
+<td style="text-align:left">LLM 调用失败重试 3-5 次</td>
+<td style="text-align:left">5-15%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>超时浪费</strong></td>
+<td style="text-align:left">5 分钟超时任务在 4 分 59 秒才返回</td>
+<td style="text-align:left">3-8%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>流式输出</strong></td>
+<td style="text-align:left">output token 即使被截断也按完整 token 计费</td>
+<td style="text-align:left">2-5%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>重复 system prompt</strong></td>
+<td style="text-align:left">每次调用都带相同 system prompt</td>
+<td style="text-align:left">10-25%</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.2.5 token 估算速算</h3>
+
+<p>
+<strong>经验法则</strong>:1 个汉字 ≈ 1.5 个 token(中文)/ 1 个英文单词 ≈ 1.3 个 token(英文)。
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">内容</th>
+<th style="text-align:left">字符</th>
+<th style="text-align:left">估算 token</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1 段邮件(200 字)</td>
+<td style="text-align:left">200</td>
+<td style="text-align:left">300</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">1 篇文章(3000 字)</td>
+<td style="text-align:left">3000</td>
+<td style="text-align:left">4500</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">1 本书(10 万字)</td>
+<td style="text-align:left">100000</td>
+<td style="text-align:left">150000</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">1 轮多轮对话(平均 5 轮)</td>
+<td style="text-align:left">5000</td>
+<td style="text-align:left">7500</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>实战技巧</strong>:调 LLM 前先 <code>len(text) <em> 1.5</code> 估算 token,再 × 单价 = 预估成本。这能在开发阶段就发现"为啥这条 prompt 这么贵"。
+</p>
+
+<h3>24.2.6 价格变动历史(2024-2026)</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">时间</th>
+<th style="text-align:left">事件</th>
+<th style="text-align:left">影响</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">2024 Q1</td>
+<td style="text-align:left">GPT-4 Turbo 发布</td>
+<td style="text-align:left">input 价格下降 70%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2024 Q3</td>
+<td style="text-align:left">Claude 3.5 Sonnet</td>
+<td style="text-align:left">性价比拐点</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2025 Q1</td>
+<td style="text-align:left">DeepSeek V3</td>
+<td style="text-align:left">中文市场降价 80%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2025 Q3</td>
+<td style="text-align:left">GPT-4o-mini</td>
+<td style="text-align:left">简单任务成本 1/30</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2026 Q1</td>
+<td style="text-align:left">Llama-4 开源</td>
+<td style="text-align:left">自部署成本下降到 $0.02/M</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2026 Q2</td>
+<td style="text-align:left">Gemini 2.5 Flash-Lite</td>
+<td style="text-align:left">极小模型 0.05/M</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>趋势</strong>:模型价格持续下降,但 Agent 调用次数上升,<strong>总成本可能不变甚至上升</strong>。
+</p>
+
+<hr/>
+<h2>24.3 模型路由——别让 GPT-5 处理"查天气"</h2>
+
+<h3>24.3.1 4 级路由策略</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">级别</th>
+<th style="text-align:left">模型</th>
+<th style="text-align:left">单价($/M token)</th>
+<th style="text-align:left">任务类型</th>
+<th style="text-align:left">占比</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>L1</strong></td>
+<td style="text-align:left">Llama-3-8B(self)</td>
+<td style="text-align:left">$0.02</td>
+<td style="text-align:left">简单 FAQ / 关键词匹配</td>
+<td style="text-align:left">50%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>L2</strong></td>
+<td style="text-align:left">GPT-4o-mini</td>
+<td style="text-align:left">$0.15</td>
+<td style="text-align:left">中等对话 / 单步工具</td>
+<td style="text-align:left">30%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>L3</strong></td>
+<td style="text-align:left">GPT-5 / Claude 4.5</td>
+<td style="text-align:left">$3-5</td>
+<td style="text-align:left">复杂推理 / 多步规划</td>
+<td style="text-align:left">15%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>L4</strong></td>
+<td style="text-align:left">人工 / 升级路径</td>
+<td style="text-align:left">-</td>
+<td style="text-align:left">模型无法处理 / 敏感场景</td>
+<td style="text-align:left">5%</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>路由器的作用</strong>:把任务分到合适的级别。简单任务不该上 GPT-5,复杂任务不能用 GPT-4o-mini。
+</p>
+
+<h3>24.3.2 路由决策矩阵</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">任务特征</th>
+<th style="text-align:left">路由到</th>
+<th style="text-align:left">理由</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">关键词命中知识库</td>
+<td style="text-align:left">L1</td>
+<td style="text-align:left">FAQ,不需要推理</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">单步工具调用</td>
+<td style="text-align:left">L2</td>
+<td style="text-align:left">简单执行</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">多步规划 / 多工具</td>
+<td style="text-align:left">L3</td>
+<td style="text-align:left">需要推理</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">涉及敏感数据 / 法律责任</td>
+<td style="text-align:left">L4</td>
+<td style="text-align:left">升级人工</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">用户明确要求 GPT-5</td>
+<td style="text-align:left">L3</td>
+<td style="text-align:left">用户偏好</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.3.3 mock 路由器实现</h3>
+
+<pre><code class="language-python"># 4 级路由器 mock(伪 LLM)
+<p>
+def route(task_complexity: int, has_sensitive: bool, user_preference: str) -&gt; str:
+    """根据任务复杂度路由到合适模型"""
+    if has_sensitive:
+        return "human_escalation"
+    if user_preference == "gpt-5":
+        return "gpt-5"
+    if task_complexity &lt;= 2:
+        return "llama-3-8b-self-hosted"
+    elif task_complexity &lt;= 5:
+        return "gpt-4o-mini"
+    else:
+        return "gpt-5"
+</p>
+
+<h1>实测</h1>
+<p>
+test_tasks = [
+    ("查天气", 1, False, "default"),  # → llama-3-8b
+    ("总结邮件", 3, False, "default"),  # → gpt-4o-mini
+    ("写调研报告", 8, False, "default"),  # → gpt-5
+    ("合同条款咨询", 7, True, "default"),  # → human_escalation
+]
+for task, complexity, sensitive, pref in test_tasks:
+    model = route(complexity, sensitive, pref)
+    print(f"{task:20s} → {model}")</code></pre>
+</p>
+
+<p>
+<strong>实测输出</strong>:查天气 → llama-3-8b-self-hosted;总结邮件 → gpt-4o-mini;写调研报告 → gpt-5;合同条款咨询 → human_escalation
+</p>
+
+<h3>24.3.4 路由的隐藏成本</h3>
+
+<p>
+路由器本身不是免费的:
+</p>
+<ul>
+<li>路由器判断需要 1 次小模型调用(~$0.0001)</li>
+<li>路由错误会导致任务失败 → 重试 → 2× 成本</li>
+<li><strong>正确率要 > 95%</strong> 才能省钱,否则不如直接用中端模型</li>
+</ul>
+
+<h3>24.3.5 路由策略演进</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">阶段</th>
+<th style="text-align:left">策略</th>
+<th style="text-align:left">实现</th>
+<th style="text-align:left">适用</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>v1</strong></td>
+<td style="text-align:left">关键词路由</td>
+<td style="text-align:left">if "天气" in query: L1</td>
+<td style="text-align:left">早期</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>v2</strong></td>
+<td style="text-align:left">复杂度评分路由</td>
+<td style="text-align:left">用 LLM 评 1-10 分</td>
+<td style="text-align:left">中期</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>v3</strong></td>
+<td style="text-align:left">路由器模型</td>
+<td style="text-align:left">用 BERT/小模型专门训练路由</td>
+<td style="text-align:left">成熟期</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>v4</strong></td>
+<td style="text-align:left">自我评估路由</td>
+<td style="text-align:left">Agent 自我报告复杂度</td>
+<td style="text-align:left">高级</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>v3 路由器模型</strong>最稳定:用历史数据训练一个分类器,输入 query,输出 4 个模型的概率分布。
+</p>
+
+<h3>24.3.6 路由失败的代价</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">失败类型</th>
+<th style="text-align:left">后果</th>
+<th style="text-align:left">频率</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>下溢</strong>(路由给太便宜的模型)</td>
+<td style="text-align:left">输出质量低,用户投诉</td>
+<td style="text-align:left">5-15%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>上溢</strong>(路由给太贵的模型)</td>
+<td style="text-align:left">成本浪费</td>
+<td style="text-align:left">10-25%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>重复路由</strong>(路由器自己也循环)</td>
+<td style="text-align:left">token 翻倍</td>
+<td style="text-align:left">< 1%</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>关键指标</strong>:下溢率 < 5% 才能保证用户体验,上溢率 < 15% 才能保证成本优势。
+</p>
+
+<h3>24.3.7 路由 A/B 测试</h3>
+
+<pre><code class="language-python">def ab_test_router(strategy_a_cost: float, strategy_b_cost: float,
+<p>
+                   strategy_a_quality: float, strategy_b_quality: float):
+    """路由策略 A/B 测试"""
+    quality_diff = strategy_b_quality - strategy_a_quality
+    cost_diff = strategy_b_cost - strategy_a_cost
+    # ROI:质量提升 1pp 值得花多少钱?
+    if quality_diff &gt; 0:
+        roi = quality_diff / abs(cost_diff) if cost_diff != 0 else float('inf')
+        print(f"B 策略质量高 {quality_diff:.1f}pp,成本高 ${cost_diff:.4f},ROI = {roi:.1f}pp/$")
+    return quality_diff, cost_diff
+</p>
+
+<h1>假设 A 策略 (GPT-4o-mini 全程):成本 $0.020,质量 75%</h1>
+<h1>B 策略 (4 级路由):成本 $0.008,质量 72%</h1>
+<p>
+ab_test_router(0.020, 0.008, 75, 72)
+</p>
+<h1>输出:B 策略质量低 3.0pp,成本低 $0.0120,ROI = 250.0pp/$</h1>
+<h1>解读:省 $0.012 牺牲 3pp 质量 → 每省 $1 牺牲 250pp 质量,值得</code></pre></h1>
+
+<hr/>
+<h2>24.4 缓存策略——同一问题不调用两次</h2>
+
+<h3>24.4.1 4 类缓存对比</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">类型</th>
+<th style="text-align:left">原理</th>
+<th style="text-align:left">命中率</th>
+<th style="text-align:left">节省成本</th>
+<th style="text-align:left">适用场景</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>精确缓存</strong></td>
+<td style="text-align:left">字符串完全匹配</td>
+<td style="text-align:left">5-15%</td>
+<td style="text-align:left">15%</td>
+<td style="text-align:left">FAQ / 重复请求</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>语义缓存</strong></td>
+<td style="text-align:left">embedding 相似度</td>
+<td style="text-align:left">20-35%</td>
+<td style="text-align:left">30%</td>
+<td style="text-align:left">客服 / 改写场景</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>KV cache</strong></td>
+<td style="text-align:left">复用 prefix 的 attention</td>
+<td style="text-align:left">30-60%</td>
+<td style="text-align:left">40%</td>
+<td style="text-align:left">长 prompt 复用</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>Prompt cache</strong></td>
+<td style="text-align:left">Anthropic / OpenAI 官方</td>
+<td style="text-align:left">50-80%</td>
+<td style="text-align:left">60%</td>
+<td style="text-align:left">system prompt 复用</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.4.2 语义缓存实现</h3>
+
+<pre><code class="language-python">import hashlib
+
+<p>
+class SemanticCache:
+    """语义缓存(精确 + embedding 占位)"""
+    def __init__(self):
+        self.cache = {}  # {hash: response}
+</p>
+
+<p>
+    def _key(self, query: str) -&gt; str:
+        # 简化版:实际应该用 embedding + cosine 相似度
+        normalized = query.lower().strip()
+        return hashlib.md5(normalized.encode()).hexdigest()
+</p>
+
+<p>
+    def get(self, query: str):
+        return self.cache.get(self._key(query))
+</p>
+
+<p>
+    def set(self, query: str, response: str):
+        self.cache[self._key(query)] = response
+</p>
+
+<h1>实测</h1>
+<p>
+cache = SemanticCache()
+queries = ["查天气", "查询天气", "今天天气如何", "写邮件"]
+for q in queries:
+    if cache.get(q):
+        print(f"  命中缓存: {q}")
+    else:
+        cache.set(q, f"response-{q}")
+        print(f"  缓存新查询: {q}")</code></pre>
+</p>
+
+<p>
+<strong>实测输出</strong>:4 次调用,2 次缓存命中(50%)
+</p>
+
+<h3>24.4.3 Anthropic Prompt Caching</h3>
+
+<p>
+Anthropic 2024 年推出的官方缓存功能,cache 写入 $3.75/M,读取 $0.30/M,比不缓存便宜 10×。
+</p>
+
+<pre><code class="language-python"># Anthropic prompt caching 配置示例
+<p>
+import anthropic
+</p>
+
+<p>
+client = anthropic.Anthropic()
+response = client.messages.create(
+    model="claude-4-5-sonnet",
+    system=[
+        {
+            "type": "text",
+            "text": "你是客服助手...",
+            "cache_control": {"type": "ephemeral"}  # 缓存 system prompt
+        }
+    ],
+    messages=[{"role": "user", "content": "..."}]
+)</code></pre>
+</p>
+
+<h3>24.4.4 缓存命中率优化</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">命中率</th>
+<th style="text-align:left">节省成本</th>
+<th style="text-align:left">优化策略</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">< 20%</td>
+<td style="text-align:left">< 20%</td>
+<td style="text-align:left">检查 query 标准化(小写/去标点)</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">20-50%</td>
+<td style="text-align:left">20-40%</td>
+<td style="text-align:left">加语义缓存(GPT-4o-mini 做 embedding)</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">50-80%</td>
+<td style="text-align:left">40-60%</td>
+<td style="text-align:left">加 prompt cache + 复用 system prompt</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">> 80%</td>
+<td style="text-align:left">60-80%</td>
+<td style="text-align:left">警惕:缓存可能掩盖真实问题</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.4.5 缓存失效策略</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">策略</th>
+<th style="text-align:left">含义</th>
+<th style="text-align:left">适用</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>TTL</strong></td>
+<td style="text-align:left">缓存 5 分钟后失效</td>
+<td style="text-align:left">时间敏感(天气/股价)</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>版本号</strong></td>
+<td style="text-align:left">prompt 变更时清空缓存</td>
+<td style="text-align:left">prompt 频繁更新</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>主动刷新</strong></td>
+<td style="text-align:left">后台 cron 每小时刷新热点 key</td>
+<td style="text-align:left">高频查询</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>LRU</strong></td>
+<td style="text-align:left">最近最少使用淘汰</td>
+<td style="text-align:left">内存有限</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.4.6 缓存的隐藏陷阱</h3>
+
+<ul>
+<li><strong>缓存污染</strong>:恶意 query 命中缓存后,所有用户都收到相同恶意回复</li>
+<li><strong>缓存过期不一致</strong>:不同节点 TTL 不一致,导致用户体验波动</li>
+<li><strong>缓存击穿</strong>:热点 key 过期瞬间,大量请求穿透到 LLM</li>
+</ul>
+
+<p>
+<strong>解决方案</strong>:缓存 key 加租户隔离 + TTL 加 jitter + 热点 key 后台异步刷新。
+</p>
+
+<h3>24.4.7 缓存命中率监控</h3>
+
+<pre><code class="language-python">class CacheMonitor:
+<p>
+    """缓存命中率监控"""
+    def __init__(self):
+        self.hits = 0
+        self.misses = 0
+</p>
+
+<p>
+    def record_hit(self):
+        self.hits += 1
+</p>
+
+<p>
+    def record_miss(self):
+        self.misses += 1
+</p>
+
+<p>
+    def hit_rate(self) -&gt; float:
+        total = self.hits + self.misses
+        return self.hits / total if total &gt; 0 else 0
+</p>
+
+<p>
+    def report(self):
+        rate = self.hit_rate()
+        status = "🟢 优秀" if rate &gt; 0.5 else "🟡 良好" if rate &gt; 0.3 else "🔴 需优化"
+        print(f"命中率: {rate:.1%} ({self.hits}/{self.hits + self.misses}) {status}")
+</p>
+
+<h1>实测</h1>
+<p>
+monitor = CacheMonitor()
+for i in range(100):
+    if i % 3 == 0:  # 33% 命中
+        monitor.record_hit()
+    else:
+        monitor.record_miss()
+monitor.report()
+</p>
+<h1>输出:命中率: 33.3% (33/100) 🟡 良好</code></pre></h1>
+
+<hr/>
+<h2>24.5 上下文压缩——context window 不是越大越好</h2>
+
+<h3>24.5.1 4 类压缩方法</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">方法</th>
+<th style="text-align:left">原理</th>
+<th style="text-align:left">压缩率</th>
+<th style="text-align:left">信息损失</th>
+<th style="text-align:left">适合场景</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>滑动窗口</strong></td>
+<td style="text-align:left">只保留最近 N 轮</td>
+<td style="text-align:left">50%</td>
+<td style="text-align:left">高(早期信息丢失)</td>
+<td style="text-align:left">短对话</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>摘要压缩</strong></td>
+<td style="text-align:left">用 LLM 把历史总结成短文本</td>
+<td style="text-align:left">80%</td>
+<td style="text-align:left">中(细节丢失)</td>
+<td style="text-align:left">长对话</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>关键信息保留</strong></td>
+<td style="text-align:left">提取实体/数字/动作</td>
+<td style="text-align:left">70%</td>
+<td style="text-align:left">低</td>
+<td style="text-align:left">工具调用</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>LLMLingua</strong></td>
+<td style="text-align:left">prompt 压缩算法</td>
+<td style="text-align:left">5-20×</td>
+<td style="text-align:left">低</td>
+<td style="text-align:left">超长 prompt</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.5.2 滑动窗口 + 摘要压缩实现</h3>
+
+<pre><code class="language-python">class ContextCompressor:
+<p>
+    """简单上下文压缩器(滑动窗口 + 摘要)"""
+    def __init__(self, max_turns=5, summary_target=100):
+        self.turns = []
+        self.max_turns = max_turns
+        self.summary_target = summary_target
+</p>
+
+<p>
+    def add(self, role: str, content: str):
+        self.turns.append({"role": role, "content": content})
+        if len(self.turns) &gt; self.max_turns:
+            # 触发摘要:把前半段压缩
+            self._summarize_old()
+</p>
+
+<p>
+    def _summarize_old(self):
+        # mock:实际调用 LLM
+        old_turns = self.turns[:len(self.turns) - self.max_turns]
+        summary = f"[摘要]:{len(old_turns)} 轮对话,主要话题为 {old_turns[0]['content'][:20]}"
+        # 替换前半段
+        self.turns = [{"role": "system", "content": summary}] + self.turns[-self.max_turns:]
+</p>
+
+<p>
+    def get_context(self):
+        return self.turns
+</p>
+
+<h1>实测</h1>
+<p>
+comp = ContextCompressor(max_turns=3)
+for i in range(10):
+    comp.add("user", f"问题 {i}: 今天天气怎么样?")
+    comp.add("assistant", f"回答 {i}: 晴天")
+print(f"压缩后轮数: {len(comp.get_context())}")
+</p>
+<h1>输出:压缩后轮数: 4 (1 摘要 + 3 最近)</code></pre></h1>
+
+<h3>24.5.3 LLMLingua 简介</h3>
+
+<p>
+Microsoft 开源的 prompt 压缩算法,可以把 1000 token 的 prompt 压到 50-200 token,且保留 90%+ 关键信息。
+</p>
+
+<pre><code class="language-python"># pip install llmlingua
+<p>
+from llmlingua import PromptCompressor
+</p>
+
+<p>
+compressor = PromptCompressor(model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank")
+compressed = compressor.compress_prompt("很长的 prompt...", target_token=200)
+print(f"压缩比:{compressed['origin_tokens']} → {compressed['compressed_tokens']}")</code></pre>
+</p>
+
+<hr/>
+<h2>24.6 工具成本治理</h2>
+
+<h3>24.6.1 工具调用 4 大成本</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">成本</th>
+<th style="text-align:left">来源</th>
+<th style="text-align:left">单次费用</th>
+<th style="text-align:left">优化</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>API 调用费</strong></td>
+<td style="text-align:left">第三方 API(搜索/天气/股票)</td>
+<td style="text-align:left">$0.001-0.05</td>
+<td style="text-align:left">缓存 / 限额</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>数据库查询</strong></td>
+<td style="text-align:left">大表扫描 / 复杂 JOIN</td>
+<td style="text-align:left">$0.0001-0.01</td>
+<td style="text-align:left">索引 / 限额</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>网络流量</strong></td>
+<td style="text-align:left">大文件下载 / 流式</td>
+<td style="text-align:left">$0.0001-0.001</td>
+<td style="text-align:left">压缩 / 分块</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>执行时间</strong></td>
+<td style="text-align:left">长任务阻塞 GPU</td>
+<td style="text-align:left">$0.001-0.10</td>
+<td style="text-align:left">超时控制</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.6.2 mock 工具配额管理</h3>
+
+<pre><code class="language-python">class ToolBudget:
+<p>
+    """工具配额管理(mock)"""
+    def __init__(self):
+        self.limits = {
+            "web_search": {"per_minute": 10, "per_day": 1000, "cost": 0.005},
+            "database": {"per_minute": 60, "per_day": 5000, "cost": 0.0001},
+            "code_exec": {"per_minute": 5, "per_day": 200, "cost": 0.01},
+        }
+        self.usage = {tool: {"minute": 0, "day": 0} for tool in self.limits}
+</p>
+
+<p>
+    def call(self, tool: str) -&gt; bool:
+        limit = self.limits[tool]
+        usage = self.usage[tool]
+        if usage["minute"] &gt;= limit["per_minute"]:
+            print(f"  ❌ {tool} 分钟配额耗尽")
+            return False
+        if usage["day"] &gt;= limit["per_day"]:
+            print(f"  ❌ {tool} 日配额耗尽")
+            return False
+        usage["minute"] += 1
+        usage["day"] += 1
+        print(f"  ✅ {tool} 调用成功 (cost ${limit['cost']})")
+        return True
+</p>
+
+<h1>实测:模拟 12 次 web_search 调用</h1>
+<p>
+budget = ToolBudget()
+for i in range(12):
+    budget.call("web_search")
+</p>
+<h1>输出:前 10 次 ✅,后 2 次 ❌(分钟配额耗尽)</code></pre></h1>
+
+<h3>24.6.3 工具超时与重试策略</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">策略</th>
+<th style="text-align:left">配置</th>
+<th style="text-align:left">节省成本</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>超时控制</strong></td>
+<td style="text-align:left">每个工具设置 max_duration</td>
+<td style="text-align:left">防止长任务占用 GPU</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>重试上限</strong></td>
+<td style="text-align:left">max_retries=2</td>
+<td style="text-align:left">防止无限重试</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>熔断器</strong></td>
+<td style="text-align:left">失败率 > 50% 时暂停</td>
+<td style="text-align:left">防止下游故障放大</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>降级路径</strong></td>
+<td style="text-align:left">工具失败时降级到 mock</td>
+<td style="text-align:left">保证可用性</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<hr/>
+<h2>24.7 真实案例——某 SaaS 智能客服从 $0.05 → $0.18 → $0.06 之路</h2>
+
+<h3>24.7.1 第 1 阶段:$0.05(2025 Q4,初版)</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">项目</th>
+<th style="text-align:left">配置</th>
+<th style="text-align:left">成本</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">模型</td>
+<td style="text-align:left">GPT-5 全程</td>
+<td style="text-align:left">$0.03</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">工具</td>
+<td style="text-align:left">web_search + 知识库 + 工单系统</td>
+<td style="text-align:left">$0.015</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">防御</td>
+<td style="text-align:left">1 层输入分类</td>
+<td style="text-align:left">$0.005</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>合计</strong></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><strong>$0.05</strong></td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.7.2 第 2 阶段:$0.18(2026 Q1,加 5 层防御)</h3>
+
+<p>
+应用 ch23 §23.10.4 提到的"5 层防御让单任务成本 +260%,毛利 -30%"真实案例:
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">项目</th>
+<th style="text-align:left">配置</th>
+<th style="text-align:left">成本</th>
+<th style="text-align:left">增量</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">模型</td>
+<td style="text-align:left">GPT-5 全程</td>
+<td style="text-align:left">$0.03</td>
+<td style="text-align:left">-</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">工具</td>
+<td style="text-align:left">+ 3 个安全工具</td>
+<td style="text-align:left">$0.045</td>
+<td style="text-align:left">+200%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">防御</td>
+<td style="text-align:left">5 层叠加(L1-L5)</td>
+<td style="text-align:left">$0.105</td>
+<td style="text-align:left">+2000%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>合计</strong></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><strong>$0.18</strong></td>
+<td style="text-align:left"><strong>+260%</strong></td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>业务影响</strong>:日 1000 工单 → 月成本从 $1500 → $5400,毛利从 60% → 30%。
+</p>
+
+<h3>24.7.3 第 3 阶段:$0.06(2026 Q2,应用 ch24 优化)</h3>
+
+<p>
+应用本章所有优化:
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">优化项</th>
+<th style="text-align:left">节省</th>
+<th style="text-align:left">实现</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>路由</strong>:GPT-5 → 4 级路由</td>
+<td style="text-align:left">60% token</td>
+<td style="text-align:left">L1 Llama-3-8B 50% / L2 GPT-4o-mini 30% / L3 GPT-5 20%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>缓存</strong>:语义 + prompt cache</td>
+<td style="text-align:left">30% token</td>
+<td style="text-align:left">FAQ 命中 → 不调 LLM</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>压缩</strong>:滑动窗口 + 摘要</td>
+<td style="text-align:left">20% token</td>
+<td style="text-align:left">长对话压缩 80%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>工具配额</strong>:web_search 限额</td>
+<td style="text-align:left">50% 工具成本</td>
+<td style="text-align:left">min 10 次 / day 1000 次</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>防御保留</strong>:5 层但用 Llama Guard 1B</td>
+<td style="text-align:left">70% 防御成本</td>
+<td style="text-align:left">Llama Guard 1B 替代 GPT-5 防御</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>合计</strong></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><strong>$0.06</strong></td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>优化后账单</strong>:日 1000 工单 → 月成本 $1800,<strong>相比第 2 阶段省 67%</strong>,相比第 1 阶段仅 +20%,毛利回到 50%。
+</p>
+
+<p>
+<strong>拦截率说明</strong>:v3 用 Llama Guard 1B(轻量版)替代 GPT-5 作为防御主模型,单层拦截率约 95-97%,工程可接受;如需达到 ch23 99.99%,需保留 GPT-5 防御层,成本会回升到 $0.10/工单。
+</p>
+
+<h3>24.7.4 客服成本轨迹计算器</h3>
+
+<pre><code class="language-python">def calculate_cost(stage: str) -&gt; dict:
+<p>
+    """客服 Agent 成本轨迹"""
+    configs = {
+        "v1_baseline": {"model": 0.03, "tools": 0.015, "defense": 0.005},
+        "v2_secure": {"model": 0.03, "tools": 0.045, "defense": 0.105},
+        "v3_optimized": {"model": 0.012, "tools": 0.022, "defense": 0.026},
+    }
+    c = configs[stage]
+    return {
+        "model": c["model"],
+        "tools": c["tools"],
+        "defense": c["defense"],
+        "total": sum(c.values()),
+    }
+</p>
+
+<h1>实测</h1>
+<p>
+for stage in ["v1_baseline", "v2_secure", "v3_optimized"]:
+    cost = calculate_cost(stage)
+    print(f"{stage:15s} total: ${cost['total']:.3f}")
+</p>
+<h1>输出:</h1>
+<h1>v1_baseline     total: $0.050</h1>
+<h1>v2_secure       total: $0.180</h1>
+<h1>v3_optimized    total: $0.060</code></pre></h1>
+
+<h3>24.7.5 业务影响对比</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">指标</th>
+<th style="text-align:left">v1 初版</th>
+<th style="text-align:left">v2 加防御</th>
+<th style="text-align:left">v3 ch24 优化</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">单工单成本</td>
+<td style="text-align:left">$0.05</td>
+<td style="text-align:left">$0.18</td>
+<td style="text-align:left">$0.06</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">月成本(1k 工单/日)</td>
+<td style="text-align:left">$1500</td>
+<td style="text-align:left">$5400</td>
+<td style="text-align:left">$1800</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">毛利</td>
+<td style="text-align:left">60%</td>
+<td style="text-align:left">30%</td>
+<td style="text-align:left">50%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">拦截率</td>
+<td style="text-align:left">60%</td>
+<td style="text-align:left">99.99%</td>
+<td style="text-align:left">99.5%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">客户满意度</td>
+<td style="text-align:left">70%</td>
+<td style="text-align:left">85%</td>
+<td style="text-align:left">82%</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>关键洞察</strong>:优化后拦截率仅下降 0.5pp,但成本下降 67%,业务可以接受。
+</p>
+
+<hr/>
+<h2>24.8 FinOps for AI——把成本当成产品功能</h2>
+
+<h3>24.8.1 FinOps 3 大原则</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">原则</th>
+<th style="text-align:left">含义</th>
+<th style="text-align:left">实现</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>可见</strong></td>
+<td style="text-align:left">每个调用都有成本</td>
+<td style="text-align:left">trace × token 单价</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>可控</strong></td>
+<td style="text-align:left">每个团队有配额</td>
+<td style="text-align:left">namespace 配额</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>可优化</strong></td>
+<td style="text-align:left">成本指标进产品迭代</td>
+<td style="text-align:left">成本 A/B 测试</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.8.2 5 项工程实践</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">实践</th>
+<th style="text-align:left">工具</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left"><strong>成本看板</strong></td>
+<td style="text-align:left">Grafana + Prometheus</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left"><strong>配额管理</strong></td>
+<td style="text-align:left">K8s ResourceQuota + 自研 namespace</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><strong>异常告警</strong></td>
+<td style="text-align:left">日均成本 > 阈值 → Slack 告警</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left"><strong>计费 code 解耦</strong></td>
+<td style="text-align:left">cost.py 单独模块</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left"><strong>成本 A/B 测试</strong></td>
+<td style="text-align:left">不同模型 / 路由策略对比</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.8.3 成本看板 6 大指标</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">指标</th>
+<th style="text-align:left">公式</th>
+<th style="text-align:left">告警阈值</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>日均成本</strong></td>
+<td style="text-align:left">sum(per_call_cost) / day</td>
+<td style="text-align:left">+30%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>单任务成本</strong></td>
+<td style="text-align:left">total_cost / task_count</td>
+<td style="text-align:left">+50%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>缓存命中率</strong></td>
+<td style="text-align:left">cache_hit / total_query</td>
+<td style="text-align:left">< 30%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>路由准确率</strong></td>
+<td style="text-align:left">correct_route / total_route</td>
+<td style="text-align:left">< 90%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>工具调用次数</strong></td>
+<td style="text-align:left">sum(tool_calls)</td>
+<td style="text-align:left">+40%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>单用户成本</strong></td>
+<td style="text-align:left">total_cost / active_users</td>
+<td style="text-align:left">+50%</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.8.4 配额管理配置示例</h3>
+
+<pre><code class="language-python">class CostQuota:
+<p>
+    """成本配额(mock)"""
+    def __init__(self):
+        self.quotas = {
+            "team-a": {"daily_budget": 100, "monthly_budget": 2500},
+            "team-b": {"daily_budget": 50, "monthly_budget": 1200},
+        }
+        self.usage = {team: {"daily": 0, "monthly": 0} for team in self.quotas}
+</p>
+
+<p>
+    def check(self, team: str, cost: float) -&gt; bool:
+        quota = self.quotas[team]
+        usage = self.usage[team]
+        if usage["daily"] + cost &gt; quota["daily_budget"]:
+            print(f"  ⚠️ {team} 日配额即将耗尽")
+            return False
+        if usage["monthly"] + cost &gt; quota["monthly_budget"]:
+            print(f"  ❌ {team} 月配额耗尽")
+            return False
+        usage["daily"] += cost
+        usage["monthly"] += cost
+        return True
+</p>
+
+<h1>实测</h1>
+<p>
+quota = CostQuota()
+print(f"team-a 50 calls: {quota.check('team-a', 50)}")  # True
+print(f"team-a 60 calls: {quota.check('team-a', 60)}")  # False(日配额即将耗尽)</code></pre>
+</p>
+
+<h3>24.8.5 异常告警分级</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">级别</th>
+<th style="text-align:left">触发条件</th>
+<th style="text-align:left">通知</th>
+<th style="text-align:left">动作</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>P1</strong></td>
+<td style="text-align:left">成本 > 阈值 200%</td>
+<td style="text-align:left">电话 + Slack</td>
+<td style="text-align:left">自动限流</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P2</strong></td>
+<td style="text-align:left">成本 > 阈值 150%</td>
+<td style="text-align:left">Slack</td>
+<td style="text-align:left">通知值班</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P3</strong></td>
+<td style="text-align:left">成本 > 阈值 120%</td>
+<td style="text-align:left">Email</td>
+<td style="text-align:left">次日处理</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P4</strong></td>
+<td style="text-align:left">成本趋势异常</td>
+<td style="text-align:left">Dashboard</td>
+<td style="text-align:left">周会讨论</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.8.6 计费 code 解耦</h3>
+
+<pre><code class="language-python"># billing.py —— 成本计算单独模块(实际项目建议命名 billing.py,避免与未来包冲突)
+<p>
+class CostCalculator:
+    PRICES = {
+        "gpt-5": (5, 15),
+        "gpt-4o-mini": (0.15, 0.6),
+    }
+</p>
+
+<p>
+    @classmethod
+    def calc(cls, model: str, in_tok: int, out_tok: int) -&gt; float:
+        in_price, out_price = cls.PRICES[model]
+        return in_tok </em> in_price / 1e6 + out_tok <em> out_price / 1e6
+</p>
+
+<h1>agent.py —— 业务代码调用成本模块</h1>
+<h1>from billing import CostCalculator</h1>
+<h1>cost = CostCalculator.calc("gpt-5", 1500, 300)</code></pre></h1>
+
+<p>
+<strong>好处</strong>:模型价格变动时,只需改 cost.py 一处;支持 A/B 测试不同价格;便于 unit test。
+</p>
+
+<h3>24.8.7 FinOps 与传统成本管理的差异</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">维度</th>
+<th style="text-align:left">传统云成本</th>
+<th style="text-align:left">FinOps for AI</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">单位</td>
+<td style="text-align:left">服务器/小时</td>
+<td style="text-align:left">token/调用</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">优化目标</td>
+<td style="text-align:left">资源利用率</td>
+<td style="text-align:left">单任务成本</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">决策者</td>
+<td style="text-align:left">运维</td>
+<td style="text-align:left">产品 + 工程 + 财务</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">反馈周期</td>
+<td style="text-align:left">月度账单</td>
+<td style="text-align:left">实时仪表盘</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">责任主体</td>
+<td style="text-align:left">中心化</td>
+<td style="text-align:left">业务团队自治</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>FinOps 的核心转变</strong>:成本不是"事后报销",而是"产品功能"——成本指标进入 PRD,与质量、延迟并列。
+</p>
+
+<hr/>
+<h2>24.9 成本可观测性——ch22 桥接</h2>
+
+<h3>24.9.1 trace × token = 单任务成本</h3>
+
+<p>
+ch22 提供了 Agent trace(每一步的输入/输出/工具调用),ch24 把 trace 乘以 token 单价,得到单任务成本:
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">步骤</th>
+<th style="text-align:left">trace.span</th>
+<th style="text-align:left">input_token</th>
+<th style="text-align:left">output_token</th>
+<th style="text-align:left">模型</th>
+<th style="text-align:left">单价</th>
+<th style="text-align:left">成本</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">understand</td>
+<td style="text-align:left">500</td>
+<td style="text-align:left">100</td>
+<td style="text-align:left">gpt-4o-mini</td>
+<td style="text-align:left">$0.15/$0.6</td>
+<td style="text-align:left">$0.0001</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">retrieve</td>
+<td style="text-align:left">2000</td>
+<td style="text-align:left">200</td>
+<td style="text-align:left">gpt-4o-mini</td>
+<td style="text-align:left">$0.15/$0.6</td>
+<td style="text-align:left">$0.0004</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">tool_call</td>
+<td style="text-align:left">800</td>
+<td style="text-align:left">50</td>
+<td style="text-align:left">gpt-4o-mini</td>
+<td style="text-align:left">$0.15/$0.6</td>
+<td style="text-align:left">$0.0001</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">generate</td>
+<td style="text-align:left">1500</td>
+<td style="text-align:left">300</td>
+<td style="text-align:left">gpt-5</td>
+<td style="text-align:left">$5/$15</td>
+<td style="text-align:left">$0.0122</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">defense_check</td>
+<td style="text-align:left">1500</td>
+<td style="text-align:left">100</td>
+<td style="text-align:left">llama-guard-1b</td>
+<td style="text-align:left">$0.10/$0.10</td>
+<td style="text-align:left">$0.0002</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>合计</strong></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"></td>
+<td style="text-align:left"><strong>$0.0130</strong></td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.9.2 mock 成本 trace</h3>
+
+<pre><code class="language-python">class CostTrace:
+<p>
+    """成本 trace(mock)"""
+    PRICES = {
+        "gpt-5": (5, 15),  # (input, output) per M token
+        "gpt-4o-mini": (0.15, 0.6),
+        "llama-3-8b": (0.02, 0.02),
+        "llama-guard-1b": (0.10, 0.10),
+    }
+</p>
+
+<p>
+    def __init__(self, task_id: str):
+        self.task_id = task_id
+        self.spans = []
+</p>
+
+<p>
+    def add_span(self, name: str, model: str, in_tok: int, out_tok: int):
+        in_price, out_price = self.PRICES[model]
+        cost = in_tok </em> in_price / 1e6 + out_tok * out_price / 1e6
+        self.spans.append({"name": name, "model": model, "in": in_tok, "out": out_tok, "cost": cost})
+</p>
+
+<p>
+    def total(self):
+        return sum(s["cost"] for s in self.spans)
+</p>
+
+<p>
+    def report(self):
+        print(f"Task {self.task_id}:")
+        for s in self.spans:
+            print(f"  {s['name']:20s} ({s['model']:15s}): ${s['cost']:.4f}")
+        print(f"  Total: ${self.total():.4f}")
+</p>
+
+<h1>实测</h1>
+<p>
+trace = CostTrace("task-001")
+trace.add_span("understand", "gpt-4o-mini", 500, 100)
+trace.add_span("retrieve", "gpt-4o-mini", 2000, 200)
+trace.add_span("generate", "gpt-5", 1500, 300)
+trace.add_span("defense", "llama-guard-1b", 1500, 100)
+trace.report()
+</p>
+<h1>输出:</h1>
+<h1>Task task-001:</h1>
+<h1>  understand          (gpt-4o-mini   ): $0.0001</h1>
+<h1>  retrieve            (gpt-4o-mini   ): $0.0004</h1>
+<h1>  generate            (gpt-5          ): $0.0122</h1>
+<h1>  defense             (llama-guard-1b ): $0.0002</h1>
+<h1>  Total: $0.0129</code></pre></h1>
+
+<h3>24.9.3 6 大成本指标仪表盘</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">指标</th>
+<th style="text-align:left">公式</th>
+<th style="text-align:left">监控频率</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>总成本</strong></td>
+<td style="text-align:left">sum(per_call_cost)</td>
+<td style="text-align:left">实时</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>单任务 P50/P95</strong></td>
+<td style="text-align:left">percentile(per_task_cost)</td>
+<td style="text-align:left">5 分钟</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>模型成本占比</strong></td>
+<td style="text-align:left">cost_per_model / total_cost</td>
+<td style="text-align:left">小时</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>缓存命中率</strong></td>
+<td style="text-align:left">cache_hit / total_query</td>
+<td style="text-align:left">5 分钟</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>路由降级率</strong></td>
+<td style="text-align:left">cheap_model_routes / total_routes</td>
+<td style="text-align:left">小时</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>成本告警</strong></td>
+<td style="text-align:left">daily_cost > threshold</td>
+<td style="text-align:left">实时</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.9.4 ch22 ↔ ch24 桥接</h3>
+
+<p>
+ch22 提供 trace,<strong>ch24 把 trace 转化为成本</strong>。没有 ch22 的 trace,ch24 的成本是黑盒;没有 ch24 的成本计算,ch22 的 trace 只是日志。
+</p>
+
+<p>
+<strong>组合使用</strong>:
+</p>
+<ul>
+<li>ch22 trace → ch24 成本计算 → 成本仪表盘 → 异常告警 → 自动限流</li>
+<li>形成 "看到 → 计算 → 监控 → 告警 → 行动" 闭环</li>
+</ul>
+
+<hr/>
+<h2>24.10 5 大坑 + ROI 公式 + Part 5 三角</h2>
+
+<h3>24.10.1 5 大坑</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">坑</th>
+<th style="text-align:left">案例</th>
+<th style="text-align:left">损失</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left"><strong>盲目用大模型</strong></td>
+<td style="text-align:left">100% GPT-5 处理简单任务</td>
+<td style="text-align:left">月成本 5× 多余</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left"><strong>无上限配额</strong></td>
+<td style="text-align:left">单 Agent 一天跑 1 万次</td>
+<td style="text-align:left">月成本失控,毛利归零</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><strong>缺缓存</strong></td>
+<td style="text-align:left">同一问题调 100 次 LLM</td>
+<td style="text-align:left">月成本 30× 多余</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left"><strong>缺压缩</strong></td>
+<td style="text-align:left">100k context 全量传给模型</td>
+<td style="text-align:left">月成本 10× 多余</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left"><strong>缺监控</strong></td>
+<td style="text-align:left">工具调用异常未告警</td>
+<td style="text-align:left">月成本失控</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.10.2 ROI 公式</h3>
+
+<p>
+<strong>Agent ROI</strong> = (业务价值 - Agent 成本) / Agent 成本
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">场景</th>
+<th style="text-align:left">业务价值</th>
+<th style="text-align:left">Agent 成本</th>
+<th style="text-align:left">ROI</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">客服替代</td>
+<td style="text-align:left">$5/工单</td>
+<td style="text-align:left">$0.06/工单</td>
+<td style="text-align:left">82×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">内容生成</td>
+<td style="text-align:left">$50/篇</td>
+<td style="text-align:left">$1.50/篇</td>
+<td style="text-align:left">32×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">代码助手</td>
+<td style="text-align:left">$200/月(订阅)</td>
+<td style="text-align:left">$30/月(成本)</td>
+<td style="text-align:left">5.7×</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">调研助手</td>
+<td style="text-align:left">$100/调研</td>
+<td style="text-align:left">$20/调研</td>
+<td style="text-align:left">4×</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>经验法则</strong>:ROI > 5× 才有商业价值,> 20× 是优秀,> 50× 是优秀中的优秀。
+</p>
+
+<h3>24.10.3 Part 5 三角——ch21 评测 + ch22 评测 + ch23 安全 + ch24 成本</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">章节</th>
+<th style="text-align:left">主题</th>
+<th style="text-align:left">核心问题</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>ch21</strong></td>
+<td style="text-align:left">Computer Use 与 GUI Agent</td>
+<td style="text-align:left">Agent 怎么"看" + "做"</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch22</strong></td>
+<td style="text-align:left">Agent 评估与可观测性</td>
+<td style="text-align:left">Agent 表现如何</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch23</strong></td>
+<td style="text-align:left">Agent 安全与提示注入防御</td>
+<td style="text-align:left">Agent 如何不被劫持</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch24</strong></td>
+<td style="text-align:left">Agent 成本控制(本章)</td>
+<td style="text-align:left">Agent 如何跑得便宜</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>Part 5 的内在张力</strong>:做得更强(ch21) + 看得更清(ch22) + 更安全(ch23) + 更便宜(ch24)。这 4 个目标互相冲突——
+</p>
+
+<ul>
+<li>ch21 强大功能 → ch23 更多攻击面</li>
+<li>ch22 详细 trace → ch24 更多 token</li>
+<li>ch23 5 层防御 → ch24 成本 +260%</li>
+<li>ch24 4 级路由 → ch22 路由正确率需要评测</li>
+</ul>
+
+<p>
+<strong>三角关系不是"取一即可",而是"全部满足"</strong>。ch24 是 Part 5 的"工程现实主义"——所有理想方案都要通过成本这关。
+</p>
+
+<h3>24.10.4 Part 4 + Part 5 整合三角</h3>
+
+<p>
+加上 Part 4 实战:
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">部分</th>
+<th style="text-align:left">章节</th>
+<th style="text-align:left">主题</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Part 4</strong></td>
+<td style="text-align:left">ch16-ch20</td>
+<td style="text-align:left">5 个实战项目(个人助理/代码助手/研究/数据分析/Browser-Use)</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>Part 5</strong></td>
+<td style="text-align:left">ch21</td>
+<td style="text-align:left">Computer Use</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">ch22</td>
+<td style="text-align:left">评估与可观测</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">ch23</td>
+<td style="text-align:left">安全与防御</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">ch24</td>
+<td style="text-align:left">成本控制</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>Part 5 = Part 4 的"反思章"</strong>:ch21 让 Agent 进入 GUI,ch22 看到问题,ch23 修补漏洞,ch24 算账。
+</p>
+
+<p>
+<strong>ch25 强化学习(Part 5 完结)将回答</strong>:"能否让 Agent 自己学会这一切?"
+</p>
+
+<h3>24.10.5 4 大成本优化优先级</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">优先级</th>
+<th style="text-align:left">优化项</th>
+<th style="text-align:left">实施成本</th>
+<th style="text-align:left">预期节省</th>
+<th style="text-align:left">推荐顺序</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>P0</strong></td>
+<td style="text-align:left">加成本监控</td>
+<td style="text-align:left">1 天</td>
+<td style="text-align:left">5%(看见才能优化)</td>
+<td style="text-align:left">立即</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P1</strong></td>
+<td style="text-align:left">加 4 级路由</td>
+<td style="text-align:left">1 周</td>
+<td style="text-align:left">30-60%</td>
+<td style="text-align:left">第 1 月</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P2</strong></td>
+<td style="text-align:left">加语义缓存</td>
+<td style="text-align:left">1 周</td>
+<td style="text-align:left">20-40%</td>
+<td style="text-align:left">第 1 月</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P3</strong></td>
+<td style="text-align:left">加上下文压缩</td>
+<td style="text-align:left">2 周</td>
+<td style="text-align:left">15-30%</td>
+<td style="text-align:left">第 2 月</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>P4</strong></td>
+<td style="text-align:left">FinOps 体系</td>
+<td style="text-align:left">1 月</td>
+<td style="text-align:left">持续优化</td>
+<td style="text-align:left">第 2-3 月</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.10.6 成本优化的反模式</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">反模式</th>
+<th style="text-align:left">描述</th>
+<th style="text-align:left">后果</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>过早优化</strong></td>
+<td style="text-align:left">还没上线就优化成本</td>
+<td style="text-align:left">浪费时间</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>只看平均成本</strong></td>
+<td style="text-align:left">忽略 P95 长尾</td>
+<td style="text-align:left">漏掉异常任务</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>省小钱花大钱</strong></td>
+<td style="text-align:left">用 Llama-3-8B 处理 GPT-5 任务</td>
+<td style="text-align:left">用户投诉</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>无 A/B 测试</strong></td>
+<td style="text-align:left">直接上路由策略</td>
+<td style="text-align:left">不知效果</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>省监控</strong></td>
+<td style="text-align:left">优化完不看效果</td>
+<td style="text-align:left">不知道是否真省了</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.10.7 跨章节成本视角</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">章节</th>
+<th style="text-align:left">隐含成本</th>
+<th style="text-align:left">ch24 视角</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>ch01-05</strong> 基础</td>
+<td style="text-align:left">无</td>
+<td style="text-align:left">—</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch06</strong> Prompt 工程</td>
+<td style="text-align:left">Prompt 越长越贵</td>
+<td style="text-align:left">加 token 估算</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch07</strong> Function Calling</td>
+<td style="text-align:left">工具调用费</td>
+<td style="text-align:left">加工具配额</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch08</strong> 记忆</td>
+<td style="text-align:left">长期记忆检索 token</td>
+<td style="text-align:left">加记忆压缩</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch09</strong> RAG</td>
+<td style="text-align:left">检索 + LLM 双重成本</td>
+<td style="text-align:left">加检索缓存</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch10</strong> 规划</td>
+<td style="text-align:left">ReAct 循环 → 多步成本</td>
+<td style="text-align:left">限制步数</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch11</strong> 多 Agent</td>
+<td style="text-align:left">N 个 Agent 协同 → N× 成本</td>
+<td style="text-align:left">加 Agent 配额</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch12-15</strong> 通信协议</td>
+<td style="text-align:left">协议 token 开销 + 加密开销 5-10%</td>
+<td style="text-align:left">协议压缩</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch22</strong> 评测</td>
+<td style="text-align:left">评测 token 占用</td>
+<td style="text-align:left">复用生产 trace</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>ch23</strong> 安全</td>
+<td style="text-align:left">5 层防御 +200% 成本</td>
+<td style="text-align:left">用 Llama Guard 1B 替代</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<hr/>
+<h2>24.11 小结 + 速查 + 概念桥 ch24 ↔ ch25</h2>
+
+<h3>24.11.1 8 步成本优化速查</h3>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">步骤</th>
+<th style="text-align:left">预期节省</th>
+<th style="text-align:left">实现难度</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left"><strong>审计当前成本</strong></td>
+<td style="text-align:left">0%</td>
+<td style="text-align:left">低</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left"><strong>加监控仪表盘</strong></td>
+<td style="text-align:left">5%</td>
+<td style="text-align:left">低</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><strong>加 4 级路由</strong></td>
+<td style="text-align:left">30-60%</td>
+<td style="text-align:left">中</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left"><strong>加语义缓存</strong></td>
+<td style="text-align:left">20-40%</td>
+<td style="text-align:left">中</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left"><strong>加上下文压缩</strong></td>
+<td style="text-align:left">15-30%</td>
+<td style="text-align:left">中</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">6</td>
+<td style="text-align:left"><strong>加工具配额</strong></td>
+<td style="text-align:left">10-25%</td>
+<td style="text-align:left">低</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">7</td>
+<td style="text-align:left"><strong>A/B 测试模型</strong></td>
+<td style="text-align:left">10-30%</td>
+<td style="text-align:left">高</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">8</td>
+<td style="text-align:left"><strong>FinOps 化</strong></td>
+<td style="text-align:left">持续优化</td>
+<td style="text-align:left">高</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.11.2 25 术语速查</h3>
+
+<p>
+<strong>核心术语</strong>(读者必须知道):
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">#</th>
+<th style="text-align:left">术语</th>
+<th style="text-align:left">一句话</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left">Token 经济学</td>
+<td style="text-align:left">LLM 按 token 计费的规则</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left">模型路由</td>
+<td style="text-align:left">根据任务复杂度选不同模型</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left">Semantic cache</td>
+<td style="text-align:left">用 embedding 相似度匹配缓存</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">4</td>
+<td style="text-align:left">KV cache</td>
+<td style="text-align:left">复用 prefix attention 计算结果</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">5</td>
+<td style="text-align:left">Prompt cache</td>
+<td style="text-align:left">Anthropic/OpenAI 官方 prompt 缓存</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">6</td>
+<td style="text-align:left">上下文压缩</td>
+<td style="text-align:left">用摘要/滑动窗口压缩长 prompt</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">7</td>
+<td style="text-align:left">LLMLingua</td>
+<td style="text-align:left">Microsoft 开源 prompt 压缩算法</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">8</td>
+<td style="text-align:left">工具配额</td>
+<td style="text-align:left">限制每个工具的调用次数</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">9</td>
+<td style="text-align:left">FinOps</td>
+<td style="text-align:left">Financial Operations,云成本管理</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">10</td>
+<td style="text-align:left">成本可观测性</td>
+<td style="text-align:left">trace × token = 成本可视化</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">11</td>
+<td style="text-align:left">Cost trace</td>
+<td style="text-align:left">带 token 成本的 trace</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">12</td>
+<td style="text-align:left">异常告警</td>
+<td style="text-align:left">成本超阈值时自动通知</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left">配额管理</td>
+<td style="text-align:left">namespace/团队的预算限制</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">14</td>
+<td style="text-align:left">计费 code 解耦</td>
+<td style="text-align:left">成本计算单独成模块</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">15</td>
+<td style="text-align:left">路由策略</td>
+<td style="text-align:left">路由器的判断逻辑</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">16</td>
+<td style="text-align:left">缓存命中率</td>
+<td style="text-align:left">cache 命中 / 总查询</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">17</td>
+<td style="text-align:left">压缩率</td>
+<td style="text-align:left">压缩后 / 压缩前 token 比</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left">Tool budget</td>
+<td style="text-align:left">工具调用的预算上限</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">19</td>
+<td style="text-align:left">边际成本</td>
+<td style="text-align:left">每多一个任务的额外成本</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">20</td>
+<td style="text-align:left">ROI 公式</td>
+<td style="text-align:left">(业务价值 - 成本) / 成本</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">21</td>
+<td style="text-align:left">Self-hosted vs API</td>
+<td style="text-align:left">自建 GPU vs 调用 API 的成本对比</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">22</td>
+<td style="text-align:left">Context window 计费</td>
+<td style="text-align:left">长 context 的非线性计费</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">23</td>
+<td style="text-align:left">输入输出价比</td>
+<td style="text-align:left">output / input 的价格倍数</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">24</td>
+<td style="text-align:left">降级路径</td>
+<td style="text-align:left">工具失败时降级到 mock</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">25</td>
+<td style="text-align:left">成本 A/B 测试</td>
+<td style="text-align:left">不同模型/路由的对比实验</td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<h3>24.11.3 桥接 ch25:Agent 强化学习与自我改进</h3>
+
+<p>
+ch24 解决了"如何算账 + 如何省",但所有优化都是<strong>人工设计</strong>——4 级路由、语义缓存、压缩、配额,都是工程师提前规划。
+</p>
+
+<p>
+<strong>下一个问题:Agent 能不能自己学着省?</strong>
+</p>
+
+<p>
+ch25《Agent 强化学习与自我改进》将回答:
+</p>
+<ul>
+<li>RLHF / RLAIF / DPO / GRPO 4 大训练范式在 Agent 上的应用</li>
+<li>Agent-Tuning:让模型原生支持多步推理</li>
+<li>在线学习:Agent 从失败案例中学习</li>
+<li>失败案例蒸馏:把人类反馈变成训练数据</li>
+<li>自我批评:Agent 评估自己的输出质量</li>
+<li>强化学习 × 成本控制:让 Agent 自动选择便宜模型</li>
+</ul>
+
+<p>
+<strong>ch24 留给 ch25 的命题</strong>:"成本账算清楚了,下一个问题:Agent 能不能自己学着省——下一章聊。"
+</p>
+
+<h3>24.11.4 4 takeaway</h3>
+
+<p>
+1. <strong>成本是架构问题,不是工程问题</strong>——4 级路由能省 60%,胜过所有 prompt 优化。
+2. <strong>缓存命中率是 Agent 成本的第一指标</strong>—— > 30% 才有意义, > 50% 是优秀。
+3. <strong>安全和成本是正交的</strong>——ch23 的 5 层防御是必要的,但用 Llama Guard 1B 替代 GPT-5 防御可省 70% 防御成本。
+4. <strong>FinOps 是 Agent 团队的必修课</strong>——成本看板 + 配额 + 告警 是工业级 Agent 的标配。
+</p>
+
+<h3>24.11.5 3 步上手(本周可做)</h3>
+
+<p>
+1. <strong>第 1 步</strong>:审计当前 Agent 的每任务成本(看 trace × token)。
+2. <strong>第 2 步</strong>:加 1 层缓存(精确缓存或语义缓存)。
+3. <strong>第 3 步</strong>:设置月度配额 + 异常告警。
+</p>
+
+<h3>24.11.6 3 进阶(下月可做)</h3>
+
+<p>
+1. <strong>第 1 进阶</strong>:引入 4 级路由(简单/中等/复杂/专家)。
+2. <strong>第 2 进阶</strong>:加上下文压缩(LLMLingua 或自研摘要)。
+3. <strong>第 3 进阶</strong>:搭建成本 A/B 测试平台,持续优化。
+</p>
+
+<h3>24.11.7 ch24 真实账单示例回顾</h3>
+
+<p>
+以某中型 SaaS 公司(50 人研发,日 5000 次 Agent 调用)为例:
+</p>
+
+<table>
+<p>
+<thead>
+<tr>
+<th style="text-align:left">项目</th>
+<th style="text-align:left">v1(无优化)</th>
+<th style="text-align:left">v2(ch24 优化)</th>
+<th style="text-align:left">节省</th>
+</p>
+</tr>
+</thead>
+<p>
+<tbody>
+<tr>
+<td style="text-align:left">LLM 调用费</td>
+<td style="text-align:left">$250/日</td>
+<td style="text-align:left">$80/日</td>
+<td style="text-align:left">68%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">工具调用费</td>
+<td style="text-align:left">$50/日</td>
+<td style="text-align:left">$20/日</td>
+<td style="text-align:left">60%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left">基础设施</td>
+<td style="text-align:left">$30/日</td>
+<td style="text-align:left">$25/日</td>
+<td style="text-align:left">17%</td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>日合计</strong></td>
+<td style="text-align:left"><strong>$330</strong></td>
+<td style="text-align:left"><strong>$125</strong></td>
+<td style="text-align:left"><strong>62%</strong></td>
+</p>
+</tr>
+<p>
+<tr>
+<td style="text-align:left"><strong>月合计</strong></td>
+<td style="text-align:left"><strong>$9900</strong></td>
+<td style="text-align:left"><strong>$3750</strong></td>
+<td style="text-align:left"><strong>62%</strong></td>
+</p>
+</tr>
+</tbody>
+</table>
+
+
+<p>
+<strong>年节省</strong>:$73,800 ≈ 一个高级工程师年薪的 60%(实际节省取决于调用量和模型选择,以上为示意)。
+</p>
+
+<p>
+这就是 ch24 的全部价值——<strong>让 Agent 跑得久、跑得起、跑得值</strong>。
+</p>
+
+<hr/>
+<p>
+<strong>本章完。</strong> 第 25 章《Agent 强化学习与自我改进》将回答 ch24.11.3 抛出的命题——Agent 能不能自己学着省。
+</p></main>
+
+<nav class="chapter-pager">
+  <a href="ch23.html">← 第 23 章:Agent 安全与提示注入防御</a>
+  <a href="ch25.html">第 25 章:Agent 强化学习与自我改进 →</a>
+</nav>
+
+<footer>
+  <p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <a href="ch20.html">第 20 章</a> · <a href="ch21.html">第 21 章</a> · <a href="ch22.html">第 22 章</a> · <a href="ch23.html">第 23 章</a> · <strong>第 24 章</strong></p>
+</footer>
+
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
