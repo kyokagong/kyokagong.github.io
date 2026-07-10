@@ -213,6 +213,7 @@
 <p>1. **激光冷却 (Laser Cooling)**: μK 量级 — Doppler 极限</p>
 <p>2. **蒸发冷却 (Evaporative Cooling)**: nK 量级 — 用于 BEC</p>
 <p>3. **光镊中的冷却**: μK 量级 (光镊不能直接蒸发冷却)</p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;- <strong>物理原因</strong>: 蒸发冷却需要<strong>弹性碰撞</strong>, 但光镊中<strong>原子密度</strong> ~ 10¹⁰/cm³ <strong>过低</strong>, 碰撞率<strong>不够</strong>, <strong>无法</strong>维持蒸发循环 (Phase-space density limit)</p>
 <p>**注**: 中性原子量子计算的**工作温度**是 **μK**, 比超导 (10 mK) 高 100 倍, 比稀释制冷机 (10 mK) 更容易实现。</p>
 <hr>
 <h2 id="24-2-光镊阵列-optical-tweezer-array">24.2 光镊阵列 (Optical Tweezer Array)</h2>
@@ -341,6 +342,7 @@
   <li>51 原子 1D 链</li>
   <li>直接观测反铁磁相变 (从顺磁到 Néel)</li>
   <li>同时发现**量子疤痕态 (Quantum Scar)** — 违反 ETH (本征态热化假说) 的反常态</li>
+  <li>&nbsp;&nbsp;&nbsp;&nbsp;- ETH 假设<strong>任意</strong>能量本征态都跟热态<strong>等价</strong>; 量子疤痕是<strong>少数</strong>本征态<strong>不</strong>等价, 它们携带<strong>可观测</strong>的非热动力学信息 (例如<strong>周期性</strong>振荡)</li>
 </ul>
 <h3>24.4.4 Kitaev 蜂窝模型 — 拓扑序模拟</h3>
 <p>**Kitaev 蜂窝模型**:</p>
@@ -393,6 +395,7 @@
   <li>Rydberg 态寿命 ~ 100 μs → 限制门数 ~ 1000</li>
   <li>激光强度波动 → 退相干</li>
 </ul>
+<p><strong>注</strong>: $n=70$ S 态寿命 ~ 100 μs; $n=50$ S 态 ~ 50 μs; $n=100$ S 态 ~ 1 ms (长寿命 Rydberg) — 寿命随 $n$ 变化剧烈 ($\tau \propto n^3$, 因偶极辐射跃迁几率 ∝ $n^{-3}$)</p>
 <h3>24.5.4 多 qubit 门 — Toffoli (CCZ)</h3>
 <p>**3 qubit 门 Toffoli** ($|a, b, c\rangle \to |a, b, c \oplus ab\rangle$):</p>
 <ul>
@@ -406,7 +409,8 @@
   <li>光镊寿命 ~ 10 s (背景碰撞)</li>
   <li>单 qubit 门: 100 ns</li>
   <li>2 qubit 门: 500 ns</li>
-  <li>**最大深度**: 10000 门 / 0.5 μs ≈ 5 ms (在 Rydberg 寿命限制内)</li>
+  <li>**最大深度**: Rydberg 寿命 100 μs / 2Q 门 500 ns ≈ **200 个 2Q 门** (P2 修订)</li>
+  <li>**总相干**: 光镊寿命 10 s / 1Q 门 100 ns ≈ **10⁸ 个 1Q 门** — 1Q/2Q **严重不平衡**</li>
   <li>**实际深度**: 100-1000 门 (保守, 留相干余量)</li>
 </ul>
 <p>**对比其他平台**:</p>
@@ -485,7 +489,7 @@
 </table>
 <p>**核心优势**: 中性原子的"可重排"是**最适合**表面码的硬件——直接生成 surface code lattice 几何。</p>
 <h3>24.6.4 Defect-Based 编码 — 中性原子的天然编码</h3>
-<p>**Defect-based 编码** (Bombin-Martin 2006): 一种比 surface code**更灵活**的拓扑码。</p>
+<p>**Defect-based 编码** (Bombin 2006; Dennis-Kitaev-Preskill 2002): 一种比 surface code**更灵活**的拓扑码。</p>
 <p>**原理**:</p>
 <ul>
   <li>在 2D 平面中**挖洞** (defect) — 形成 1D 边界</li>
@@ -622,7 +626,7 @@
 <tr><td>**QuEra 1180 (2024)**</td><td>量子模拟规模新纪录</td><td>24.4.5</td></tr>
 <tr><td>**Pasqal Orion**</td><td>1000+ 数字路线</td><td>24.5.7</td></tr>
 <tr><td>**Atom Computing 118**</td><td>1 logical qubit 演示</td><td>24.6.5</td></tr>
-<tr><td>**Bombin-Martin 编码**</td><td>defect-based 编码原文献 (2006)</td><td>24.6.4</td></tr>
+<tr><td>**Bombin-Dennis 编码**</td><td>defect-based 编码原文献 (Bombin 2006; DKP 2002)</td><td>24.6.4</td></tr>
 <tr><td>**Rydberg-Rydberg 相互作用**</td><td>$V(r) = C_6/r^6$, $C_6 \propto n^{11}$</td><td>24.3.1</td></tr>
 <tr><td>**Stark 调谐**</td><td>改变局部电场调节 Rydberg 能级</td><td>24.5.8</td></tr>
 <tr><td>**Mott 转变**</td><td>$t/U$ 临界点 ~ 0.086 (3D)</td><td>24.B.1</td></tr>
@@ -1006,10 +1010,10 @@
           <span class="pager-label">← 上一章</span>
           <span class="pager-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</span>
         </a>
-        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+        <a href="ch25.html" class="pager-link pager-next">
           <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 25 章 (第六部分开篇, 即将推出)</span>
-        </span>
+          <span class="pager-title">第 25 章 量子优势与量子霸权 (Quantum Advantage / Quantum Supremacy)</span>
+        </a>
       </nav>
     </main>
 
@@ -1070,6 +1074,7 @@
           <li><a href="ch22.html">第 22 章</a></li>
           <li><a href="ch23.html">第 23 章</a></li>
           <li><a href="ch24.html">第 24 章</a></li>
+          <li><a href="ch25.html">第 25 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>
