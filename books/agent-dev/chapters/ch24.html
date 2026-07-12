@@ -402,8 +402,8 @@ ch23 §23.7.1 那个 30 行防御流水线看似免费,放到生产环境跑 1 �
 <thead>
 <tr>
 <th style="text-align:left">模型</th>
-<th style="text-align:left">Input ($/M token)</th>
-<th style="text-align:left">Output ($/M token)</th>
+<th style="text-align:left">Input (USD/1M token)</th>
+<th style="text-align:left">Output (USD/1M token)</th>
 <th style="text-align:left">Context</th>
 <th style="text-align:left">适合场景</th>
 </p>
@@ -1894,7 +1894,7 @@ for stage in ["v1_baseline", "v2_secure", "v3_optimized"]:
 <tr>
 <td style="text-align:left">4</td>
 <td style="text-align:left"><strong>计费 code 解耦</strong></td>
-<td style="text-align:left">cost.py 单独模块</td>
+<td style="text-align:left">cost.py 单独模块(项目里建议命名 billing.py 避免未来与第三方包重名)</td>
 </p>
 </tr>
 <p>

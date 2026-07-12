@@ -243,7 +243,7 @@
 <hr>
 <h2 id="25-2-第一阶段-随机电路采样-google-sycamore-2019">25.2 第一阶段: 随机电路采样 (Google Sycamore 2019)</h2>
 <h3>25.2.1 实验设置</h3>
-<p>**芯片**: Sycamore, 53 个超导 qubit (实际使用 53 中可用 54 减去 1 个坏 qubit)</p>
+<p><strong>芯片</strong>: Sycamore, 53 个超导 qubit。Sycamore 芯片<strong>制造</strong>了 54 个 qubit 的网格, 1 个 qubit <strong>失效率</strong>较高, 实际可用 53 个 qubit。<strong>注意</strong>: 53 这个数字<strong>不是</strong>精心选择的, 而是<strong>网格设计</strong> (为了适配 Sycamore 平面布局) + <strong>制造良率</strong>的结果。</p>
 <p>**任务**: 伪随机量子电路采样 (Pseudo-Random Circuit Sampling)</p>
 <ul>
   <li>输入: 12-20 个周期的**随机**单 qubit + 2 qubit 门序列</li>
@@ -488,7 +488,7 @@
 <ul>
   <li>当前 (2024) 的量子设备**不**能破解 RSA-2048</li>
   <li>**但**未来 (2030+) 的量子设备**可能**能</li>
-  <li>因此后量子密码学 (NIST 2022 标准, ch11) **必须**现在开始部署</li>
+  <li>因此后量子密码学 (NIST 2022 标准, ch11) <strong>必须</strong>现在开始部署。NIST 2022 标准化了 <strong>CRYSTALS-Kyber</strong> (ML-KEM, 密钥封装) + <strong>CRYSTALS-Dilithium</strong> (ML-DSA, 数字签名) + <strong>FALCON</strong> (Falcon, 紧凑签名) + <strong>SPHINCS+</strong> (SLH-DSA, 基于哈希) 共 <strong>4 个算法</strong>, 取代 RSA/ECC。</li>
 </ul>
 <hr>
 <h2 id="25-7-量子优势-vs-量子实用价值">25.7 量子优势 vs 量子实用价值</h2>
@@ -536,7 +536,7 @@
 采样优势                     模拟优势                     算法优势                     实用优势
 (任务无实用价值)             (任务有物理意义)             (任务有渐近加速)             (任务有实用价值)
        ↓                          ↓                          ↓                          ↓
-Sycamore 2019               QuEra 1180 2024             早期容错                    Shor-2048 (估算 2035+)
+Sycamore 2019               QuEra 1180 2024             早期容错                    Shor-2048 (Gidney-Ekera: ~2000 万 qubit + 8 小时, 估算 2035+)
 Jiuzhang 2020               早期 VQE 化学               早期 Shor-15                化学/材料
                             D-Wave 4400+                Grover-15                   量子 AI</code></pre>
 <hr>
@@ -608,7 +608,7 @@ Jiuzhang 2020               早期 VQE 化学               早期 Shor-15      
 <h3>25.9.1 核心要点</h3>
 <p>本章的核心结论:</p>
 <p>1. **量子优势已经实现 (多次)** — 2019 Sycamore, 2020 Jiuzhang, 2024 QuEra 1180</p>
-<p>2. **采样优势 ≠ 实用价值** — 还需要数百万 qubit 才能实现 Shor-2048</p>
+<p>2. <strong>采样优势 ≠ 实用价值</strong> — 还需要数百万 qubit 才能实现 Shor-2048 (Gidney-Ekera 2019 估算 ~ 2000 万 qubit + 8 小时)</p>
 <p>3. **经典反驳不能完全消除优势** — 即使最保守估算, 仍有 ~ 100-1000 倍</p>
 <p>4. **量子模拟是近期最有希望的实用优势** — QuEra 1180 是关键里程碑</p>
 <p>5. **量子优势需要持续"赢得"** — 经典算法在追赶, 量子必须持续超越</p>
@@ -1003,10 +1003,10 @@ Jiuzhang 2020               早期 VQE 化学               早期 Shor-15      
           <span class="pager-label">← 上一章</span>
           <span class="pager-title">第 24 章 中性原子量子计算机 (Neutral Atom Quantum Computer)</span>
         </a>
-        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+        <a href="ch26.html" class="pager-link pager-next">
           <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 26 章 量子互联网 (即将推出)</span>
-        </span>
+          <span class="pager-title">第 26 章 量子互联网与量子通信 (Quantum Internet &amp; Quantum Communication)</span>
+        </a>
       </nav>
     </main>
 
@@ -1068,6 +1068,7 @@ Jiuzhang 2020               早期 VQE 化学               早期 Shor-15      
           <li><a href="ch23.html">第 23 章</a></li>
           <li><a href="ch24.html">第 24 章</a></li>
           <li><a href="ch25.html">第 25 章</a></li>
+          <li><a href="ch26.html">第 26 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>

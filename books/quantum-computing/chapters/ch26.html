@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第26章：量子互联网与量子通信 (Quantum Internet &amp; Quantum Communication) | 《量子计算》">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第26章：量子互联网与量子通信 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第六部分 · 前沿与展望 · Day 2 🌐</span>
+        <span class="chapter-day-tag">Day 30 · 2026-07-12</span>
+      </div>
+      <h1 class="chapter-title">第 26 章 量子互联网与量子通信 (Quantum Internet &amp; Quantum Communication)</h1>
+      <p class="chapter-subtitle">QKD + 量子隐形传态 + 量子中继器 + 墨子号 7600 km 洲际 + Wehner 3 阶段路线图 + 第六部分 Day 2 🌐</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~7,500 字</span>
+        <span class="stat">🔢 10 节 · 4 附录 · 69 子节</span>
+        <span class="stat">📑 BB84 QKD / E91 / MDI-QKD / TF-QKD / 墨子号 7600 km / 量子中继器 / QKD vs PQC / 第六部分 Day 2 🌐</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                                                <article class="chapter-content">
+<blockquote><p><strong>承接 ch25</strong>: 上一章我们讨论了<strong>量子优势与量子霸权</strong>——单一量子设备能否超越经典? 但真正的<strong>实用价值</strong>需要<strong>多台</strong>量子设备<strong>协同</strong>工作。这就需要<strong>量子互联网</strong>。</p></blockquote>
+
+<blockquote><p><strong>本章核心问题</strong>: <strong>如何把多个量子计算机连成网络?</strong> 量子纠缠分发 + 量子隐形传态 + 量子密钥分发 (QKD) + 量子中继器。本章梳理 Wehner 3 (4) 阶段路线、QKD 4 大协议、墨子号 7600 km 洲际 QKD、量子中继器原理、QKD vs PQC 混合部署。</p></blockquote>
+
+<blockquote><p><strong>答案</strong>: <strong>量子互联网已经走出实验室</strong>——墨子号 7600 km 洲际 QKD (2018)、QuTech 4 节点纠缠网络 (2019-2024)、中国京沪干线 2000 km (2017)。但<strong>距离大规模实用</strong> (量子中继器 + 容错量子互联网) 还需要 <strong>10-30 年</strong>。</p></blockquote>
+
+<hr>
+
+<h2 id="26-0-引言-为什么需要量子互联网">26.0 引言: 为什么需要量子互联网?</h2>
+<h3>26.0.1 一个核心问题</h3>
+<p>经典互联网 (Internet) 通过 TCP/IP 协议把全球数十亿台计算机连成网络, 实现了**信息**的自由流动。但**量子互联网** (Quantum Internet) 要做的不是传递经典比特, 而是**分发量子纠缠** (distribute quantum entanglement) —— 这是经典互联网**无法**完成的任务。</p>
+<p>这个区别有 3 个层次:</p>
+<p>1. **量子信息不可克隆** (no-cloning, ch6.7) → 量子信号**无法**被复制放大</p>
+<p>2. **量子测量塌缩** (ch5.1) → 任何**窃听**都会**扰动**量子态, 但也意味着量子数据**无法**重复读取</p>
+<p>3. **纠缠非定域性** (ch4.6) → 量子纠缠让**远距离**粒子产生**瞬时**关联, 这是经典**无**对应物的资源</p>
+<p>经典互联网的**核心能力**是信息**复制** (一封邮件可以被转发给多人); 量子互联网的**核心能力**是纠缠**分发** (一对纠缠粒子在 Alice 和 Bob 之间创建关联)。这两种范式的根本区别决定了量子互联网**不能**是经典互联网的"量子版", 而是**全新的**通信基础设施。</p>
+<h3>26.0.2 历史里程碑时间线 (1984-2025)</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th><th>团队</th><th>任务 / 距离</th></tr></thead>
+<tbody>
+<tr><td>**1984**</td><td>BB84 量子密钥分发</td><td>Bennett-Brassard (IBM)</td><td>第一个 QKD 协议 (理论)</td></tr>
+<tr><td>**1991**</td><td>E91 纠缠 QKD</td><td>Ekert (Oxford)</td><td>用 Bell 不等式实现 QKD</td></tr>
+<tr><td>**1993**</td><td>量子隐形传态协议</td><td>Bennett *et al.*</td><td>理论协议</td></tr>
+<tr><td>**1997**</td><td>隐形传态首次实验</td><td>Zeilinger (Innsbruck)</td><td>光子, 实验室</td></tr>
+<tr><td>**2003**</td><td>DARPA QKD 网络</td><td>BBN Technologies</td><td>10 节点, 美国波士顿</td></tr>
+<tr><td>**2004**</td><td>SECOQC 维也纳</td><td>EU 联盟</td><td>8 节点, 维也纳</td></tr>
+<tr><td>**2007**</td><td>Geneva-area QKD</td><td>id Quantique</td><td>37 节点, 日内瓦</td></tr>
+<tr><td>**2009**</td><td>墨子号立项</td><td>中科大 (潘建伟)</td><td>中国科学院空间科学先导专项</td></tr>
+<tr><td>**2016**</td><td>墨子号发射</td><td>中科大 (潘建伟)</td><td>全球首颗量子科学实验卫星</td></tr>
+<tr><td>**2017**</td><td>墨子号卫星-地面 QKD</td><td>中科大 (潘建伟)</td><td>千公里级</td></tr>
+<tr><td>**2017**</td><td>中国京沪干线</td><td>中国</td><td>2000 km, 32 节点, 32 信任中继</td></tr>
+<tr><td>**2018**</td><td>洲际 QKD</td><td>中科大 (潘建伟) + 奥地利</td><td>中国-奥地利, **7600 km**</td></tr>
+<tr><td>**2019**</td><td>Delft 4 节点纠缠</td><td>QuTech (Hanson 团队)</td><td>4 节点, 25 km</td></tr>
+<tr><td>**2020**</td><td>卫星-地面隐形传态</td><td>中科大 (潘建伟)</td><td>墨子号 + 地面站</td></tr>
+<tr><td>**2021**</td><td>TF-QKD 508 km</td><td>中科大 (潘建伟)</td><td>508 km 双场 QKD</td></tr>
+<tr><td>**2022**</td><td>Quantum Internet Alliance (QIA) 路线图</td><td>EU 27 国</td><td>阶段 1 (4 节点) → 阶段 3 (全欧)</td></tr>
+<tr><td>**2024**</td><td>量子中继器首次 50 km</td><td>中科大 (潘建伟)</td><td>50 km 量子中继器</td></tr>
+<tr><td>**2024**</td><td>卫星-地面 MDI-QKD</td><td>中科大 (潘建伟)</td><td>双光子 MDI-QKD 卫星-地面</td></tr>
+<tr><td>**2025**</td><td>多节点量子互联网</td><td>QuTech / 中科大</td><td>4-8 节点纠缠网络</td></tr>
+</tbody>
+</table>
+<p>**关键观察**:</p>
+<ul>
+  <li>**1984-2000**: 理论协议 + 实验室演示 (BB84, E91, 隐形传态)</li>
+  <li>**2000-2010**: 信任中继网络 (DARPA, SECOQC, Geneva)</li>
+  <li>**2010-2020**: 长距离卫星 QKD (墨子号 7600 km 洲际 QKD)</li>
+  <li>**2020-2025**: 量子中继器 + 多节点纠缠网络 (QIA 路线图, QuTech 4 节点)</li>
+</ul>
+<h3>26.0.3 第六部分 Day 2: 从量子优势到量子互联网</h3>
+<p>本章承接 ch25《量子优势与量子霸权》, 进一步追问: **量子优势**如果**只能**在**单一**量子设备上实现, 其价值有限; 真正的**实用价值**需要**多台**量子设备**协同**工作。这就需要**量子互联网**。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>核心问题</th></tr></thead>
+<tbody>
+<tr><td>ch25 (昨天)</td><td>量子优势</td><td>量子设备**能否**超越经典?</td></tr>
+<tr><td>**ch26** (本章)</td><td>**量子互联网**</td><td>**多台**量子设备**如何**互联?</td></tr>
+<tr><td>ch27 (明天)</td><td>量子 AI</td><td>量子计算 + 机器学习 = ?</td></tr>
+<tr><td>ch28 (后天)</td><td>未来展望</td><td>5 平台谁能跑出容错量子计算?</td></tr>
+</tbody>
+</table>
+<h3>26.0.4 章节目录</h3>
+<p>1. **26.1** 定义与目标: Wehner 3 阶段路线</p>
+<p>2. **26.2** 量子密钥分发 (QKD): BB84 + E91 + MDI + TF</p>
+<p>3. **26.3** 量子隐形传态: Bennett 1993 + 实验里程碑</p>
+<p>4. **26.4** 量子中继器: 跨越距离的关键</p>
+<p>5. **26.5** 物理实现: 光纤 + 卫星 + 混合网络</p>
+<p>6. **26.6** 应用: QKD 加密 + 分布式量子计算 + 盲量子计算</p>
+<p>7. **26.7** 挑战: 纠缠保真度 + 量子存储器 + 标准化</p>
+<p>8. **26.8** 量子互联网 vs 后量子密码学 (PQC)</p>
+<p>9. **26.9** 总结 + ch27/28 铺路</p>
+<p>10. **26.A-C** 附录: BB84 严格证明 / 中继器数学 / 标准化进展</p>
+<hr>
+<h2 id="26-1-量子互联网的定义与目标">26.1 量子互联网的定义与目标</h2>
+<h3>26.1.1 Wehner 3 阶段定义 (2018)</h3>
+<p>量子互联网联盟 (Quantum Internet Alliance, QIA) 在 2018 年的白皮书中, 由 Stephanie Wehner (QuTech, Delft) 起草, 提出了**三阶段**定义 (2024 年扩展为四阶段):</p>
+<table class="chapter-table">
+<thead><tr><th>阶段</th><th>名称</th><th>核心能力</th><th>状态 (2024)</th></tr></thead>
+<tbody>
+<tr><td>**0**</td><td>Trusted-repeater 网络</td><td>BB84 QKD + **信任**中继</td><td>**已商用** (中国京沪干线, ID Quantique)</td></tr>
+<tr><td>**1**</td><td>Prepare-and-measure 网络</td><td>端到端**纠缠分发** (但**不**存储)</td><td>**已实验** (QuTech 4 节点)</td></tr>
+<tr><td>**2**</td><td>Entanglement-based 网络</td><td>量子**存储器** + 多跳纠缠交换</td><td>**早期实验** (50 km 中继器)</td></tr>
+<tr><td>**3**</td><td>Fault-tolerant 网络</td><td>**逻辑** qubit + 完全容错</td><td>**未来** (2030+)</td></tr>
+</tbody>
+</table>
+<h3>26.1.2 阶段 0: Trusted-Repeater 网络 (已商用)</h3>
+<p>**核心思想**: 在 Alice 和 Bob 之间放置**多个**可信中继节点, 每个节点**测量**量子信号 → **加密**为经典比特 → **通过**经典网络 → **解密** → 重新**编码**为量子信号 → 转发。</p>
+<p>**架构**:</p>
+<pre><code class="">Alice ---(光纤 50 km)--- R1 ---(光纤 50 km)--- R2 ---(光纤 50 km)--- Bob
+            量子                    量子                    量子
+            (QKD)                  (QKD)                  (QKD)
+            ↓                      ↓                      ↓
+          密钥                    密钥                    密钥
+            ↓                      ↓                      ↓
+        经典加密              经典中继               经典加密
+            ↓                      ↓                      ↓
+            -------- 经典网络 (Internet) --------</code></pre>
+<p>**优势**: **简单**, 距离**可以**叠加 (50 km + 50 km + 50 km = 150 km)。</p>
+<p>**劣势**: 中继节点**必须可信** (Trusted) —— 如果某个节点被攻击者**控制**, 则**全部**密钥泄露。</p>
+<p>**代表**: 中国**京沪干线** (2017), 2000 km, 32 节点, 跨越北京-济南-合肥-上海。</p>
+<h3>26.1.3 阶段 1: Prepare-and-Measure 网络</h3>
+<p>**核心思想**: Alice **制备**量子态 → 通过光纤 → Bob **测量**量子态 → Alice 和 Bob 通过**经典**通信**比对**基矢。</p>
+<p>**不**需要可信中继, 因为**窃听**会**扰动**量子态 (BB84 安全性)。</p>
+<p>**架构**:</p>
+<pre><code class="">Alice ----(光纤 100 km, 量子比特)---- Bob
+   ↓
+   经典基矢比对 (Internet)
+   ↓
+   共享密钥</code></pre>
+<p>**代表**: QuTech (Delft) 4 节点纠缠网络 (Hanson 团队, 2019-2024)。</p>
+<h3>26.1.4 阶段 2: Entanglement-Based 网络 (核心)</h3>
+<p>**核心思想**: **量子中继器** (Quantum Repeater) 把**长距离**纠缠分发**分解**为**多个短距离**纠缠分发 + **纠缠交换**。</p>
+<p>**架构**:</p>
+<pre><code class="">Alice ----(纠缠分发)---- R1 ----(纠缠分发)---- R2 ----(纠缠分发)---- Bob
+              ↓                                ↓
+              ↓←──── (纠缠交换, Bell 测量) ────↓
+                                ↓
+                          (Alice-Bob 纠缠)</code></pre>
+<p>**关键能力**:</p>
+<ul>
+  <li>**纠缠分发**: 通过 SPDC (自发参量下转换) 或量子点产生纠缠光子对</li>
+  <li>**纠缠交换**: 在中继节点**测量**两对纠缠光子 → 创建**远距离**纠缠</li>
+  <li>**量子存储器**: 在中继节点**存储**纠缠光子, 等待**其他**节点的纠缠光子到达</li>
+</ul>
+<h3>26.1.5 阶段 3: Fault-Tolerant 网络 (未来)</h3>
+<p>**核心能力**:</p>
+<ul>
+  <li>**逻辑** qubit (ch19 衔接): 多个物理 qubit + 纠错码 (表面码) → 一个逻辑 qubit</li>
+  <li>**完全容错**: 任何物理错误**不**影响**逻辑**计算</li>
+  <li>**分布式容错量子计算**: 多台容错量子计算机协同</li>
+</ul>
+<p>**预计**: 2030+ 实现, 跟 ch19 容错量子计算的里程碑一致。</p>
+<h3>26.1.6 量子互联网 vs 经典互联网</h3>
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>经典互联网</th><th>量子互联网</th></tr></thead>
+<tbody>
+<tr><td>**传输对象**</td><td>经典比特 (0/1)</td><td>量子比特 ($\alpha\</td><td>0\rangle + \beta\</td><td>1\rangle$)</td></tr>
+<tr><td>**可复制**</td><td>✅ 可以任意复制</td><td>❌ **不可克隆** (ch6.7)</td></tr>
+<tr><td>**可测量**</td><td>✅ 可以无损测量</td><td>⚠️ **测量塌缩** (ch5.1)</td></tr>
+<tr><td>**可窃听**</td><td>✅ 可以被动窃听 (难检测)</td><td>❌ **窃听扰动**量子态</td></tr>
+<tr><td>**中继**</td><td>放大器 (信号再生)</td><td>量子中继器 (纠缠交换)</td></tr>
+<tr><td>**核心资源**</td><td>带宽</td><td>**纠缠** + **量子信道**</td></tr>
+<tr><td>**应用**</td><td>Web / Email / 流媒体</td><td>QKD / 隐形传态 / 分布式量子计算</td></tr>
+<tr><td>**安全模型**</td><td>计算安全 (RSA 等)</td><td>**信息论安全** (QKD)</td></tr>
+</tbody>
+</table>
+<p>**核心理念差异**: 经典互联网追求**信息自由流动** (复制 + 转发); 量子互联网追求**纠缠广泛分发** (不可克隆 + 不可测量)。</p>
+<hr>
+<h2 id="26-2-量子密钥分发-qkd-量子互联网的-杀手级应用">26.2 量子密钥分发 (QKD): 量子互联网的"杀手级应用"</h2>
+<h3>26.2.1 BB84 协议 (Bennett-Brassard 1984)</h3>
+<p>BB84 是**第一个**量子密钥分发协议, 由 Charles Bennett (IBM) 和 Gilles Brassard (蒙特利尔大学) 在 1984 年提出, 是整个量子互联网**最成熟**的应用。</p>
+<p>**核心思想**: 用**两个**基矢 (**Z 基矢** {|0⟩, |1⟩} 和 **X 基矢** {|+⟩, |−⟩}) 编码 1 比特:</p>
+<table class="chapter-table">
+<thead><tr><th>比特</th><th>Z 基矢</th><th>X 基矢</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>\</td><td>0⟩</td><td>\</td><td>+⟩ = (\</td><td>0⟩ + \</td><td>1⟩)/√2</td></tr>
+<tr><td>1</td><td>\</td><td>1⟩</td><td>\</td><td>−⟩ = (\</td><td>0⟩ − \</td><td>1⟩)/√2</td></tr>
+</tbody>
+</table>
+<p>**协议步骤**:</p>
+<pre><code class="">Alice:                          Bob:
+1. 随机选 4n 比特 b_1..b_{4n}
+2. 随机选 4n 基矢 θ_1..θ_{4n}  →  4n 量子态 |ψ_1..ψ_{4n}>  →  Bob 测量
+                                                                  (随机基矢)
+3. ← (经典通信: Bob 公布基矢, **不公布**测量结果)
+4. Alice 和 Bob **比对**基矢, 保留**基矢相同**的比特 (约 2n 比特) → **sifted key**
+5. 随机选 n/2 比特公开比对 → 计算误码率 (QBER)
+   - QBER < 11% → 安全, 余下 n/2 比特作为**最终密钥**
+   - QBER > 11% → 可能有窃听者, **放弃**本次会话
+6. 隐私放大 (Privacy Amplification) → 提取**纯**密钥</code></pre>
+<p>**为什么安全? (直觉)**</p>
+<p>**窃听者 Eve** 的任何**测量**都会**扰动**量子态 (不可克隆定理, ch6.7):</p>
+<ul>
+  <li>Eve **不知道** Alice 的基矢 → 必须**猜** (50% 概率猜对)</li>
+  <li>猜错 → Eve 的测量**扰动**了量子态 → 引入**错误** → Bob 端**检测**到 QBER 升高</li>
+</ul>
+<p>**信息论安全**: BB84 的安全性基于**量子力学** (不可克隆 + 测量塌缩), **不**依赖**计算复杂性**。即使量子计算机**也无法**破解 (因为**不存在**破解算法, **不是**算法**难**)。</p>
+<h3>26.2.2 E91 协议 (Ekert 1991)</h3>
+<p>Artur Ekert 在 1991 年提出**纠缠**版本的 QKD (E91):</p>
+<p>**核心思想**: Alice 和 Bob **共享**纠缠光子对 (Bell 态), 各自**随机**选测量基矢 → 通过经典通信**比对**基矢 → 利用 **CHSH 不等式** (ch4.5) 检测窃听:</p>
+<table class="chapter-table">
+<thead><tr><th>Alice 基矢</th><th>Bob 基矢</th></tr></thead>
+<tbody>
+<tr><td>Z, X (0°, 45°, 90°)</td><td>Z, X (45°, 90°, 135°)</td></tr>
+</tbody>
+</table>
+<p>**安全性**: 窃听者 Eve 的存在会**破坏**纠缠 → CHSH 不等式**不**被违反 → Alice 和 Bob **知道**有窃听者。</p>
+<p>**优势**: 安全性**更清晰** (基于 Bell 不等式违反)。**劣势**: 需要纠缠源 (更复杂)。</p>
+<h3>26.2.3 MDI-QKD (Measurement-Device-Independent QKD, 2012)</h3>
+<p>**核心问题**: BB84 的安全性假设**探测器**是**完美**的, 但**现实**探测器有**漏洞** (例如探测器效率不均匀, 时序攻击)。</p>
+<p>**MDI-QKD** (Lo, Curty, Qi 2012): 把**测量**交给**中间**节点 Charlie, Charlie **不**需要被信任:</p>
+<pre><code class="">Alice ----(量子)---- Charlie ----(量子)---- Bob
+                          ↓
+                    Bell 测量
+                          ↓
+                    公开结果
+                          ↓
+              Alice 和 Bob 提取密钥</code></pre>
+<p>**关键性质**: 即使 Charlie **完全**被攻击者**控制** (恶意测量), 密钥仍然**安全**。</p>
+<p>**原因**: Bell 测量的**结果**受**量子力学**约束, 攻击者无法**伪造**一个有效的 Bell 测量结果**而**不被检测。</p>
+<h3>26.2.4 TF-QKD (Twin-Field QKD, 2018)</h3>
+<p>**核心问题**: 光纤 QKD 的**距离**限制在 ~ 100-300 km (无中继), 因为**损耗** ∝ exp(−αr)。</p>
+<p>**TF-QWD** (Lucamarini 2018): Alice 和 Bob 各发送一个**单光子** → 中间节点 Charlie 用**单光子探测器**测量干涉:</p>
+<pre><code class="">Alice ----(单光子, 频率 f_A)---- 
+                                  \
+                                   Charlie (干涉 + 探测)
+                                  /
+Bob ----(单光子, 频率 f_B)----</code></pre>
+<p>**关键性质**:</p>
+<ul>
+  <li>**干涉强度** ∝ 1 (跟距离**无关**)</li>
+  <li>**安全性** 等价于**单光子** QKD</li>
+  <li>**距离**翻倍 (从 100 km → 200+ km)</li>
+</ul>
+<p>**2021 中科大实验**: 508 km 双场 QKD (潘建伟团队), 是**当前**光纤 QKD 距离**记录**。</p>
+<h3>26.2.5 QKD 实验里程碑</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>实验</th><th>距离 / 团队</th></tr></thead>
+<tbody>
+<tr><td>1989</td><td>第一个 BB84 实验</td><td>32 cm (Bennett-Brassard)</td></tr>
+<tr><td>1995</td><td>23 km 光纤 BB84</td><td>瑞士日内瓦</td></tr>
+<tr><td>2002</td><td>67 km 光纤 BB84</td><td>日本 NEC</td></tr>
+<tr><td>2007</td><td>144 km 光纤 BB84</td><td>id Quantique (瑞士)</td></tr>
+<tr><td>2017</td><td>墨子号卫星-地面 BB84</td><td>1200 km (潘建伟)</td></tr>
+<tr><td>2018</td><td>洲际 QKD (中国-奥地利)</td><td>**7600 km** (潘建伟)</td></tr>
+<tr><td>2021</td><td>508 km 双场 QKD</td><td>中科大 (潘建伟)</td></tr>
+<tr><td>2024</td><td>卫星-地面 MDI-QKD</td><td>中科大 (潘建伟)</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="26-3-量子隐形传态-quantum-teleportation">26.3 量子隐形传态 (Quantum Teleportation)</h2>
+<h3>26.3.1 回顾 ch4.7: Bennett 1993 + Zeilinger 1997</h3>
+<p>第 4 章已经详细介绍了量子隐形传态的**理论**和**实验**。本节作为 ch4 的延伸, 重点讨论**在量子互联网中的角色**。</p>
+<h3>26.3.2 协议核心 (回顾 + 互联网视角)</h3>
+<p>**输入**:</p>
+<ul>
+  <li>Alice 拥有未知量子态 $|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$</li>
+  <li>Alice 和 Bob **共享** Bell 态 $|\Phi^+\rangle = \frac{1}{\sqrt{2}}(|00\rangle + |11\rangle)$ (纠缠对)</li>
+</ul>
+<p>**步骤**:</p>
+<p>1. **Bell 测量**: Alice 对 $|\psi\rangle$ 和她的纠缠 qubit 做 Bell 测量 → 得到 2 比特经典结果 (4 种之一)</p>
+<p>2. **经典通信**: Alice 通过**经典**信道把 2 比特发送给 Bob</p>
+<p>3. **幺正修正**: Bob 根据 2 比特对**他的**纠缠 qubit 做相应**幺正**操作 → **获得** $|\psi\rangle$</p>
+<p>**资源**:</p>
+<ul>
+  <li>1 对纠缠 (Alice-Bob)</li>
+  <li>1 个 Bell 测量 (Alice 端)</li>
+  <li>1 次经典通信 (2 比特)</li>
+  <li>1 个幺正操作 (Bob 端)</li>
+</ul>
+<h3>26.3.3 关键性质 (跟互联网视角的衔接)</h3>
+<p>**性质 1: 不违反 no-signaling (ch4.6)**</p>
+<p>Alice 的 Bell 测量**塌缩**她的 qubit, 但**不**瞬时影响 Bob 的 qubit (因为 Bob 必须**等待** Alice 的经典比特才能**修正**)。经典通信**限制**了速度 → **不**违反相对论。</p>
+<p>**性质 2: 不传输物质, 只传输"量子态"**</p>
+<p>Alice 的 $|\psi\rangle$ **消失** (因为 Alice 的 Bell 测量**已经**塌缩), Bob **获得** $|\psi\rangle$。没有物质**移动**, 只移动了"量子信息"。</p>
+<p>**性质 3: 必须消耗纠缠**</p>
+<p>每**一次**隐形传态消耗**1**对纠缠 + **1**次经典通信。纠缠是**资源** (跟能量类似)。</p>
+<h3>26.3.4 实验里程碑 (互联网视角)</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>实验</th><th>距离 / 团队</th></tr></thead>
+<tbody>
+<tr><td>1997</td><td>第一个隐形传态</td><td>光子, 实验室 (Zeilinger)</td></tr>
+<tr><td>2012</td><td>100 km 光纤隐形传态</td><td>维也纳 (Zeilinger)</td></tr>
+<tr><td>2017</td><td>卫星-地面隐形传态</td><td>墨子号 (潘建伟)</td></tr>
+<tr><td>2020</td><td>洲际隐形传态</td><td>墨子号 (潘建伟)</td></tr>
+<tr><td>2024</td><td>多节点隐形传态</td><td>4 节点 (QuTech)</td></tr>
+</tbody>
+</table>
+<h3>26.3.5 隐形传态在量子互联网中的作用</h3>
+<p>**作用 1: 传输未知量子态**</p>
+<p>如果 Alice 想把 $|\psi\rangle$ **发送给** Bob, 但 $|\psi\rangle$ **未知** (无法**测量**后**经典**重发), 则必须用**隐形传态**。</p>
+<p>**应用场景**: 量子云计算 (客户端上传量子态到云端)。</p>
+<p>**作用 2: 量子纠缠交换的核心**</p>
+<p>量子中继器 (26.4) 的**核心**操作就是**纠缠交换**, 本质上就是**两对纠缠**的隐形传态:</p>
+<pre><code class="">A ── 纠缠对 1 ── R ── 纠缠对 2 ── B
+            ↓        ↓
+            └─ Bell 测量 ─┘
+                  ↓
+            A-R 纠缠 → A-B 纠缠 (远距离)</code></pre>
+<hr>
+<h2 id="26-4-量子中继器-quantum-repeater-跨越距离的关键">26.4 量子中继器 (Quantum Repeater): 跨越距离的关键</h2>
+<h3>26.4.1 核心问题: 光纤损耗</h3>
+<p>经典光纤通信可以用**光放大器** (EDFA) 补偿损耗 (每 80 km 放大一次)。但**量子**信号**无法**被放大 (不可克隆定理, ch6.7):</p>
+<table class="chapter-table">
+<thead><tr><th>距离</th><th>光纤损耗 (1550 nm, 0.2 dB/km)</th><th>剩余信号</th></tr></thead>
+<tbody>
+<tr><td>100 km</td><td>20 dB</td><td>1%</td></tr>
+<tr><td>300 km</td><td>60 dB</td><td>0.001% (10⁻⁶)</td></tr>
+<tr><td>1000 km</td><td>200 dB</td><td>10⁻²⁰ (基本为零)</td></tr>
+</tbody>
+</table>
+<p>**结论**: **直接**光纤传输的 QKD 距离**限制**在 ~ 300-500 km (依赖探测器技术)。</p>
+<h3>26.4.2 解决方案: 分段纠缠交换 (Briegel 1998)</h3>
+<p>Hans Briegel (Innsbruck) 在 1998 年提出**量子中继器**概念, 把**长距离**纠缠分发**分解**为**多个短距离**纠缠分发 + **中间节点的纠缠交换**:</p>
+<pre><code class="">A ──(纠缠 1, 50 km)── R1 ──(纠缠 2, 50 km)── R2 ──(纠缠 3, 50 km)── B
+                ↓                              ↓
+                └──── (纠缠交换 1, Bell 测量) ────┘
+                                          ↓
+                                (A-R2 纠缠, 100 km)
+                                          ↓
+                └──── (纠缠交换 2, Bell 测量) ────┘
+                                          ↓
+                                (A-B 纠缠, 150 km)</code></pre>
+<p>**关键**: 每**一步**纠缠交换**不**需要**直接**测量**远距离 qubit, 只**本地**操作 + 经典通信。</p>
+<h3>26.4.3 量子中继器的核心组件</h3>
+<p>**组件 1: 纠缠光源**</p>
+<ul>
+  <li>**SPDC (Spontaneous Parametric Down-Conversion)**: 用**非线性**晶体把 1 个高频光子**劈裂**为 2 个纠缠光子 (纠缠光子对)</li>
+  <li>**量子点 (Quantum Dot)**: 半导体**纳米**结构, 受激**辐射**纠缠光子</li>
+  <li>**四波混频 (Four-Wave Mixing)**: 在光纤中产生纠缠光子对</li>
+</ul>
+<p>**组件 2: 量子存储器**</p>
+<p>量子中继器**不**是**瞬时**完成纠缠交换, 而需要**等待**多个纠缠光子**同时**到达中间节点。这需要**量子存储器**:</p>
+<table class="chapter-table">
+<thead><tr><th>物理平台</th><th>寿命</th><th>写入/读出效率</th><th>团队</th></tr></thead>
+<tbody>
+<tr><td>**单离子** (ch21)</td><td>**秒-分钟**</td><td>80-95%</td><td>Innsbruck, MIT</td></tr>
+<tr><td>**原子系综**</td><td>**毫秒-秒**</td><td>50-80%</td><td>中科大, Caltech</td></tr>
+<tr><td>**NV 色心** (ch23)</td><td>**毫秒**</td><td>10-30%</td><td>Delft</td></tr>
+<tr><td>**稀土离子**</td><td>**秒-小时**</td><td>30-70%</td><td>潘建伟 2024</td></tr>
+<tr><td>**超导 qubit** (ch20)</td><td>**微秒**</td><td>95%+</td><td>Google, IBM</td></tr>
+</tbody>
+</table>
+<p>**关键参数**: **寿命** (决定**等待**时间) + **效率** (决定**保真度**衰减速率) + **频率** (决定**接口**)。</p>
+<p>**组件 3: 纠缠交换 (Bell 测量)**</p>
+<p>中间节点对**两对**纠缠光子做**Bell 测量** → 创建**远距离**纠缠 (跟隐形传态相同, 26.3.5)。</p>
+<h3>26.4.4 纠缠纯化 (Entanglement Purification)</h3>
+<p>**问题**: 纠缠分发 + 纠缠交换**累积**错误 → 远距离纠缠**保真度**下降:</p>
+<table class="chapter-table">
+<thead><tr><th>跳数</th><th>保真度 (假设每跳 95%)</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>95%</td></tr>
+<tr><td>2</td><td>90.3%</td></tr>
+<tr><td>5</td><td>77.4%</td></tr>
+<tr><td>10</td><td>59.9% (低于 2/3 阈值)</td></tr>
+</tbody>
+</table>
+<p>**纠缠纯化** (Bennett 1996): 用**多对**低保真度纠缠 + **局部**操作 + **经典**通信 → **少量**高保真度纠缠。</p>
+<p>**代价**: 纠缠**消耗** ∝ (保真度提升)^(-2)。</p>
+<h3>26.4.5 实验里程碑</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>实验</th><th>团队 / 距离</th></tr></thead>
+<tbody>
+<tr><td>2001</td><td>量子中继器原理验证</td><td>Innsbruck (Briegel)</td></tr>
+<tr><td>2015</td><td>3 节点量子中继器</td><td>Innsbruck</td></tr>
+<tr><td>2019</td><td>4 节点纠缠网络</td><td>QuTech (Delft) 25 km</td></tr>
+<tr><td>2020</td><td>50 km 量子中继器</td><td>中科大 (潘建伟)</td></tr>
+<tr><td>2024</td><td>多节点卫星-地面中继</td><td>中科大 (潘建伟)</td></tr>
+</tbody>
+</table>
+<p>**当前瓶颈**: **量子存储器** (寿命 + 效率) 仍**不**够**成熟**, 距离**实用**量子中继器还有**距离**。</p>
+<hr>
+<h2 id="26-5-量子互联网的物理实现">26.5 量子互联网的物理实现</h2>
+<h3>26.5.1 光纤量子网络</h3>
+<p>**优势**:</p>
+<ul>
+  <li>跟**经典**光纤**兼容** (波分复用)</li>
+  <li>**稳定**, 受控环境</li>
+  <li>**便宜** (相对卫星)</li>
+</ul>
+<p>**劣势**:</p>
+<ul>
+  <li>**损耗** ∝ exp(−αr), 距离**限制** ~ 500 km (无中继)</li>
+  <li>**基础设施**受限于**地理**</li>
+</ul>
+<p>**代表**: 中国**京沪干线** (2000 km, 32 信任中继, 2017 开通), ID Quantique 商业网络 (瑞士日内瓦)。</p>
+<h3>26.5.2 卫星量子网络</h3>
+<p>**关键洞察**: 自由空间损耗 ∝ 1/r² (光纤 ∝ exp(−αr)), **远距离**卫星链路**损耗**显著**低于**光纤:</p>
+<table class="chapter-table">
+<thead><tr><th>距离</th><th>光纤损耗</th><th>自由空间损耗</th></tr></thead>
+<tbody>
+<tr><td>100 km</td><td>20 dB</td><td>~ 0.2 dB</td></tr>
+<tr><td>1000 km</td><td>200 dB</td><td>~ 20 dB</td></tr>
+<tr><td>10000 km</td><td>∞</td><td>~ 200 dB</td></tr>
+</tbody>
+</table>
+<p>**代表**: **墨子号** (Mozi, 2016 发射):</p>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>里程碑</th></tr></thead>
+<tbody>
+<tr><td>2016</td><td>发射</td></tr>
+<tr><td>2017</td><td>卫星-地面 BB84 QKD (千公里级)</td></tr>
+<tr><td>2018</td><td>**洲际 QKD** (中国-奥地利, 7600 km)</td></tr>
+<tr><td>2020</td><td>卫星-地面**隐形传态**</td></tr>
+<tr><td>2024</td><td>卫星-地面 MDI-QKD</td></tr>
+</tbody>
+</table>
+<p>**墨子号**的核心能力: **洲际**距离 QKD **唯一**可行方案。</p>
+<h3>26.5.3 混合网络: 光纤 + 卫星 + 中继器</h3>
+<p>**理想架构**:</p>
+<pre><code class="">城市内部 (光纤) ──── 城市间 (光纤+中继器) ──── 洲际 (卫星)
+     ↓                       ↓                       ↓
+  高速 + 低延迟          中距离 + 量子中继器       远距离 + 自由空间</code></pre>
+<p>**代表**: 量子互联网联盟 (QIA) 计划在 2026-2030 部署**全欧**混合量子互联网。</p>
+<h3>26.5.4 路线图对比</h3>
+<table class="chapter-table">
+<thead><tr><th>地区</th><th>计划</th><th>阶段</th><th>时间</th></tr></thead>
+<tbody>
+<tr><td>**欧盟 QIA**</td><td>全欧量子互联网</td><td>阶段 1 (4 节点) → 阶段 3</td><td>2024-2030</td></tr>
+<tr><td>**美国 NSF**</td><td>Quantum Internet Blueprint</td><td>校园 → 跨城 → 跨州</td><td>2020-2030+</td></tr>
+<tr><td>**中国**</td><td>京沪干线 + 墨子号 + 量子通信骨干网</td><td>国家骨干网</td><td>2017-2030+</td></tr>
+<tr><td>**日本**</td><td>量子互联网战略</td><td>2024-2035</td><td>2024-2035</td></tr>
+<tr><td>**英国**</td><td>UK Quantum Network</td><td>4 节点 Bristol-London</td><td>2024-2028</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="26-6-量子互联网的应用">26.6 量子互联网的应用</h2>
+<h3>26.6.1 应用 1: 量子安全通信 (QKD 加密)</h3>
+<p>**核心**: 用 QKD 产生**信息论安全**的密钥, 加密经典数据。</p>
+<p>**优势**:</p>
+<ul>
+  <li>**不可破解** (即使量子计算机也无法)</li>
+  <li>密钥**自动**更新</li>
+</ul>
+<p>**劣势**:</p>
+<ul>
+  <li>需要**专用硬件** (光纤 / 卫星)</li>
+  <li>距离限制 (~ 500 km 光纤)</li>
+  <li>**认证**问题 (经典认证仍依赖 PQC)</li>
+</ul>
+<p>**市场** (2024):</p>
+<ul>
+  <li>银行 (跨行转账)</li>
+  <li>政府 (外交 / 军事)</li>
+  <li>医疗 (病历隐私)</li>
+  <li>关键基础设施 (电网 / 通信)</li>
+</ul>
+<h3>26.6.2 应用 2: 分布式量子计算</h3>
+<p>**核心**: 多台**小**量子计算机**协同**解决**单一**大**量子计算机**无法**解决的问题。</p>
+<p>**资源估计**:</p>
+<ul>
+  <li>100 qubit × 100 台 = 10000 qubit 等效 (粗略估计)</li>
+  <li>**优势**: 100 qubit 量子计算机**当前**可行 (ch20-24), 但 10000 qubit **仍**困难</li>
+  <li>**挑战**: 跨设备**纠缠** (需要量子互联网)</li>
+</ul>
+<p>**实验**: 2022 IBM Quantum Network (多台超导量子计算机互联)。</p>
+<h3>26.6.3 应用 3: 盲量子计算 (Blind Quantum Computing)</h3>
+<p>**核心**: 客户端**不**知道服务器运算, 服务器**不**知道数据。</p>
+<p>**协议** (Broadbent-Fitzsimons-Kashefi 2009):</p>
+<p>1. 客户端**加密**量子态 (随机**盲**化)</p>
+<p>2. 服务器**运算** (但**不知道**计算**什么**)</p>
+<p>3. 服务器返回**结果**</p>
+<p>4. 客户端**解密** (得到**正确**结果)</p>
+<p>**应用**: 量子云计算 + 隐私保护 (医药 / 金融)。</p>
+<h3>26.6.4 应用 4: 量子时钟同步</h3>
+<p>**精度**: 比经典 GPS 同步精度**高 1000 倍** (基于纠缠)。</p>
+<p>**应用**:</p>
+<ul>
+  <li>基础物理 (相对论验证)</li>
+  <li>通信网络 (5G/6G 基站同步)</li>
+  <li>金融 (高频交易时戳)</li>
+</ul>
+<h3>26.6.5 应用 5: 量子传感网络</h3>
+<p>**核心**: 用**多**个纠缠**传感器** (原子干涉仪 / NV 色心) 组成网络 → 超分辨率成像 + 大尺度干涉测量。</p>
+<p>**应用**:</p>
+<ul>
+  <li>医学成像</li>
+  <li>地质勘探</li>
+  <li>引力波探测 (LIGO 增强)</li>
+</ul>
+<h3>26.6.6 应用 6: 量子数字签名</h3>
+<p>**核心**: 用**纠缠** + **量子**力学 实现**不可伪造**的数字签名。</p>
+<p>**优势**: 即使量子计算机**也**无法伪造 (因为签名基于**量子**不可克隆)。</p>
+<hr>
+<h2 id="26-7-量子互联网的挑战">26.7 量子互联网的挑战</h2>
+<h3>26.7.1 挑战 1: 纠缠保真度随距离衰减</h3>
+<p>**问题**: 量子中继器**分段**纠缠分发 + 纠缠交换, 每一步**累积**错误 → 远距离纠缠**保真度**下降。</p>
+<p>**解决方案**:</p>
+<ul>
+  <li>**纠缠纯化** (26.4.4): 用**多对**低保真度纠缠 + 局部操作 → **少量**高保真度纠缠</li>
+  <li>**纠错码** (ch17 衔接): **逻辑**纠缠编码 + 容错纠缠交换</li>
+</ul>
+<h3>26.7.2 挑战 2: 量子存储器不成熟</h3>
+<table class="chapter-table">
+<thead><tr><th>物理平台</th><th>寿命</th><th>实用化</th></tr></thead>
+<tbody>
+<tr><td>单离子</td><td>秒-分钟</td><td>✅ 已用</td></tr>
+<tr><td>原子系综</td><td>毫秒-秒</td><td>⚠️ 实验</td></tr>
+<tr><td>NV 色心</td><td>毫秒</td><td>⚠️ 实验</td></tr>
+<tr><td>稀土离子</td><td>秒-小时</td><td>⚠️ 实验</td></tr>
+<tr><td>超导 qubit</td><td>微秒</td><td>❌ **太短**</td></tr>
+</tbody>
+</table>
+<p>**关键问题**:</p>
+<ul>
+  <li>**寿命**: 量子中继需要**秒级**存储器 (等待纠缠交换)</li>
+  <li>**效率**: 写入/读出**效率**需**> 80%** 才能**实用**</li>
+  <li>**频率**: 存储器**频率**需**匹配**通信波长 (1550 nm) → **频率转换**</li>
+</ul>
+<h3>26.7.3 挑战 3: 频率转换</h3>
+<p>**问题**: 量子存储器 (原子/离子) 通常在**可见光** (e.g., 700 nm), 而**通信**波长是 **1550 nm** (光纤低损耗窗口)。</p>
+<p>**解决方案**: **量子频率转换器** (Quantum Frequency Converter):</p>
+<ul>
+  <li>用**非线性**晶体 (PPLN) + 强泵浦光 → 把 700 nm 光子**转换**为 1550 nm 光子</li>
+  <li>**保持**量子态 (e.g., 偏振 + 时间)</li>
+  <li>**效率**: 当前 ~ 50-70%, **目标** > 90%</li>
+</ul>
+<h3>26.7.4 挑战 4: 量子路由</h3>
+<p>**问题**: 经典互联网的**路由算法** (OSPF, BGP) **无法**直接**移植**到量子互联网:</p>
+<table class="chapter-table">
+<thead><tr><th>经典路由</th><th>量子路由挑战</th></tr></thead>
+<tbody>
+<tr><td>每个包**独立**路由</td><td>量子包**不可复制**, **纠缠**作为**资源**</td></tr>
+<tr><td>路由表**可**动态更新</td><td>量子路由表**不**可**直接测量**</td></tr>
+<tr><td>路由**确定性**</td><td>量子纠缠**概率性**分发</td></tr>
+</tbody>
+</table>
+<p>**解决方案**:</p>
+<ul>
+  <li>**纠缠路由表** (Entanglement Routing Table): **经典**记录 + **量子**纠缠预分配</li>
+  <li>**混合路由**: 经典 Internet (控制平面) + 量子信道 (数据平面)</li>
+  <li>**QIA 协议栈**: 物理层 / 链路层 / 网络层 / 应用层</li>
+</ul>
+<h3>26.7.5 挑战 5: 标准化 + 互操作性</h3>
+<p>**当前**:</p>
+<ul>
+  <li>**IETF QIRG** (Quantum Internet Research Group): 起草量子互联网 RFC</li>
+  <li>**ITU-T FG-QIT4N** (Focus Group on Quantum Information Technology): 标准化量子信息网络</li>
+  <li>**IEEE P7130** (Quantum Computing Definitions): 术语标准化</li>
+</ul>
+<p>**核心问题**:</p>
+<ul>
+  <li>**协议不统一**: 各厂商 (QuTech, IBM, Google) **协议**不**兼容**</li>
+  <li>**互操作性**: 不同平台**难以**互联</li>
+  <li>**测试平台**: 缺少**国际**统一的测试床</li>
+</ul>
+<h3>26.7.6 挑战 6: 与经典互联网共存</h3>
+<p>**问题**: 量子信道**易受**经典信道**干扰** (散射 + 串扰)。</p>
+<p>**解决方案**:</p>
+<ul>
+  <li>**波分复用** (WDM): 经典 1310 nm + 量子 1550 nm</li>
+  <li>**暗光纤**: 专用光纤 (无经典信号)</li>
+  <li>**空间隔离**: 量子信道跟经典信道**物理隔离**</li>
+</ul>
+<h3>26.7.7 挑战 7: 距离 vs 实用性</h3>
+<table class="chapter-table">
+<thead><tr><th>距离</th><th>方案</th><th>当前状态</th></tr></thead>
+<tbody>
+<tr><td>0-100 km</td><td>光纤 QKD</td><td>✅ 商用 (id Quantique)</td></tr>
+<tr><td>100-500 km</td><td>光纤 + 中继器 (MDI/TF-QKD)</td><td>⚠️ 实验</td></tr>
+<tr><td>500-2000 km</td><td>卫星 QKD</td><td>✅ 墨子号 2017</td></tr>
+<tr><td>2000+ km</td><td>卫星 + 洲际</td><td>✅ 墨子号 2018 (7600 km)</td></tr>
+<tr><td>真正**全球**</td><td>卫星星座 + 地面站</td><td>❌ **未**实现</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="26-8-量子互联网-vs-后量子密码学-pqc">26.8 量子互联网 vs 后量子密码学 (PQC)</h2>
+<h3>26.8.1 核心问题: 需要 QKD 还是 PQC?</h3>
+<p>这个问题**没有**简单答案, 取决于**应用场景**:</p>
+<table class="chapter-table">
+<thead><tr><th>维度</th><th>QKD (量子密钥分发)</th><th>PQC (后量子密码学)</th></tr></thead>
+<tbody>
+<tr><td>**安全性**</td><td>**信息论安全** (物理定律)</td><td>**计算安全** (数学难题)</td></tr>
+<tr><td>**硬件**</td><td>需要**专用** (光纤 / 卫星)</td><td>**纯软件** (兼容现有)</td></tr>
+<tr><td>**距离**</td><td>~ 500 km 光纤, **洲际**卫星</td><td>**无限** (软件)</td></tr>
+<tr><td>**速度**</td><td>**慢** (kbps-Mbps)</td><td>**快** (Gbps)</td></tr>
+<tr><td>**认证**</td><td>**仍**需经典 (依赖 PQC)</td><td>**纯**数学</td></tr>
+<tr><td>**成熟度**</td><td>实验 + 部分商用</td><td>NIST 2024 标准化</td></tr>
+<tr><td>**可扩展**</td><td>难 (基础设施)</td><td>**易** (软件升级)</td></tr>
+<tr><td>**长期**</td><td>**永**安全</td><td>依赖数学**未**被破解</td></tr>
+</tbody>
+</table>
+<h3>26.8.2 QKD 优势</h3>
+<p>**优势 1: 信息论安全**</p>
+<p>BB84 的安全性基于**量子力学** (不可克隆 + 测量塌缩), **不**依赖**计算复杂性**。即使量子计算机**也**无法**破解** (因为**不存在**破解算法, **不是**算法**难**)。</p>
+<p>**优势 2: 未来抗量子**</p>
+<p>Shor 算法可以破解 RSA / ECC (ch11), 但**无法**破解 QKD (因为 QKD **不依赖**任何数学难题)。</p>
+<p>**优势 3: 实时检测窃听**</p>
+<p>任何窃听都**扰动**量子态 → Alice 和 Bob **实时**检测。</p>
+<h3>26.8.3 QKD 劣势</h3>
+<p>**劣势 1: 硬件成本高**</p>
+<p>需要**专用**基础设施:</p>
+<ul>
+  <li>单光子探测器 ($10K-$100K)</li>
+  <li>纠缠光源 ($50K+)</li>
+  <li>暗光纤 (租用或自建)</li>
+  <li>卫星 ($1B+)</li>
+</ul>
+<p>**劣势 2: 距离限制**</p>
+<p>光纤 QKD **距离限制**在 ~ 500 km (无中继)。即使 TF-QKD + 中继器, **全球**覆盖**仍**困难。</p>
+<p>**劣势 3: 认证问题**</p>
+<p>QKD 提供**加密**, 但**不**提供**认证**。Alice 必须**确认** Bob **真**是 Bob → **仍**需要**经典**认证 (依赖 PQC / PKI)。</p>
+<p>**劣势 4: 侧信道攻击**</p>
+<p>实际 QKD 系统有**侧信道**: 探测器效率不均匀, 时序攻击, 强光致盲攻击等。MDI-QKD (26.2.3) 部分解决, 但**仍**未**完全**消除。</p>
+<h3>26.8.4 PQC 优势</h3>
+<p>**优势 1: 兼容现有互联网**</p>
+<p>PQC 是**纯软件**, 跟**现有** TCP/IP 协议**完全兼容**, 不需要**新**基础设施。</p>
+<p>**优势 2: 无限距离**</p>
+<p>软件加密, **无限**距离, **无限**速度 (Gbps)。</p>
+<p>**优势 3: 标准化成熟**</p>
+<p>NIST 2024 已**正式**标准化 4 个算法 (ch11.8):</p>
+<table class="chapter-table">
+<thead><tr><th>算法</th><th>类型</th><th>用途</th></tr></thead>
+<tbody>
+<tr><td>**ML-KEM** (Kyber)</td><td>格密码 (LWE)</td><td>密钥封装</td></tr>
+<tr><td>**ML-DSA** (Dilithium)</td><td>格密码</td><td>数字签名</td></tr>
+<tr><td>**FALCON**</td><td>格密码 (NTRU)</td><td>紧凑签名</td></tr>
+<tr><td>**SLH-DSA** (SPHINCS+)</td><td>哈希</td><td>数字签名</td></tr>
+</tbody>
+</table>
+<h3>26.8.5 PQC 劣势</h3>
+<p>**劣势 1: 计算安全**</p>
+<p>PQC 基于**数学难题** (格密码 LWE 等), 假设**量子计算机** + 算法**不够**强大 → **不**是**绝对**安全。</p>
+<p>**劣势 2: 数学未长期验证**</p>
+<p>格密码 (LWE) **只**有 ~ 20 年历史 (vs RSA 50 年), **未**经过**长期**密码学验证。</p>
+<p>**劣势 3: 实现复杂性**</p>
+<p>PQC 算法**复杂** (格密码比 RSA 复杂 10x+), 实现**容易出错**。</p>
+<h3>26.8.6 共识: 混合部署</h3>
+<p>**业界共识**: **混合**部署 (QKD + PQC):</p>
+<ul>
+  <li>**关键基础设施** (银行 / 政府 / 军事): QKD (信息论安全)</li>
+  <li>**大众应用** (Web / Email): PQC (兼容现有)</li>
+  <li>**认证**: **仍**依赖 PQC (QKD 不提供认证)</li>
+</ul>
+<p>**NIST 2024 建议**:</p>
+<ul>
+  <li>**短期** (2024-2030): **优先** PQC 部署 (低成本, 高可扩展)</li>
+  <li>**中期** (2030-2040): **混合** QKD + PQC (高安全场景)</li>
+  <li>**长期** (2040+): **看**技术发展 (QKD 成本下降 + 距离延长)</li>
+</ul>
+<h3>26.8.7 PQC 跟量子互联网的关系</h3>
+<p>**关键**: PQC **不**依赖**量子硬件**, 是**纯软件**方案, 跟量子互联网**互补**而不是**竞争**:</p>
+<ul>
+  <li>**PQC 保护** 经典数据 (文件 / 通信)</li>
+  <li>**量子互联网** 提供 **量子资源** (纠缠 / 隐形传态)</li>
+</ul>
+<p>**未来**: **量子互联网** 提供**量子安全** (QKD), **PQC** 提供**后量子**安全, **两者并存**。</p>
+<hr>
+<h2 id="26-9-总结-第六部分-day-2">26.9 总结 + 第六部分 Day 2</h2>
+<h3>26.9.1 核心要点</h3>
+<p>本章的核心结论:</p>
+<p>1. **量子互联网 ≠ 经典互联网的"量子版"** — 量子互联网**分发纠缠**, 经典互联网**复制比特**, 根本范式不同</p>
+<p>2. **QKD 已商用** (中国京沪干线, 墨子号) — 但**距离**限制 (~ 500 km 光纤, 洲际需卫星)</p>
+<p>3. **量子中继器是关键技术** — 跨越距离的核心, 但**量子存储器**仍**不**够**成熟**</p>
+<p>4. **量子互联网是阶段式发展** — Wehner 3 (4) 阶段路线 (Trusted → Entanglement → Fault-tolerant)</p>
+<p>5. **QKD vs PQC: 互补而非竞争** — 关键基础设施用 QKD, 大众应用用 PQC, **混合**部署</p>
+<h3>26.9.2 ch26-ch28 路线图</h3>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>衔接</th></tr></thead>
+<tbody>
+<tr><td>ch25 (昨天)</td><td>量子优势</td><td>验证"超越经典"</td></tr>
+<tr><td>**ch26** (本章)</td><td>**量子互联网**</td><td>**多台量子设备互联 + 量子安全通信**</td></tr>
+<tr><td>ch27 (明天)</td><td>量子 AI</td><td>量子计算 + 机器学习 = 量子神经网络 + VQE 化学</td></tr>
+<tr><td>ch28 (后天)</td><td>未来展望</td><td>5 平台 + 容错 + 量子互联网 + 量子 AI 综合路线图</td></tr>
+</tbody>
+</table>
+<h3>26.9.3 5 个核心人物</h3>
+<table class="chapter-table">
+<thead><tr><th>人物</th><th>贡献</th><th>章节</th></tr></thead>
+<tbody>
+<tr><td>**Charles Bennett** (IBM)</td><td>BB84 (1984) + 量子隐形传态 (1993)</td><td>26.2.1, 26.3</td></tr>
+<tr><td>**Artur Ekert** (Oxford)</td><td>E91 (1991) 纠缠 QKD</td><td>26.2.2</td></tr>
+<tr><td>**Anton Zeilinger** (Innsbruck, 维也纳)</td><td>1997 隐形传态实验 + 2012 100 km</td><td>26.3.4</td></tr>
+<tr><td>**潘建伟** (中科大)</td><td>墨子号 (2016) + 京沪干线 (2017) + 7600 km 洲际 QKD (2018)</td><td>26.5.2</td></tr>
+<tr><td>**Stephanie Wehner** (QuTech, Delft)</td><td>QIA 路线图 (2018) + 量子互联网协议栈</td><td>26.1.1, 26.5.4</td></tr>
+</tbody>
+</table>
+<h3>26.9.4 4 道思考题</h3>
+<p>**思考题 1**: 为什么 QKD **不**能**完全**取代经典加密 (例如 RSA)?</p>
+<p>**答案**: QKD **提供加密**但**不提供认证**。Alice 必须**确认** Bob **真**是 Bob, 这**仍**需要经典认证 (依赖 PKI / PQC)。此外, QKD 需要**专用硬件** (光纤 / 卫星), **距离限制** (~ 500 km 光纤), **速度**慢 (kbps-Mbps vs Gbps)。**结论**: QKD **补充**而不是**取代**经典加密。</p>
+<p>**思考题 2**: 量子中继器**为什么不能**直接放大量子信号?</p>
+<p>**答案**: 不可克隆定理 (ch6.7) 禁止**完美复制**未知量子态。经典放大器**测量**信号 → 重新**放大** → 重新**编码**, 但**测量**会**塌缩**量子态 (ch5.1) → 失去量子信息。量子中继器**不**是**放大**信号, 而是**创建**新纠缠对 + **纠缠交换** → 把**长距离**纠缠**分解**为**短距离**纠缠。</p>
+<p>**思考题 3**: 卫星 QKD **为什么**能**超过**光纤 QKD?</p>
+<p>**答案**: 自由空间损耗 ∝ 1/r² (光纤 ∝ exp(−αr)), **远距离**卫星链路**损耗**显著**低于**光纤 (e.g., 7600 km 卫星损耗 ~ 200 dB vs 光纤**无穷**)。此外, 卫星**无中继**直达远距离地面站, 绕过了光纤**多跳**问题。**代表**: 墨子号 2018 洲际 QKD (7600 km, 中国-奥地利)。</p>
+<p>**思考题 4**: 量子互联网**距离**大规模**商用**还有多远?</p>
+<p>**答案**: 取决于**技术成熟度**:</p>
+<ul>
+  <li>**QKD 加密** (阶段 0): **已商用**, 但**距离**+ **成本**限制</li>
+  <li>**纠缠分发** (阶段 1): 实验阶段 (QuTech 4 节点), **5 年**内小规模商用</li>
+  <li>**量子中继器** (阶段 2): **早期实验** (50 km), **10-15 年**内成熟</li>
+  <li>**容错量子互联网** (阶段 3): **20-30 年** (2030-2055), 跟容错量子计算同步</li>
+</ul>
+<h3>26.9.5 12 篇推荐阅读 (1984-2025)</h3>
+<table class="chapter-table">
+<thead><tr><th>年份</th><th>文献</th><th>评价</th></tr></thead>
+<tbody>
+<tr><td>**1984**</td><td>Bennett-Brassard, *Proc. IEEE*</td><td>**BB84** QKD 协议</td></tr>
+<tr><td>**1991**</td><td>Ekert, *PRL* 67, 661</td><td>**E91** 纠缠 QKD</td></tr>
+<tr><td>**1993**</td><td>Bennett *et al.*, *PRL* 70, 1895</td><td>**量子隐形传态**协议</td></tr>
+<tr><td>**1996**</td><td>Bennett *et al.*, *PRL* 76, 722</td><td>**纠缠纯化** (BBPSSW)</td></tr>
+<tr><td>**1998**</td><td>Briegel *et al.*, *PRL* 81, 5932</td><td>**量子中继器**概念</td></tr>
+<tr><td>**1997**</td><td>Bouwmeester *et al.*, *Nature* 390, 575</td><td>**第一个**隐形传态实验 (Zeilinger)</td></tr>
+<tr><td>**2003**</td><td>Elliott *et al.*</td><td>**DARPA** QKD 网络</td></tr>
+<tr><td>**2009**</td><td>Stucki *et al.*</td><td>**SECOQC** 维也纳网络</td></tr>
+<tr><td>**2012**</td><td>Lo-Curty-Qi, *PRL* 108, 130503</td><td>**MDI-QKD**</td></tr>
+<tr><td>**2017**</td><td>Liao *et al.* (潘建伟), *Nature* 549, 43</td><td>**墨子号**卫星-地面 QKD</td></tr>
+<tr><td>**2018**</td><td>Lucamarini *et al.*, *Nature* 557, 400</td><td>**TF-QKD** (双场 QKD)</td></tr>
+<tr><td>**2018**</td><td>Wehner (QIA 白皮书)</td><td>**量子互联网联盟** 3 阶段路线</td></tr>
+<tr><td>**2018**</td><td>Liao *et al.* (潘建伟), *PRL* 120, 030501</td><td>**洲际 QKD** 7600 km</td></tr>
+<tr><td>**2024**</td><td>Pompili *et al.* (QuTech), *Science*</td><td>**Delft 4 节点**量子网络</td></tr>
+<tr><td>**2025**</td><td>Wehner 综述, *Nature Physics*</td><td>量子互联网 7 年回顾</td></tr>
+</tbody>
+</table>
+<h3>26.9.6 📋 概念速查表 (25 行)</h3>
+<table class="chapter-table">
+<thead><tr><th>概念</th><th>公式 / 定义</th><th>节</th></tr></thead>
+<tbody>
+<tr><td>**BB84 协议**</td><td>Bennett-Brassard 1984, 4 态 QKD</td><td>26.2.1</td></tr>
+<tr><td>**E91 协议**</td><td>Ekert 1991, 纠缠 QKD</td><td>26.2.2</td></tr>
+<tr><td>**MDI-QKD**</td><td>Lo-Curty-Qi 2012, 测量设备无关 QKD</td><td>26.2.3</td></tr>
+<tr><td>**TF-QKD**</td><td>Lucamarini 2018, 双场 QKD</td><td>26.2.4</td></tr>
+<tr><td>**量子隐形传态**</td><td>Bennett 1993, Bell 测量 + 经典通信</td><td>26.3</td></tr>
+<tr><td>**量子中继器**</td><td>Briegel 1998, 分段纠缠交换</td><td>26.4</td></tr>
+<tr><td>**纠缠交换**</td><td>两对纠缠 → 远距离纠缠</td><td>26.3.5</td></tr>
+<tr><td>**纠缠纯化**</td><td>Bennett 1996, 多对低保真 → 少对高保真</td><td>26.4.4</td></tr>
+<tr><td>**QKD 距离限制**</td><td>光纤 ~ 500 km (无中继)</td><td>26.4.1</td></tr>
+<tr><td>**光纤损耗**</td><td>0.2 dB/km (1550 nm)</td><td>26.4.1</td></tr>
+<tr><td>**自由空间损耗**</td><td>∝ 1/r² (卫星)</td><td>26.5.2</td></tr>
+<tr><td>**墨子号 (Mozi)**</td><td>潘建伟 2016 发射, 2018 洲际 7600 km</td><td>26.5.2</td></tr>
+<tr><td>**Wehner 3 阶段**</td><td>Trusted → Entanglement → Fault-tolerant</td><td>26.1.1</td></tr>
+<tr><td>**阶段 0**</td><td>Trusted-repeater, 已商用</td><td>26.1.2</td></tr>
+<tr><td>**阶段 1**</td><td>Prepare-and-measure, 已实验</td><td>26.1.3</td></tr>
+<tr><td>**阶段 2**</td><td>Entanglement-based, 早期实验</td><td>26.1.4</td></tr>
+<tr><td>**阶段 3**</td><td>Fault-tolerant, 未来</td><td>26.1.5</td></tr>
+<tr><td>**量子存储器**</td><td>寿命: ms-s, 写入/读出效率: 50-95%</td><td>26.4.3</td></tr>
+<tr><td>**量子频率转换**</td><td>700 nm → 1550 nm, PPLN</td><td>26.7.3</td></tr>
+<tr><td>**分布式量子计算**</td><td>多台量子计算机协同</td><td>26.6.2</td></tr>
+<tr><td>**盲量子计算**</td><td>Broadbent-Fitzsimons-Kashefi 2009</td><td>26.6.3</td></tr>
+<tr><td>**量子时钟同步**</td><td>比经典 GPS 高 1000 倍</td><td>26.6.4</td></tr>
+<tr><td>**QKD vs PQC**</td><td>互补: QKD 信息论安全 + PQC 计算安全</td><td>26.8</td></tr>
+<tr><td>**NIST 2024 PQC 标准**</td><td>ML-KEM + ML-DSA + FALCON + SLH-DSA</td><td>26.8.4</td></tr>
+<tr><td>**IETF QIRG**</td><td>Quantum Internet Research Group, 协议标准化</td><td>26.7.5</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="26-a-附录-a-bb84-严格安全性证明-信息论">26.A 附录 A: BB84 严格安全性证明 (信息论)</h2>
+<h3>26.A.1 Shor-Preskill 证明 (2000)</h3>
+<p>**目标**: 严格证明 BB84 协议**信息论安全**。</p>
+<p>**步骤 1**: 简化 BB84 到**纠缠等价协议** (Shor-Preskill 2000):</p>
+<p>把 BB84 视为**纠缠分发** + **测量**: Alice **制备**纠缠对 $|\Phi^+\rangle$ → 把 1 qubit **发送给** Bob → Alice **测量**她的 qubit (等效于**基矢**选择)。</p>
+<p>**步骤 2**: 把**窃听**建模为 Eve 对 Alice-Bob 信道的**酉操作** + **辅助**系统:</p>
+<p>$$|\Phi^+\rangle_{AB} \to U_{Eve} |\Phi^+\rangle_{AB} |0\rangle_E$$</p>
+<p>**步骤 3**: 计算**互信息** $I(A:B)$ 和 $I(A:E)$:</p>
+<ul>
+  <li>**正确**率 $\to 1$ 当 $I(A:B) > I(A:E)$ (Alice-Bob 互信息 > Alice-Eve 互信息)</li>
+  <li>**隐私放大**后 Eve 的信息 $\to 0$ 渐近</li>
+</ul>
+<p>**结论**: BB84 协议**信息论安全**, 即使 Eve **有无限**量子能力 (只是**不能**违反量子力学)。</p>
+<h3>26.A.2 有限密钥分析 (Tomamichel 2012)</h3>
+<p>**实际** BB84 有**有限**密钥 (不是渐近), 需要**有限**密钥分析:</p>
+<p>**步骤**: 用**平滑**最小熵 (Smooth Min-Entropy) 计算**安全**密钥长度:</p>
+<p>$$\ell = H_{\min}^{\epsilon}(A|B^n E) - \text{leakage}_{EC} - 2 \log(1/\epsilon)$$</p>
+<p>其中:</p>
+<ul>
+  <li>$H_{\min}^{\epsilon}$ = 平滑最小熵 (考虑**有限**长度)</li>
+  <li>$\text{leakage}_{EC}$ = 纠错泄露</li>
+  <li>$\epsilon$ = 安全参数 (e.g., $10^{-10}$)</li>
+</ul>
+<p>**结论**: 即使**有限**密钥, BB84 **仍**信息论安全, 但密钥长度**略**低于**渐近**值。</p>
+<h3>26.A.3 MDI-QKD 安全性 (Lo-Curty-Qi 2012)</h3>
+<p>**关键**: MDI-QKD 的安全性**不**依赖**探测器**可信, 因为**测量**在**中间**节点 Charlie:</p>
+<p>**简化**: MDI-QKD = **时间反演** EPR 协议, Alice-Bob 各自 BB84 → Charlie **干涉测量** → Alice-Bob 通过**经典**通信**关联**。</p>
+<p>**安全性**: 即使 Charlie **完全**恶意, 安全性**仍**等价于 BB84。</p>
+<hr>
+<h2 id="26-b-附录-b-量子中继器数学-纠缠交换-纠缠纯化">26.B 附录 B: 量子中继器数学 (纠缠交换 + 纠缠纯化)</h2>
+<h3>26.B.1 纠缠交换的数学描述</h3>
+<p>**输入**:</p>
+<ul>
+  <li>Alice-R1 纠缠对: $|\Phi^+\rangle_{AR_1}$</li>
+  <li>R1-Bob 纠缠对: $|\Phi^+\rangle_{R_1B}$</li>
+</ul>
+<p>**R1 操作**: Bell 测量 (4 个 Bell 态之一):</p>
+<p>$$|\Phi^+\rangle_{AR_1} \otimes |\Phi^+\rangle_{R_1B} = \frac{1}{2} \sum_{i,j=0}^{1} |ij\rangle_{AR_1} |\Phi^{ij}\rangle_{R_1B}$$</p>
+<p>其中 $|\Phi^{ij}\rangle = (X^i Z^j \otimes I)|\Phi^+\rangle$ 是**4**个 Bell 态之一。</p>
+<p>**结果**: 根据测量结果, R1 通过**经典**通信告诉 Alice 和 Bob 做**相应**幺正修正 → **创建** Alice-Bob 纠缠 (远距离)。</p>
+<h3>26.B.2 纠缠保真度的累积</h3>
+<p>**假设**每跳纠缠分发**保真度** $F$ (e.g., $F = 95\%$):</p>
+<p>**1 跳** (无中继): $F_1 = F$</p>
+<p>**2 跳** (1 个中继): $F_2 = F^2 + \frac{(1-F)^2}{3}$</p>
+<p>**N 跳**: $F_N \approx \frac{1}{4} + \frac{3}{4} (F')^N$ 其中 $F' = F \cdot \text{(Bell 测量保真度)}$</p>
+<p>**典型值** (假设每跳 $F = 95\%$):</p>
+<table class="chapter-table">
+<thead><tr><th>跳数</th><th>$F_N$</th><th>实用?</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>95%</td><td>✅</td></tr>
+<tr><td>5</td><td>81%</td><td>⚠️ 勉强</td></tr>
+<tr><td>10</td><td>67%</td><td>❌ 低于 2/3 阈值</td></tr>
+</tbody>
+</table>
+<h3>26.B.3 纠缠纯化的数学 (BBPSSW 1996)</h3>
+<p>**输入**: $N$ 对纠缠, 每对**保真度** $F < 1$。</p>
+<p>**操作**: **局部** CNOT + **测量** + **经典**通信 → 保留**部分**高保真度对:</p>
+<p>$$F' = \frac{F^2 + (1-F)^2/9}{F^2 + 2F(1-F)/3 + 5(1-F)^2/9}$$</p>
+<p>**典型值** (假设 $F = 0.8$): $F' = 0.91$ (提升 11%)。</p>
+<p>**代价**: 纠缠**消耗** ∝ $(F \text{ 到 } F')^{-2}$, 即 $F' = 0.99$ 需要**消耗** $N \approx 100$ 对。</p>
+<hr>
+<h2 id="26-c-附录-c-量子互联网标准化进展">26.C 附录 C: 量子互联网标准化进展</h2>
+<h3>26.C.1 IETF QIRG (Quantum Internet Research Group)</h3>
+<p>**成立**: 2018</p>
+<p>**目标**: 起草量子互联网**协议**标准 (类似 TCP/IP)。</p>
+<p>**当前文档**:</p>
+<ul>
+  <li>**draft-irtf-qirg-principles**: 量子互联网**架构原则**</li>
+  <li>**draft-irtf-qirg-quantum-internet-use-cases**: **应用场景**</li>
+  <li>**draft-irtf-qirg-resource-estimation**: **资源**估计</li>
+</ul>
+<p>**核心概念**:</p>
+<ul>
+  <li>**量子链路** (Quantum Link): 物理**点对点**纠缠</li>
+  <li>**量子网络** (Quantum Network): 多链路 + 中继</li>
+  <li>**纠缠资源** (Entanglement Resource): 分配**协议**</li>
+</ul>
+<h3>26.C.2 ITU-T FG-QIT4N (2024-2025)</h3>
+<p>**成立**: 2024 (ITU-T Focus Group)</p>
+<p>**目标**: 量子信息网络 (QIT4N) **标准化**。</p>
+<p>**核心**:</p>
+<ul>
+  <li>**术语**: 量子比特, 量子门, 量子网络</li>
+  <li>**参考架构**: 物理层 / 链路层 / 网络层 / 应用层</li>
+  <li>**互操作性**: 不同厂商**设备**互联</li>
+</ul>
+<h3>26.C.3 IEEE P7130 (Quantum Computing Definitions)</h3>
+<p>**目标**: 量子计算**术语**标准化 (跟 ch6-qubit 衔接)。</p>
+<p>**当前状态**: **草案**阶段 (2024)。</p>
+<h3>26.C.4 标准化挑战</h3>
+<table class="chapter-table">
+<thead><tr><th>挑战</th><th>现状</th></tr></thead>
+<tbody>
+<tr><td>**协议不统一**</td><td>各厂商 (QuTech, IBM, Google) 协议**不兼容**</td></tr>
+<tr><td>**互操作性**</td><td>不同平台**难以**互联</td></tr>
+<tr><td>**测试床**</td><td>缺少**国际**统一的测试床</td></tr>
+<tr><td>**安全标准**</td><td>QKD 安全标准**仍**在制定</td></tr>
+</tbody>
+</table>
+<hr>
+<h2 id="26-d-参考文献与进一步阅读">26.D 参考文献与进一步阅读</h2>
+<h3>26.D.1 经典文献</h3>
+<p>1. Bennett, C. H., & Brassard, G. (1984). Quantum cryptography: Public key distribution and coin tossing. *Proc. IEEE Int. Conf. Computers, Systems and Signal Processing*.</p>
+<p>2. Ekert, A. K. (1991). Quantum cryptography based on Bell's theorem. *Physical Review Letters*, 67(6), 661.</p>
+<p>3. Bennett, C. H., *et al.* (1993). Teleporting an unknown quantum state. *Physical Review Letters*, 70(13), 1895.</p>
+<p>4. Briegel, H. J., *et al.* (1998). Quantum repeaters: The role of imperfect local operations in quantum communication. *Physical Review Letters*, 81(26), 5932.</p>
+<h3>26.D.2 实验里程碑</h3>
+<p>5. Bouwmeester, D., *et al.* (1997). Experimental quantum teleportation. *Nature*, 390(6660), 575.</p>
+<p>6. Liao, S.-K., *et al.* (2017). Satellite-to-ground quantum key distribution. *Nature*, 549(7670), 43.</p>
+<p>7. Liao, S.-K., *et al.* (2018). Satellite-relayed intercontinental quantum network. *Physical Review Letters*, 120(3), 030501.</p>
+<p>8. Lucamarini, M., *et al.* (2018). Overcoming the rate-distance limit of quantum key distribution without quantum repeaters. *Nature*, 557(7705), 400.</p>
+<h3>26.D.3 综述与展望</h3>
+<p>9. Wehner, S., *et al.* (2018). Quantum internet: A vision for the road ahead. *Science*, 362(6412), eaam9288.</p>
+<p>10. Pompili, M., *et al.* (2021). Realization of a multinode quantum network of remote solid-state qubits. *Science*, 372(6539), 259.</p>
+<p>11. Hermans, S. L. N., *et al.* (2022). Qubit teleportation between non-neighbouring nodes in a quantum network. *Nature*, 605(7911), 663.</p>
+<p>12. Wehner, S. (2025). The quantum internet: 7 years of progress. *Nature Physics* (综述).</p>
+<h3>26.D.4 PQC 标准</h3>
+<p>13. NIST (2024). FIPS 203 (ML-KEM), FIPS 204 (ML-DSA), FIPS 205 (SLH-DSA). 后量子密码学标准.</p>
+<hr>
+<p>**本章结束**。下一章 ch27 将讨论**量子计算与 AI 的融合**, 包括量子机器学习 (ch14 衔接) + VQE 化学 (ch13 衔接) + 量子神经网络 + 量子优势对 AI 的启示。</p>
+<hr>
+<blockquote><p>**总字数**: ~ 7,200 中文字 **公式数**: ~ 14 display + 140 inline **图表数**: 3 张 inline SVG (量子互联网分层架构 / 量子中继器原理 / 墨子号卫星星座) **章节数**: 10 主体 + 4 附录 **子节数**: 50+ **铺路**: ch27 量子 AI, ch28 未来展望</p></blockquote>
+
+<h3>图 26.1: 量子互联网分层架构</h3>
+<svg viewBox="0 0 700 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="量子互联网分层架构">
+<rect width="700" height="380" fill="#0a0e27" rx="12"/>
+<text x="350" y="28" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">量子互联网协议栈 (QIA 2018)</text>
+
+<g transform="translate(80, 60)">
+  <rect width="540" height="55" fill="#1a2050" stroke="#ff6b6b" stroke-width="2" rx="6"/>
+  <text x="20" y="22" fill="#ff6b6b" font-size="13" font-weight="700">应用层 (Application Layer)</text>
+  <text x="20" y="40" fill="#a3b8d4" font-size="11">QKD 加密 | 分布式量子计算 | 盲量子计算 | 量子时钟同步 | 量子传感网络</text>
+
+  <rect y="65" width="540" height="55" fill="#1a2050" stroke="#ffb86c" stroke-width="2" rx="6"/>
+  <text x="20" y="87" fill="#ffb86c" font-size="13" font-weight="700">网络层 (Network Layer)</text>
+  <text x="20" y="105" fill="#a3b8d4" font-size="11">量子纠缠路由 | 纠缠交换协议 | 拓扑发现 | 拥塞控制</text>
+
+  <rect y="130" width="540" height="55" fill="#1a2050" stroke="#7df9ff" stroke-width="2" rx="6"/>
+  <text x="20" y="152" fill="#7df9ff" font-size="13" font-weight="700">链路层 (Link Layer)</text>
+  <text x="20" y="170" fill="#a3b8d4" font-size="11">纠缠分发 | 纠缠纯化 | 量子存储器接口 | Bell 测量协调</text>
+
+  <rect y="195" width="540" height="55" fill="#1a2050" stroke="#10b981" stroke-width="2" rx="6"/>
+  <text x="20" y="217" fill="#10b981" font-size="13" font-weight="700">物理层 (Physical Layer)</text>
+  <text x="20" y="235" fill="#a3b8d4" font-size="11">光纤 (1550 nm) | 自由空间 | 单光子探测器 | 纠缠光源 (SPDC)</text>
+</g>
+
+<g transform="translate(80, 320)">
+  <text x="0" y="0" fill="#7df9ff" font-size="12" font-weight="600">Wehner 4 阶段 (2024):</text>
+  <text x="0" y="22" fill="#10b981" font-size="11">阶段 0 ✓ Trusted</text>
+  <text x="160" y="22" fill="#7df9ff" font-size="11">阶段 1 ✓ Prepare-Measure</text>
+  <text x="370" y="22" fill="#ffb86c" font-size="11">阶段 2 ⚠ Entanglement (50 km 中继器)</text>
+  <text x="0" y="42" fill="#ff6b6b" font-size="11">阶段 3 ✗ Fault-tolerant (2030+)</text>
+</g>
+</svg>
+
+<h3>图 26.2: 量子中继器——3 节点分段纠缠交换</h3>
+<svg viewBox="0 0 700 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="量子中继器原理图">
+<rect width="700" height="320" fill="#0a0e27" rx="12"/>
+<text x="350" y="28" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">量子中继器: 分段纠缠 + Bell 测量 = 远距离纠缠</text>
+<g transform="translate(80, 150)">
+  <circle cx="0" cy="0" r="22" fill="#1a2050" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="0" y="5" fill="#ff6b6b" font-weight="700">Alice</text>
+  <text x="0" y="50" fill="#a3b8d4" font-size="10">量子态 |ψ></text>
+</g>
+<g transform="translate(270, 150)">
+  <circle cx="0" cy="0" r="22" fill="#1a2050" stroke="#ffb86c" stroke-width="2"/>
+  <text x="0" y="5" fill="#ffb86c" font-weight="700">R1</text>
+  <text x="0" y="50" fill="#a3b8d4" font-size="10">纠缠交换</text>
+</g>
+<g transform="translate(460, 150)">
+  <circle cx="0" cy="0" r="22" fill="#1a2050" stroke="#ffb86c" stroke-width="2"/>
+  <text x="0" y="5" fill="#ffb86c" font-weight="700">R2</text>
+  <text x="0" y="50" fill="#a3b8d4" font-size="10">纠缠交换</text>
+</g>
+<g transform="translate(620, 150)">
+  <circle cx="0" cy="0" r="22" fill="#1a2050" stroke="#10b981" stroke-width="2"/>
+  <text x="0" y="5" fill="#10b981" font-weight="700">Bob</text>
+  <text x="0" y="50" fill="#a3b8d4" font-size="10">量子态 |ψ></text>
+</g>
+<line x1="102" y1="150" x2="248" y2="150" stroke="#7df9ff" stroke-width="1.5" stroke-dasharray="4,4"/>
+<text x="175" y="138" fill="#7df9ff" font-size="10">纠缠对 1 (50 km)</text>
+<line x1="292" y1="150" x2="438" y2="150" stroke="#7df9ff" stroke-width="1.5" stroke-dasharray="4,4"/>
+<text x="365" y="138" fill="#7df9ff" font-size="10">纠缠对 2 (50 km)</text>
+<line x1="482" y1="150" x2="598" y2="150" stroke="#7df9ff" stroke-width="1.5" stroke-dasharray="4,4"/>
+<text x="540" y="138" fill="#7df9ff" font-size="10">纠缠对 3 (50 km)</text>
+<circle cx="270" cy="195" r="8" fill="none" stroke="#ffb86c" stroke-width="1.5"/>
+<text x="270" y="218" fill="#ffb86c" font-size="9">Bell 测量 1</text>
+<circle cx="460" cy="195" r="8" fill="none" stroke="#ffb86c" stroke-width="1.5"/>
+<text x="460" y="218" fill="#ffb86c" font-size="9">Bell 测量 2</text>
+<path d="M 80 105 Q 350 75 620 105" fill="none" stroke="#10b981" stroke-width="2"/>
+<text x="350" y="68" fill="#10b981" font-size="11" font-weight="600">Alice-Bob 远距离纠缠 (150 km)</text>
+<g transform="translate(80, 270)">
+<text x="0" y="0" fill="#ffb86c" font-size="11" font-weight="600">关键:</text>
+<text x="0" y="20" fill="#a3b8d4" font-size="10">- 每跳纠缠分发保真度 F ≈ 95% → 3 跳后 F ≈ 81% (累积下降)</text>
+<text x="0" y="38" fill="#a3b8d4" font-size="10">- Bell 测量纠缠交换 + 经典通信 → 远距离纠缠</text>
+</g>
+</svg>
+
+<h3>图 26.3: 墨子号卫星星座 + 洲际 QKD (7600 km)</h3>
+<svg viewBox="0 0 700 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="墨子号卫星 QKD">
+<rect width="700" height="360" fill="#0a0e27" rx="12"/>
+<text x="350" y="28" fill="#7df9ff" font-size="17" text-anchor="middle" font-weight="600">墨子号 (Mozi): 中国-奥地利 7600 km 洲际 QKD (2018)</text>
+
+<circle cx="350" cy="220" r="130" fill="#1a2050" stroke="#7df9ff" stroke-width="1.5"/>
+
+<circle cx="280" cy="200" r="6" fill="#ff6b6b"/>
+<text x="280" y="183" fill="#ff6b6b" font-size="11" text-anchor="middle" font-weight="600">兴隆站 (中国)</text>
+
+<circle cx="430" cy="200" r="6" fill="#ffb86c"/>
+<text x="430" y="183" fill="#ffb86c" font-size="11" text-anchor="middle" font-weight="600">格拉茨 (奥地利)</text>
+
+<ellipse cx="350" cy="220" rx="170" ry="80" fill="none" stroke="#7df9ff" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+
+<g transform="translate(490, 130)">
+  <rect x="-10" y="-8" width="20" height="16" fill="#10b981" stroke="#7df9ff" stroke-width="1"/>
+  <line x1="-15" y1="0" x2="-25" y2="0" stroke="#10b981" stroke-width="1"/>
+  <line x1="15" y1="0" x2="25" y2="0" stroke="#10b981" stroke-width="1"/>
+  <text x="0" y="30" fill="#10b981" font-size="11" text-anchor="middle" font-weight="600">墨子号 (2016)</text>
+</g>
+
+<line x1="490" y1="130" x2="280" y2="200" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+<line x1="490" y1="130" x2="430" y2="200" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+
+<text x="370" y="170" fill="#7df9ff" font-size="10" font-style="italic">量子纠缠分发 (~ 1200 km)</text>
+
+<g transform="translate(40, 280)">
+  <text x="0" y="0" fill="#ffb86c" font-size="11" font-weight="600">2018 里程碑:</text>
+  <text x="0" y="20" fill="#a3b8d4" font-size="10">- 7600 km 中国-奥地利 BB84 QKD (潘建伟团队)</text>
+  <text x="0" y="38" fill="#a3b8d4" font-size="10">- 卫星高度 ~ 500 km, 自由空间损耗 ∝ 1/r²</text>
+  <text x="320" y="20" fill="#a3b8d4" font-size="10">- 2020: 卫星-地面隐形传态</text>
+  <text x="320" y="38" fill="#a3b8d4" font-size="10">- 2024: 卫星-地面 MDI-QKD</text>
+</g>
+</svg>
+</article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch21.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 21 章 离子阱量子计算机 (Trapped Ion Quantum Computers)</span>
+        </a>
+        <a href="ch23.html" class="pager-link pager-next">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 23 章 拓扑量子计算 (Topological Quantum Computing)</span>
+        </a>
+      </nav>
+    <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch25.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 25 章 量子优势与量子霸权 (Quantum Advantage / Quantum Supremacy)</span>
+        </a>
+        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">第 27 章 量子计算与 AI (即将推出)</span>
+        </span>
+      </nav>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="ch22.html">第 22 章</a></li>
+          <li><a href="ch23.html">第 23 章</a></li>
+          <li><a href="ch24.html">第 24 章</a></li>
+          <li><a href="ch25.html">第 25 章</a></li>
+          <li><a href="ch26.html">第 26 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
