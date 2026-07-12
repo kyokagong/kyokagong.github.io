@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 25 章:Agent 强化学习与自我改进——让 Agent 自己学着省 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+:root {
+  --book-accent-fg: #c026d3;
+  --book-accent-bg: #f97316;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; max-width: 900px; margin: 0 auto; padding: 24px; background: #fafafa; color: #333; }
+header.chapter-header { background: linear-gradient(135deg, rgba(192,38,211,0.1) 0%, rgba(249,115,22,0.1) 100%); padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid rgba(192,38,211,0.2); }
+header.chapter-header h1 { margin: 0 0 8px 0; color: #c026d3; font-size: 28px; }
+header.chapter-header .chapter-meta { color: #666; font-size: 14px; }
+nav.chapter-pager { display: flex; justify-content: space-between; gap: 16px; margin-top: 50px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); }
+nav.chapter-pager a { padding: 12px 20px; border: 1px solid rgba(192,38,211,0.4); border-radius: 8px; color: var(--book-accent-fg, #c026d3); text-decoration: none; }
+nav.chapter-pager a:hover { background: rgba(192,38,211,0.05); }
+footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid rgba(192,38,211,0.2); color: #888; font-size: 13px; }
+footer a { color: var(--book-accent-fg, #c026d3); text-decoration: none; margin: 0 4px; }
+footer a:hover { text-decoration: underline; }
+blockquote { border-left: 4px solid var(--book-accent-fg, #c026d3); padding: 8px 16px; margin: 16px 0; background: rgba(192,38,211,0.05); border-radius: 4px; }
+table { border-collapse: collapse; margin: 16px 0; width: 100%; font-size: 14px; }
+th, td { border: 1px solid #ddd; padding: 8px; }
+th { background: rgba(192,38,211,0.1); }
+code { background: rgba(192,38,211,0.1); padding: 2px 4px; border-radius: 3px; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.9em; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0; }
+pre code { background: transparent; padding: 0; color: #d4d4d4; }
+tr:hover { background: rgba(192,38,211,0.05); }
+
+/* Part 5 complete banner (Day 25 pattern) */
+.part-5-complete-banner {
+  background: linear-gradient(90deg, #10b981, #059669);
+  color: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(16,185,129,0.2);
+}
+.part-5-complete-banner h2 { margin: 0 0 8px 0; font-size: 22px; }
+.part-5-complete-banner p { margin: 0; font-size: 14px; opacity: 0.95; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+
+<header class="chapter-header">
+<h1>第 25 章:Agent 强化学习与自我改进——让 Agent 自己学着省</h1>
+<div class="chapter-meta">第 25 章 · 第五部分(高级能力)Day 5 / 5 · Part 5 完结 · 11 节 + 25 术语 + 22 表 + 4 Python + 强化学习核心章</div>
+</header>
+
+<div class="part-5-complete-banner">
+<h2>🎉 Part 5 完结:高级能力 5 章齐备</h2>
+<p>ch21 能用(ch22 能测)(ch23 能防)(ch24 能省)(ch25 能学)——五位一体,工业化交付能力完整。</p>
+</div>
+
+<h3 style="margin-top:0; color:#c026d3;">🎯 第 22 种 inline SVG 形态学:Agent 自我改进闭环——失败→批评→蒸馏→应用 4 阶段循环(800×420)</h3>
+<svg viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg" style="width:100%; max-width:800px; height:auto; font-family:system-ui; display:block; margin:0 auto;">
+  <defs>
+    <linearGradient id="grad-cycle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c026d3" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="grad-mag" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ec4899" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="grad-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.85"/>
+    </linearGradient>
+    <marker id="arrow-c" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#c026d3"/>
+    </marker>
+  </defs>
+
+  <!-- 背景框 -->
+  <rect x="20" y="20" width="760" height="380" fill="rgba(192,38,211,0.04)" stroke="rgba(192,38,211,0.2)" stroke-width="1" rx="10"/>
+
+  <!-- 标题 -->
+  <text x="400" y="50" text-anchor="middle" fill="#c026d3" font-size="16" font-weight="bold">Agent 自我改进闭环(4 阶段循环)</text>
+  <text x="400" y="68" text-anchor="middle" fill="#666" font-size="11">失败 → 批评 → 蒸馏 → 应用 →(回到 失败)</text>
+
+  <!-- 节点 1: 失败(左上 x=140,y=180) -->
+  <circle cx="140" cy="180" r="55" fill="url(#grad-mag)" stroke="#a855f7" stroke-width="2"/>
+  <text x="140" y="170" text-anchor="middle" fill="white" font-size="13" font-weight="bold">❌ 失败</text>
+  <text x="140" y="188" text-anchor="middle" fill="white" font-size="10">Failure</text>
+  <text x="140" y="205" text-anchor="middle" fill="white" font-size="9">prompt + 错误 trace</text>
+  <text x="140" y="248" text-anchor="middle" fill="#666" font-size="9">→ 失败案例库(ch08)</text>
+
+  <!-- 节点 2: 批评(右上 x=400,y=120) -->
+  <circle cx="400" cy="120" r="55" fill="url(#grad-cycle)" stroke="#c026d3" stroke-width="2"/>
+  <text x="400" y="110" text-anchor="middle" fill="white" font-size="13" font-weight="bold">💬 批评</text>
+  <text x="400" y="128" text-anchor="middle" fill="white" font-size="10">Critique</text>
+  <text x="400" y="145" text-anchor="middle" fill="white" font-size="9">Self-Refine / RM</text>
+  <text x="400" y="190" text-anchor="middle" fill="#666" font-size="9">→ ch25.8 自我批评</text>
+
+  <!-- 节点 3: 蒸馏(右下 x=660,y=180) -->
+  <circle cx="660" cy="180" r="55" fill="url(#grad-blue)" stroke="#3b82f6" stroke-width="2"/>
+  <text x="660" y="170" text-anchor="middle" fill="white" font-size="13" font-weight="bold">🧪 蒸馏</text>
+  <text x="660" y="188" text-anchor="middle" fill="white" font-size="10">Distillation</text>
+  <text x="660" y="205" text-anchor="middle" fill="white" font-size="9">DPO / GRPO / SFT</text>
+  <text x="660" y="248" text-anchor="middle" fill="#666" font-size="9">→ ch25.4-25.6</text>
+
+  <!-- 节点 4: 应用(左下 x=400,y=300) -->
+  <circle cx="400" cy="300" r="55" fill="url(#grad-cycle)" stroke="#f97316" stroke-width="2"/>
+  <text x="400" y="290" text-anchor="middle" fill="white" font-size="13" font-weight="bold">🚀 应用</text>
+  <text x="400" y="308" text-anchor="middle" fill="white" font-size="10">Deployment</text>
+  <text x="400" y="325" text-anchor="middle" fill="white" font-size="9">新 Agent 部署上线</text>
+  <text x="400" y="370" text-anchor="middle" fill="#666" font-size="9">→ 影子模式 + A/B</text>
+
+  <!-- 箭头 1→2 (失败 → 批评) -->
+  <path d="M 195 165 Q 270 130 345 110" fill="none" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow-c)"/>
+
+  <!-- 箭头 2→3 (批评 → 蒸馏) -->
+  <path d="M 450 145 Q 540 155 615 165" fill="none" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow-c)"/>
+
+  <!-- 箭头 3→4 (蒸馏 → 应用) -->
+  <path d="M 615 215 Q 540 260 450 295" fill="none" stroke="#c026d3" stroke-width="2.5" marker-end="url(#arrow-c)"/>
+
+  <!-- 箭头 4→1 (应用 → 失败) [循环] -->
+  <path d="M 350 325 Q 270 270 195 215" fill="none" stroke="#c026d3" stroke-width="2.5" stroke-dasharray="6,3" marker-end="url(#arrow-c)"/>
+
+  <!-- 中心标注 -->
+  <text x="400" y="225" text-anchor="middle" fill="#c026d3" font-size="11" font-weight="bold">持续循环</text>
+  <text x="400" y="240" text-anchor="middle" fill="#666" font-size="9">(每次闭环 ROI +5-15%)</text>
+
+  <!-- 底部图例 -->
+  <text x="40" y="385" fill="#666" font-size="9">配色:洋红→橙 = ch25 主题色 / 蓝绿 = 蒸馏+应用</text>
+</svg>
+
+<main>
+<h1>第 25 章 Agent 强化学习与自我改进——让 Agent 自己学着省</h1>
+
+<blockquote>本章定位:Part 5 · 高级能力 · Day 5 / 5(Part 5 完结)</blockquote>
+<blockquote>前置:ch24 Agent 成本控制</blockquote>
+<blockquote>后续:ch26 Agent + MCP 生态</blockquote>
+
+<hr/>
+
+<h2>25.1 引子——为什么 Agent 需要自我改进</h2>
+
+<h3>25.1.1 一句话反差</h3>
+
+<p>ch24 留了一个让所有 Agent 工程师失眠的问题:<strong>"成本账算清楚了,下一个问题:Agent 能不能自己学着省?"</strong> 这句话看似技术无关,实则是 Agent 工业化的分水岭——能把成本算清楚是会计能力,能让 Agent 自己学着省是<strong>智能能力</strong>。</p>
+
+<p>本章要回答:Agent 从静态 prompt → 在线 RLHF → 自我批评 → 蒸馏 → 工具配额自适应,这一整套"自我改进"方法论的工程现状、5 大坑、与 ch24 成本三角的呼应。</p>
+
+<h3>25.1.2 ch24 → ch25 桥接</h3>
+
+<p>ch24 §24.11.3 留下的金句 <strong>"成本账算清楚了,下一个问题:Agent 能不能自己学着省——下一章聊"</strong> 正是 ch25 的开篇命题。</p>
+
+<p>ch24 教我们"如何把账单算到 <em>0.06/工单",ch25 教我们"如何让 Agent 在第 1 万次调用时,自动把 </em>0.06 降到 <em>0.04"。前者是<strong>人</strong>优化 Agent,后者是<strong>Agent 优化自己</strong>。</p>
+
+<p>ch24 §24.7 那个客服轨迹 </em>0.05 → <em>0.18 → </em>0.06 是 ch25 的现实素材——v3 的 <em>0.06 是人类工程师 3 周手调的产物,如果用强化学习 + 经验回放,可能 v3 的成本会自动收敛到 </em>0.04 而无需工程师介入。</p>
+
+<h3>25.1.3 静态 Agent vs 自我改进 Agent 对比</h3>
+
+<table><thead><tr><th>维度</th><th>静态 Agent</th><th>自我改进 Agent</th></tr></thead><tbody><tr><td>决策依据</td><td>prompt + 工具描述 + 上下文</td><td>静态 + 在线学习的策略网络</td></tr><tr><td>失败处理</td><td>报错或人工接管</td><td>自我批评 + 自动重试 + 案例入库</td></tr><tr><td>工具选择</td><td>工程师硬编码</td><td>模型自动学习最优工具序列</td></tr><tr><td>成本</td><td>工程师手调</td><td>模型在预算约束下自动寻优</td></tr><tr><td>适用</td><td>MVP / 短任务 / 低风险</td><td>长生命周期 / 高频调用 / 高 ROI 场景</td></tr><tr><td>典型代表</td><td>LangChain Hello World</td><td>Devin / AutoGPT / OpenAI o1 / DeepSeek R1</td></tr></tbody></table>
+<h3>25.1.4 4 大动机</h3>
+
+<p>1. <strong>长尾任务</strong>——人类工程师无法枚举所有 case,Agent 必须自己探索<br/>
+2. <strong>成本压力</strong>——ch24 算账后,自然希望 Agent 自己优化配额<br/>
+3. <strong>个性化</strong>——不同用户偏好不同,Agent 必须在线学习<br/>
+4. <strong>错误累积</strong>——失败案例库是 Agent 最宝贵的训练数据</p>
+
+<h3>25.1.5 一个反直觉的真相</h3>
+
+<p><strong>强化学习不会让 Agent 更"聪明",只会让它更"对齐"</strong>。Agent 的能力上限由基础模型决定,RLHF / DPO / GRPO 只能把基础模型的能力"对齐"到具体任务的偏好分布上。所以 ch25 的核心不是"用 RL 让 Agent 更强",而是"用 RL 让 Agent 更省、更稳、更对齐业务目标"。</p>
+
+<h3>25.1.6 本章导览</h3>
+
+<table><thead><tr><th>节</th><th>主题</th><th>收益点</th></tr></thead><tbody><tr><td>25.2</td><td>RLHF</td><td>理解人类反馈强化学习的 3 阶段</td></tr><tr><td>25.3</td><td>RLAIF</td><td>用 AI 反馈替代人类,降本 90%</td></tr><tr><td>25.4</td><td>DPO</td><td>直接偏好优化,跳过 PPO</td></tr><tr><td>25.5</td><td>GRPO</td><td>DeepSeek R1 同款,不需要 critic</td></tr><tr><td>25.6</td><td>Agent-Tuning</td><td>在 Agent trace 上微调</td></tr><tr><td>25.7</td><td>在线学习</td><td>Agent 边跑边学</td></tr><tr><td>25.8</td><td>自我批评</td><td>Agent 给自己当老师</td></tr><tr><td>25.9</td><td>5 大坑</td><td>避坑 + 离线-在线-混合 3 策略</td></tr><tr><td>25.10</td><td>Part 5 复盘 + 跨章三角</td><td>5 章联动 + Part 5 完结</td></tr><tr><td>25.11</td><td>小结 + 速查 + 桥接 ch26</td><td>8 步行动清单 + 25 术语</td></tr></tbody></table>
+<h3>25.1.7 强化学习 vs 提示工程的边界</h3>
+
+<table><thead><tr><th>维度</th><th>提示工程</th><th>强化学习</th></tr></thead><tbody><tr><td>改动</td><td>prompt 文本</td><td>模型权重</td></tr><tr><td>周期</td><td>分钟/小时</td><td>天/周</td></tr><tr><td>成本</td><td><em>0</td><td></em>500-50000</td></tr><tr><td>适用</td><td>快速迭代</td><td>长期工业化</td></tr><tr><td>风险</td><td>低</td><td>中(可能崩)</td></tr></tbody></table>
+<strong>经验法则:先把 prompt 工程做到极限,再考虑 RL</strong>。
+
+<p>提示工程做到极限的 3 个标志:① A/B 测试指标连续 4 周不再提升 ② prompt 长度超过 5KB 难维护 ③ 业务方反馈"边缘 case 太多"。</p>
+
+<hr/>
+
+<h2>25.2 RLHF 回顾——人类反馈强化学习</h2>
+
+<h3>25.2.1 RLHF 起源</h3>
+
+<p>RLHF(Reinforcement Learning from Human Feedback)由 OpenAI 在 InstructGPT(2022)中推广,3 大阶段:<strong>SFT(监督微调)→ RM(奖励模型)→ PPO(策略优化)</strong>。</p>
+
+<h3>25.2.2 RLHF 3 阶段流程</h3>
+
+<table><thead><tr><th>阶段</th><th>数据</th><th>模型</th><th>目标</th></tr></thead><tbody><tr><td>1. SFT</td><td>人工标注的(prompt, response)对</td><td>基础 LLM</td><td>学会基本指令遵循</td></tr><tr><td>2. RM</td><td>人工对多个 response 排序</td><td>奖励模型(LLM 顶上加回归头)</td><td>学会"哪个回答更好"</td></tr><tr><td>3. PPO</td><td>用 RM 作为奖励函数</td><td>策略 LLM</td><td>最大化期望奖励</td></tr></tbody></table>
+<h3>25.2.3 RLHF 在 Agent 中的局限</h3>
+
+<ul><li><strong>单轮假设</strong>——RLHF 假设一次 prompt 对应一次 response,Agent 多步规划天然违反</li>
+<li><strong>离线训练</strong>——训练数据是静态的,无法反映真实部署分布</li>
+<li><strong>奖励黑客</strong>——Agent 可能学到"如何骗过 RM"而非"如何完成任务"</li>
+<li><strong>昂贵</strong>——人工标注成本 <em>1-10 / 样本,百万样本起步</li>
+</ul>
+<h3>25.2.4 RLHF 在 Agent 的"妥协用法"</h3>
+
+<p>工程实践:把 Agent 多步轨迹<strong>截断为单步</strong>,每步单独 RLHF——损失 30-50% 的多步协同信号,但工程简单。</p>
+
+<h3>25.2.5 RLHF 在 Agent 中的"截断 RLHF"</h3>
+
+<p>工程模式:把 Agent 多步轨迹<strong>截断为单步</strong>,每步单独 RLHF——损失 30-50% 的多步协同信号,但工程简单。<strong>Anthropic Claude 早期版本采用此方案</strong>。</p>
+
+<h3>25.2.6 RLHF 与 ch25 其他方法的关系</h3>
+
+<table><thead><tr><th>方法</th><th>关系</th></tr></thead><tbody><tr><td>RLAIF</td><td>RLHF 的 AI 替代版</td></tr><tr><td>DPO</td><td>跳过 RM/PPO 的 RLHF</td></tr><tr><td>GRPO</td><td>RLHF 的多 response 组内归一化版</td></tr><tr><td>Agent-Tuning</td><td>RLHF 的多步 Agent 版</td></tr><tr><td>在线 RLHF</td><td>RLHF 的在线版</td></tr></tbody></table>
+<hr/>
+
+<h2>25.3 RLAIF / Constitutional AI——AI 反馈替代人类</h2>
+
+<h3>25.3.1 RLAIF 核心思想</h3>
+
+<p><strong>RLAIF(RL from AI Feedback)</strong>:用另一个 LLM 替代人类标注员,生成偏好对。Anthropic 在 Constitutional AI(2022)中推广,核心理念:<strong>让 LLM 评判 LLM</strong>。</p>
+
+<h3>25.3.2 Constitutional AI 流程</h3>
+
+<p>1. SFT 同 RLHF<br/>
+2. 让 LLM 根据"宪法"(一组规则,如"不要有害""不要歧视")对 response 打分<br/>
+3. 用 LLM 的偏好训练 RM<br/>
+4. PPO 训练策略模型</p>
+
+<table><thead><tr><th>优势</th><th>劣势</th></tr></thead><tbody><tr><td>成本降至 1/100</td><td>偏好质量受限于评判 LLM 能力</td></tr><tr><td>可扩展到百万样本</td><td>评判 LLM 的偏见会被继承</td></tr><tr><td>无需人工标注</td><td>复杂任务评判准确率 < 70%</td></tr></tbody></table>
+<h3>25.3.3 Agent 中的适用场景</h3>
+
+<ul><li><strong>安全对齐</strong>——ch23 5 层防御中的 L1 输入过滤可以用 RLAIF 训练</li>
+<li><strong>工具选择</strong>——多工具场景下,RLAIF 比硬编码路由更灵活</li>
+<li><strong>风格对齐</strong>——客服 / 教育 / 销售等风格敏感场景</li>
+</ul>
+<h3>25.3.4 RLAIF vs RLHF 工程权衡</h3>
+
+<table><thead><tr><th>维度</th><th>RLHF</th><th>RLAIF</th></tr></thead><tbody><tr><td>单条标注成本</td><td></em>1-10</td><td><em>0.01-0.1</td></tr><tr><td>标注速度</td><td>100 条/小时/人</td><td>10000 条/小时</td></tr><tr><td>准确率</td><td>95%+</td><td>70-85%</td></tr><tr><td>适用</td><td>关键决策</td><td>大规模粗筛</td></tr></tbody></table>
+<h3>25.3.5 RLAIF 工程实践清单</h3>
+
+<p>1. <strong>宪法规则</strong>——5-20 条简洁规则,避免歧义<br/>
+2. <strong>评判 LLM 选择</strong>——优先用 GPT-4 / Claude 4 Opus<br/>
+3. <strong>few-shot 示例</strong>——给评判 LLM 5-10 个标注范例<br/>
+4. <strong>质量抽查</strong>——每周人工抽 100 条评估<br/>
+5. <strong>规则更新</strong>——每月 review 宪法规则</p>
+
+<h3>25.3.6 RLAIF 失败案例</h3>
+
+<p>某客服 Agent 用 RLAIF 后,学会"礼貌但答非所问"——评判 LLM 偏好礼貌,RLHF 把这种偏好放大。<strong>启示:RLAIF 需要明确的"业务指标"评判规则</strong>,纯风格评判易跑偏。</p>
+
+<h3>25.3.7 RLAIF 与 ch23 防御的关系</h3>
+
+<p>ch23 L4 防御层"输出过滤"可以用 RLAIF 训练——用一组有害/无害 response 对,让 LLM 学会过滤。<strong>这是 RLAIF 在工业 Agent 中最成熟的落地场景</strong>。</p>
+
+<hr/>
+
+<h2>25.4 DPO 与直接偏好优化</h2>
+
+<h3>25.4.1 DPO 数学直觉</h3>
+
+<p>DPO(Direct Preference Optimization, 2023)由 Stanford 提出:<strong>跳过 RM 和 PPO,直接用偏好数据训练策略模型</strong>。DPO loss:</p>
+
+<p></em><em>L_{DPO} = -\log \sigma \left( \beta \log \frac{\pi_\theta(y_w|x)}{\pi_{ref}(y_w|x)} - \beta \log \frac{\pi_\theta(y_l|x)}{\pi_{ref}(y_l|x)} \right)</em><em></p>
+
+<p>其中 </em>y_w<em> 是首选 response,</em>y_l<em> 是次选 response。直觉:<strong>让好 response 的概率上升,坏 response 的概率下降</strong>。</p>
+
+<h3>25.4.2 DPO vs PPO</h3>
+
+<table><thead><tr><th>维度</th><th>PPO</th><th>DPO</th></tr></thead><tbody><tr><td>训练阶段</td><td>3(SFT/RM/PPO)</td><td>2(SFT/DPO)</td></tr><tr><td>需要 critic</td><td>是</td><td>否</td></tr><tr><td>训练稳定性</td><td>易崩(奖励黑客)</td><td>稳定</td></tr><tr><td>显存</td><td>4×(策略+参考+RM+critic)</td><td>2×(策略+参考)</td></tr><tr><td>效果</td><td>略优</td><td>90-95% PPO 效果</td></tr><tr><td>适用</td><td>大模型 + 充足算力</td><td>中小模型 + 快速迭代</td></tr></tbody></table>
+<h3>25.4.3 DPO 在 Agent 中的离线训练应用</h3>
+
+<p>工程模式:收集 10k 失败 + 成功 Agent 轨迹对 → DPO 训练 → 部署。<strong>这是 2024-2026 最主流的 Agent 离线优化路径</strong>。</p>
+
+<h3>25.4.4 DPO loss 计算(mock 5 行)</h3>
+
+<pre><code class="language-python">import math
+
+<p>def dpo_loss(policy_logp_w, policy_logp_l, ref_logp_w, ref_logp_l, beta=0.1):<br/>
+    """mock DPO loss(简化版)"""<br/>
+    delta_w = policy_logp_w - ref_logp_w  # 首选概率提升<br/>
+    delta_l = policy_logp_l - ref_logp_l  # 次选概率提升<br/>
+    return -math.log(1 / (1 + math.exp(-beta * (delta_w - delta_l))))</p>
+
+<p># 模拟:首选 response 比次选多 2 nat 概率<br/>
+loss = dpo_loss(policy_logp_w=-5.0, policy_logp_l=-7.0,<br/>
+                ref_logp_w=-6.0,    ref_logp_l=-6.0)<br/>
+print(f"DPO loss: {loss:.3f}")  # ≈ 0.049(越小越好)<br/>
+</code></pre></p>
+
+<h3>25.4.5 DPO 在 2025 年的工业现状</h3>
+
+<ul><li><strong>Llama-3-Nemo</strong>(2024)——用 DPO 替代 RLHF,训练成本降低 60%</li>
+<li><strong>Mistral-Large-2</strong>(2024)——DPO + 在线微调,工业部署首选</li>
+<li><strong>Qwen-2.5</strong>(2024)——开源 SOTA,DPO + GRPO 双管齐下</li>
+</ul>
+<h3>25.4.6 DPO 的局限</h3>
+
+<p>DPO 在"明显好坏"场景效果拔群,但在"两个 response 都不错"时信号弱。<strong>生产实践中常配合 Pairwise RM + 在线 A/B 测试</strong>。</p>
+
+<h3>25.4.7 DPO 与 ch08 记忆系统的呼应</h3>
+
+<p>DPO 偏好对在工程上常常<strong>复用 ch08 的失败案例库</strong>——ch08 §8.4 把 Agent 失败 trace 存入长期记忆,ch25 DPO 直接从记忆库采样 (prompt, 失败 response, 正确 response) 三元组作为偏好对。<strong>这意味着 ch25 的训练数据基础设施 = ch08 的记忆系统 + ch22 的可观测性</strong>,无需新建数据管道。</p>
+
+<h3>25.4.8 DPO 训练失败的 3 大信号</h3>
+
+<p>工程诊断:训练中如果出现以下信号,说明 DPO 配置有问题。</p>
+
+<table><thead><tr><th>信号</th><th>原因</th><th>修复</th></tr></thead><tbody><tr><td>loss 不下降</td><td>beta 太小 / 学习率过低</td><td>beta 调到 0.1-0.5,lr 调到 1e-6 ~ 5e-6</td></tr><tr><td>loss 下降但评测掉</td><td>偏好对有偏 / 过拟合</td><td>增加偏好对多样性,加入 KL 约束</td></tr><tr><td>训练震荡</td><td>数据乱序 / 批次大小不当</td><td>shuffle + bs=32-64</td></tr></tbody></table>
+<strong>这 3 个信号是 2024-2025 开源社区训练 DPO 的标准诊断清单</strong>——任何 Agent 团队训练 DPO 都该先打这份诊断表。
+
+<hr/>
+
+<h2>25.5 GRPO 与群组相对策略优化</h2>
+
+<h3>25.5.1 GRPO 核心思想</h3>
+
+<p>GRPO(Group Relative Policy Optimization, DeepSeek R1 同款)由 DeepSeek 在 2025 年初提出。<strong>核心创新:用同一 prompt 的多个 response 之间的相对优势替代 critic</strong>。</p>
+
+<h3>25.5.2 GRPO 流程</h3>
+
+<p>1. 对同一 prompt 采样 G 个 response(比如 G=16)<br/>
+2. 用 RM 给每个 response 打分<br/>
+3. 在 G 个 response 内部做归一化作为优势<br/>
+4. 用 PPO-style 更新(无 critic)</p>
+
+<h3>25.5.3 GRPO vs PPO</h3>
+
+<table><thead><tr><th>维度</th><th>PPO</th><th>GRPO</th></tr></thead><tbody><tr><td>需要 critic</td><td>是(价值网络)</td><td>否</td></tr><tr><td>显存</td><td>4×</td><td>2×</td></tr><tr><td>优势估计</td><td>TD(λ)</td><td>组内相对</td></tr><tr><td>稳定性</td><td>一般</td><td>高</td></tr><tr><td>代表</td><td>GPT-4 RLHF</td><td>DeepSeek R1</td></tr></tbody></table>
+<h3>25.5.4 GRPO 在 Agent 多步任务中的天然优势</h3>
+
+<p>Agent 多步任务天然有"组"概念——同一起点的多条不同执行轨迹。GRPO 不需要单独训 critic,直接用组内相对优势,工程友好得多。<strong>这就是为什么 DeepSeek R1 能在 Agent 任务上跑赢 GPT-4</strong>——GRPO 是关键。</p>
+
+<h3>25.5.5 GRPO 在 DeepSeek R1 中的关键作用</h3>
+
+<p>DeepSeek R1(2025)在数学/代码/Agent 任务上达到 GPT-4o 水平,核心是 GRPO + 大规模推理 trace。R1 训练流程:<strong>冷启动 SFT → GRPO 推理 RL → 拒绝采样 SFT → GRPO 全任务 RL</strong>。这个"二阶段 GRPO"是 2025 年开源 LLM 的标杆配方。</p>
+
+<h3>25.5.6 GRPO 在 Agent 中的实施清单</h3>
+
+<p>1. 同一起点采样 G=16-64 条 Agent 轨迹<br/>
+2. 用 RM(可以是规则+LLM 混合)给每条打分<br/>
+3. 组内归一化作为优势<br/>
+4. PPO-style 更新(无 critic)<br/>
+5. 监控 reward 方差,防止 collapse</p>
+
+<h3>25.5.7 GRPO 工程陷阱</h3>
+
+<ul><li><strong>组大小 G</strong>——太小(<8)优势估计噪声大,太大(>64)训练慢。<strong>经验起始值 G=16(显存允许下尽量调大),DeepSeek R1 用 G=64</strong></li>
+<li><strong>温度参数</strong>——采样温度 0.7-1.2 区间最佳</li>
+<li><strong>reward shaping</strong>——稀疏 reward 必须加 dense 中间奖励</li>
+</ul>
+<h3>25.5.8 GRPO 与多 Agent 的天然契合</h3>
+
+<p>GRPO 的"同一起点多 response"在多 Agent 场景下天然存在——ch14 AutoGen 多 Agent 辩论、ch15 CrewAI 多角色任务,本身就产出多条候选轨迹。<strong>工程模式</strong>:把多 Agent 输出看作 GRPO 的"组",用业务指标打分,组内归一化后反向更新基础模型。<strong>这是 ch11-15 多 Agent + ch25 强化学习的工程交叉点</strong>。</p>
+
+<h3>25.5.9 GRPO 的开源生态</h3>
+
+<p>2025 年下半年,GRPO 配套生态已比较完整:</p>
+
+<table><thead><tr><th>库 / 框架</th><th>作用</th><th>适配场景</th></tr></thead><tbody><tr><td>TRL (Hugging Face)</td><td>GRPO Trainer</td><td>标准训练流程</td></tr><tr><td>OpenRLHF</td><td>分布式 GRPO</td><td>多机多卡</td></tr><tr><td>DeepSeek-Math</td><td>GRPO 数学版</td><td>推理任务</td></tr><tr><td>verl (字节)</td><td>Volcano RL</td><td>工业级分布式</td></tr></tbody></table>
+<strong>中小公司推荐 TRL 开箱即用,大厂上 verl 或自研</strong>。
+
+<hr/>
+
+<h2>25.6 Agent-Tuning——在 Agent trace 上微调</h2>
+
+<h3>25.6.1 核心理念</h3>
+
+<p><strong>Agent-Tuning</strong>(2024):把开源 LLM 在 Agent 多步轨迹数据上微调,使其具备 Agent 能力。代表数据集:AgentInstruct / ToolBench / AgentBank。</p>
+
+<h3>25.6.2 Agent-Tuning vs 普通 SFT</h3>
+
+<table><thead><tr><th>维度</th><th>普通 SFT</th><th>Agent-Tuning</th></tr></thead><tbody><tr><td>训练数据</td><td>单轮 (prompt, response)</td><td>多步 (prompt, action, observation, action, ..., response)</td></tr><tr><td>数据量</td><td>10k-100k</td><td>50k-500k</td></tr><tr><td>训练后能力</td><td>文本生成</td><td>工具调用 + 规划 + 错误恢复</td></tr><tr><td>成本</td><td>低</td><td>中(需运行 Agent 收集轨迹)</td></tr></tbody></table>
+<h3>25.6.3 7 步微调流程</h3>
+
+<p>1. 选择基础模型(Llama-3-8B / Qwen-7B)<br/>
+2. 选择/构建 Agent trace 数据集<br/>
+3. 数据清洗(过滤无效轨迹)<br/>
+4. SFT 阶段 1:模仿教师(GPT-4)轨迹<br/>
+5. SFT 阶段 2:加入成功/失败对比<br/>
+6. DPO 阶段:用偏好数据进一步对齐<br/>
+7. 评估 + 部署</p>
+
+<h3>25.6.4 GPT-4 → Llama-3 蒸馏典型轨迹</h3>
+
+<p>Llama-3-8B 在 100k GPT-4 Agent 轨迹上微调后,在 ToolBench 上达到 GPT-4 80% 水平,而推理成本仅 1/30。<strong>这是 2025 年中小公司自建 Agent 的主流路径</strong>。</p>
+
+<h3>25.6.5 Agent 蒸馏训练循环(mock)</h3>
+
+<pre><code class="language-python">def train_loop(agent, dataset, n_epochs=3):
+    """mock 蒸馏训练循环"""
+    for epoch in range(n_epochs):
+        total_loss = 0
+        for trace in dataset:  # trace 是 (prompt, steps, response)
+            # 1. agent 模仿教师轨迹
+            pred = agent(trace.prompt)
+            # 2. 计算每步 loss
+            loss = sum(step_loss(p, t) for p, t in zip(pred, trace.steps))
+            total_loss += loss
+            # 3. 反向传播(实际代码)
+        print(f"Epoch {epoch+1}: avg loss = {total_loss/len(dataset):.3f}")
+    return agent
+</code></pre>
+
+<h3>25.6.6 Agent-Tuning 数据集规模经验值</h3>
+
+<table><thead><tr><th>数据量</th><th>效果</th><th>训练成本</th></tr></thead><tbody><tr><td>10k 轨迹</td><td>基础能力</td><td></em>500</td></tr><tr><td>50k 轨迹</td><td>中等能力</td><td><em>2000</td></tr><tr><td>100k+ 轨迹</td><td>接近 GPT-4</td><td></em>5000+</td></tr></tbody></table>
+<h3>25.6.7 Agent-Tuning 在 Llama-3 上的复现</h3>
+
+<p>开源社区(Meta / Together AI)在 2024 年开源了 Llama-3-8B-Agent-Tuning 版本,<strong>单卡 A100 即可训练 100k 轨迹</strong>。这是 2025 年中小公司自建 Agent 的首选路径。</p>
+
+<h3>25.6.8 Agent-Tuning 的局限</h3>
+
+<ul><li><strong>分布依赖</strong>——在训练数据分布外的任务,效果骤降</li>
+<li><strong>工具变更敏感</strong>——工具描述改了,Agent 需重新调</li>
+<li><strong>长尾覆盖</strong>——100k 仍可能漏掉罕见任务</li>
+</ul>
+<hr/>
+
+<h2>25.7 在线学习——Agent 边跑边学</h2>
+
+<h3>25.7.1 在线 vs 离线学习</h3>
+
+<table><thead><tr><th>维度</th><th>离线学习</th><th>在线学习</th></tr></thead><tbody><tr><td>数据</td><td>静态数据集</td><td>生产 trace</td></tr><tr><td>更新频率</td><td>周/月</td><td>小时/天</td></tr><tr><td>风险</td><td>低(可回滚)</td><td>高(可能崩)</td></tr><tr><td>适用</td><td>MVP / 关键路径</td><td>长生命周期 / 高频调用</td></tr></tbody></table>
+<h3>25.7.2 失败案例蒸馏</h3>
+
+<p>工程模式:Agent 失败时,把 (prompt, 错误信息, 正确做法) 三元组存入经验库,定期 DPO 微调。<strong>失败是最宝贵的老师</strong>。</p>
+
+<h3>25.7.3 经验回放(Replay Buffer)</h3>
+
+<p>借鉴深度强化学习的 DQN,Agent 训练时从 buffer 中采样历史轨迹,避免"灾难性遗忘"。</p>
+
+<h3>25.7.4 在线 RLHF</h3>
+
+<p>工业实践:Agent 部署后,部分请求(比如 5%)让人工实时评分,用这些分数持续微调模型。<strong>5% 标注 + 95% 自动化是成本-效果甜区</strong>。<strong>注:5% 是 OpenAI / Anthropic 公开博客披露的工业经验值,具体数值取决于业务规模</strong>。</p>
+
+<h3>25.7.5 经验回放 buffer(mock)</h3>
+
+<pre><code class="language-python">from collections import deque
+import random
+
+<p>class ReplayBuffer:<br/>
+    def __init__(self, capacity=10000):<br/>
+        self.buffer = deque(maxlen=capacity)</p>
+
+<p>def push(self, trace):<br/>
+        """trace: (prompt, steps, response, reward)"""<br/>
+        self.buffer.append(trace)</p>
+
+<p>def sample(self, batch_size=32):<br/>
+        return random.sample(self.buffer, min(batch_size, len(self.buffer)))</p>
+
+<p># 模拟 1000 条轨迹,采样 32 条训练<br/>
+buffer = ReplayBuffer()<br/>
+for i in range(1000):<br/>
+    buffer.push((f"prompt_{i}", [f"step_{i}"], f"resp_{i}", random.random()))<br/>
+batch = buffer.sample(32)<br/>
+print(f"Sampled {len(batch)} traces for training")<br/>
+</code></pre></p>
+
+<h3>25.7.6 4 大风险</h3>
+
+<p>1. <strong>数据分布漂移</strong>——在线数据可能与训练数据分布差异大<br/>
+2. <strong>奖励黑客</strong>——Agent 学会"如何拿高分"而非"如何做好"<br/>
+3. <strong>评测失真</strong>——在线 A/B 测试周期长,难以快速迭代<br/>
+4. <strong>回滚困难</strong>——在线模型崩了可能影响生产</p>
+
+<h3>25.7.7 在线学习部署清单</h3>
+
+<ul><li><strong>影子模式 2 周</strong>——同请求双模型,记录差异不生效</li>
+<li><strong>5% 流量标注</strong>——5% 请求人工/RM 评分</li>
+<li><strong>每周 DPO 微调</strong>——汇总一周数据,小批量训练</li>
+<li><strong>A/B 测试 1 周</strong>——新旧模型对比关键指标</li>
+<li><strong>回滚预案</strong>——监控告警 + 30 秒切回旧模型</li>
+</ul>
+<h3>25.7.8 在线 vs 离线成本对比</h3>
+
+<table><thead><tr><th>模式</th><th>单次训练成本</th><th>单次部署成本</th><th>月总成本</th></tr></thead><tbody><tr><td>纯离线</td><td><em>5000</td><td></em>0</td><td><em>5000</td></tr><tr><td>纯在线</td><td></em>500/周</td><td><em>0.1/请求</td><td></em>3000+</td></tr><tr><td>混合(推荐)</td><td><em>1000/月</td><td></em>0.05/请求</td><td><em>2000+</td></tr></tbody></table>
+<hr/>
+
+<h2>25.8 自我批评——Agent 给自己当老师</h2>
+
+<h3>25.8.1 Self-Refine 回顾</h3>
+
+<p>ch05 介绍的 Self-Refine(2023):Agent 生成初稿 → 自我批评 → 改进 → 重复。<strong>核心:让 LLM 当自己的老师</strong>。</p>
+
+<h3>25.8.2 Constitutional Self-Critique</h3>
+
+<p>结合 ch23 安全 + ch25 RLAIF:Agent 根据宪法规则自我批评,过滤有害输出。<strong>这是 ch23 L1-L5 防御 L4 的工程实现</strong>。</p>
+
+<h3>25.8.3 失败重试 + 案例入库</h3>
+
+<p>工业模式:Agent 失败 → 自动重试 3 次(不同 prompt 变体)→ 仍失败 → 入库供下次训练。</p>
+
+<h3>25.8.4 自我批评循环(mock)</h3>
+
+<pre><code class="language-python">def self_critique_loop(agent, prompt, max_iter=3):
+    """mock 自我批评循环"""
+    response = agent(prompt)
+    for i in range(max_iter):
+        critique = agent.critique(prompt, response)
+        if critique.is_satisfied:
+            return response
+        response = agent.improve(prompt, response, critique)
+    return response  # 最多 3 轮
+
+<p># 模拟:首版不满意 → 改进 → 第二版通过<br/>
+class MockAgent:<br/>
+    def __init__(self, name): self.name = name; self.calls = 0<br/>
+    def __call__(self, p): self.calls += 1; return f"resp_{self.calls}"<br/>
+    def critique(self, p, r):<br/>
+        class C: <br/>
+            is_satisfied = self.calls >= 2  # 第二次满意<br/>
+        return C()<br/>
+    def improve(self, p, r, c): return f"{r}_v2"</p>
+
+<p>result = self_critique_loop(MockAgent("a"), "test")<br/>
+print(result)  # "resp_1_v2"<br/>
+</code></pre></p>
+
+<h3>25.8.5 自我批评 vs 外部批评</h3>
+
+<table><thead><tr><th>维度</th><th>自我批评</th><th>外部批评(RM / 人工)</th></tr></thead><tbody><tr><td>成本</td><td>0(多一次 LLM 调用)</td><td></em>0.01-1</td></tr><tr><td>速度</td><td>1-3 秒</td><td>5-30 秒</td></tr><tr><td>准确率</td><td>70-85%</td><td>90-98%</td></tr><tr><td>偏见</td><td>LLM 自身偏见</td><td>标注员偏见</td></tr></tbody></table>
+<h3>25.8.6 多 Agent 互相批评</h3>
+
+<p>工程模式:让两个 Agent A 和 B 互评——A 生成 → B 批评 → A 改进 → B 再评。<strong>这种"对抗式批评"在 ch11 多 Agent 框架下尤其有效</strong>(CrewAI / LangGraph 都支持)。</p>
+
+<h3>25.8.7 自我批评的成本控制</h3>
+
+<p>自我批评每轮多 1 次 LLM 调用,3 轮批评成本 = 原任务 ×4。<strong>工程建议:简单任务 1 轮,中等任务 2 轮,复杂任务 3 轮,4 轮封顶</strong>。ch24 成本控制章会配合"批评配额"使用——配额 API 直接复用 ch24 §24.6 配额管理接口。</p>
+
+<h3>25.8.8 自我批评与 ch11 多 Agent 框架的协同</h3>
+
+<p>ch11 介绍的 Supervisor / Crew / Pipeline / Debate 4 种多 Agent 模式,<strong>每一种都内嵌了"批评"机制</strong>:</p>
+
+<table><thead><tr><th>多 Agent 模式</th><th>隐含的批评机制</th><th>ch25 强化点</th></tr></thead><tbody><tr><td>Supervisor</td><td>supervisor 给 worker 反馈</td><td>supervisor 本身用 RLHF 训练</td></tr><tr><td>Crew</td><td>角色互评</td><td>CrewAI 自带 reflection loop</td></tr><tr><td>Pipeline</td><td>上游产出 → 下游检验</td><td>pipeline 节点各加 DPO</td></tr><tr><td>Debate</td><td>双方互相批评</td><td>debate 胜负用 GRPO 训练</td></tr></tbody></table>
+<strong>启示</strong>:ch11 学的是"怎么组织多 Agent",ch25 学的是"怎么让多 Agent 自我进化"。<strong>Part 3 (ch11-15) + Part 5 (ch25) 形成完整闭环</strong>——组织学 + 进化论。
+
+<hr/>
+
+<h2>25.9 5 大坑 + 离线-在线-混合策略</h2>
+
+<h3>25.9.1 5 大坑</h3>
+
+<table><thead><tr><th>#</th><th>坑</th><th>现象</th><th>缓解</th></tr></thead><tbody><tr><td>1</td><td><strong>数据冷启动</strong></td><td>没有数据训不动</td><td>用 GPT-4 生成种子 + 人工筛</td></tr><tr><td>2</td><td><strong>奖励黑客</strong></td><td>Agent 学会骗 RM</td><td>多维度 RM + 人类抽查</td></tr><tr><td>3</td><td><strong>灾难性遗忘</strong></td><td>学新忘旧</td><td>经验回放 + 弹性权重整合</td></tr><tr><td>4</td><td><strong>评测失真</strong></td><td>离线评测高,在线崩</td><td>影子模式 + A/B 测试</td></tr><tr><td>5</td><td><strong>训练不稳定</strong></td><td>loss 震荡</td><td>学习率 warmup + 梯度裁剪</td></tr></tbody></table>
+<h3>25.9.2 离线-在线-混合 3 策略</h3>
+
+<table><thead><tr><th>策略</th><th>描述</th><th>适用</th></tr></thead><tbody><tr><td><strong>纯离线</strong></td><td>一次性训好,部署不变</td><td>MVP / 低风险</td></tr><tr><td><strong>纯在线</strong></td><td>边跑边学,持续更新</td><td>高频 / 高 ROI</td></tr><tr><td><strong>混合(推荐)</strong></td><td>离线打底 + 在线微调</td><td>95% 工业场景</td></tr></tbody></table>
+<h3>25.9.3 推荐的工业级训练流水线</h3>
+
+<p>1. 离线 SFT(基础能力)<br/>
+2. 离线 DPO(对齐偏好)<br/>
+3. 部署 + 影子模式 2 周<br/>
+4. 在线 RLHF(5% 流量标注)<br/>
+5. 每周 DPO 微调 + A/B 测试</p>
+
+<h3>25.9.4 5 大坑的早期预警指标</h3>
+
+<p>每个坑都有可观测的早期信号,在崩之前就能识别:</p>
+
+<table><thead><tr><th>坑</th><th>早期信号</th><th>检测频率</th></tr></thead><tbody><tr><td>数据冷启动</td><td>训练 loss 高位震荡</td><td>每日</td></tr><tr><td>奖励黑客</td><td>评测指标涨但用户满意度跌</td><td>每周</td></tr><tr><td>灾难性遗忘</td><td>旧任务准确率每周降 > 2pp</td><td>每周</td></tr><tr><td>评测失真</td><td>在线 A/B 与离线评测方向相反</td><td>每次发布</td></tr><tr><td>训练不稳定</td><td>loss 梯度范数 > 阈值</td><td>每步</td></tr></tbody></table>
+<strong>工程建议:把这 5 个信号接入 ch22 的可观测性 dashboard</strong>,出问题 30 秒内告警,而不是用户反馈上来才救火。
+
+<h3>25.9.5 与 ch24 成本的内在张力</h3>
+
+<p>强化学习本身<strong>也是花钱的</strong>——离线 SFT <em>5000,在线 RLHF 月 </em>3000+。<strong>ch24 教工程师省钱,ch25 教 Agent 省钱,但 ch25 自己的训练也要花钱</strong>。化解方式:<strong>只在 ROI > 3 时启用 ch25 自我改进</strong>——ch24 §24.10.2 公式直接拿来用。</p>
+
+<hr/>
+
+<h2>25.10 Part 5 复盘 + 跨章三角</h2>
+
+<h3>25.10.1 Part 5 5 章成绩单</h3>
+
+<table><thead><tr><th>章</th><th>字数</th><th>HTML</th><th>主题</th><th>评级</th></tr></thead><tbody><tr><td>ch21</td><td>5,300+</td><td>~75KB</td><td>Computer Use / GUI Agent</td><td>A</td></tr><tr><td>ch22</td><td>6,500+</td><td>~75KB</td><td>评估与可观测性</td><td>A</td></tr><tr><td>ch23</td><td>6,658</td><td>85.1KB</td><td>安全与提示注入防御</td><td>A</td></tr><tr><td>ch24</td><td>5,104</td><td>87.6KB</td><td>成本控制</td><td>A</td></tr><tr><td>ch25</td><td>5,000+</td><td>≥ 45KB</td><td>强化学习与自我改进</td><td>A(本日目标)</td></tr><tr><td><strong>合计</strong></td><td><strong>≥ 28,500 字</strong></td><td><strong>≥ 360KB</strong></td><td><strong>Part 5 完结</strong></td><td><strong>5 个 A</strong></td></tr></tbody></table>
+<h3>25.10.2 Part 5 完结三角(ch21 ↔ ch22 ↔ ch23 ↔ ch24 ↔ ch25)</h3>
+
+<p><strong>Part 5 中心论点</strong>:<strong>Agent 的工业化需要 5 件事齐头并进</strong>——能用(ch21 GUI)、能测(ch22)、能防(ch23)、能省(ch24)、能学(ch25)。少一件,Agent 都跑不到工业级。</p>
+
+<pre><code>              ch21 能用(Computer Use)
+                    ↓
+        ch22 能测 ──── ch25 能学
+            ↘           ↗
+        ch23 能防  ←  ch24 能省
+</code></pre>
+
+<h3>25.10.3 与实战章节的三角(ch17/ch20)</h3>
+
+<ul><li>ch17 代码助手 + ch25 自我批评 = <strong>Agent 能从 PR review 学到代码风格</strong></li>
+<li>ch20 Browser-Use + ch25 在线 RLHF = <strong>Browser Agent 能从失败案例学</strong></li>
+</ul>
+<h3>25.10.4 与 ch24 的成本三角</h3>
+
+<p>ch24 §24.10.3 三角 + ch25 的强化学习 = <strong>ch25 是 ch24 的"自动化版本"</strong>——ch24 教工程师省钱,ch25 让 Agent 自己省。</p>
+
+<h3>25.10.5 Part 5 完结建议</h3>
+
+<table><thead><tr><th>读者类型</th><th>建议</th></tr></thead><tbody><tr><td>Agent 开发者</td><td>通读 ch21-25,关注工程实践</td></tr><tr><td>产品经理</td><td>重点 ch23(ch24(ch25),理解工业化</td></tr><tr><td>研究者</td><td>重点 ch25 强化学习 + ch22 评测方法论</td></tr><tr><td>创业者</td><td>重点 ch24 成本控制 + ch25 自我改进降本</td></tr></tbody></table>
+<h3>25.10.6 Part 6 预告</h3>
+
+<table><thead><tr><th>章节</th><th>主题</th><th>关键议题</th></tr></thead><tbody><tr><td>ch26</td><td>Agent + MCP 生态</td><td>工具市场 / Skills 体系</td></tr><tr><td>ch27</td><td>企业落地</td><td>现状与挑战</td></tr><tr><td>ch28</td><td>AGI 之路</td><td>Agent 的角色</td></tr></tbody></table>
+<h3>25.10.7 Part 5 与 Part 4 实战的对应</h3>
+
+<table><thead><tr><th>Part 5</th><th>Part 4 对应</th><th>工业化映射</th></tr></thead><tbody><tr><td>ch21 GUI Agent</td><td>ch20 Browser-Use</td><td>GUI 是 Browser 的超集</td></tr><tr><td>ch22 评测</td><td>ch16-20 全部</td><td>评测覆盖所有实战</td></tr><tr><td>ch23 安全</td><td><strong>ch17-20 全部</strong></td><td><strong>代码/Browser/调研/数据分析都是攻击面</strong></td></tr><tr><td>ch24 成本</td><td>ch16-20 全部</td><td>成本覆盖所有实战</td></tr><tr><td>ch25 自我改进</td><td>ch16-20 全部</td><td>改进覆盖所有实战</td></tr></tbody></table>
+<h3>25.10.8 Part 5 5 章的内在张力</h3>
+
+<table><thead><tr><th>张力对</th><th>矛盾</th><th>平衡</th></tr></thead><tbody><tr><td>ch21 能力 vs ch23 安全</td><td>越强越危险</td><td>Constitutional AI 约束</td></tr><tr><td>ch22 评测 vs ch24 成本</td><td>评测贵</td><td>用生产 trace 复用</td></tr><tr><td>ch23 安全 vs ch24 成本</td><td>安全贵</td><td>Llama Guard 1B 替代</td></tr><tr><td>ch24 成本 vs ch25 自我改进</td><td>自我改进也要花钱</td><td>5% 流量标注</td></tr></tbody></table>
+<h3>25.10.9 Part 5 vs Part 1-4 的能力跃迁</h3>
+
+<table><thead><tr><th>阶段</th><th>能力</th></tr></thead><tbody><tr><td>Part 1-2 基础</td><td>能跑起来</td></tr><tr><td>Part 3 多 Agent</td><td>能协作</td></tr><tr><td>Part 4 实战</td><td>能落地</td></tr><tr><td><strong>Part 5 高级</strong></td><td><strong>能工业化(可用 + 可测 + 可防 + 可省 + 可学)</strong></td></tr></tbody></table>
+<h3>25.10.10 Part 5 完结的一句话总结</h3>
+
+<p><strong>没有 Part 5,Agent 只是 demo;有了 Part 5,Agent 才是产品。</strong></p>
+
+<h3>25.10.11 Part 5 完结的工程仪式感</h3>
+
+<p>给走到这里的读者一个<strong>5 项清单</strong>——完成 Part 5 后,你的 Agent 工程能力应当达到:</p>
+
+<p>1. 能跑通 GUI Agent 实战(ch21)<br/>
+2. 能搭建评测 + 可观测性 dashboard(ch22)<br/>
+3. 能部署 5 层防御挡住 99.99% 攻击(ch23)<br/>
+4. 能把单次成本压到 $0.05 量级(ch24)<br/>
+5. 能让 Agent 自己学着省 30% 以上(ch25)</p>
+
+<p><strong>5 项全部达成,你的 Agent 就具备工业化交付能力</strong>。任何一项欠缺,都建议回炉补课。</p>
+
+<hr/>
+
+<h2>25.11 小结 + 速查 + 概念桥</h2>
+
+<h3>25.11.1 8 步速查行动清单</h3>
+
+<p>1. <strong>明确目标</strong>——你希望 Agent 学什么(省钱?对齐?少错?)<br/>
+2. <strong>选择范式</strong>——RLHF / RLAIF / DPO / GRPO / Agent-Tuning<br/>
+3. <strong>收集数据</strong>——离线:人工/GPT-4 标注;在线:trace 评分<br/>
+4. <strong>训练模型</strong>——SFT → DPO → 在线微调<br/>
+5. <strong>影子模式</strong>——2 周 A/B 验证<br/>
+6. <strong>在线 RLHF</strong>——5% 流量标注<br/>
+7. <strong>持续监控</strong>——ch22 评测指标 + ch24 成本指标<br/>
+8. <strong>每周迭代</strong>——DPO 微调 + 案例库更新</p>
+
+<h3>25.11.2 25 术语速查</h3>
+
+<table><thead><tr><th>#</th><th>术语</th><th>简释</th></tr></thead><tbody><tr><td>1</td><td>RLHF</td><td>人类反馈强化学习(3 阶段)</td></tr><tr><td>2</td><td>RLAIF</td><td>AI 反馈强化学习(成本 1/100)</td></tr><tr><td>3</td><td>DPO</td><td>直接偏好优化(跳过 PPO)</td></tr><tr><td>4</td><td>GRPO</td><td>群组相对策略优化(R1 同款)</td></tr><tr><td>5</td><td>PPO</td><td>近端策略优化(经典 RL)</td></tr><tr><td>6</td><td>RM</td><td>奖励模型</td></tr><tr><td>7</td><td>SFT</td><td>监督微调</td></tr><tr><td>8</td><td>Agent-Tuning</td><td>在 Agent trace 上微调</td></tr><tr><td>9</td><td>Constitutional AI</td><td>宪法 AI(Anthropic)</td></tr><tr><td>10</td><td>Self-Refine</td><td>自我改进</td></tr><tr><td>11</td><td>Reflexion</td><td>反思 + 长期记忆</td></tr><tr><td>12</td><td>在线学习</td><td>边跑边学</td></tr><tr><td>13</td><td>离线学习</td><td>静态数据训练</td></tr><tr><td>14</td><td>灾难性遗忘</td><td>学新忘旧</td></tr><tr><td>15</td><td>奖励黑客</td><td>骗过 RM 而非完成任务</td></tr><tr><td>16</td><td>经验回放</td><td>Replay Buffer</td></tr><tr><td>17</td><td>Critic</td><td>价值网络(PPO 需要)</td></tr><tr><td>18</td><td>群组相对优势</td><td>GRPO 用组内归一化</td></tr><tr><td>19</td><td>蒸馏</td><td>Teacher-Student 训练</td></tr><tr><td>20</td><td>Self-Play</td><td>自我博弈</td></tr><tr><td>21</td><td>在线 RLHF</td><td>5% 流量标注</td></tr><tr><td>22</td><td>Constitutional Self-Critique</td><td>宪法式自我批评</td></tr><tr><td>23</td><td>失败案例库</td><td>错误 → 训练数据</td></tr><tr><td>24</td><td>探索 vs 利用</td><td>Exploration vs Exploitation</td></tr><tr><td>25</td><td>影子模式</td><td>Shadow Mode(部署不生效)</td></tr></tbody></table>
+<h3>25.11.3 概念桥 ch25 ↔ ch26</h3>
+
+<p>ch25 解决了"Agent 怎么自己学",但有个隐含假设:<strong>Agent 的工具是固定的</strong>。现实中,Agent 工业化的下一步是——<strong>工具本身也在演化、市场化、标准化</strong>。</p>
+
+<p>工具市场 / Skills 体系 / MCP 生态——这是 2025-2026 Agent 生态最热的方向。<strong>OpenAI Apps SDK / Anthropic MCP / Google ADK / Hugging Face Spaces / 阿里百炼 / 字节扣子</strong>——每个大厂都在建自己的"Agent 工具市场"。</p>
+
+<p>第二个问题随之而来:<strong>当工具越来越多,Agent 怎么选?</strong>这就是 ch26 要解决的——<strong>生态化、标准化、互操作</strong>。工具市场 / Skills 体系 / MCP 生态——<strong>第二十六章聊</strong>。</p>
+
+<h3>25.11.4 ch25 资源清单</h3>
+
+<table><thead><tr><th>资源</th><th>链接/参考</th></tr></thead><tbody><tr><td>InstructGPT</td><td>OpenAI 2022 论文</td></tr><tr><td>Constitutional AI</td><td>Anthropic 2022 论文</td></tr><tr><td>DPO 论文</td><td>Stanford 2023</td></tr><tr><td>GRPO / R1</td><td>DeepSeek 2025</td></tr><tr><td>AgentInstruct</td><td>Salesforce 2024</td></tr><tr><td>ToolBench</td><td>OpenBMB 2024</td></tr><tr><td>LangSmith</td><td>LangChain 评测工具</td></tr><tr><td>Llama-3-Agent</td><td>Meta 开源</td></tr></tbody></table>
+<h3>25.11.5 ch25 自测题</h3>
+
+<p>1. RLHF 三阶段分别是什么?<br/>
+2. DPO 相比 PPO 的最大优势?<br/>
+3. GRPO 为什么不需要 critic?<br/>
+4. Agent-Tuning 与普通 SFT 的核心差异?<br/>
+5. 在线学习的 4 大风险?<br/>
+6. Self-Refine 与 Constitutional Self-Critique 的关系?</p>
+
+<p>(答案在 §25.2-25.9 都有提示,完整答案见配套 Notebook)</p>
+
+<h3>25.11.6 25 术语速查(图解版)</h3>
+
+<pre><code>RLHF = 人类反馈强化学习(SFT → RM → PPO)
+  ├── RLAIF = AI 替代人类反馈
+  ├── DPO = 直接偏好优化(跳过 RM/PPO)
+  └── GRPO = 组内相对优势(DeepSeek R1)
+
+<p>Agent-Tuning = 在 Agent trace 上微调<br/>
+在线学习 = 边跑边学<br/>
+  ├── 经验回放 = Replay Buffer<br/>
+  ├── 在线 RLHF = 5% 流量标注<br/>
+  └── 影子模式 = 不生效只观察</p>
+
+<p>自我批评 = Agent 给自己当老师<br/>
+  ├── Self-Refine = 自我迭代<br/>
+  ├── Constitutional Self-Critique = 宪法约束<br/>
+  └── 多 Agent 互相批评 = CrewAI 模式<br/>
+</code></pre>---</p>
+
+<p><strong>本章完。Part 5 完结。下章 Part 6 开篇。</strong></p>
+</main>
+
+<nav class="chapter-pager">
+  <a href="ch24.html">← 第 24 章:Agent 成本控制</a>
+  <a href="ch26.html">第 26 章:Agent + MCP 生态 →</a>
+</nav>
+
+<footer>
+  <p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <a href="ch20.html">第 20 章</a> · <a href="ch21.html">第 21 章</a> · <a href="ch22.html">第 22 章</a> · <a href="ch23.html">第 23 章</a> · <a href="ch24.html">第 24 章</a> · <strong>第 25 章</strong></p>
+</footer>
+
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
