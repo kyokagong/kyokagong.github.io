@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>第 26 章：Agent + MCP 生态——工具市场、Skills 体系 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css"><link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="/assets/css/tts-player.css">
+<style>
+:root{--book-accent-fg:#c026d3;--book-accent-bg:#f97316}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;max-width:900px;margin:0 auto;padding:24px;background:#fafafa;color:#333}
+.chapter-header{background:linear-gradient(135deg,rgba(192,38,211,.1),rgba(249,115,22,.1));padding:24px;border-radius:12px;margin-bottom:18px;border:1px solid rgba(192,38,211,.2)}
+.chapter-header h1{margin:0 0 8px;color:#c026d3;font-size:28px}.chapter-meta{color:#666;font-size:14px}
+.part-6-banner{background:linear-gradient(90deg,#3b82f6,#06b6d4);color:#fff;padding:20px 24px;border-radius:12px;margin-bottom:24px;box-shadow:0 4px 12px rgba(59,130,246,.22)}
+.part-6-banner h2{margin:0 0 8px;font-size:22px}.part-6-banner p{margin:0;font-size:14px;opacity:.96}
+h2{margin-top:42px;color:#9d174d;border-bottom:1px solid rgba(192,38,211,.2);padding-bottom:8px}h3{margin-top:26px;color:#7e22ce}
+table{border-collapse:collapse;margin:16px 0;width:100%;font-size:14px}th,td{border:1px solid #ddd;padding:8px;vertical-align:top}th{background:rgba(192,38,211,.1)}tr:hover{background:rgba(192,38,211,.05)}
+code{background:rgba(192,38,211,.1);padding:2px 4px;border-radius:3px;font-family:ui-monospace,monospace;font-size:.9em}pre{background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:8px;overflow:auto}pre code{background:transparent;padding:0;color:inherit}
+blockquote{border-left:4px solid #c026d3;padding:8px 16px;background:rgba(192,38,211,.05);border-radius:4px}
+.chapter-pager{display:flex;justify-content:space-between;gap:16px;margin-top:50px;padding-top:24px;border-top:1px solid rgba(192,38,211,.2)}.chapter-pager a{padding:12px 20px;border:1px solid rgba(192,38,211,.4);border-radius:8px;color:#c026d3;text-decoration:none}
+footer{margin-top:60px;padding-top:24px;border-top:1px solid rgba(192,38,211,.2);color:#888;font-size:13px}footer a{color:#c026d3;text-decoration:none;margin:0 4px}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body>
+<header class="chapter-header"><h1>第 26 章：Agent + MCP 生态——工具市场、Skills 体系</h1><div class="chapter-meta">第 26 章 · 第六部分（前沿与未来）Day 1 / 3 · Part 6 开篇 · 11 节 + 55 子节 + 19 表 + 4 Python + 30 术语</div></header>
+<div class="part-6-banner"><h2>🔭 Part 6 开篇：前沿与未来</h2><p>ch26 看生态 / ch27 看企业 / ch28 看 AGI——从能力分发走向组织落地与长期未来。</p></div>
+<h3 style="margin-top:0; color:#c026d3;">🔌 第 23 种 inline SVG 形态学：MCP + Skills 双层生态交换机（800×440）</h3>
+<svg viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;height:auto;font-family:system-ui;display:block;margin:0 auto" role="img" aria-labelledby="mcp-title mcp-desc">
+  <title id="mcp-title">MCP 加 Skills 双层生态交换机</title>
+  <desc id="mcp-desc">上层 Agent Host 通过 MCP Client 和协议总线连接三个 Server，Skills 从侧边为 Agent 提供步骤与模板。</desc>
+  <defs>
+    <linearGradient id="mcp-main" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c026d3"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+    <linearGradient id="mcp-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#06b6d4"/></linearGradient>
+    <linearGradient id="mcp-green" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#059669"/></linearGradient>
+    <marker id="mcp-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0 0 L0 6 L9 3z" fill="#c026d3"/></marker>
+  </defs>
+  <rect x="10" y="10" width="780" height="420" rx="18" fill="#fff" stroke="rgba(192,38,211,.22)"/>
+  <text x="400" y="38" text-anchor="middle" font-size="17" font-weight="700" fill="#c026d3">能力接口（MCP）+ 操作手册（Skills）</text>
+
+  <rect x="270" y="58" width="270" height="76" rx="15" fill="url(#mcp-main)"/>
+  <text x="405" y="87" text-anchor="middle" fill="white" font-size="16" font-weight="700">🧠 Agent Host</text>
+  <text x="405" y="110" text-anchor="middle" fill="white" font-size="11">模型 · 用户界面 · 权限 · 上下文策略</text>
+
+  <rect x="30" y="62" width="190" height="140" rx="15" fill="url(#mcp-blue)"/>
+  <text x="125" y="90" text-anchor="middle" fill="white" font-size="15" font-weight="700">📘 Agent Skills</text>
+  <text x="125" y="114" text-anchor="middle" fill="white" font-size="11">SKILL.md：怎样做</text>
+  <text x="125" y="135" text-anchor="middle" fill="white" font-size="10">scripts/ · references/</text>
+  <text x="125" y="153" text-anchor="middle" fill="white" font-size="10">assets/ · 模板 · 检查表</text>
+  <text x="125" y="180" text-anchor="middle" fill="white" font-size="10">渐进式披露，按需加载</text>
+  <path d="M220 126 C240 126 245 106 270 106" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#mcp-arrow)"/>
+
+  <rect x="280" y="165" width="250" height="58" rx="14" fill="url(#mcp-green)"/>
+  <text x="405" y="190" text-anchor="middle" fill="white" font-size="14" font-weight="700">🔌 MCP Clients</text>
+  <text x="405" y="209" text-anchor="middle" fill="white" font-size="10">一条 Client ↔ 一条 Server 会话</text>
+  <path d="M405 134 L405 165" stroke="#c026d3" stroke-width="2.5" marker-end="url(#mcp-arrow)"/>
+
+  <rect x="170" y="252" width="470" height="54" rx="27" fill="rgba(192,38,211,.08)" stroke="url(#mcp-main)" stroke-width="2"/>
+  <text x="405" y="275" text-anchor="middle" fill="#c026d3" font-size="14" font-weight="700">MCP 协议总线 · JSON-RPC · 生命周期 · 能力协商</text>
+  <text x="405" y="295" text-anchor="middle" fill="#666" font-size="10">Tools · Resources · Prompts · Sampling · Roots · Elicitation</text>
+  <path d="M405 223 L405 252" stroke="#c026d3" stroke-width="2.5" marker-end="url(#mcp-arrow)"/>
+
+  <g>
+    <rect x="45" y="342" width="205" height="70" rx="13" fill="rgba(192,38,211,.10)" stroke="#c026d3"/>
+    <text x="148" y="370" text-anchor="middle" fill="#c026d3" font-size="13" font-weight="700">📁 Files Server</text>
+    <text x="148" y="392" text-anchor="middle" fill="#666" font-size="10">stdio · Roots · 只读优先</text>
+    <rect x="298" y="342" width="205" height="70" rx="13" fill="rgba(249,115,22,.10)" stroke="#f97316"/>
+    <text x="400" y="370" text-anchor="middle" fill="#f97316" font-size="13" font-weight="700">🐙 GitHub Server</text>
+    <text x="400" y="392" text-anchor="middle" fill="#666" font-size="10">HTTP · OAuth · 读写分权</text>
+    <rect x="550" y="342" width="205" height="70" rx="13" fill="rgba(16,185,129,.10)" stroke="#10b981"/>
+    <text x="652" y="370" text-anchor="middle" fill="#059669" font-size="13" font-weight="700">🗄️ Data Server</text>
+    <text x="652" y="392" text-anchor="middle" fill="#666" font-size="10">私有 Registry · 审计 · SLA</text>
+  </g>
+  <path d="M280 306 L148 342" stroke="#c026d3" stroke-width="2" marker-end="url(#mcp-arrow)"/>
+  <path d="M405 306 L400 342" stroke="#c026d3" stroke-width="2" marker-end="url(#mcp-arrow)"/>
+  <path d="M530 306 L652 342" stroke="#c026d3" stroke-width="2" marker-end="url(#mcp-arrow)"/>
+</svg><main><h1>第 26 章 Agent + MCP 生态——工具市场、Skills 体系</h1>
+<blockquote>本章定位：Part 6 · 前沿与未来 · Day 1 / 3（Part 6 开篇）</blockquote>
+<blockquote>前置：ch25 Agent 强化学习与自我改进</blockquote>
+<blockquote>后续：ch27 Agent 在企业落地的现状与挑战</blockquote>
+<hr/>
+<h2>26.1 引子——当工具从固定列表变成生态系统</h2>
+<h3>26.1.1 ch25 留下的隐含假设</h3>
+<p>ch25 讨论了 Agent 如何从失败轨迹中学习，但它默认了一件事：<strong>Agent 的工具集合相对固定</strong>。模型可以学会更好地调用搜索、数据库和代码执行器，却很少追问这些工具从哪里来、怎样升级、如何授权、能否跨客户端复用。</p>
+<p>于是，“<strong>工具市场 / Skills 体系 / MCP 生态——第二十六章聊</strong>”不只是下章预告，而是 Agent 从单体应用走向生态系统的转折点。Agent 自己学会做事之后，下一步不是继续堆 prompt，而是让能力能够被发现、安装、组合、审计和替换。</p>
+<h3>26.1.2 三个经常混在一起的问题</h3>
+<table><thead><tr><th>层</th><th>核心问题</th><th>代表机制</th></tr></thead><tbody><tr><td>连接层</td><td>Agent 怎样以统一方式访问外部数据与动作？</td><td>MCP</td></tr><tr><td>分发层</td><td>开发者怎样发现、发布、安装这些能力？</td><td>Registry / 工具市场</td></tr><tr><td>方法层</td><td>Agent 怎样知道完成某类任务的可靠步骤？</td><td>Agent Skills / <code>SKILL.md</code></td></tr></tbody></table>
+<p>MCP 解决“插头不统一”，Registry 解决“去哪里找插头”，Skills 解决“插上以后怎样把事做对”。三者相互增强，却不能互相替代。</p>
+<h3>26.1.3 从 N×M 集成到 N+M 集成</h3>
+<p>没有协议时，N 个 Agent 客户端接 M 个工具，最坏需要维护 N×M 组适配。统一协议把问题近似拆成 N 个客户端适配器加 M 个服务端适配器。它不会消灭业务差异，却把重复的连接、发现、schema 和错误处理收敛到公共层。</p>
+<table><thead><tr><th>时代</th><th>典型做法</th><th>主要代价</th></tr></thead><tbody><tr><td>手写时代</td><td>每个 Agent 直接调用 REST/SDK</td><td>凭据、重试、schema 各写一遍</td></tr><tr><td>Function Calling 时代</td><td>模型获得结构化函数描述</td><td>仍由应用自行发现和托管工具</td></tr><tr><td>MCP 时代</td><td>Client 连接标准化 Server</td><td>需要治理服务供应链与权限</td></tr><tr><td>生态时代</td><td>Registry + MCP + Skills</td><td>发现更容易，信任判断更重要</td></tr></tbody></table>
+<h3>26.1.4 Part 6 为什么从生态开始</h3>
+<p>前五部分回答“Agent 是什么、怎样构建、怎样协作、怎样实战、怎样工业化”。最后一部分要把视野拉远：技术能力正在变成生态，生态进入企业后又会碰到组织与治理，最后才有资格讨论 Agent 与 AGI。ch26 因此不是工具清单，而是一张<strong>能力如何流动</strong>的地图。</p>
+<hr/>
+<h2>26.2 MCP 到底标准化了什么</h2>
+<h3>26.2.1 一句话定义</h3>
+<p>MCP（Model Context Protocol）是连接 AI 应用与外部系统的开放协议。官方文档把它类比为 AI 应用的 USB-C：数据源、工具和工作流通过统一接口接入 Host，Host 再决定把哪些能力交给模型或用户。</p>
+<p>这个类比很好用，但不能过度延伸。USB-C 连接的大多是确定性硬件；MCP Server 暴露的可能是数据库写操作、云资源删除或浏览器控制，风险远高于普通外设。因此“能插”从来不等于“应该信任”。</p>
+<h3>26.2.2 Host、Client、Server 三方架构</h3>
+<table><thead><tr><th>角色</th><th>职责</th><th>例子</th><th>不应承担的职责</th></tr></thead><tbody><tr><td>Host</td><td>承载模型、用户界面、权限与上下文策略</td><td>IDE、桌面助手、Hermes Agent</td><td>不应无条件信任 Server 描述</td></tr><tr><td>Client</td><td>Host 内的一条 MCP 连接</td><td><code>mcp_github</code> 连接器</td><td>不代表整个应用身份</td></tr><tr><td>Server</td><td>提供上下文与能力</td><td>文件、GitHub、数据库服务</td><td>不应读取未授权的 Host 上下文</td></tr></tbody></table>
+<p>一个 Host 可以拥有多个 Client；通常每个 Client 与一个 Server 建立有状态会话。把 Client 理解成“会话级连接器”，就不容易把它误认为前端应用。</p>
+<h3>26.2.3 协议骨架：JSON-RPC + 生命周期</h3>
+<p>MCP 消息建立在 JSON-RPC 2.0 之上，包含 request、response 与 notification。一次典型连接不是上来就 <code>tools/call</code>，而是：</p>
+<ol>
+<li>Client 发送 <code>initialize</code>，声明协议版本与客户端能力；</li>
+<li>Server 返回自身能力与信息；</li>
+<li>Client 发送 <code>notifications/initialized</code>；</li>
+<li>双方按协商结果使用 tools、resources、prompts 等能力；</li>
+<li>连接结束时释放资源。</li>
+</ol>
+<p><strong>能力协商（capability negotiation）</strong>很关键：协议存在某个功能，不代表当前两端都支持。生产代码必须按协商结果启用功能，不能只看版本号猜能力。</p>
+<h3>26.2.4 MCP 不是什么</h3>
+<table><thead><tr><th>误解</th><th>为什么错</th><th>正确理解</th></tr></thead><tbody><tr><td>MCP 就是 Function Calling</td><td>FC 描述一次模型调用可用的函数；MCP还管发现、会话、资源、提示、传输等</td><td>FC 可作为 Host 内部执行工具的一环</td></tr><tr><td>MCP 是 Agent 框架</td><td>它不负责规划、记忆和状态机</td><td>LangGraph/CrewAI 等仍负责业务编排</td></tr><tr><td>MCP Server 一定运行在远端</td><td>stdio Server 常是本地子进程</td><td>本地与远端都是一等场景</td></tr><tr><td>进 Registry 就安全</td><td>Registry 提供发现与元数据，不等于安全背书</td><td>安装前仍需审计、签名与权限策略</td></tr><tr><td>MCP 会自动解决权限</td><td>协议只提供承载机制</td><td>Host 与组织必须实施最小权限</td></tr></tbody></table>
+<h3>26.2.5 与 ch07 Function Calling 的关系</h3>
+<p>ch07 教的是“模型如何给出结构化调用参数”；ch26 教的是“这些可调用能力如何被发现并跨应用复用”。常见链路是：MCP Server 提供 tool schema → Host 转成模型能理解的工具描述 → 模型产生调用 → Host 经 MCP Client 发送 <code>tools/call</code> → Server 执行并返回结果。二者是上下游，不是竞争标准。</p>
+<hr/>
+<h2>26.3 MCP 六类能力与两种传输</h2>
+<h3>26.3.1 Server 提供的三类核心原语</h3>
+<table><thead><tr><th>原语</th><th>谁主导选择</th><th>用途</th><th>例子</th></tr></thead><tbody><tr><td>Tools</td><td>通常由模型选择</td><td>执行动作或计算</td><td>创建 issue、查天气、跑 SQL</td></tr><tr><td>Resources</td><td>通常由应用选择</td><td>提供可寻址上下文</td><td>文件、数据库记录、文档 URI</td></tr><tr><td>Prompts</td><td>通常由用户显式选择</td><td>提供模板化消息/工作流入口</td><td>“审查 PR”“生成周报”</td></tr></tbody></table>
+<p>“通常”二字不能删。不同 Host 可以设计不同交互，但这个控制边界能帮助工程师判断：工具调用要重审批，资源读取要重范围，Prompt 模板要重可见性与用户意图。</p>
+<h3>26.3.2 Client 提供的三类反向能力</h3>
+<table><thead><tr><th>能力</th><th>方向</th><th>解决什么问题</th><th>风险控制</th></tr></thead><tbody><tr><td>Sampling</td><td>Server → Client → 模型</td><td>Server 请求 Host 代为生成内容</td><td>模型白名单、token 上限、轮数限制</td></tr><tr><td>Roots</td><td>Client → Server</td><td>告知 Server 可操作的文件/URI 根范围</td><td>目录隔离、只读优先</td></tr><tr><td>Elicitation</td><td>Server → Client → 用户</td><td>向用户索取缺失信息或确认</td><td>明示字段、禁止索取秘密、用户可拒绝</td></tr></tbody></table>
+<p>Sampling 让 Server 不必自带模型密钥，但也创造了“Server 消耗 Host 模型预算”的新边界。Roots 是范围提示，不应被当作唯一沙箱；真正的文件权限仍须由操作系统或容器保证。Elicitation 把追问纳入协议，但不能绕过用户同意。</p>
+<h3>26.3.3 两种主流传输</h3>
+<table><thead><tr><th>维度</th><th>stdio</th><th>Streamable HTTP</th></tr></thead><tbody><tr><td>位置</td><td>本地子进程</td><td>本地或远端服务</td></tr><tr><td>通信</td><td>stdin/stdout</td><td>HTTP POST，可配流式响应</td></tr><tr><td>部署</td><td>简单，适合开发者工具</td><td>适合共享、多租户与云服务</td></tr><tr><td>身份</td><td>继承受控环境或显式变量</td><td>常结合 HTTP 授权与 OAuth</td></tr><tr><td>扩缩容</td><td>进程级</td><td>服务级</td></tr><tr><td>主要风险</td><td>本地文件与环境变量泄露</td><td>网络攻击、租户隔离、令牌泄露</td></tr></tbody></table>
+<p>旧版独立 HTTP+SSE transport 在生态中仍可能遇到；当前规范的 Streamable HTTP 自身也可以使用 SSE 返回流式事件。新实现应优先跟随当前规范，并对旧 Server 做显式兼容，而不是把“旧 transport 名称”误解成“SSE 技术已经失效”。</p>
+<h3>26.3.4 工具 schema 是产品契约</h3>
+<p>一个好 tool schema 至少要做到：名称可区分、描述明确边界、参数有类型与约束、危险动作显式标记、错误可恢复。把 50 个含糊工具一次性暴露给模型，会同时增加 token、误选率和攻击面。</p>
+<table><thead><tr><th>坏描述</th><th>问题</th><th>改进</th></tr></thead><tbody><tr><td><code>run(query)</code></td><td>不知道查询什么、是否写入</td><td><code>search_readonly_docs(query, top_k)</code></td></tr><tr><td><code>manage_repo(action)</code></td><td>一个入口混合读写删</td><td>拆成 list/create/update，删除单独审批</td></tr><tr><td><code>execute(code)</code></td><td>权限边界无限</td><td>固定运行时、超时、网络与目录白名单</td></tr></tbody></table>
+<h3>26.3.5 结果也需要结构</h3>
+<p>工具返回一大段自然语言并非最佳实践。结果应优先包含机器可检查的状态、结构化内容、可展示文本与可追踪错误。Host 还应区分“协议错误”“工具执行错误”和“业务未找到”，否则模型只能把所有失败都当成同一类重试。</p>
+<hr/>
+<h2>26.4 从零理解一个最小 MCP 服务</h2>
+<h3>26.4.1 先用 mock 看懂协议，不被 SDK 隐藏细节</h3>
+<p>下面不是生产 Server，而是一个可运行的 JSON-RPC mock。它展示 <code>initialize</code>、<code>tools/list</code> 与 <code>tools/call</code> 三条主路径，并故意把工具集合做成 allowlist。为聚焦方法分派，示例省略 <code>jsonrpc</code>、<code>id</code>、标准 error object 与 framing，<strong>不是线缆级兼容实现</strong>。真实项目应使用官方或成熟 SDK 处理 framing、并发、取消、通知和传输。</p>
+<pre><code class="language-python">import json
+
+class MiniMCPServer:
+    def __init__(self):
+        self.tools = {
+            &quot;add&quot;: {
+                &quot;description&quot;: &quot;两个整数相加&quot;,
+                &quot;inputSchema&quot;: {
+                    &quot;type&quot;: &quot;object&quot;,
+                    &quot;properties&quot;: {&quot;a&quot;: {&quot;type&quot;: &quot;integer&quot;}, &quot;b&quot;: {&quot;type&quot;: &quot;integer&quot;}},
+                    &quot;required&quot;: [&quot;a&quot;, &quot;b&quot;],
+                },
+            }
+        }
+
+    def handle(self, req):
+        method, params = req.get(&quot;method&quot;), req.get(&quot;params&quot;, {})
+        if method == &quot;initialize&quot;:
+            return {&quot;protocolVersion&quot;: &quot;2025-06-18&quot;,
+                    &quot;capabilities&quot;: {&quot;tools&quot;: {&quot;listChanged&quot;: False}},
+                    &quot;serverInfo&quot;: {&quot;name&quot;: &quot;mini-math&quot;, &quot;version&quot;: &quot;0.1.0&quot;}}
+        if method == &quot;tools/list&quot;:
+            return {&quot;tools&quot;: [{&quot;name&quot;: name, **spec} for name, spec in self.tools.items()]}
+        if method == &quot;tools/call&quot;:
+            name, args = params.get(&quot;name&quot;), params.get(&quot;arguments&quot;, {})
+            if name not in self.tools:
+                return {&quot;isError&quot;: True, &quot;content&quot;: [{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: &quot;unknown tool&quot;}]}
+            if not all(isinstance(args.get(k), int) for k in (&quot;a&quot;, &quot;b&quot;)):
+                return {&quot;isError&quot;: True, &quot;content&quot;: [{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: &quot;a/b must be integers&quot;}]}
+            return {&quot;content&quot;: [{&quot;type&quot;: &quot;text&quot;, &quot;text&quot;: str(args[&quot;a&quot;] + args[&quot;b&quot;])}]}
+        raise ValueError(f&quot;unsupported method: {method}&quot;)
+
+server = MiniMCPServer()
+for request in [
+    {&quot;method&quot;: &quot;initialize&quot;, &quot;params&quot;: {}},
+    {&quot;method&quot;: &quot;tools/list&quot;},
+    {&quot;method&quot;: &quot;tools/call&quot;, &quot;params&quot;: {&quot;name&quot;: &quot;add&quot;, &quot;arguments&quot;: {&quot;a&quot;: 20, &quot;b&quot;: 26}}},
+]:
+    print(json.dumps(server.handle(request), ensure_ascii=False))</code></pre>
+<p>预期最后一行返回 <code>46</code>。代码没有网络、API key 或第三方依赖，适合先建立协议直觉。</p>
+<h3>26.4.2 生产实现多出来的工作</h3>
+<table><thead><tr><th>mock 省略项</th><th>生产要求</th></tr></thead><tbody><tr><td>请求 ID 与 JSON-RPC envelope</td><td>正确关联并发 request/response</td></tr><tr><td><code>notifications/initialized</code></td><td>完整生命周期与通知</td></tr><tr><td>参数校验库</td><td>严格 JSON Schema、长度与枚举限制</td></tr><tr><td>超时/取消</td><td>截止时间、取消传播、幂等重试</td></tr><tr><td>身份权限</td><td>用户、租户、scope、审批</td></tr><tr><td>可观测性</td><td>trace_id、tool、版本、耗时、结果类别</td></tr></tbody></table>
+<h3>26.4.3 错误设计决定 Agent 能否自愈</h3>
+<p>“失败”至少拆成四类：<code>invalid_arguments</code> 让模型改参数；<code>permission_denied</code> 让 Host 请求授权；<code>rate_limited</code> 根据 <code>retry_after</code> 延迟；<code>internal_error</code> 触发有限重试或人工接管。若一律返回“something went wrong”，再强的模型也只能盲猜。</p>
+<h3>26.4.4 版本兼容策略</h3>
+<p>协议版本由初始化协商，工具版本则是另一条线。工具 schema 的破坏性修改应发布新 major 版本或新工具名；新增可选字段通常可保持兼容。Server 更新后若工具列表变化，可以通过相应能力通知 Client 刷新，但 Host 仍应缓存上一个可用版本用于回退。</p>
+<hr/>
+<h2>26.5 工具市场与 MCP Registry</h2>
+<h3>26.5.1 Registry 是“目录”，不是“运行时”</h3>
+<p>官方 MCP Registry 的目标是让 Client 发现可安装的 Server，类似 MCP Server 的应用目录。它保存发布元数据与版本信息，却不替你运行所有 Server，也不天然替你承担安全审计。Client 从 Registry 找到条目后，仍需根据包、远程 URL 或部署说明完成安装和连接。<strong>截至 2026 年，具体 API 稳定性与审核范围仍是日期敏感事实，部署前应核对官方状态页。</strong></p>
+<h3>26.5.2 从发布到调用的生命周期</h3>
+<table><thead><tr><th>阶段</th><th>关键对象</th><th>必查问题</th></tr></thead><tbody><tr><td>开发</td><td>Server + manifest</td><td>工具边界是否单一、schema 是否稳定</td></tr><tr><td>发布</td><td>包/镜像/远程端点</td><td>作者身份、版本、许可证、哈希</td></tr><tr><td>发现</td><td>Registry 元数据</td><td>名称、能力、兼容客户端、更新时间</td></tr><tr><td>安装</td><td>Client/Host 配置</td><td>来源可信度、依赖、权限、密钥</td></tr><tr><td>连接</td><td>initialize 协商</td><td>协议版本、能力、超时</td></tr><tr><td>运行</td><td>tool/resource/prompt</td><td>审批、审计、预算、速率限制</td></tr><tr><td>升级</td><td>新版本</td><td>schema diff、迁移、回退</td></tr><tr><td>下架</td><td>撤销/隔离</td><td>已安装副本、凭据吊销、告警</td></tr></tbody></table>
+<h3>26.5.3 为什么企业一定会建私有 Registry</h3>
+<p>公共市场适合通用能力，企业真正有价值的工具往往连接 CRM、ERP、数据仓库、工单和内部知识库，不能公开发布。私有 Registry 的价值不只“藏起来”，更是把审批状态、数据等级、责任团队、SLA、成本中心与可用租户写进元数据。</p>
+<table><thead><tr><th>公共 Registry</th><th>企业私有 Registry</th></tr></thead><tbody><tr><td>强调开放发现与跨客户端兼容</td><td>强调身份、合规、SLA 与资产责任人</td></tr><tr><td>作者声誉和社区反馈重要</td><td>安全评审、数据分级和变更流程重要</td></tr><tr><td>常见安装是 npm/PyPI/容器/远程 URL</td><td>常见安装是内部镜像与受控远程服务</td></tr><tr><td>用户自行判断是否可信</td><td>平台团队维护 allowlist 与撤销机制</td></tr></tbody></table>
+<h3>26.5.4 市场排序不能只看下载量</h3>
+<p>工具市场若只按下载量排序，会把“流行”等同于“适合”。面向 Agent 的排序至少要综合：任务相关度、权限需求、组织 allowlist、schema 质量、维护活跃度、调用成本、历史成功率和安全事件。对写操作，合规等级应当拥有一票否决权。</p>
+<h3>26.5.5 供应链是新攻击面</h3>
+<p>恶意或被接管的 Server 可以在描述中诱导模型泄露上下文，在更新中扩大权限，或借依赖包执行本地代码。因而市场需要包签名、不可变版本、来源证明、依赖清单（SBOM）、漏洞扫描、维护者双因素认证与快速撤销。<strong>“安装一个工具”在安全意义上更接近安装 IDE 插件，而不是收藏一个网页。</strong></p>
+<hr/>
+<h2>26.6 Agent Skills——把“会做事”打包</h2>
+<h3>26.6.1 Skill 不是工具，而是可移植的操作手册</h3>
+<p>Agent Skills 是一种轻量开放格式，用文件夹打包专门知识与工作流。最小 Skill 只有一个带 YAML frontmatter 的 <code>SKILL.md</code>；复杂 Skill 还能带 <code>scripts/</code>、<code>references/</code>、<code>assets/</code> 等资源。</p>
+<pre><code class="language-text">my-skill/
+├── SKILL.md          # 必需：名称、描述、工作步骤
+├── scripts/          # 可选：确定性代码
+├── references/       # 可选：规范、API、长文档
+└── assets/           # 可选：模板、图片、样例</code></pre>
+<p>工具提供“能做什么”，Skill 描述“怎样稳定地做”。比如 GitHub MCP Server 能列 issue、改文件、开 PR；<code>release-hotfix</code> Skill 则规定先复现、再写测试、检查变更、走审批、发布与回滚。</p>
+<h3>26.6.2 <code>SKILL.md</code> 的最小契约</h3>
+<pre><code class="language-markdown">---
+name: release-hotfix
+description: 生产故障热修复流程；当用户要求紧急修复和发布时使用。
+---
+
+# Hotfix
+1. 建立隔离分支并记录事件编号。
+2. 先写失败测试，再做最小修复。
+3. 运行安全扫描、回归测试和回滚演练。
+4. 经审批后发布，并记录验证证据。</code></pre>
+<p>描述字段尤其重要：Agent 通常先看到 Skill 的名称和描述，再决定是否加载正文。描述过宽会误触发，描述过窄会漏触发；好的描述同时写“做什么”和“何时使用”。按 Agent Skills 规范，名称应使用小写字母、数字与连字符并与目录名一致；<code>description</code> 必填，长度为 1-1024 个字符。</p>
+<h3>26.6.3 渐进式披露为什么重要</h3>
+<p>把所有 Skill 全文塞进 system prompt 会迅速耗尽上下文。渐进式披露通常分三层：</p>
+<ol>
+<li><strong>目录层</strong>：只加载名称与描述，用于路由；</li>
+<li><strong>正文层</strong>：命中后加载 <code>SKILL.md</code>；</li>
+<li><strong>附件层</strong>：执行到具体步骤时才读取脚本、参考和模板。</li>
+</ol>
+<p>这样既节省 token，也减少无关说明之间的冲突。Skills 的优势不是“prompt 更多”，而是<strong>在正确时机加载正确上下文</strong>。</p>
+<h3>26.6.4 一个可运行的渐进加载器</h3>
+<pre><code class="language-python">from pathlib import Path
+from tempfile import TemporaryDirectory
+
+
+def read_skill(skill_dir, load_references=False):
+    text = (Path(skill_dir) / &quot;SKILL.md&quot;).read_text(encoding=&quot;utf-8&quot;)
+    if not text.startswith(&quot;---\n&quot;):
+        raise ValueError(&quot;SKILL.md must start with YAML frontmatter&quot;)
+    _, frontmatter, body = text.split(&quot;---&quot;, 2)
+    meta = {}
+    for line in frontmatter.strip().splitlines():
+        if &quot;:&quot; in line:
+            key, value = line.split(&quot;:&quot;, 1)
+            meta[key.strip()] = value.strip()
+    result = {&quot;metadata&quot;: meta, &quot;instructions&quot;: body.strip()}
+    if load_references:
+        ref_dir = Path(skill_dir) / &quot;references&quot;
+        result[&quot;references&quot;] = {
+            p.name: p.read_text(encoding=&quot;utf-8&quot;) for p in ref_dir.glob(&quot;*.md&quot;)
+        } if ref_dir.exists() else {}
+    return result
+
+
+with TemporaryDirectory() as tmp:
+    root = Path(tmp) / &quot;demo-skill&quot;
+    (root / &quot;references&quot;).mkdir(parents=True)
+    (root / &quot;SKILL.md&quot;).write_text(
+        &quot;---\nname: demo-skill\ndescription: 演示渐进加载\n---\n\n先读说明，再按需读参考。&quot;,
+        encoding=&quot;utf-8&quot;,
+    )
+    (root / &quot;references&quot; / &quot;api.md&quot;).write_text(&quot;API v1&quot;, encoding=&quot;utf-8&quot;)
+    print(read_skill(root, load_references=False)[&quot;metadata&quot;])
+    print(read_skill(root, load_references=True)[&quot;references&quot;])</code></pre>
+<p>真实实现应使用 YAML 解析器并校验规范字段；这里刻意只用标准库，展示“先元数据、后正文、再附件”的加载时机。</p>
+<h3>26.6.5 Skills 的版本与评测</h3>
+<p>Skill 是代码旁边的过程资产，也要进版本控制。每次修改应记录触发条件、步骤差异和兼容性，并用一组真实任务评测：该触发时是否触发、不该触发时是否沉默、步骤是否完成、脚本是否可执行、最终证据是否齐全。</p>
+<table><thead><tr><th>评测维度</th><th>示例指标</th></tr></thead><tbody><tr><td>触发准确率</td><td>20 个正例命中率、20 个负例误触发率</td></tr><tr><td>执行完成率</td><td>验收项通过数 / 总数</td></tr><tr><td>稳定性</td><td>同任务重复 5 次的方差</td></tr><tr><td>成本</td><td>加载 token、工具调用数、耗时</td></tr><tr><td>可维护性</td><td>过期链接、脚本测试、责任人</td></tr></tbody></table>
+<h3>26.6.6 Skills 不应藏秘密</h3>
+<p>Skill 文件夹通常可被提交、共享或安装，不能把 API key 写进正文或脚本。Skill 应声明需要哪些凭据，再由 Host 的秘密管理系统注入；日志中也要脱敏。过程知识可移植，身份凭据不可移植。</p>
+<hr/>
+<h2>26.7 MCP、Skills、Prompt、Plugin 如何分工</h2>
+<h3>26.7.1 四者不是同一层</h3>
+<table><thead><tr><th>机制</th><th>核心资产</th><th>最适合</th><th>不适合</th></tr></thead><tbody><tr><td>Prompt</td><td>一段即时上下文</td><td>当前任务约束、输出格式</td><td>长期维护复杂流程</td></tr><tr><td>Skill</td><td>可版本化流程包</td><td>领域方法、重复工作、模板脚本</td><td>直接提供远程系统权限</td></tr><tr><td>MCP</td><td>标准能力接口</td><td>跨客户端工具/资源/Prompt 接入</td><td>替代业务编排与审查制度</td></tr><tr><td>Plugin/原生工具</td><td>Host 内代码扩展</td><td>深度 UI、性能或平台特性</td><td>每个客户端重复开发通用接口</td></tr></tbody></table>
+<p>判断口诀：<strong>需要“知道怎么做”写 Skill；需要“能够去做”接 Tool/MCP；需要“只在本轮这样做”写 Prompt；需要“改变 Host 本身”才做 Plugin。</strong></p>
+<h3>26.7.2 最强组合：Skill 编排 MCP</h3>
+<p>以“发布周报”为例：Skill 规定从 Linear 汇总已完成 issue、从 GitHub 取 PR、按部门模板生成摘要、让负责人确认后发到文档系统；MCP Servers 分别提供 Linear、GitHub 和文档写入能力。若换掉 GitHub Client，只要工具语义兼容，Skill 的业务步骤仍可复用。</p>
+<h3>26.7.3 何时不该上 MCP</h3>
+<ul>
+<li>只有一个应用、一个稳定内部函数，且不存在复用计划；</li>
+<li>调用在同一进程内且性能极敏感；</li>
+<li>API 仍高速变动，连基本 schema 都不稳定；</li>
+<li>数据不能跨进程或网络边界；</li>
+<li>团队尚无权限、审计和版本治理能力。</li>
+</ul>
+<p>标准化有固定成本。MVP 可以先用原生函数，但接口边界应保持清晰，成熟后再封成 MCP Server。</p>
+<h3>26.7.4 何时不该写 Skill</h3>
+<p>一次性、两行即可说明的任务不需要 Skill；没有验证过的个人偏好也不应立刻固化；纯事实知识若更适合 RAG，就不必伪装成流程。Skill 应保存<strong>可复用的程序性知识</strong>，而不是成为所有上下文的垃圾抽屉。</p>
+<hr/>
+<h2>26.8 发现、路由与组合</h2>
+<h3>26.8.1 工具越多，选择越难</h3>
+<p>1000 个工具全部注入模型上下文，会导致描述成本上升、相似名称互相竞争、误调用增加。生态规模化的关键不是无限曝光，而是两阶段甚至三阶段路由：先找领域，再找候选工具，最后按权限和任务状态筛选。</p>
+<h3>26.8.2 一个可解释的路由评分器</h3>
+<pre><code class="language-python">TOOLS = [
+    {&quot;name&quot;: &quot;github_search&quot;, &quot;tags&quot;: {&quot;code&quot;, &quot;search&quot;}, &quot;risk&quot;: 1, &quot;latency&quot;: 2},
+    {&quot;name&quot;: &quot;github_merge&quot;, &quot;tags&quot;: {&quot;code&quot;, &quot;write&quot;}, &quot;risk&quot;: 5, &quot;latency&quot;: 2},
+    {&quot;name&quot;: &quot;docs_search&quot;, &quot;tags&quot;: {&quot;docs&quot;, &quot;search&quot;}, &quot;risk&quot;: 1, &quot;latency&quot;: 1},
+]
+
+
+def rank_tools(task_tags, allow_write=False):
+    ranked = []
+    for tool in TOOLS:
+        overlap = len(task_tags &amp; tool[&quot;tags&quot;])
+        blocked = &quot;write&quot; in tool[&quot;tags&quot;] and not allow_write
+        score = overlap * 10 - tool[&quot;risk&quot;] * 2 - tool[&quot;latency&quot;]
+        if not blocked and overlap:
+            ranked.append((score, tool[&quot;name&quot;]))
+    return sorted(ranked, reverse=True)
+
+
+print(rank_tools({&quot;code&quot;, &quot;search&quot;}))
+# github_search 应排名第一；github_merge 因 write 未授权被过滤</code></pre>
+<p>真实系统会加入语义向量、历史成功率、租户策略与实时成本，但“先硬过滤、后软排序”原则不变。安全条件不能只是一个可被相关度抵消的负分。</p>
+<h3>26.8.3 Skill 路由与工具路由不同</h3>
+<p>Skill 路由看用户意图是否匹配“何时使用”；工具路由看当前步骤需要哪项外部能力。一个任务通常先命中一个 Skill，然后 Skill 的每一步再触发不同工具。若反过来让工具描述承担完整流程，工具会变得又长又脆弱。</p>
+<h3>26.8.4 上下文预算的三级漏斗</h3>
+<table><thead><tr><th>阶段</th><th>输入规模</th><th>输出</th></tr></thead><tbody><tr><td>目录检索</td><td>数百/数千条短描述</td><td>5-20 个候选 Skill/Server</td></tr><tr><td>能力展开</td><td>候选 schema 与 Skill 正文</td><td>3-8 个当前可用工具</td></tr><tr><td>执行时加载</td><td>具体参考、模板、资源</td><td>本步骤最小上下文</td></tr></tbody></table>
+<p>这与 ch08 记忆系统的混合检索同构：先粗召回，再重排，最后按需读取原文。生态越大，越不能省掉检索层。</p>
+<h3>26.8.5 组合需要显式状态</h3>
+<p>跨 Server 工作流要保存调用结果、来源、版本和授权状态。例如“查客户 → 查未付账单 → 创建提醒”涉及 CRM、财务和消息三个 Server。任何一步失败，都要知道哪些动作已产生副作用，才能补偿或请求人工接管。MCP 统一调用接口，不自动提供分布式事务。</p>
+<hr/>
+<h2>26.9 安全、权限与治理</h2>
+<h3>26.9.1 MCP 把 ch23 的攻击面扩大到供应链</h3>
+<p>ch23 的提示注入在 MCP 生态里出现新载体：工具描述、Resource 内容、Prompt 模板、Server 返回值和 Registry 元数据都可能携带恶意指令。Host 必须把它们当作<strong>不可信数据</strong>，而不是高优先级系统指令。</p>
+<table><thead><tr><th>威胁</th><th>例子</th><th>防线</th></tr></thead><tbody><tr><td>Tool poisoning</td><td>描述诱导模型先读取密钥</td><td>描述扫描、来源签名、上下文隔离</td></tr><tr><td>Rug pull</td><td>更新版偷偷新增写权限</td><td>版本锁定、schema diff、重新审批</td></tr><tr><td>Confused deputy</td><td>低权限用户借 Host 调高权限工具</td><td>端到端用户身份与 scope</td></tr><tr><td>Data exfiltration</td><td>Resource 内容指示把数据发外网</td><td>出站 allowlist、数据分类、DLP</td></tr><tr><td>Dependency compromise</td><td>npm/PyPI 依赖被接管</td><td>SBOM、哈希锁定、镜像扫描</td></tr><tr><td>Prompt injection</td><td>文档要求忽略 Host 策略</td><td>指令/数据分层、结果净化</td></tr></tbody></table>
+<h3>26.9.2 最小权限要落到每个工具</h3>
+<p>不要只给整个 Server 一个“可信/不可信”开关。GitHub Server 可以同时包含读仓库、写 issue、合并 PR、删除分支；它们的风险完全不同。Host 应允许按 Server、tool、参数、用户、租户和环境分别授权。</p>
+<h3>26.9.3 一个参数级策略门</h3>
+<pre><code class="language-python">from pathlib import PurePosixPath
+
+POLICY = {
+    &quot;read_file&quot;: {&quot;roots&quot;: [PurePosixPath(&quot;/workspace/docs&quot;)], &quot;approval&quot;: False},
+    &quot;publish_report&quot;: {&quot;roots&quot;: [], &quot;approval&quot;: True},
+}
+
+
+def authorize(tool, args, user_approved=False):
+    rule = POLICY.get(tool)
+    if not rule:
+        return False, &quot;tool_not_allowlisted&quot;
+    if rule[&quot;approval&quot;] and not user_approved:
+        return False, &quot;approval_required&quot;
+    if tool == &quot;read_file&quot;:
+        path = PurePosixPath(args.get(&quot;path&quot;, &quot;&quot;))
+        allowed = any(path == root or root in path.parents for root in rule[&quot;roots&quot;])
+        if not allowed or &quot;..&quot; in path.parts:
+            return False, &quot;path_outside_roots&quot;
+    return True, &quot;allowed&quot;
+
+
+print(authorize(&quot;read_file&quot;, {&quot;path&quot;: &quot;/workspace/docs/guide.md&quot;}))
+print(authorize(&quot;read_file&quot;, {&quot;path&quot;: &quot;/etc/passwd&quot;}))
+print(authorize(&quot;publish_report&quot;, {}, user_approved=False))</code></pre>
+<p>策略检查必须发生在真正执行之前，且不能让模型通过自然语言说“用户已同意”来设置 <code>user_approved=True</code>。审批状态应来自 Host UI 的可信事件。</p>
+<h3>26.9.4 凭据不能交给模型上下文</h3>
+<p>stdio Server 只应继承必要环境变量；远程 Server 使用短期 token、细粒度 scope 与安全存储。Host 调用工具时引用凭据，但不把明文 key 放进 prompt、Resource 或工具结果。凭据轮换和吊销也要独立于 Skill 与 Server 版本。</p>
+<h3>26.9.5 零信任 MCP 清单</h3>
+<ol>
+<li>默认不安装，来源进入 allowlist；</li>
+<li>默认只读，写操作按 tool 单独开；</li>
+<li>默认锁版本，升级先做 schema 与依赖 diff；</li>
+<li>默认隔离，本地 Server 在容器或受限账户运行；</li>
+<li>默认限流，限制调用次数、时长、token 与费用；</li>
+<li>默认留痕，记录用户、模型、Server/tool 版本、参数摘要和结果；</li>
+<li>默认可撤销，出现事件能停用 Server 并吊销所有凭据；</li>
+<li>默认人工确认不可逆动作。</li>
+</ol>
+<h3>26.9.6 Tool annotations 不是安全边界</h3>
+<p>Server 可以声明工具只读、破坏性或幂等等属性，Host 可借此改善 UI 与默认策略；但这些注解来自 Server 自己，不能替代独立策略。恶意 Server 完全可能把删除动作标成只读。安全判断必须以组织策略、代码审计和运行时观测为准。</p>
+<hr/>
+<h2>26.10 2026 生态现状与企业参考架构</h2>
+<h3>26.10.1 从协议采用到生态竞争</h3>
+<p>截至 2026 年，MCP 已从单一厂商倡议走向多种 AI 客户端、开发工具与服务提供商共同支持的开放生态。竞争焦点也从“是否支持 MCP”转向“发现体验、授权、远程托管、工具筛选、企业治理和可观测性做得多好”。协议统一底座，并不会让上层产品同质化。</p>
+<p>Skills 同样体现这一趋势：团队不再只共享 prompt，而是共享带触发条件、脚本、参考和模板的过程包。MCP 让能力跨客户端流动，Skills 让方法跨模型与团队流动。</p>
+<h3>26.10.2 Hermes Agent 的组合示例</h3>
+<p>Hermes 的原生 MCP Client 可以连接 stdio 与 HTTP Server，启动时发现工具并注册为一等工具；工具名带 Server 前缀以避免冲突。Hermes Skills 则按需加载知识文档，并通过渐进式披露控制 token。两者组合恰好展示了本章结论：</p>
+<pre><code class="language-text">用户任务
+  ↓
+Skill 路由：加载“怎样做”的步骤、模板、检查表
+  ↓
+Agent 规划：决定当前步骤需要哪种能力
+  ↓
+MCP 工具路由：从允许的 Server/Tool 中选择
+  ↓
+策略门：用户、scope、参数、预算、审批
+  ↓
+执行 + 观测 + 结果回到 Agent</code></pre>
+<h3>26.10.3 企业双 Registry 参考架构</h3>
+<p>企业可以把公共生态与内部资产分开治理：</p>
+<table><thead><tr><th>层</th><th>组件</th><th>职责</th></tr></thead><tbody><tr><td>体验层</td><td>IDE、助手、业务 Agent</td><td>用户交互、审批、结果展示</td></tr><tr><td>编排层</td><td>Agent Runtime + Skill Catalog</td><td>计划、流程、上下文预算</td></tr><tr><td>连接层</td><td>MCP Clients / Gateway</td><td>发现、会话、协议、限流</td></tr><tr><td>治理层</td><td>Policy Engine + Audit + Secrets</td><td>scope、DLP、凭据、追踪</td></tr><tr><td>目录层</td><td>公共 Registry 镜像 + 私有 Registry</td><td>审核、版本、撤销、责任人</td></tr><tr><td>能力层</td><td>SaaS/内部/本地 MCP Servers</td><td>业务数据与动作</td></tr></tbody></table>
+<p>公共 Registry 条目应先进入隔离环境扫描和评测，再被镜像到企业 allowlist；内部 Server 则必须绑定资产责任人、数据等级和 SLA。Agent 只能看见与当前用户和租户匹配的子集。</p>
+<h3>26.10.4 5 大落地坑</h3>
+<table><thead><tr><th>坑</th><th>症状</th><th>根因</th><th>修复</th></tr></thead><tbody><tr><td>工具海啸</td><td>上百工具全塞 prompt，误选上升</td><td>无检索与分层</td><td>目录召回 → 重排 → 最小暴露</td></tr><tr><td>权限扁平</td><td>一个 token 能读写所有系统</td><td>只按 Server 授权</td><td>tool/参数/用户/环境四维策略</td></tr><tr><td>版本漂移</td><td>昨天可用，升级后 schema 变了</td><td>未锁版本、无契约测试</td><td>semver、schema diff、回归与回退</td></tr><tr><td>Skill 腐化</td><td>步骤和链接过期</td><td>无责任人和评测</td><td>版本控制、使用遥测、定期复核</td></tr><tr><td>市场即信任</td><td>看到 Registry 就直接安装</td><td>把发现误当背书</td><td>签名、SBOM、扫描、沙箱、allowlist</td></tr></tbody></table>
+<h3>26.10.5 三阶段落地路线</h3>
+<p><strong>阶段 1：受控试点。</strong> 选 3-5 个只读工具和 2-3 个高频 Skill，在沙箱中验证发现、权限、日志和成本。</p>
+<p><strong>阶段 2：私有目录。</strong> 建立 Server/Skill 负责人、版本规则、审批、评测集和撤销机制；接入统一秘密管理与 SSO。</p>
+<p><strong>阶段 3：生态运营。</strong> 开放内部发布，按任务成功率、成本和安全事件持续排序；对公共生态采用镜像审查；把重复的 Agent 轨迹沉淀回 Skills，把稳定能力沉淀为 MCP Server。</p>
+<h3>26.10.6 生态飞轮</h3>
+<p>成功轨迹 → 提炼成 Skill → Skill 调用标准 MCP 能力 → 运行产生可观测数据 → 发现缺失能力 → 发布或升级 Server → Registry 分发 → 更多轨迹。ch25 的自我改进因此没有结束，而是从“模型策略”扩展到“组织能力资产”的持续改进。</p>
+<hr/>
+<h2>26.11 小结、速查与概念桥</h2>
+<h3>26.11.1 8 步落地清单</h3>
+<ol>
+<li>盘点现有工具与数据源，先区分读、写和不可逆动作；</li>
+<li>把可复用能力封装成边界清晰的 MCP Server；</li>
+<li>用严格 schema、结构化错误和能力协商建立契约；</li>
+<li>建立公共 Registry 镜像与企业私有 Registry；</li>
+<li>把重复流程沉淀成 Skills，而不是继续堆 system prompt；</li>
+<li>使用渐进式披露与两阶段路由控制上下文；</li>
+<li>在调用前执行 tool/参数/用户/环境级策略；</li>
+<li>用审计、评测、版本锁定和撤销机制持续运营。</li>
+</ol>
+<h3>26.11.2 30 术语速查</h3>
+<table><thead><tr><th>#</th><th>术语</th><th>简释</th></tr></thead><tbody><tr><td>1</td><td>MCP</td><td>Model Context Protocol，AI 应用连接外部系统的开放协议</td></tr><tr><td>2</td><td>Host</td><td>承载模型、用户体验与策略的应用</td></tr><tr><td>3</td><td>Client</td><td>Host 内面向一个 Server 的协议连接器</td></tr><tr><td>4</td><td>Server</td><td>暴露能力与上下文的服务</td></tr><tr><td>5</td><td>JSON-RPC</td><td>MCP 消息的基础 RPC 格式</td></tr><tr><td>6</td><td>Capability Negotiation</td><td>初始化时协商双方支持的功能</td></tr><tr><td>7</td><td>Tool</td><td>通常由模型选择的可执行能力</td></tr><tr><td>8</td><td>Resource</td><td>可寻址的上下文或数据</td></tr><tr><td>9</td><td>Prompt</td><td>用户可选择的模板化消息/工作流</td></tr><tr><td>10</td><td>Sampling</td><td>Server 请求 Client 代为调用模型</td></tr><tr><td>11</td><td>Roots</td><td>Client 告知 Server 的可操作根范围</td></tr><tr><td>12</td><td>Elicitation</td><td>Server 经 Client 向用户索取信息</td></tr><tr><td>13</td><td>stdio</td><td>本地子进程标准输入输出传输</td></tr><tr><td>14</td><td>Streamable HTTP</td><td>支持远程与流式响应的 HTTP 传输</td></tr><tr><td>15</td><td>Registry</td><td>Server 的发现和发布目录</td></tr><tr><td>16</td><td>Manifest</td><td>描述包、端点、版本等发布元数据</td></tr><tr><td>17</td><td>Semantic Versioning</td><td>major/minor/patch 版本语义</td></tr><tr><td>18</td><td>Agent Skill</td><td>专门知识与工作流的可移植文件夹</td></tr><tr><td>19</td><td>SKILL.md</td><td>Skill 的必需元数据与说明文件</td></tr><tr><td>20</td><td>Frontmatter</td><td>Markdown 顶部的 YAML 元数据</td></tr><tr><td>21</td><td>Progressive Disclosure</td><td>元数据→正文→附件的按需加载</td></tr><tr><td>22</td><td>Tool Routing</td><td>从候选工具中筛选和排序</td></tr><tr><td>23</td><td>Least Privilege</td><td>只授予完成任务所需最小权限</td></tr><tr><td>24</td><td>OAuth</td><td>远程服务常用的授权框架</td></tr><tr><td>25</td><td>Supply-chain Security</td><td>发布、依赖、升级链路的安全治理</td></tr><tr><td>26</td><td>SBOM</td><td>软件物料清单</td></tr><tr><td>27</td><td>Tool Poisoning</td><td>用恶意工具描述或结果影响 Agent</td></tr><tr><td>28</td><td>Private Registry</td><td>企业内部受控能力目录</td></tr><tr><td>29</td><td>Allowlist</td><td>明确允许安装或调用的集合</td></tr><tr><td>30</td><td>Schema Diff</td><td>升级前比较工具契约变化</td></tr></tbody></table>
+<h3>26.11.3 五个必须记住的判断</h3>
+<ul>
+<li>MCP 标准化连接，不标准化信任；</li>
+<li>Registry 负责发现，不等于安全认证；</li>
+<li>Skill 保存程序性知识，不保存凭据；</li>
+<li>工具数量越多，越需要检索、路由和最小暴露；</li>
+<li>能力生态的终点不是“安装更多”，而是“用更少、更可信的能力完成任务”。</li>
+</ul>
+<h3>26.11.4 参考资料与时间边界</h3>
+<table><thead><tr><th>资料</th><th>本章用途</th></tr></thead><tbody><tr><td><code>https://modelcontextprotocol.io/docs/getting-started/intro</code></td><td>MCP 定义、生态价值与总体导览</td></tr><tr><td><code>https://modelcontextprotocol.io/specification/2025-06-18</code></td><td>架构、能力、传输与生命周期</td></tr><tr><td><code>https://registry.modelcontextprotocol.io/</code></td><td>官方 Registry 入口</td></tr><tr><td><code>https://github.com/modelcontextprotocol/registry</code></td><td>Registry 定位、发布与 API 项目</td></tr><tr><td><code>https://agentskills.io/what-are-skills</code></td><td>Agent Skills 定义与目录结构</td></tr><tr><td><code>https://agentskills.io/specification</code></td><td><code>SKILL.md</code>、frontmatter 与渐进式披露规范</td></tr><tr><td><code>https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp</code></td><td>Hermes 原生 MCP Client 案例</td></tr><tr><td><code>https://hermes-agent.nousresearch.com/docs/user-guide/features/skills</code></td><td>Hermes Skills 与按需加载案例</td></tr></tbody></table>
+<p>MCP 与 Skills 仍在快速演化。协议版本、Registry 状态和客户端支持属于日期敏感事实；本章以 2026 年可见的官方文档为基线，实施时应再次核对最新规范与安全建议。</p>
+<h3>26.11.5 概念桥 ch26 ↔ ch27</h3>
+<p>ch26 看起来给出了一个漂亮答案：接口统一、工具可发现、流程可复用，企业似乎只要建个市场就能获得 Agent 生产力。但技术目录不会自动改变责任边界，协议兼容也不会自动带来 ROI、数据质量、员工采纳、采购流程与合规批准。</p>
+<p><strong>接口统一了，工具上架了，真正困难的问题才开始：企业为什么仍然落不了地——第二十七章聊。</strong></p>
+<hr/>
+<p><strong>本章完。Part 6 已开启。</strong></p></main>
+<nav class="chapter-pager"><a href="ch25.html">← 第 25 章：Agent 强化学习与自我改进</a><a href="ch27.html">第 27 章：Agent 在企业落地的现状与挑战 →</a></nav>
+<footer><p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <a href="ch20.html">第 20 章</a> · <a href="ch21.html">第 21 章</a> · <a href="ch22.html">第 22 章</a> · <a href="ch23.html">第 23 章</a> · <a href="ch24.html">第 24 章</a> · <a href="ch25.html">第 25 章</a> · <strong>第 26 章</strong> · <a href="ch27.html">第 27 章</a> · <a href="ch28.html">第 28 章</a></p></footer>
+<script src="/assets/js/tts-player.js" defer></script></body></html>
