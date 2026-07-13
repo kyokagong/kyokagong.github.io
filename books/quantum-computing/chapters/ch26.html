@@ -257,6 +257,7 @@
                                                                   (随机基矢)
 3. ← (经典通信: Bob 公布基矢, **不公布**测量结果)
 4. Alice 和 Bob **比对**基矢, 保留**基矢相同**的比特 (约 2n 比特) → **sifted key**
+   - **注**: Alice 和 Bob **各自**独立 **随机**选**两**种基矢 (Z 或 X), 基矢匹配概率 = 50% (e.g., Z-Z 或 X-X), 所以 4n 个 qubit 中**约** 2n 个基矢匹配 → sifted key ≈ 2n 比特
 5. 随机选 n/2 比特公开比对 → 计算误码率 (QBER)
    - QBER < 11% → 安全, 余下 n/2 比特作为**最终密钥**
    - QBER > 11% → 可能有窃听者, **放弃**本次会话
@@ -415,6 +416,7 @@ Bob ----(单光子, 频率 f_B)----</code></pre>
 </tbody>
 </table>
 <p>**关键参数**: **寿命** (决定**等待**时间) + **效率** (决定**保真度**衰减速率) + **频率** (决定**接口**)。</p>
+<p><strong>注</strong>: 量子存储器<strong>频率</strong> (原子/离子 ~ 700 nm) 跟<strong>通信</strong>波长 (1550 nm) <strong>不匹配</strong>, 这是 26.7.3 频率转换的<strong>核心</strong>问题。量子存储器需<strong>频繁</strong>通过<strong>量子频率转换</strong>接口<strong>对接</strong>电信波段。</p>
 <p>**组件 3: 纠缠交换 (Bell 测量)**</p>
 <p>中间节点对**两对**纠缠光子做**Bell 测量** → 创建**远距离**纠缠 (跟隐形传态相同, 26.3.5)。</p>
 <h3>26.4.4 纠缠纯化 (Entanglement Purification)</h3>
@@ -571,7 +573,7 @@ Bob ----(单光子, 频率 f_B)----</code></pre>
 <tr><td>原子系综</td><td>毫秒-秒</td><td>⚠️ 实验</td></tr>
 <tr><td>NV 色心</td><td>毫秒</td><td>⚠️ 实验</td></tr>
 <tr><td>稀土离子</td><td>秒-小时</td><td>⚠️ 实验</td></tr>
-<tr><td>超导 qubit</td><td>微秒</td><td>❌ **太短**</td></tr>
+<tr><td>超导 qubit</td><td>**微秒** (μs)</td><td>⚠️ 适合**瞬时**纠缠交换, **不适合**量子中继器</td></tr>
 </tbody>
 </table>
 <p>**关键问题**:</p>
@@ -683,12 +685,12 @@ Bob ----(单光子, 频率 f_B)----</code></pre>
 <p>**优势 3: 标准化成熟**</p>
 <p>NIST 2024 已**正式**标准化 4 个算法 (ch11.8):</p>
 <table class="chapter-table">
-<thead><tr><th>算法</th><th>类型</th><th>用途</th></tr></thead>
+<thead><tr><th>算法</th><th>FIPS 编号</th><th>类型</th><th>用途</th></tr></thead>
 <tbody>
-<tr><td>**ML-KEM** (Kyber)</td><td>格密码 (LWE)</td><td>密钥封装</td></tr>
-<tr><td>**ML-DSA** (Dilithium)</td><td>格密码</td><td>数字签名</td></tr>
-<tr><td>**FALCON**</td><td>格密码 (NTRU)</td><td>紧凑签名</td></tr>
-<tr><td>**SLH-DSA** (SPHINCS+)</td><td>哈希</td><td>数字签名</td></tr>
+<tr><td>**ML-KEM** (Kyber)</td><td>**FIPS 203**</td><td>格密码 (LWE)</td><td>密钥封装</td></tr>
+<tr><td>**ML-DSA** (Dilithium)</td><td>**FIPS 204**</td><td>格密码</td><td>数字签名</td></tr>
+<tr><td>**SLH-DSA** (SPHINCS+)</td><td>**FIPS 205**</td><td>哈希</td><td>数字签名</td></tr>
+<tr><td>**FALCON**</td><td>**FIPS 206** (待批准)</td><td>格密码 (NTRU)</td><td>紧凑签名</td></tr>
 </tbody>
 </table>
 <h3>26.8.5 PQC 劣势</h3>
@@ -813,6 +815,7 @@ Bob ----(单光子, 频率 f_B)----</code></pre>
 <tr><td>**QKD vs PQC**</td><td>互补: QKD 信息论安全 + PQC 计算安全</td><td>26.8</td></tr>
 <tr><td>**NIST 2024 PQC 标准**</td><td>ML-KEM + ML-DSA + FALCON + SLH-DSA</td><td>26.8.4</td></tr>
 <tr><td>**IETF QIRG**</td><td>Quantum Internet Research Group, 协议标准化</td><td>26.7.5</td></tr>
+<tr><td>**量子中继器 vs 经典放大器**</td><td>中继器 = 纠缠交换 (创建新纠缠), 放大器 = 复制信号 (经典可行, 量子**不可** — 不可克隆定理 ch6.7)</td><td>26.4.1</td></tr>
 </tbody>
 </table>
 <hr>
@@ -1063,14 +1066,14 @@ Bob ----(单光子, 频率 f_B)----</code></pre>
         </a>
       </nav>
     <nav class="chapter-pager" aria-label="章节导航">
-        <a href="ch25.html" class="pager-link pager-prev">
-          <span class="pager-label">← 上一章</span>
-          <span class="pager-title">第 25 章 量子优势与量子霸权 (Quantum Advantage / Quantum Supremacy)</span>
-        </a>
-        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
-          <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 27 章 量子计算与 AI (即将推出)</span>
-        </span>
+      <a href="ch25.html" class="pager-link pager-prev">
+        <span class="pager-label">← 上一章</span>
+        <span class="pager-title">第 25 章 量子优势与量子霸权 (Quantum Advantage / Quantum Supremacy)</span>
+      </a>
+      <a href="ch27.html" class="pager-link pager-next">
+        <span class="pager-label">下一章 →</span>
+        <span class="pager-title">第 27 章 量子计算与 AI 的融合 (Quantum Computing & AI Convergence)</span>
+      </a>
       </nav>
     </main>
 
@@ -1133,6 +1136,7 @@ Bob ----(单光子, 频率 f_B)----</code></pre>
           <li><a href="ch24.html">第 24 章</a></li>
           <li><a href="ch25.html">第 25 章</a></li>
           <li><a href="ch26.html">第 26 章</a></li>
+          <li><a href="ch27.html">第 27 章</a></li>
           <li><a href="../index.html#progress">阅读进度</a></li>
         </ul>
       </div>
