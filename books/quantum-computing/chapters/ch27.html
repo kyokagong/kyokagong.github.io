@@ -345,6 +345,12 @@
 <p><strong>数学表述</strong>:</p>
 <p>$$\frac{\partial \langle C \rangle}{\partial \theta_k} \in O(2^{-n})$$</p>
 <p><strong>影响</strong>: 训练代价<strong>指数级</strong>增长 — 跟量子优势<strong>对冲</strong>。</p>
+<p><strong>vs 经典梯度消失 (关键区别)</strong>:</p>
+<ul>
+  <li><strong>经典深度学习</strong>: 梯度消失源于<strong>激活函数</strong> (sigmoid/tanh) + <strong>深度</strong>累积 — <strong>局部</strong>问题, <strong>有</strong>缓解 (ReLU, 残差连接, 归一化)</li>
+  <li><strong>Barren Plateau</strong>: 梯度源于 <strong>Hilbert 空间维度</strong> ($2^n$) + <strong>随机参数初始化</strong> — <strong>全局</strong>问题, <strong>没有</strong>简单缓解, 是<strong>量子独有</strong></li>
+  <li><strong>注</strong>: 经典深度学习<strong>也</strong>有 vanishing gradient, 但通常<strong>局部</strong>; Barren Plateau 是<strong>指数级</strong>全局消失, 规模更大</li>
+</ul>
 <p><strong>缓解策略</strong>:</p>
 <ul>
   <li>局部成本函数 (Local Cost Function)</li>
@@ -387,6 +393,12 @@
   <li>单 qubit $+$ 通用参数化旋转 = 通用神经网络</li>
   <li><strong>有限 qubit</strong> 即可模拟深度网络</li>
   <li>量子<strong>不</strong>需要指数 qubit 来<strong>通用逼近</strong></li>
+</ul>
+<p><strong>重要注 (避免误读)</strong>:</p>
+<ul>
+  <li>这是<strong>逼近</strong>意义 (类比经典 Universal Approximation Theorem), <strong>不是</strong>通用量子计算</li>
+  <li>Universal Approximation 只<strong>保证</strong>存在电路<strong>能</strong>逼近 $f$, <strong>不保证</strong>高效学习 (梯度 / 训练仍受 Barren Plateau 限制)</li>
+  <li>实际 QNN <strong>仍</strong>受 NISQ 限制 (噪声 + qubit 数)</li>
 </ul>
 <h3>27.3.3 QCNN: 量子卷积神经网络 (Cong 2019)</h3>
 <p><strong>架构</strong> (类比经典 CNN):</p>
@@ -663,6 +675,14 @@
   <li>已应用于超导 qubit 表面码 (5x5 + 7x7)</li>
   <li><strong>意义</strong>: 第一次 <strong>AI 在量子纠错中</strong>超越经典, <strong>几乎所有</strong>硬件团队 (IBM, Google, QuTech) <strong>采用</strong></li>
 </ul>
+<p><strong>Scalability (扩展性) — 关键挑战</strong>:</p>
+<ul>
+  <li>当前 AlphaQubit <strong>已</strong>测试到码距 <strong>d=11</strong> (5×5 + 7×7 表面码)</li>
+  <li>后续目标: 表面码 d=25 (≈ 600 qubit) <strong>未</strong>验证</li>
+  <li>远期: 表面码 d=41 (~ 41k 物理 qubit, Gidney 估算)</li>
+  <li><strong>扩展瓶颈</strong>: 更大神经网络 + 指数增长训练数据 + <strong>未见衰减迹象</strong> (transformer 注意力<strong>自然</strong>扩展)</li>
+  <li><strong>乐观信号</strong>: 初步结果显示 transformer 架构在码距增加时<strong>未</strong>出现性能坍塌, <strong>可能</strong>可扩展</li>
+</ul>
 <h3>27.6.4 AI 辅助量子态层析 (QST)</h3>
 <p><strong>问题</strong>: 量子态层析 (ch5) 需要<strong>指数级</strong>测量 ($3^n$)</p>
 <p><strong>AI 方法</strong> (MIT 2024 PRL):</p>
@@ -733,8 +753,8 @@
 <p><strong>实际</strong> (2026):</p>
 <ul>
   <li>实验 toy 数据集 (small MNIST, IMDb)</li>
-  <li>性能<strong>接近</strong>经典 Transformer</li>
-  <li><strong>量子优势</strong> <strong>尚未</strong>明显</li>
+  <li>性能<strong>接近</strong>经典 Transformer (差异 &lt; 2%, <strong>统计上</strong>不<strong>显著</strong>)</li>
+  <li><strong>没有</strong>压倒性优势 — 量子优势<strong>需要</strong>更大规模 + 更长训练时间</li>
   <li><strong>量子硬件规模</strong> 是<strong>主要</strong>瓶颈</li>
 </ul>
 <h3>27.7.3 量子辅助 LLM 训练</h3>
@@ -1181,6 +1201,14 @@ softmax 输出 → 每 qubit 纠错预测 (binary)</code></pre>
   <li>全书字数累计 ~ 18 万中文字</li>
   <li>全书 ~ 500 个 SVG 示意图 + 1000+ 公式</li>
 </ul>
+<p><strong>ch28 5 节具体子主题</strong> (提前预告):</p>
+<ul>
+  <li><strong>28.1 全书 6 部分回顾</strong> (28 章精华, ~ 1000 字)</li>
+  <li><strong>28.2 关键人物图谱</strong> (30+ 名字: Planck → Deutsch → Shor → Preskill → AlphaQubit)</li>
+  <li><strong>28.3 5 大开放挑战</strong> (实用化优势 / 百万 qubit / 量子互联网 / 软件 / 人才)</li>
+  <li><strong>28.4 5 年路线图 (2026-2030)</strong> (NISQ → 早期容错 → FTQC)</li>
+  <li><strong>28.5 哲学与未来</strong> (本体论 / 认识论 / 社会 / 教育 / 文化 / 个人建议)</li>
+</ul>
 <hr>
 <h2 id="概念速查表">📋 概念速查表</h2>
 <table class="chapter-table">
@@ -1402,10 +1430,10 @@ softmax 输出 → 每 qubit 纠错预测 (binary)</code></pre>
           <span class="pager-label">← 上一章</span>
           <span class="pager-title">第 26 章 量子互联网与量子通信 (Quantum Internet & Quantum Communication)</span>
         </a>
-        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+        <a href="ch28.html" class="pager-link pager-next">
           <span class="pager-label">下一章 →</span>
-          <span class="pager-title">第 28 章 未来展望 (即将推出)</span>
-        </span>
+          <span class="pager-title">第 28 章 未来展望 (The Future of Quantum Computing)</span>
+        </a>
       </nav>
     </main>
 

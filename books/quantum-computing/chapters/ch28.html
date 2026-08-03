@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="第28章：未来展望 (The Future of Quantum Computing) | 《量子计算》 — 6 部分 28 章完结 🎉">
+  <meta name="theme-color" content="#0a0e27">
+
+  <title>第28章：未来展望 | 量子计算</title>
+
+  <!-- Google Fonts: Noto Sans SC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <!-- MathJax -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']],
+        processEscapes: true,
+        tags: 'none'
+      },
+      options: { ignoreHtmlClass: 'no-mathjax', processHtmlClass: 'mathjax' },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async></script>
+
+  <link rel="stylesheet" href="/assets/css/book.css">
+  <link rel="stylesheet" href="/assets/css/site.css">
+  <link rel="stylesheet" href="/assets/css/tts-player.css">
+</head>
+<body>
+  <!-- Reading Progress Bar -->
+  <div id="reading-progress"></div>
+
+  <!-- Particle Background Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- ==================== HEADER ==================== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="../index.html" class="logo">
+        <div class="logo-icon">⚛</div>
+        <span>量子计算</span>
+      </a>
+
+      <!-- 站点级导航：返回书库 + 切换书籍 -->
+      <nav class="site-nav" aria-label="站点导航">
+        <a href="../../index.html" class="site-nav-link site-nav-home" title="返回书库">
+          <span class="nav-icon">📚</span><span>书库</span>
+        </a>
+        <span class="site-nav-sep" aria-hidden="true">·</span>
+        <a href="../index.html" class="site-nav-link active" title="《量子计算》">量子计算</a>
+        <a href="../../ml-intro/index.html" class="site-nav-link" title="《机器学习导论》">机器学习</a>
+        <a href="../../information-theory/index.html" class="site-nav-link" title="《信息论基础》">信息论</a>
+        <a href="../../agent-dev/index.html" class="site-nav-link" title="《AGENT开发从入门到精通》">AGENT</a>
+      </nav>
+
+      <!-- 主题切换 -->
+      <button class="theme-toggle" id="theme-toggle" aria-label="切换主题">
+        <span class="theme-icon">🌙</span>
+      </button>
+
+      <!-- 移动端菜单 -->
+      <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="菜单">
+        ☰
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== HERO ==================== -->
+  <section class="chapter-hero">
+    <div class="hero-content">
+      <div class="chapter-meta">
+        <span class="chapter-badge">第六部分 · 前沿与展望 · Day 4 🎉</span>
+        <span class="chapter-day-tag">Day 32 · 2026-08-03</span>
+      </div>
+      <h1 class="chapter-title">第 28 章 未来展望 (The Future of Quantum Computing)</h1>
+      <p class="chapter-subtitle">6 部分 28 章完结 🎉 · 32 天旅程终点 · 全书回顾 + 5 大挑战 + 5 年路线图 + 哲学反思</p>
+      <div class="chapter-stats">
+        <span class="stat">📖 ~6,940 字</span>
+        <span class="stat">🔢 8 节 + 2 附录 · 43 子节</span>
+        <span class="stat">📑 全书回顾 / 30+ 人物 / 5 大挑战 / 5 年路线图 / 哲学反思</span>
+        <span class="stat">⏱ ~50 分钟</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MAIN LAYOUT ==================== -->
+  <div class="chapter-layout">
+    <main class="chapter-main">
+                                                <article class="chapter-content">
+<hr>
+<h2 id="28-0-引言-一本书的终点-一门学科的新起点">28.0 引言: 一本书的终点, 一门学科的新起点</h2>
+<p>当读者翻开这一页的时候, 我们已经走过了 <strong>27 章、6 部分、约 18 万中文字、~1500 个公式、~50 张 inline SVG</strong> 的漫长旅程。从 1900 年普朗克 (Planck) 在柏林物理学会上提出能量量子假说, 到 2024 年 Google DeepMind 在 Nature 上发表 AlphaQubit; 从 1985 年 Deutsch 提出通用量子计算机的抽象模型, 到 2026 年 IBM Heron 156 qubit + Google Willow 105 qubit + Quantinuum H2 56 qubit 多个 NISQ 平台并行推进——<strong>量子计算</strong>已经从一个思想实验成长为价值千亿美元的全球产业。</p>
+<p><strong>本章是全书的最后一章</strong>, 也是我们 32 天旅程的总结。它的使命有三重:</p>
+<ol>
+  <li><strong>鸟瞰</strong>: 把 27 章的知识点串成一张完整的知识图谱, 帮助读者建立量子计算的<strong>完整心智模型</strong></li>
+  <li><strong>前瞻</strong>: 给出 5 大开放挑战和 5 年路线图 (2026-2030), 让读者看到未来 5 年量子计算的<strong>演化方向</strong></li>
+  <li><strong>激励</strong>: 用哲学反思和实用建议, 帮助读者决定是否要<strong>亲自下场</strong>参与这场科学革命</li>
+</ol>
+<p><strong>本章与其他 27 章的关系</strong>: 前 27 章是<strong>纵向深入</strong> (从公理到算法到硬件), 本章是<strong>横向整合</strong> (从历史到哲学到个人选择).</p>
+<hr>
+<h3>28.0.1 全书 6 部分鸟瞰图</h3>
+<pre><code class="">┌─────────────────────────────────────────────────────┐
+│  第一部分 (ch01-05) — 量子力学公理 (基础)            │
+│  Planck → Einstein → Bohr → Heisenberg → Dirac      │
+│  五大公理: 态空间 / 演化 / 测量 / 复合系统 / 不可克隆  │
+├─────────────────────────────────────────────────────┤
+│  第二部分 (ch06-10) — 量子计算基础 (硬件无关)        │
+│  量子比特 → 量子门 → 电路模型 → QFT → Grover         │
+├─────────────────────────────────────────────────────┤
+│  第三部分 (ch11-15) — 量子算法 (理论加速)            │
+│  Shor (指数) → QPE → VQE/QAOA → QML → 复杂性        │
+├─────────────────────────────────────────────────────┤
+│  第四部分 (ch16-19) — 量子纠错与容错                  │
+│  噪声 → Shor/Steane 码 → 表面码 → 容错定理 (~1%)      │
+├─────────────────────────────────────────────────────┤
+│  第五部分 (ch20-24) — 量子硬件 (5 平台物理实现)        │
+│  超导 / 离子阱 / 光量子 / 拓扑 / 中性原子             │
+├─────────────────────────────────────────────────────┤
+│  第六部分 (ch25-28) — 前沿与展望                     │
+│  量子优势 → 量子互联网 → 量子 AI → 未来展望           │
+└─────────────────────────────────────────────────────┘</code></pre>
+<hr>
+<h2 id="28-1-全书-6-部分回顾-知识体系鸟瞰">28.1 全书 6 部分回顾 — 知识体系鸟瞰</h2>
+<h3>28.1.1 第一部分: 量子力学公理 (ch01-05)</h3>
+<p>第一部分是全书的<strong>基础</strong>——没有量子力学公理, 量子计算就无从谈起。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>核心贡献</th></tr></thead>
+<tbody><tr><td><strong>ch01</strong></td><td>量子力学简史</td><td>1900 Planck → 1927 Solvay → 1965 Bell → 1981 Feynman 模拟 → 1994 Shor → 2024 AlphaQubit</td></tr><tr><td><strong>ch02</strong></td><td>量子态与狄拉克符号</td><td>ket/bra 符号、内积、外积、张量积、密度矩阵——所有后续数学语言</td></tr><tr><td><strong>ch03</strong></td><td>叠加原理与量子干涉</td><td>单光子双缝 + Mach-Zehnder 干涉仪——叠加≠"同时在两处"</td></tr><tr><td><strong>ch04</strong></td><td>量子纠缠与贝尔不等式</td><td>EPR 佯谬 + Bell 定理 + Aspect 1982 实验 + 隐形传态——非局域关联</td></tr><tr><td><strong>ch05</strong></td><td>量子测量与不确定性原理</td><td>Born 规则 + Robertson 不确定性 + POVM + 弱测量——测量的本质</td></tr></tbody>
+</table>
+<p><strong>第一部分的 5 大公理</strong> (ch05.9.7 完整表述):</p>
+<ol>
+  <li><strong>态空间公理</strong>: 量子态用 Hilbert 空间中的向量 (至差全局相位) 表示</li>
+  <li><strong>演化公理</strong>: 封闭系统演化由酉算符 $U(t)$ 描述, 连续演化由 Schrödinger 方程生成</li>
+  <li><strong>测量公理</strong>: 测量由 POVM 元 $\{M_m\}$ 描述, 结果 $m$ 的概率为 $\langle \psi | M_m^\dagger M_m | \psi \rangle$</li>
+  <li><strong>复合系统公理</strong>: 复合系统的态空间是子系统态空间的张量积 $\mathcal{H}_{AB} = \mathcal{H}_A \otimes \mathcal{H}_B$</li>
+  <li><strong>不可克隆定理</strong>: 未知量子态不能被完美复制 (ch06 详述)</li>
+</ol>
+<p><strong>为什么公理重要</strong>: 整个量子计算大厦就建立在这 5 条公理之上——没有它们, 量子比特、量子门、量子算法都是空中楼阁。</p>
+<hr>
+<h3>28.1.2 第二部分: 量子计算基础 (ch06-10)</h3>
+<p>第二部分是量子计算<strong>硬件无关</strong>的基础。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>核心贡献</th></tr></thead>
+<tbody><tr><td><strong>ch06</strong></td><td>量子比特 (qubit)</td><td>Bloch 球几何 + 5 种物理实现 + 不可克隆定理详细证明</td></tr><tr><td><strong>ch07</strong></td><td>量子逻辑门与量子线路</td><td>Pauli/H/S/T + CNOT/Toffoli + Clifford 群 24 元素 + Nielsen-Chuang 通用性</td></tr><tr><td><strong>ch08</strong></td><td>量子电路的数学模型</td><td>矩阵表示 + 控制门 + QSD 分解 + 1D S¹ 拓扑直觉</td></tr><tr><td><strong>ch09</strong></td><td>量子傅里叶变换 (QFT)</td><td>$O(n^2)$ 门 vs FFT $O(n 2^n)$ + QPE 完整推导 + Shor N=15 例子</td></tr><tr><td><strong>ch10</strong></td><td>Grover 搜索算法</td><td>振幅放大 + 几何可视化 + 二次加速 $O(\sqrt{N})$ + BBBV 最优性证明</td></tr></tbody>
+</table>
+<p><strong>第二部分的核心概念</strong>:</p>
+<ul>
+  <li><strong>Bloch 球</strong>: 纯态的几何表示, 单 qubit 态参数化 (ch06)</li>
+  <li><strong>通用性</strong>: 任意酉算符可由 H + T + CNOT 任意精度逼近 (ch07 Nielsen-Chuang)</li>
+  <li><strong>二次加速</strong>: Grover $O(\sqrt{N})$ 是<strong>最优</strong> (BBBV 证明, ch10)</li>
+</ul>
+<hr>
+<h3>28.1.3 第三部分: 量子算法与复杂性 (ch11-15)</h3>
+<p>第三部分是量子计算的<strong>核心吸引力</strong>——理论加速。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>核心贡献</th></tr></thead>
+<tbody><tr><td><strong>ch11</strong></td><td>Shor 因式分解算法</td><td>$O(n^3)$ 多项式 vs 经典 GNFS 亚指数——破解 RSA 的量子算法</td></tr><tr><td><strong>ch12</strong></td><td>量子相位估计 (QPE)</td><td>Shor + HHL + VQE 的<strong>共同</strong>子程序——相位 $\phi$ 编码在寄存器</td></tr><tr><td><strong>ch13</strong></td><td>变分量子算法 (VQE/QAOA)</td><td>经典-量子混合 + 参数化电路 + 噪声鲁棒——NISQ 时代的主力</td></tr><tr><td><strong>ch14</strong></td><td>量子机器学习 (QML)</td><td>CC/CQ/QQ 三大范式 + HHL/QPCA/QSVM + QCNN/QRNN——AI 加速器</td></tr><tr><td><strong>ch15</strong></td><td>量子复杂性理论</td><td>BQP / QMA / QSZK + 量子查询复杂度 + 后量子密码学</td></tr></tbody>
+</table>
+<p><strong>第三部分的核心加速谱</strong>:</p>
+<table class="chapter-table">
+<thead><tr><th>算法</th><th>加速</th><th>复杂度对比</th><th>章节</th></tr></thead>
+<tbody><tr><td><strong>Shor</strong></td><td>指数加速</td><td>经典 GNFS $\exp(O(n^{1/3}))$ vs Shor $O(n^3)$</td><td>ch11</td></tr><tr><td><strong>Grover</strong></td><td>二次加速</td><td>经典 $O(N)$ vs Grover $O(\sqrt{N})$</td><td>ch10</td></tr><tr><td><strong>VQE</strong></td><td>启发式</td><td>经典 FCI $\exp(O(n))$ vs VQE 多项式 (经验)</td><td>ch13</td></tr><tr><td><strong>HHL</strong></td><td>条件指数</td><td>经典 $O(N)$ vs HHL $O(\log N)$ (需稀疏 + QRAM)</td><td>ch14/ch27</td></tr><tr><td><strong>量子模拟</strong></td><td>指数加速</td><td>经典 $\exp(O(n))$ vs 量子 $O(\text{poly}(n))$</td><td>ch15</td></tr></tbody>
+</table>
+<p><strong>重要警告</strong>: 不是所有问题都有量子加速——NP 完全问题<strong>量子也不行</strong> (Grover 二次是最优).</p>
+<hr>
+<h3>28.1.4 第四部分: 量子纠错与容错 (ch16-19)</h3>
+<p>第四部分是量子计算的<strong>工程基础</strong>——没有容错, 大规模量子计算是空谈。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>核心贡献</th></tr></thead>
+<tbody><tr><td><strong>ch16</strong></td><td>量子噪声与退相干</td><td>退相干时间 $T_1$/$T_2$ + 噪声通道 (去极化/相位阻尼/振幅阻尼) + Lindblad 主方程</td></tr><tr><td><strong>ch17</strong></td><td>量子纠错码 (Shor 码 / Steane 码)</td><td>9-qubit Shor 码 + Steane [7,1,3] + 稳定子形式化</td></tr><tr><td><strong>ch18</strong></td><td>表面码与拓扑量子计算</td><td>表面码 + 拓扑码 + 阈值 ~1% + 2D 近邻门优势</td></tr><tr><td><strong>ch19</strong></td><td>容错量子计算</td><td>容错阈值定理 + magic state 注入 + Shor 态 + 逻辑 qubit 构造</td></tr></tbody>
+</table>
+<p><strong>第四部分的核心里程碑</strong>:</p>
+<ul>
+  <li><strong>Shor 9-qubit 码</strong> (ch17): 第一个量子纠错码, 纠正任意单 qubit 错误</li>
+  <li><strong>表面码阈值 ~1%</strong> (ch18): 工程上可达到 (现代硬件 ~99.5% 门保真度已超过阈值)</li>
+  <li><strong>AlphaQubit</strong> (ch19 + ch27): AI 辅助解码, 2024 Nature 638 在表面码上达到 96.6% 准确率 (vs MWPM 88.2%)</li>
+</ul>
+<hr>
+<h3>28.1.5 第五部分: 量子硬件 (ch20-24)</h3>
+<p>第五部分是量子计算的<strong>物理实现</strong>——5 大硬件平台的对比。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>平台</th><th>当前代表</th><th>主要优势</th><th>主要挑战</th></tr></thead>
+<tbody><tr><td><strong>ch20</strong></td><td>超导 qubit</td><td>Google Willow (105), IBM Heron (156)</td><td>可扩展 + 工艺成熟 + 门速度快 (ns)</td><td>相干时间短 (μs)</td></tr><tr><td><strong>ch21</strong></td><td>离子阱</td><td>Quantinuum H2 (56), IonQ Tempo</td><td>保真度最高 (&gt;99.9%) + 全连接</td><td>门速度慢 (μs) + 难扩展</td></tr><tr><td><strong>ch22</strong></td><td>光量子</td><td>Xanadu Borealis, PsiQuantum</td><td>室温运行 + 天然适合通信 + 大规模 Boson Sampling</td><td>确定性双 qubit 门难</td></tr><tr><td><strong>ch23</strong></td><td>拓扑量子计算</td><td>Microsoft Majorana 1</td><td>拓扑保护, 理论上零退相干</td><td>仍未<strong>确认</strong> Majorana 零模存在</td></tr><tr><td><strong>ch24</strong></td><td>中性原子</td><td>QuEra (256), Atom Computing (1180)</td><td>可扩展 (1000+ qubit) + 灵活几何</td><td>门保真度待提升</td></tr></tbody>
+</table>
+<p><strong>第五部分的硬件对比要点</strong> (ch20-24 综合):</p>
+<ul>
+  <li><strong>2024-2025 里程碑</strong>:</li>
+  <li><strong>Google Willow</strong>: 105 qubit 表面码, 低于阈值, 2024 Nature 638 (AlphaQubit 用)</li>
+  <li><strong>IBM Heron</strong>: 156 qubit, 2024 年 12 月发布</li>
+  <li><strong>Quantinuum H2</strong>: 56 qubit 全连接, 保真度 99.87%</li>
+  <li><strong>Atom Computing</strong>: 1180 qubit 中性原子 (2024 年 10 月), 史上最多</li>
+  <li><strong>Microsoft Majorana 1</strong>: 8 拓扑 qubit (2025 年 2 月宣布, 学术界仍有质疑)</li>
+</ul>
+<hr>
+<h3>28.1.6 第六部分: 前沿与展望 (ch25-28)</h3>
+<p>第六部分是量子计算的<strong>前沿动态</strong>——已经发生但尚未成为教科书的内容。</p>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>主题</th><th>核心贡献</th></tr></thead>
+<tbody><tr><td><strong>ch25</strong></td><td>量子优势与量子霸权</td><td>Sycamore 53 qubit (2019) → Willow 105 qubit (2024) + 量子优势的诚实评估</td></tr><tr><td><strong>ch26</strong></td><td>量子互联网与量子通信</td><td>BB84 QKD + 量子隐形传态 + 量子中继器 + 京沪干线</td></tr><tr><td><strong>ch27</strong></td><td>量子计算与 AI 的融合</td><td>QML + QNN + AlphaQubit + AI for Quantum 6 大应用</td></tr><tr><td><strong>ch28</strong></td><td>未来展望 (本章)</td><td>全书回顾 + 30+ 人物 + 5 大挑战 + 5 年路线图 + 哲学反思</td></tr></tbody>
+</table>
+<p><strong>第六部分的里程碑</strong>:</p>
+<ul>
+  <li><strong>2019 Google Sycamore</strong>: 量子优势首次宣布 (53 qubit 随机电路采样)</li>
+  <li><strong>2020 中国九章</strong>: 光量子 76 qubit 高斯玻色采样</li>
+  <li><strong>2022-2024 多平台</strong>: 中国祖冲之 + IBM Condor + Quantinuum H1</li>
+  <li><strong>2024 Willow 105</strong>: 低于阈值, 错误率指数级衰减 ($Λ = 2.14$)</li>
+  <li><strong>2024 AlphaQubit</strong>: AI 纠错超越经典</li>
+</ul>
+<hr>
+<h2 id="28-2-关键人物图谱-量子计算的英雄年代-1900-2026">28.2 关键人物图谱 — 量子计算的英雄年代 (1900-2026)</h2>
+<p>量子计算的发展史是一幅<strong>群星璀璨</strong>的画卷。下面按时代列出 30+ 位关键人物。</p>
+<h3>28.2.1 理论奠基期 (1900-1940)</h3>
+<p><strong>这些人物的工作奠定了量子力学的数学基础</strong>——没有他们就没有量子比特、量子门。</p>
+<table class="chapter-table">
+<thead><tr><th>人物</th><th>出生-去世</th><th>主要贡献</th><th>年份</th></tr></thead>
+<tbody><tr><td><strong>Max Planck</strong></td><td>1858-1947</td><td>量子假说 $E = h\nu$</td><td>1900</td></tr><tr><td><strong>Albert Einstein</strong></td><td>1879-1955</td><td>光量子解释光电效应</td><td>1905</td></tr><tr><td><strong>Niels Bohr</strong></td><td>1885-1962</td><td>氢原子模型 + 互补原理</td><td>1913</td></tr><tr><td><strong>Werner Heisenberg</strong></td><td>1901-1976</td><td>矩阵力学 + 不确定性原理</td><td>1925</td></tr><tr><td><strong>Erwin Schrödinger</strong></td><td>1887-1961</td><td>波动力学 + Schrödinger 方程</td><td>1926</td></tr><tr><td><strong>Paul Dirac</strong></td><td>1902-1984</td><td>Dirac 方程 + 量子电动力学</td><td>1928</td></tr><tr><td><strong>John von Neumann</strong></td><td>1903-1957</td><td>量子力学公理化 + 内积空间</td><td>1932</td></tr><tr><td><strong>Wolfgang Pauli</strong></td><td>1900-1958</td><td>不相容原理 + 中微子预言</td><td>1925</td></tr></tbody>
+</table>
+<h3>28.2.2 量子信息先驱期 (1960-1994)</h3>
+<p><strong>这是量子力学从"描述自然"到"操控信息"的转折期</strong>。</p>
+<table class="chapter-table">
+<thead><tr><th>人物</th><th>主要贡献</th><th>年份</th><th>意义</th></tr></thead>
+<tbody><tr><td><strong>Rolf Landauer</strong></td><td>兰道尔原理 (擦除 1 bit 耗能 $\geq k_B T \ln 2$)</td><td>1961</td><td>信息是物理的</td></tr><tr><td><strong>John Bell</strong></td><td>贝尔不等式 (EPR 量子化)</td><td>1964</td><td>量子纠缠可实验验证</td></tr><tr><td><strong>Charles Bennett</strong></td><td>可逆计算 + 量子隐形传态 + BB84 QKD</td><td>1973/1984/1993</td><td>量子信息奠基</td></tr><tr><td><strong>Gilles Brassard</strong></td><td>BB84 量子密钥分发协议</td><td>1984</td><td>量子密码学</td></tr><tr><td><strong>David Deutsch</strong></td><td>通用量子计算机 + Deutsch 算法</td><td>1985</td><td>量子算法的起点</td></tr><tr><td><strong>Artur Ekert</strong></td><td>E91 纠缠 QKD 协议</td><td>1991</td><td>基于纠缠的密码学</td></tr><tr><td><strong>Charles Bennett &amp; Stephen Wiesner</strong></td><td>超密编码</td><td>1992</td><td>量子通信协议</td></tr></tbody>
+</table>
+<h3>28.2.3 算法突破期 (1994-2010)</h3>
+<p><strong>这是量子计算"震惊世界"的时期</strong>——Shor 算法让 RSA 加密面临威胁。</p>
+<table class="chapter-table">
+<thead><tr><th>人物</th><th>主要贡献</th><th>年份</th><th>章节</th></tr></thead>
+<tbody><tr><td><strong>Peter Shor</strong></td><td>Shor 因式分解算法</td><td>1994</td><td>ch11</td></tr><tr><td><strong>Lov Grover</strong></td><td>Grover 搜索算法</td><td>1996</td><td>ch10</td></tr><tr><td><strong>Seth Lloyd</strong></td><td>量子模拟算法</td><td>1996</td><td>ch15</td></tr><tr><td><strong>Daniel Gottesman</strong></td><td>稳定子量子纠错码</td><td>1996</td><td>ch17</td></tr><tr><td><strong>Peter Shor</strong></td><td>Shor 9-qubit 纠错码</td><td>1995</td><td>ch17</td></tr><tr><td><strong>Andrew Steane</strong></td><td>Steane [7,1,3] 纠错码</td><td>1996</td><td>ch17</td></tr><tr><td><strong>Robert Calderbank / Peter Shor / Andrew Steane</strong></td><td>CSS 码</td><td>1996</td><td>ch17</td></tr><tr><td><strong>Michael Nielsen / Isaac Chuang</strong></td><td>Nielsen-Chuang 教科书</td><td>2000</td><td>ch07</td></tr><tr><td><strong>Alexei Kitaev</strong></td><td>拓扑量子计算 + 表面码</td><td>1997</td><td>ch18/ch23</td></tr><tr><td><strong>Aram Harrow / Avinatan Hassidim / Seth Lloyd</strong></td><td>HHL 线性方程组求解</td><td>2009</td><td>ch14/ch27</td></tr></tbody>
+</table>
+<h3>28.2.4 硬件突破期 (2010-2024)</h3>
+<p><strong>这是 NISQ (Noisy Intermediate-Scale Quantum) 时代</strong>——量子硬件从实验室走向云端。</p>
+<table class="chapter-table">
+<thead><tr><th>人物</th><th>主要贡献</th><th>平台</th><th>章节</th></tr></thead>
+<tbody><tr><td><strong>Robert Schoelkopf</strong></td><td>超导 transmon qubit + Yale 团队</td><td>超导</td><td>ch20</td></tr><tr><td><strong>Michel Devoret</strong></td><td>超导量子比特 (与 Schoelkopf 合作)</td><td>超导</td><td>ch20</td></tr><tr><td><strong>John Martinis</strong></td><td>Google Sycamore 量子优势实验</td><td>超导</td><td>ch20/ch25</td></tr><tr><td><strong>David Wineland</strong></td><td>离子阱量子逻辑门 (2012 诺奖)</td><td>离子阱</td><td>ch21</td></tr><tr><td><strong>Ignacio Cirac / Peter Zoller</strong></td><td>离子阱量子计算理论</td><td>离子阱</td><td>ch21</td></tr><tr><td><strong>Jian-Wei Pan (潘建伟)</strong></td><td>中国墨子号量子卫星 (2016)</td><td>光量子</td><td>ch22/ch26</td></tr><tr><td><strong>Anton Zeilinger</strong></td><td>Bell 实验无漏洞验证</td><td>光量子</td><td>ch22/ch26</td></tr><tr><td><strong>Alain Aspect</strong></td><td>Bell 实验 (2022 诺奖)</td><td>光量子</td><td>ch04/ch22/ch26</td></tr><tr><td><strong>Mikhail Lukin</strong></td><td>中性原子 + 光晶格 (Harvard)</td><td>中性原子</td><td>ch24</td></tr><tr><td><strong>Antoine Browaeys</strong></td><td>中性原子 (Institut d'Optique)</td><td>中性原子</td><td>ch24</td></tr><tr><td><strong>Charlie Marcus</strong></td><td>Microsoft Majorana 团队</td><td>拓扑</td><td>ch23</td></tr></tbody>
+</table>
+<h3>28.2.5 NISQ 时代与量子 AI 时代 (2018-2026)</h3>
+<p><strong>这是量子计算从研究到产业的转折期</strong>。</p>
+<table class="chapter-table">
+<thead><tr><th>人物/团队</th><th>主要贡献</th><th>年份</th><th>章节</th></tr></thead>
+<tbody><tr><td><strong>John Preskill</strong></td><td>NISQ 概念 + 量子模拟</td><td>2018</td><td>ch15/ch25</td></tr><tr><td><strong>Scott Aaronson</strong></td><td>复杂性理论 + 公众科普</td><td>2010s+</td><td>ch15</td></tr><tr><td><strong>Google AI Quantum</strong></td><td>Sycamore 53 qubit 量子优势</td><td>2019</td><td>ch25</td></tr><tr><td><strong>Google Quantum AI</strong></td><td>Willow 105 qubit + AlphaQubit</td><td>2024</td><td>ch25/ch27</td></tr><tr><td><strong>IBM Quantum</strong></td><td>IBM Heron 156 qubit (Condor 1121)</td><td>2024</td><td>ch20</td></tr><tr><td><strong>DeepMind AlphaQubit</strong></td><td>Nature 638, AI 纠错</td><td>2024</td><td>ch27</td></tr><tr><td><strong>Quantinuum (Ilyas Khan 等)</strong></td><td>H1/H2 离子阱 + QNLP 实验</td><td>2021+</td><td>ch21/ch27</td></tr><tr><td><strong>PsiQuantum</strong></td><td>光量子容错路线图 (1M qubit)</td><td>2020s</td><td>ch22</td></tr><tr><td><strong>Atom Computing (Ben Bloom)</strong></td><td>1180 qubit 中性原子</td><td>2024</td><td>ch24</td></tr><tr><td><strong>QuEra (Alex Keesling 等)</strong></td><td>256 qubit 中性原子 + 模拟</td><td>2023+</td><td>ch24</td></tr><tr><td><strong>Peter Shor (再次!)</strong></td><td>2024 后量子密码学呼吁</td><td>2024+</td><td>ch11/ch26</td></tr></tbody>
+</table>
+<hr>
+<h2 id="28-3-量子计算的-5-大开放挑战">28.3 量子计算的 5 大开放挑战</h2>
+<p>量子计算的现状 (2026) 是<strong>NISQ 时代中后期</strong>——已有 100+ qubit 设备, 但<strong>远未</strong>达到容错量子计算 (FTQC) 的工程成熟度。下面是未来 5-10 年的 5 大开放挑战。</p>
+<h3>28.3.1 挑战 1: 从"量子优势"到"量子实用"</h3>
+<p><strong>现状</strong>:</p>
+<ul>
+  <li><strong>量子优势</strong> (Quantum Advantage) 已<strong>多次</strong>宣布: Sycamore 53 qubit (2019), 中国九章 (2020), Xanadu Borealis (2022), Willow 105 qubit (2024)</li>
+  <li>但<strong>所有</strong>这些实验都是<strong>人为构造</strong>的——随机电路采样、高斯玻色采样等<strong>没有商业价值</strong>的任务</li>
+</ul>
+<p><strong>问题</strong>: 量子优势<strong>不能</strong>等同于<strong>商业价值</strong>——一台量子计算机解决一个真实商业问题才算"实用化优势".</p>
+<p><strong>5 年目标</strong>:</p>
+<ul>
+  <li>第一个<strong>实用化量子优势</strong> (Quantum Utility, 取代 Quantum Advantage 术语)</li>
+  <li>可能的应用:</li>
+  <li><strong>量子化学</strong>: VQE 模拟 N₂、咖啡因分子</li>
+  <li><strong>量子优化</strong>: QAOA 解决物流 / 投资组合优化</li>
+  <li><strong>量子机器学习</strong>: 在小数据集上有<strong>可证明</strong>优势</li>
+</ul>
+<p><strong>预计时间</strong>: 2026-2030 NISQ 实用化 (Google / IBM / Quantinuum 路线图一致)</p>
+<p><strong>为什么难</strong>:</p>
+<ul>
+  <li>噪声仍是<strong>主要</strong>瓶颈——1000+ qubit 设备<strong>仍然</strong>是 NISQ</li>
+  <li>经典算法也在<strong>改进</strong>——e.g., 经典模拟 IBM Eagle 127 qubit (2024)</li>
+  <li>"实用化优势" 的<strong>标准</strong> 尚未<strong>共识</strong> (IBM / Google / IonQ 各有标准)</li>
+</ul>
+<h3>28.3.2 挑战 2: 百万物理 qubit 容错机</h3>
+<p><strong>现状</strong>:</p>
+<ul>
+  <li>当前最大设备: Atom Computing 1180 qubit 中性原子 (2024)</li>
+  <li>容错<strong>真正</strong>实现: 表面码 d=11 (AlphaQubit) + 表面码 d=25 (未验证)</li>
+  <li>100 万物理 qubit → ~1000 逻辑 qubit 是<strong>业界共识</strong>目标</li>
+</ul>
+<p><strong>5 年目标</strong>:</p>
+<ul>
+  <li>2026-2027: 表面码 d=25 → 几百逻辑 qubit</li>
+  <li>2028-2030: 1000+ 逻辑 qubit (容错早期)</li>
+  <li>2030-2035: 1M+ 物理 qubit → 1000+ 逻辑 qubit (FTQC 成熟)</li>
+</ul>
+<p><strong>路线图</strong>:</p>
+<ul>
+  <li><strong>Google</strong>: 2029 100 万 qubit 计划 (基于 Willow)</li>
+  <li><strong>IBM</strong>: 2033 Kookaburra 100K qubit + Flamingo 链路</li>
+  <li><strong>Microsoft</strong>: 2030+ Majorana 1 拓扑路线</li>
+  <li><strong>PsiQuantum</strong>: 2027-2029 100 万 qubit 光量子容错</li>
+</ul>
+<p><strong>为什么难</strong>:</p>
+<ul>
+  <li><strong>物理 qubit 数</strong>: 1M 是当前最大设备的<strong>1000 倍</strong></li>
+  <li><strong>门保真度</strong>: 容错阈值 ~1%, 当前 ~99.5% (临界)</li>
+  <li><strong>量子比特互联</strong>: 长程纠缠仍是工程难点</li>
+  <li><strong>解码器</strong>: AlphaQubit 已<strong>部分</strong>解决, 但规模化未验证</li>
+</ul>
+<h3>28.3.3 挑战 3: 量子互联网</h3>
+<p><strong>现状</strong>:</p>
+<ul>
+  <li><strong>城域量子网络</strong>: 已<strong>部分</strong>部署 (京沪干线 2000 km, 北京-维也纳 7600 km)</li>
+  <li><strong>量子中继器</strong>: 实验阶段, <strong>未</strong>实用</li>
+  <li><strong>量子存储</strong>: 几秒 (离子阱) → 几分钟 (稀土掺杂晶体) → 几小时 (核自旋) — 各有局限</li>
+</ul>
+<p><strong>5 年目标</strong>:</p>
+<ul>
+  <li>2026-2028: 城域量子网络扩展 (10+ 城市, e.g., 北京/上海/纽约/伦敦)</li>
+  <li>2028-2030: 国家级量子互联网试点 (e.g., 美国 Quantum Internet Blueprint)</li>
+  <li>2030-2035: 洲际量子互联网 (依赖量子中继器 + 量子卫星)</li>
+</ul>
+<p><strong>为什么难</strong>:</p>
+<ul>
+  <li><strong>量子存储</strong>: 需要长相干时间 + 频率转换 + 确定性读出——三难困境</li>
+  <li><strong>量子中继器</strong>: 纠缠交换 + 纠缠纯化 + 错误检测——需突破</li>
+  <li><strong>网络协议</strong>: 量子 TCP/IP <strong>未</strong>标准化——IETF QIRG 工作进展缓慢</li>
+</ul>
+<h3>28.3.4 挑战 4: 软件与算法突破</h3>
+<p><strong>现状</strong>:</p>
+<ul>
+  <li><strong>SDK 成熟</strong>: PennyLane / Qiskit / TFQ / CUDAQ / Classiq 5 大框架</li>
+  <li><strong>算法</strong>: Shor / Grover / VQE / QAOA 已<strong>有</strong>实现, 但<strong>不</strong>实用</li>
+  <li><strong>错误缓解</strong>: ZNE / PEC / CDR 已<strong>部分</strong>成功</li>
+</ul>
+<p><strong>5 年目标</strong>:</p>
+<ul>
+  <li>2026-2027: NISQ 应用<strong>部分</strong>找到价值 (材料/化学/优化)</li>
+  <li>2028-2030: 容错早期 + 第一个<strong>杀手级</strong>应用 (量子化学?)</li>
+  <li>2030+: 通用量子算法 + 量子 AI 突破</li>
+</ul>
+<p><strong>为什么难</strong>:</p>
+<ul>
+  <li><strong>理论</strong>: 很多问题<strong>不知道</strong>量子加速是否存在</li>
+  <li><strong>工程</strong>: SDK 性能仍待优化 (PennyLane vs Qiskit 速度差异 10x)</li>
+  <li><strong>生态</strong>: 量子-经典混合编程范式<strong>未</strong>标准化</li>
+</ul>
+<h3>28.3.5 挑战 5: 人才与教育</h3>
+<p><strong>现状</strong>:</p>
+<ul>
+  <li>全球量子人才 ~10 万 (估算)</li>
+  <li>缺口 100 万 (McKinsey 2024)</li>
+  <li>大学本科量子课程<strong>少</strong> (MIT / Stanford / Caltech / Tsinghua / Peking 等少数学校)</li>
+</ul>
+<p><strong>5 年目标</strong>:</p>
+<ul>
+  <li>2026-2028: 全球 100+ 大学开设量子计算本科课程</li>
+  <li>2028-2030: K-12 量子科学普及 (e.g., 美国 NSF Q-12 计划)</li>
+  <li>2030+: 量子技术员职业认证体系</li>
+</ul>
+<p><strong>为什么重要</strong>:</p>
+<ul>
+  <li>量子计算不是<strong>纯理论</strong>——需要实验物理学家 + 工程师 + 软件开发者</li>
+  <li><strong>跨学科</strong>: 物理 + 数学 + 计算机 + 电气工程——复合人才稀缺</li>
+  <li><strong>国际竞争</strong>: 美国 / 中国 / 欧盟 / 英国 / 日本都在抢人才</li>
+</ul>
+<hr>
+<h2 id="28-4-5-年路线图-2026-2030">28.4 5 年路线图 (2026-2030)</h2>
+<h3>28.4.1 2026 (今年) — "实用化优势"的起点</h3>
+<p><strong>里程碑</strong>:</p>
+<ul>
+  <li><strong>Q1-Q2</strong>: IBM Heron 156 qubit 首次 NISQ 实用化 (化学模拟)</li>
+  <li><strong>Q3-Q4</strong>: Google Willow 2.0 + 第一个 VQE 实用化优势 (N₂ 分子)</li>
+  <li><strong>持续</strong>: Quantinuum H2 商业应用扩展 (金融 + 物流 + 化学)</li>
+</ul>
+<p><strong>预期指标</strong>:</p>
+<ul>
+  <li>量子优势从"人为构造" → "第一次<strong>实用化</strong>"</li>
+  <li>NISQ QML benchmarks 标准化 (IBM / Google / Xanadu / Quantinuum 共识)</li>
+  <li>量子 AI 早期商业应用 (e.g., 量子纠错 + 量子控制)</li>
+</ul>
+<h3>28.4.2 2027-2028 — 早期容错</h3>
+<p><strong>里程碑</strong>:</p>
+<ul>
+  <li><strong>2027</strong>: 表面码 d=25 (几百逻辑 qubit) 首次验证</li>
+  <li><strong>2027-2028</strong>: 量子 + 经典 HPC 混合 (GPU + QPU) 标准化 (e.g., NVIDIA CUDA-Q)</li>
+  <li><strong>2028</strong>: 量子互联网城域试点扩展 (5+ 主要城市)</li>
+</ul>
+<p><strong>预期指标</strong>:</p>
+<ul>
+  <li>容错<strong>早期</strong> (early FTQC) — 几百逻辑 qubit</li>
+  <li>第一次"实用化优势"在<strong>生产</strong>环境部署</li>
+  <li>量子-经典混合 HPC 成为常态 (类似今天 GPU + CPU)</li>
+</ul>
+<h3>28.4.3 2029-2030 — 通用容错早期</h3>
+<p><strong>里程碑</strong>:</p>
+<ul>
+  <li><strong>2029</strong>: 1000+ 逻辑 qubit (Google / IBM 路线图)</li>
+  <li><strong>2030</strong>: 第一批"量子杀手级应用"出现 (候选: 量子化学 / 材料 / 药物 / 优化)</li>
+  <li><strong>2030</strong>: 量子 AI 进入 LLM 辅助训练 (类似今天的 GPU 加速)</li>
+</ul>
+<p><strong>预期指标</strong>:</p>
+<ul>
+  <li>通用容错<strong>早期</strong> (FTQC) — 1000+ 逻辑 qubit</li>
+  <li>量子互联网区域连接 (5+ 国家)</li>
+  <li>量子 + AI + 生物医药深度融合</li>
+</ul>
+<h3>28.4.4 2030+ 中远期 — 量子计算黄金时代</h3>
+<p><strong>里程碑 (预测)</strong>:</p>
+<ul>
+  <li><strong>2031-2035</strong>: 百万 qubit 容错机 (Google / IBM 路线图兑现)</li>
+  <li><strong>2035+</strong>: 量子互联网全球连接 (类似经典互联网)</li>
+  <li><strong>2035+</strong>: 量子 + AI + 生物医药 + 材料 + 气候 五大应用领域全面爆发</li>
+</ul>
+<p><strong>关键转折点</strong>:</p>
+<ul>
+  <li>"NISQ + 容错早期" (2026-2030) → "FTQC 主导" (2030+)</li>
+  <li>从"研究"到"产业"——类似 1990 年代经典互联网</li>
+  <li>从"演示"到"实用"——类似 2000 年代云计算</li>
+</ul>
+<p><strong>警告</strong>: 以上<strong>全部是预测</strong>——量子计算历史上<strong>多次</strong>预测<strong>落空</strong> (e.g., 2017 IBM 路线图预测 2020 实现 50 qubit 容错, <strong>未</strong>兑现). 保持<strong>审慎乐观</strong>.</p>
+<hr>
+<h2 id="28-5-哲学与未来-量子计算的终极意义">28.5 哲学与未来 — 量子计算的终极意义</h2>
+<h3>28.5.1 本体论层面: 量子力学是最终理论吗?</h3>
+<p><strong>问题</strong>: 量子力学是否就是描述自然的<strong>最终</strong>理论?</p>
+<p><strong>当前的物理共识</strong>: <strong>不是</strong>——量子力学跟广义相对论<strong>不兼容</strong> (量子引力问题).</p>
+<p><strong>候选理论</strong>:</p>
+<ul>
+  <li><strong>弦论</strong>: 试图统一四种基本力 (2024 仍在发展)</li>
+  <li><strong>圈量子引力</strong>: 量子化的时空几何 (2024 仍在发展)</li>
+  <li><strong>涌现时空</strong>: 量子纠缠 + 时空 = 涌现 (Van Raamsdonk 2010, 重要进展)</li>
+</ul>
+<p><strong>对量子计算的影响</strong>:</p>
+<ul>
+  <li>即使<strong>未来</strong>发现量子引力效应, <strong>当前</strong>量子计算 (基于量子力学 + 广义相对论) <strong>仍然有效</strong></li>
+  <li>量子计算不会因为"量子力学不完美" 而<strong>失效</strong>——只是<strong>可能</strong>需要修正</li>
+</ul>
+<h3>28.5.2 认识论层面: 量子计算的极限是什么?</h3>
+<p><strong>问题</strong>: 量子计算能否解决所有问题?</p>
+<p><strong>答案</strong>: <strong>不能</strong>——量子计算<strong>不是</strong>万能的.</p>
+<p><strong>理论极限</strong>:</p>
+<ul>
+  <li><strong>NP 完全问题</strong>: 量子<strong>仍然</strong>没有指数加速 (e.g., SAT, TSP, 3-COLOR)</li>
+  <li><strong>Grover 二次加速是上限</strong> (BBBV 1994 证明)</li>
+  <li><strong>某些问题量子甚至比经典更慢</strong> (e.g., 排序 $O(n \log n)$ 经典最优)</li>
+</ul>
+<p><strong>工程极限</strong>:</p>
+<ul>
+  <li><strong>物理 qubit 数</strong>: 即使 1M 也只能解<strong>中等规模</strong>问题</li>
+  <li><strong>门保真度</strong>: 即使 99.99% 也需要<strong>大量</strong>纠错开销</li>
+  <li><strong>量子存储</strong>: 长相干时间仍<strong>未</strong>完全解决</li>
+</ul>
+<p><strong>实用极限</strong>:</p>
+<ul>
+  <li><strong>量子-经典混合</strong>: 量子<strong>不是</strong>取代经典, 而是<strong>协同</strong></li>
+  <li><strong>数据加载</strong>: QRAM 仍未实现, 大数据加载是<strong>瓶颈</strong></li>
+</ul>
+<h3>28.5.3 社会层面: 量子计算会取代经典计算吗?</h3>
+<p><strong>答案</strong>: <strong>不会</strong>——量子计算跟经典计算是<strong>共存</strong>关系, <strong>不是</strong>替代.</p>
+<p><strong>类比</strong>: 就像 GPU <strong>没有</strong>取代 CPU, 而是<strong>协同</strong> (GPU 适合并行, CPU 适合串行).</p>
+<p><strong>场景</strong>:</p>
+<ul>
+  <li><strong>个人电脑</strong>: 仍然是经典 (经典足够)</li>
+  <li><strong>服务器</strong>: 经典为主, QPU 协处理</li>
+  <li><strong>数据中心</strong>: 经典 + QPU 混合 (类似今天的 CPU + GPU)</li>
+  <li><strong>云端</strong>: 量子计算作为<strong>云服务</strong> (类似今天的 AWS GPU)</li>
+</ul>
+<p><strong>就业影响</strong>:</p>
+<ul>
+  <li><strong>短期 (2026-2030)</strong>: 新增 100 万 量子岗位 (McKinsey 2024)</li>
+  <li><strong>中期 (2030-2035)</strong>: 量子 + 经典 复合岗位成为主流</li>
+  <li><strong>长期 (2035+)</strong>: 量子技术员 / 工程师 / 研究员 成为新职业</li>
+</ul>
+<h3>28.5.4 教育层面: 量子计算应何时进入大学本科?</h3>
+<p><strong>问题</strong>: 量子计算是研究生课程, 还是本科课程?</p>
+<p><strong>当前 (2026)</strong>: <strong>研究生为主</strong>, 本科<strong>少数</strong>学校 (MIT / Stanford / Caltech / Harvard / Tsinghua / Peking).</p>
+<p><strong>5 年目标 (2030)</strong>:</p>
+<ul>
+  <li><strong>本科普及</strong>: 全球 100+ 大学开设量子计算本科课程</li>
+  <li><strong>在线教育</strong>: Coursera / edX / Khan Academy 提供量子入门</li>
+  <li><strong>K-12</strong>: 中学物理加入"量子力学初步" (类似今天"相对论初步")</li>
+</ul>
+<p><strong>个人建议</strong>:</p>
+<ul>
+  <li><strong>大学生</strong>: 现在开始学 Qiskit / PennyLane (免费在线)</li>
+  <li><strong>研究生</strong>: 选定方向 (硬件 / 算法 / 应用), 跟随导师</li>
+  <li><strong>工程师</strong>: 关注 IBM Quantum / Google Quantum AI 公开课</li>
+  <li><strong>爱好者</strong>: 读 Nielsen-Chuang + 本书, 跑 Qiskit 教程</li>
+</ul>
+<h3>28.5.5 文化层面: 量子力学是 21 世纪的新牛顿力学吗?</h3>
+<p><strong>问题</strong>: 量子力学是 21 世纪的"新牛顿力学" 吗?</p>
+<p><strong>类比</strong>:</p>
+<ul>
+  <li><strong>17 世纪</strong>: 牛顿力学 — 经典物理的奠基</li>
+  <li><strong>20 世纪</strong>: 量子力学 + 相对论 — 现代物理的两大支柱</li>
+  <li><strong>21 世纪</strong>: 量子力学 + 相对论 + 信息论 — 仍然是基础</li>
+</ul>
+<p><strong>判断</strong>: 量子力学<strong>已经是</strong>21 世纪的基础物理, 但<strong>不是</strong>"取代"经典力学, 而是"包含" (经典是量子的宏观近似).</p>
+<p><strong>文化影响</strong>:</p>
+<ul>
+  <li>量子力学<strong>已经</strong>进入公众文化 (e.g., "量子纠缠"成为流行语, "薛定谔的猫" 成为比喻)</li>
+  <li>量子计算<strong>正在</strong>进入公众视野 (e.g., "量子优势"成为新闻标题)</li>
+  <li><strong>下一波</strong>: "量子 AI" / "量子互联网" 将成为日常词汇</li>
+</ul>
+<h3>28.5.6 终极问题: 量子计算会加速人类发现吗?</h3>
+<p><strong>乐观答案</strong>: <strong>可能</strong>——量子计算<strong>有望</strong>在以下几个领域<strong>加速</strong>人类发现:</p>
+<ul>
+  <li><strong>药物设计</strong>: 量子化学模拟蛋白质折叠 → 加速新药研发</li>
+  <li><strong>新材料</strong>: 量子模拟高温超导 / 室温超导 → 能源革命</li>
+  <li><strong>AI 训练</strong>: 量子辅助 LLM 训练 → 更强大 AI</li>
+  <li><strong>气候模拟</strong>: 量子模拟分子动力学 → 更准确气候模型</li>
+  <li><strong>金融建模</strong>: 量子优化投资组合 → 更好风险管理</li>
+</ul>
+<p><strong>悲观警告</strong>: <strong>未必</strong>——量子计算的历史上<strong>多次</strong>预测<strong>落空</strong>:</p>
+<ul>
+  <li><strong>2017 IBM 预测</strong>: 2020 实现 50 qubit 容错 — <strong>未</strong>兑现</li>
+  <li><strong>2017 Google 预测</strong>: 2025 实用化量子优势 — <strong>尚未</strong>实现</li>
+  <li><strong>保持审慎乐观</strong>, 不要<strong>盲目</strong>相信营销宣传</li>
+</ul>
+<h3>28.5.7 个人建议: 如何参与量子计算?</h3>
+<p><strong>如果你是学生</strong>:</p>
+<ol>
+  <li><strong>学 Qiskit</strong>: 免费在线教程 (qiskit.org/textbook)</li>
+  <li><strong>跑量子电路</strong>: IBM Quantum 真实量子计算机免费访问</li>
+  <li><strong>读 Nielsen-Chuang</strong>: 量子计算圣经, 但<strong>难</strong></li>
+  <li><strong>跟本书</strong>: 32 天, 28 章, 从基础到前沿</li>
+</ol>
+<p><strong>如果你是工程师</strong>:</p>
+<ol>
+  <li><strong>学 PennyLane</strong>: Xanadu 量子机器学习框架</li>
+  <li><strong>关注 IBM Quantum Network</strong>: 产业联盟</li>
+  <li><strong>参加 QHack</strong>: Xanadu 量子编程马拉松</li>
+  <li><strong>写量子应用</strong>: 从小项目开始 (e.g., VQE 分子模拟)</li>
+</ol>
+<p><strong>如果你是研究者</strong>:</p>
+<ol>
+  <li><strong>选方向</strong>: 硬件 / 算法 / 应用 / 理论</li>
+  <li><strong>找合作</strong>: 大学 + 企业 + 政府 (三方合作常见)</li>
+  <li><strong>跟会议</strong>: QIP / QPL / IEEE QCE / APS March Meeting</li>
+  <li><strong>读 arXiv</strong>: quant-ph 每日更新</li>
+</ol>
+<p><strong>如果你是爱好者</strong>:</p>
+<ol>
+  <li><strong>读本书</strong>: 28 章完整覆盖</li>
+  <li><strong>看视频</strong>: Scott Aaronson 公开课 / MinutePhysics 量子系列</li>
+  <li><strong>玩模拟</strong>: Quantum Flytrap (拖拽量子电路可视化)</li>
+  <li><strong>关注新闻</strong>: Quantum Computing Report / The Quantum Daily / IBM Quantum Blog</li>
+</ol>
+<hr>
+<h2 id="28-6-全书完结">28.6 全书完结 🎉🎉🎉</h2>
+<h3>28.6.1 本章核心要点</h3>
+<p><strong>全书 6 部分 28 章 ~18 万中文字</strong> 已经走完。下面是 ch28 的核心要点:</p>
+<p><strong>4 大核心心智模型</strong> (贯穿全书):</p>
+<ol>
+  <li><strong>量子叠加</strong>: $|0\rangle + |1\rangle$ 同时存在于两个状态, 直到测量</li>
+  <li><strong>量子纠缠</strong>: 两 qubit <strong>非局域</strong>关联, Bell 不等式违反</li>
+  <li><strong>量子测量</strong>: 测量<strong>不可逆</strong>, 改变状态 (Born 规则 + 投影公理)</li>
+  <li><strong>量子算法</strong>: 酉演化 + 干涉 + 测量 → 加速 (Shor 指数, Grover 二次)</li>
+</ol>
+<p><strong>3 大未来方向</strong> (第六部分):</p>
+<ol>
+  <li><strong>量子 AI</strong>: QML + QNN + AlphaQubit (ch27)</li>
+  <li><strong>量子互联网</strong>: 量子隐形传态 + 量子中继器 + 京沪干线 (ch26)</li>
+  <li><strong>容错量子计算</strong>: 表面码 + AlphaQubit + 百万 qubit 路线图 (ch18/ch19)</li>
+</ol>
+<p><strong>5 年路线图</strong> (2026-2030):</p>
+<ul>
+  <li>2026: 第一个<strong>实用化量子优势</strong> (NISQ)</li>
+  <li>2027-2028: 早期容错 (几百逻辑 qubit)</li>
+  <li>2029-2030: 通用容错早期 (1000+ 逻辑 qubit)</li>
+</ul>
+<h3>28.6.2 致读者</h3>
+<p>亲爱的读者:</p>
+<p>感谢你<strong>完整</strong>读完这 28 章。</p>
+<p>我们从 1900 年普朗克的量子假说起步, 走到 2024 年 AlphaQubit 的 AI 纠错; 从双缝干涉实验, 走到量子隐形传态协议; 从 Deutsch 1985 年提出通用量子计算机, 走到 2026 年 IBM Heron 156 qubit + Google Willow 105 qubit + Quantinuum H2 56 qubit 多个 NISQ 平台并行推进。</p>
+<p><strong>这是 32 天旅程的终点</strong>——但<strong>不是</strong>量子计算的终点. 量子计算<strong>仍在</strong>快速发展, 每年都有<strong>新的</strong>里程碑.</p>
+<p><strong>下一步建议</strong>:</p>
+<ol>
+  <li><strong>实践</strong>: 跑 Qiskit / PennyLane / Cirq 教程</li>
+  <li><strong>关注</strong>: IBM Quantum Blog + Google Quantum AI + arXiv quant-ph</li>
+  <li><strong>思考</strong>: 你能用量子计算<strong>解决</strong>什么问题?</li>
+  <li><strong>贡献</strong>: 加入量子计算社区 (Qiskit Slack / PennyLane Discourse / Quantum Open Source Foundation)</li>
+</ol>
+<p><strong>持续关注</strong>:</p>
+<ul>
+  <li><strong>arXiv quant-ph</strong>: 每日更新, 量子物理 + 量子计算最新论文</li>
+  <li><strong>IBM Quantum</strong>: https://quantum.ibm.com — 156 qubit + 量子云服务</li>
+  <li><strong>Google Quantum AI</strong>: https://quantumai.google — Willow 105 qubit</li>
+  <li><strong>Quantum Computing Report</strong>: https://quantumcomputingreport.com — 产业新闻</li>
+  <li><strong>The Quantum Daily</strong>: https://thequantumdaily.com — 量子新闻</li>
+  <li><strong>Scott Aaronson Blog</strong>: https://scottaaronson.blog — 复杂性理论 + 公众科普</li>
+</ul>
+<h3>28.6.3 致谢</h3>
+<p><strong>致领班 (foreman)</strong>: 32 天每日规划, 32 次进度汇报, 32 次风险评估. 谢谢!</p>
+<p><strong>致写书人 (writer)</strong>: 32 天 28 章 ~18 万字撰写. 每一个章节都是<strong>心血</strong>凝聚. 谢谢!</p>
+<p><strong>致审稿人 (reviewer)</strong>: 32 天 28 次审稿, 140+ 条修改建议, 全书质量守门人. 谢谢!</p>
+<p><strong>致网页开发者 (webdev)</strong>: 32 天 28 个 HTML + 50+ SVG + 多书站点维护. 视觉化艺术. 谢谢!</p>
+<p><strong>致用户 kyokagong</strong>: 持续支持, 32 天不间断. 没有您的支持, 这本书<strong>不可能</strong>完成. 谢谢!</p>
+<p><strong>致 GitHub Pages</strong>: 免费, 稳定, 可靠. 让这本书<strong>全球</strong>可访问. 谢谢!</p>
+<p><strong>致 Nielsen &amp; Chuang</strong>: <em>Quantum Computation and Quantum Information</em> (2000) — 量子计算圣经. 全书结构<strong>深受</strong>此书影响. 致敬!</p>
+<p><strong>致读者</strong>: 您<strong>完整</strong>读完 28 章. 这是<strong>我们</strong>最大的<strong>动力</strong>. 谢谢!</p>
+<h3>28.6.4 全书完结 🎉🎉🎉</h3>
+<p><strong>6 部分 28 章 完结!</strong></p>
+<pre><code class="">┌────────────────────────────────────────────────────────┐
+│                                                        │
+│         《量子计算》 全书 6 部分 28 章                  │
+│                                                        │
+│      ✅ 第一部分 (ch01-05) 量子力学公理                  │
+│      ✅ 第二部分 (ch06-10) 量子计算基础                  │
+│      ✅ 第三部分 (ch11-15) 量子算法与复杂性               │
+│      ✅ 第四部分 (ch16-19) 量子纠错与容错                │
+│      ✅ 第五部分 (ch20-24) 量子硬件                      │
+│      ✅ 第六部分 (ch25-28) 前沿与展望                   │
+│                                                        │
+│       ~ 18 万中文字 + ~ 1500 公式 + ~ 50 SVG            │
+│       32 天 + 4 角色 + 28 章 + 28/28 = 100%             │
+│                                                        │
+│              🎉🎉🎉 全书完结 🎉🎉🎉                   │
+│                                                        │
+└────────────────────────────────────────────────────────┘</code></pre>
+<hr>
+<h2 id="28-7-五道思考题">28.7 五道思考题</h2>
+<h3>思考题 1: 量子计算的"杀手级应用" 是什么?</h3>
+<p><strong>参考答案</strong>:</p>
+<ul>
+  <li><strong>候选 1: 量子化学</strong> — 模拟大分子 (e.g., 咖啡因) 的电子结构, 加速药物设计</li>
+  <li><strong>候选 2: 材料科学</strong> — 设计高温超导 / 室温超导材料</li>
+  <li><strong>候选 3: 优化问题</strong> — QAOA 解决物流 / 投资组合 / 调度</li>
+  <li><strong>候选 4: 量子机器学习</strong> — 在特定数据集上有可证明加速</li>
+  <li><strong>当前 (2026) 共识</strong>: 量子化学 (尤其催化 + 储能) 是<strong>最可能</strong>的杀手级应用</li>
+  <li><strong>关键条件</strong>: 量子优势必须<strong>超过</strong>经典最佳算法 (e.g., FCI vs VQE 对比)</li>
+</ul>
+<h3>思考题 2: 为什么 Shor 算法威胁 RSA?</h3>
+<p><strong>参考答案</strong>:</p>
+<ul>
+  <li><strong>RSA 安全基础</strong>: 大整数因式分解是<strong>经典难题</strong> (GNFS 亚指数)</li>
+  <li><strong>Shor 算法</strong>: 在量子计算机上<strong>多项式</strong>时间因式分解 ($O(n^3)$)</li>
+  <li><strong>关键加速</strong>: Shor 让 RSA-2048 的 112 bit 安全<strong>降为 0</strong> (理论上<strong>几小时</strong>即可破解)</li>
+  <li><strong>但是</strong>: 需要<strong>百万</strong>物理 qubit 的容错量子计算机——<strong>当前</strong> (2026) <strong>仍</strong> 远未实现</li>
+  <li><strong>当前对策</strong>: 后量子密码学 (NIST 2022 标准, ML-KEM / ML-DSA / SLH-DSA)</li>
+</ul>
+<h3>思考题 3: 量子计算跟经典计算的"边界" 在哪里?</h3>
+<p><strong>参考答案</strong>:</p>
+<ul>
+  <li><strong>量子优势</strong> (Quantum Advantage): 量子比经典<strong>快</strong>的任务 (e.g., Shor, Grover, 模拟)</li>
+  <li><strong>量子等价</strong> (Quantum Parity): 量子跟经典<strong>一样</strong>的任务 (e.g., 部分 ML)</li>
+  <li><strong>量子劣势</strong> (Quantum Disadvantage): 量子比经典<strong>慢</strong>的任务 (e.g., 排序)</li>
+  <li><strong>当前</strong> (2026) 共识: 量子优势<strong>存在</strong> (Shor/Grover 理论证明) 但<strong>工程</strong>仍未实用化</li>
+  <li><strong>5 年预期</strong>: 第一个<strong>实用化</strong>量子优势 (Quantum Utility)</li>
+</ul>
+<h3>思考题 4: 如何参与量子计算?</h3>
+<p><strong>参考答案</strong>:</p>
+<ul>
+  <li><strong>学生</strong>: 学 Qiskit / PennyLane + 读 Nielsen-Chuang + 跑 IBM Quantum</li>
+  <li><strong>工程师</strong>: 关注 IBM Quantum Network + 写量子应用 + 参加 QHack</li>
+  <li><strong>研究者</strong>: 选方向 + 找合作 + 跟会议 + 读 arXiv quant-ph</li>
+  <li><strong>爱好者</strong>: 读本书 + 玩 Quantum Flytrap + 关注 Quantum Computing Report</li>
+  <li><strong>关键心态</strong>: 量子计算是<strong>长期投资</strong>, <strong>不要</strong>期望"一夜成名"</li>
+</ul>
+<h3>思考题 5: 量子计算的终极意义是什么?</h3>
+<p><strong>参考答案</strong> (开放性, 没有标准答案):</p>
+<ul>
+  <li><strong>物理意义</strong>: 量子计算是<strong>验证</strong>量子力学预言的<strong>终极实验</strong> (e.g., 多世界 vs 退相干)</li>
+  <li><strong>信息意义</strong>: 量子计算揭示<strong>信息</strong>的<strong>物理本质</strong> (Landauer 原理)</li>
+  <li><strong>哲学意义</strong>: 量子计算挑战<strong>经典确定性</strong>世界观, 拥抱<strong>概率 + 测量</strong></li>
+  <li><strong>社会意义</strong>: 量子计算<strong>可能</strong>加速人类发现 (药物 + 材料 + AI)</li>
+  <li><strong>文化意义</strong>: 量子力学<strong>已经</strong>成为 21 世纪基础物理, 量子计算<strong>正在</strong>成为 21 世纪基础技术</li>
+  <li><strong>个人意义</strong>: 量子计算是<strong>人类智慧</strong>的<strong>结晶</strong>, 凝聚<strong>基础物理 + 数学 + 工程 + 信息</strong>四大学科的精华</li>
+</ul>
+<hr>
+<h2 id="28-8-推荐阅读-15-篇">28.8 推荐阅读 (15 篇)</h2>
+<h3>经典综述</h3>
+<ol>
+  <li><strong>Nielsen &amp; Chuang</strong> (2000). <em>Quantum Computation and Quantum Information</em>. Cambridge University Press. — 量子计算圣经</li>
+  <li><strong>Preskill</strong> (2018). "Quantum Computing in the NISQ era and beyond." <em>Quantum</em> 2, 79. — NISQ 概念奠基</li>
+  <li><strong>Cerezo et al.</strong> (2021). "Variational Quantum Algorithms." <em>Nature Reviews Physics</em> 3, 625. — VQE/QAOA 综述</li>
+</ol>
+<h3>量子算法</h3>
+<ol>
+  <li><strong>Shor</strong> (1994). "Algorithms for quantum computation." FOCS '94. — Shor 算法原始论文</li>
+  <li><strong>Grover</strong> (1996). "A fast quantum mechanical algorithm for database search." STOC '96. — Grover 算法原始论文</li>
+  <li><strong>Harrow, Hassidim, Lloyd</strong> (2009). "Quantum algorithm for linear systems of equations." <em>PRL</em> 103, 150502. — HHL 算法</li>
+</ol>
+<h3>量子硬件</h3>
+<ol>
+  <li><strong>Koch et al.</strong> (2007). "Charge-insensitive qubit design." <em>Phys. Rev. A</em> 76, 042319. — transmon qubit 原始论文</li>
+  <li><strong>Cirac &amp; Zoller</strong> (1995). "Quantum computations with cold trapped ions." <em>PRL</em> 74, 4091. — 离子阱量子计算</li>
+  <li><strong>Saffman, Walker, Mølmer</strong> (2010). "Quantum information with Rydberg atoms." <em>Rev. Mod. Phys.</em> 82, 2313. — 中性原子综述</li>
+</ol>
+<h3>量子优势 + 量子 AI</h3>
+<ol>
+  <li><strong>Arute et al.</strong> (2019). "Quantum supremacy using a programmable superconducting processor." <em>Nature</em> 574, 505. — Sycamore 量子优势</li>
+  <li><strong>Acharya et al.</strong> (2024). "Quantum error correction below the surface code threshold." <em>Nature</em> 638, 920. — Willow + AlphaQubit</li>
+  <li><strong>Biamonte et al.</strong> (2017). "Quantum machine learning." <em>Nature</em> 549, 195. — QML 综述</li>
+</ol>
+<h3>量子互联网 + 量子通信</h3>
+<ol>
+  <li><strong>Wehner, Elkouss, Hanson</strong> (2018). "Quantum internet: A vision for the road ahead." <em>Science</em> 362, eaam9288. — 量子互联网路线图</li>
+  <li><strong>Pirandola et al.</strong> (2020). "Advances in quantum cryptography." <em>Adv. Opt. Photonics</em> 12, 1012. — 量子密码学综述</li>
+</ol>
+<h3>哲学 + 公众科普</h3>
+<ol>
+  <li><strong>Aaronson</strong> (2013). <em>Quantum Computing Since Democritus</em>. Cambridge University Press. — 量子计算哲学 + 数学</li>
+  <li><strong>Susskind &amp; Friedman</strong> (2014). <em>Quantum Mechanics: The Theoretical Minimum</em>. Basic Books. — 量子力学经典教材</li>
+  <li><strong>Feynman</strong> (1982). "Simulating physics with computers." <em>Int. J. Theor. Phys.</em> 21, 467. — 量子模拟原始论文</li>
+</ol>
+<hr>
+<h2 id="28-a-附录-a-全书-28-章索引表">28.A 附录 A: 全书 28 章索引表</h2>
+<table class="chapter-table">
+<thead><tr><th>章号</th><th>章名</th><th>主题</th><th>关键人物</th><th>核心概念</th><th>关键公式</th></tr></thead>
+<tbody><tr><td><strong>ch01</strong></td><td>量子力学简史</td><td>历史</td><td>Planck → Deutsch</td><td>5 大事件</td><td>-</td></tr><tr><td><strong>ch02</strong></td><td>量子态与狄拉克符号</td><td>数学</td><td>Dirac</td><td>ket/bra</td><td>$\</td><td>\psi\rangle = \sum c_i \</td><td>i\rangle$</td></tr><tr><td><strong>ch03</strong></td><td>叠加原理与量子干涉</td><td>物理</td><td>Dirac, Feynman</td><td>双缝</td><td>$\</td><td>0\rangle + \</td><td>1\rangle$</td></tr><tr><td><strong>ch04</strong></td><td>量子纠缠与贝尔不等式</td><td>物理</td><td>Bell, Aspect</td><td>CHSH</td><td>$\</td><td>S\</td><td>\leq 2$</td></tr><tr><td><strong>ch05</strong></td><td>量子测量与不确定性原理</td><td>物理</td><td>Born, Heisenberg</td><td>POVM</td><td>$\Delta A \Delta B \geq \frac{1}{2}\</td><td>\langle [A,B] \rangle\</td><td>$</td></tr><tr><td><strong>ch06</strong></td><td>量子比特</td><td>硬件无关</td><td>Bloch</td><td>Bloch 球</td><td>$\</td><td>\psi\rangle = \cos(\theta/2)\</td><td>0\rangle + e^{i\phi}\sin(\theta/2)\</td><td>1\rangle$</td></tr><tr><td><strong>ch07</strong></td><td>量子逻辑门</td><td>硬件无关</td><td>Nielsen-Chuang</td><td>通用性</td><td>任意 $U \approx$ H+T+CNOT</td></tr><tr><td><strong>ch08</strong></td><td>量子电路数学模型</td><td>数学</td><td>-</td><td>QSD</td><td>$U = (A \otimes B)$ ...</td></tr><tr><td><strong>ch09</strong></td><td>QFT</td><td>算法</td><td>Coppersmith</td><td>QFT</td><td>$O(n^2)$ 门</td></tr><tr><td><strong>ch10</strong></td><td>Grover</td><td>算法</td><td>Grover, Bennett</td><td>振幅放大</td><td>$O(\sqrt{N})$</td></tr><tr><td><strong>ch11</strong></td><td>Shor</td><td>算法</td><td>Shor</td><td>周期发现</td><td>$O(n^3)$</td></tr><tr><td><strong>ch12</strong></td><td>QPE</td><td>算法</td><td>Kitaev</td><td>相位估计</td><td>-</td></tr><tr><td><strong>ch13</strong></td><td>VQE/QAOA</td><td>算法</td><td>Peruzzo, Farhi</td><td>变分</td><td>-</td></tr><tr><td><strong>ch14</strong></td><td>QML</td><td>应用</td><td>Biamonte</td><td>HHL</td><td>$O(\log N)$</td></tr><tr><td><strong>ch15</strong></td><td>复杂性</td><td>理论</td><td>Bennett, Bernstein</td><td>BQP</td><td>-</td></tr><tr><td><strong>ch16</strong></td><td>噪声与退相干</td><td>物理</td><td>Landauer</td><td>Lindblad</td><td>$T_1, T_2$</td></tr><tr><td><strong>ch17</strong></td><td>Shor/Steane 码</td><td>纠错</td><td>Shor, Steane</td><td>稳定子</td><td>-</td></tr><tr><td><strong>ch18</strong></td><td>表面码</td><td>纠错</td><td>Kitaev, Fowler</td><td>拓扑</td><td>阈值 ~1%</td></tr><tr><td><strong>ch19</strong></td><td>容错</td><td>工程</td><td>Aharonov, Ben-Or</td><td>容错定理</td><td>-</td></tr><tr><td><strong>ch20</strong></td><td>超导</td><td>硬件</td><td>Schoelkopf, Devoret</td><td>transmon</td><td>-</td></tr><tr><td><strong>ch21</strong></td><td>离子阱</td><td>硬件</td><td>Wineland, Cirac-Zoller</td><td>-</td><td>-</td></tr><tr><td><strong>ch22</strong></td><td>光量子</td><td>硬件</td><td>Pan, Zeilinger</td><td>Boson Sampling</td><td>-</td></tr><tr><td><strong>ch23</strong></td><td>拓扑</td><td>硬件</td><td>Kitaev, Freedman</td><td>Majorana</td><td>-</td></tr><tr><td><strong>ch24</strong></td><td>中性原子</td><td>硬件</td><td>Lukin, Browaeys</td><td>Rydberg</td><td>-</td></tr><tr><td><strong>ch25</strong></td><td>量子优势</td><td>应用</td><td>Preskill, Arute</td><td>Quantum Supremacy</td><td>-</td></tr><tr><td><strong>ch26</strong></td><td>量子互联网</td><td>应用</td><td>Wehner, Pan</td><td>量子中继器</td><td>-</td></tr><tr><td><strong>ch27</strong></td><td>量子 AI</td><td>应用</td><td>Biamonte, AlphaQubit</td><td>QML/QNN</td><td>-</td></tr><tr><td><strong>ch28</strong></td><td>未来展望</td><td>总结</td><td>-</td><td>5 大挑战 + 5 年路线图</td><td>-</td></tr></tbody>
+</table>
+<hr>
+<h2 id="28-b-附录-b-全书推荐阅读清单汇总">28.B 附录 B: 全书推荐阅读清单汇总</h2>
+<table class="chapter-table">
+<thead><tr><th>章节</th><th>经典论文</th><th>现代综述</th></tr></thead>
+<tbody><tr><td>ch01</td><td>Planck 1900, Einstein 1905, Bohr 1913</td><td>Freeman Dyson 2019</td></tr><tr><td>ch02</td><td>Dirac 1939 (bra-ket)</td><td>Nielsen-Chuang ch2</td></tr><tr><td>ch03</td><td>Feynman 1982</td><td>Strekalov 2002</td></tr><tr><td>ch04</td><td>Bell 1964, Aspect 1982</td><td>Brunner 2014</td></tr><tr><td>ch05</td><td>Born 1926, Heisenberg 1927</td><td>Busch 1995</td></tr><tr><td>ch06</td><td>Bloch 1946</td><td>Nielsen-Chuang ch4</td></tr><tr><td>ch07</td><td>Toffoli 1980, Fredkin 1982</td><td>Nielsen-Chuang ch4</td></tr><tr><td>ch08</td><td>Vatan-Williams 2004</td><td>Shende 2006</td></tr><tr><td>ch09</td><td>Coppersmith 1994</td><td>Nielsen-Chuang ch5</td></tr><tr><td>ch10</td><td>Grover 1996</td><td>Bennett 1997</td></tr><tr><td>ch11</td><td>Shor 1994, Ekert 1996</td><td>-</td></tr><tr><td>ch12</td><td>Kitaev 1995</td><td>-</td></tr><tr><td>ch13</td><td>Peruzzo 2014, Farhi 2014</td><td>Cerezo 2021</td></tr><tr><td>ch14</td><td>HHL 2009, Biamonte 2017</td><td>Schuld 2024</td></tr><tr><td>ch15</td><td>Bernstein-Vazirani 1997</td><td>Watrous 2008</td></tr><tr><td>ch16</td><td>Lindblad 1976</td><td>Breuer-Petruccione 2002</td></tr><tr><td>ch17</td><td>Shor 1995, Steane 1996</td><td>Gottesman 1997</td></tr><tr><td>ch18</td><td>Kitaev 1997, Fowler 2012</td><td>-</td></tr><tr><td>ch19</td><td>Aharonov-Ben-Or 1997</td><td>Gottesman 2010</td></tr><tr><td>ch20</td><td>Koch 2007 (transmon)</td><td>Devoret 2013</td></tr><tr><td>ch21</td><td>Cirac-Zoller 1995</td><td>Wineland 2013</td></tr><tr><td>ch22</td><td>Knill-Laflamme-Milburn 2001</td><td>Pan 2012</td></tr><tr><td>ch23</td><td>Kitaev 2001, Nayak 2008</td><td>-</td></tr><tr><td>ch24</td><td>Jaksch-Zoller 2003, Saffman 2010</td><td>-</td></tr><tr><td>ch25</td><td>Preskill 2012 (term), Arute 2019</td><td>-</td></tr><tr><td>ch26</td><td>Wehner 2018</td><td>Pirandola 2020</td></tr><tr><td>ch27</td><td>HHL 2009, Cong 2019, AlphaQubit 2024</td><td>Biamonte 2017</td></tr><tr><td>ch28</td><td>Aaronson 2013</td><td>Preskill 2018</td></tr></tbody>
+</table>
+<hr>
+<h2 id="概念速查表-全书-30-术语汇总">📋 概念速查表 (全书 30+ 术语汇总)</h2>
+<table class="chapter-table">
+<thead><tr><th>概念</th><th>定义</th><th>章节</th></tr></thead>
+<tbody><tr><td><strong>量子比特 (qubit)</strong></td><td>量子信息基本单元</td><td>ch06</td></tr><tr><td><strong>Bloch 球</strong></td><td>单 qubit 纯态几何</td><td>ch06</td></tr><tr><td><strong>酉算符</strong></td><td>量子演化</td><td>ch07</td></tr><tr><td><strong>通用性定理</strong></td><td>H+T+CNOT 通用</td><td>ch07</td></tr><tr><td><strong>Bell 态</strong></td><td>4 个最大纠缠态</td><td>ch04</td></tr><tr><td><strong>GHZ 态</strong></td><td>3 qubit 纠缠态</td><td>ch04/ch06</td></tr><tr><td><strong>POVM</strong></td><td>一般测量</td><td>ch05</td></tr><tr><td><strong>Born 规则</strong></td><td>测量概率 $\</td><td>\langle m \</td><td>\psi \rangle\</td><td>^2$</td><td>ch05</td></tr><tr><td><strong>不确定性原理</strong></td><td>Robertson 不等式</td><td>ch05</td></tr><tr><td><strong>不可克隆定理</strong></td><td>量子态不能复制</td><td>ch06</td></tr><tr><td><strong>量子纠缠</strong></td><td>非局域关联</td><td>ch04</td></tr><tr><td><strong>CHSH 不等式</strong></td><td>$\</td><td>S\</td><td>\leq 2$ 经典 / $\leq 2\sqrt{2}$ 量子</td><td>ch04</td></tr><tr><td><strong>QFT</strong></td><td>量子傅里叶变换 $O(n^2)$</td><td>ch09</td></tr><tr><td><strong>Shor 算法</strong></td><td>因式分解指数加速</td><td>ch11</td></tr><tr><td><strong>Grover 算法</strong></td><td>搜索二次加速</td><td>ch10</td></tr><tr><td><strong>QPE</strong></td><td>量子相位估计</td><td>ch12</td></tr><tr><td><strong>VQE</strong></td><td>变分量子特征值求解</td><td>ch13</td></tr><tr><td><strong>QAOA</strong></td><td>量子近似优化</td><td>ch13</td></tr><tr><td><strong>HHL</strong></td><td>量子线性方程组</td><td>ch14/ch27</td></tr><tr><td><strong>QML</strong></td><td>量子机器学习</td><td>ch14/ch27</td></tr><tr><td><strong>QCNN</strong></td><td>量子卷积神经网络</td><td>ch27</td></tr><tr><td><strong>Q-Transformer</strong></td><td>量子注意力机制</td><td>ch27</td></tr><tr><td><strong>AlphaQubit</strong></td><td>DeepMind AI 纠错</td><td>ch19/ch27</td></tr><tr><td><strong>BQP</strong></td><td>有界误差量子多项式</td><td>ch15</td></tr><tr><td><strong>QMA</strong></td><td>量子 Merlin-Arthur</td><td>ch15</td></tr><tr><td><strong>Shor 9-qubit 码</strong></td><td>第一个量子纠错码</td><td>ch17</td></tr><tr><td><strong>Steane [7,1,3] 码</strong></td><td>CSS 码</td><td>ch17</td></tr><tr><td><strong>表面码</strong></td><td>2D 拓扑码</td><td>ch18</td></tr><tr><td><strong>容错阈值</strong></td><td>~1%</td><td>ch18/ch19</td></tr><tr><td><strong>退相干 $T_1, T_2$</strong></td><td>量子噪声时间尺度</td><td>ch16</td></tr><tr><td><strong>5 大硬件</strong></td><td>超导 / 离子阱 / 光 / 拓扑 / 中性原子</td><td>ch20-24</td></tr><tr><td><strong>BB84</strong></td><td>第一个量子密钥分发协议</td><td>ch26</td></tr><tr><td><strong>量子隐形传态</strong></td><td>未知量子态远程传输</td><td>ch04/ch26</td></tr><tr><td><strong>量子中继器</strong></td><td>长距离纠缠分发</td><td>ch26</td></tr><tr><td><strong>NISQ</strong></td><td>含噪中等规模量子</td><td>ch15/ch25</td></tr><tr><td><strong>FTQC</strong></td><td>容错量子计算</td><td>ch19</td></tr><tr><td><strong>Quantum Utility</strong></td><td>实用化量子优势 (Preskill 2024+)</td><td>ch25/ch28</td></tr></tbody>
+</table>
+<hr>
+<p>(本章完。Day 32 任务。<strong>全书 28 章完结 🎉🎉🎉</strong>。32 天旅程终点, 量子计算新起点。)</p>
+</article>
+
+      <!-- 章节 pager -->
+      <nav class="chapter-pager" aria-label="章节导航">
+        <a href="ch27.html" class="pager-link pager-prev">
+          <span class="pager-label">← 上一章</span>
+          <span class="pager-title">第 27 章 量子计算与 AI 的融合 (Quantum Computing & AI Convergence)</span>
+        </a>
+        <span class="pager-link pager-next pager-disabled" aria-disabled="true">
+          <span class="pager-label">下一章 →</span>
+          <span class="pager-title">🎉 全书完结 🎉 (Final Chapter)</span>
+        </span>
+      </nav>
+    </main>
+
+    <!-- ==================== SIDEBAR TOC ==================== -->
+    <aside class="chapter-toc" id="chapter-toc">
+      <div class="toc-card">
+        <h4>📖 本章目录</h4>
+        <ul class="toc-list">
+          <!-- Auto-populated by JS -->
+        </ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- TOC Toggle Button (mobile) -->
+  <button class="toc-toggle" id="toc-toggle" aria-label="切换目录">
+    📑
+  </button>
+
+  <!-- Back to Top -->
+  <button class="fab-back-top" id="back-to-top" aria-label="回到顶部">
+    ↑
+  </button>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h3>⚛ 量子计算</h3>
+        <p>一本系统性的量子计算中文教材。从历史到前沿,从理论到算法,构建完整的量子计算知识体系。</p>
+      </div>
+      <div class="footer-col">
+        <h4>导航</h4>
+        <ul>
+          <li><a href="../index.html">首页</a></li>
+          <li><a href="../index.html#chapters">章节总览</a></li>
+          <li><a href="ch01.html">第 1 章</a></li>
+          <li><a href="ch02.html">第 2 章</a></li>
+          <li><a href="ch03.html">第 3 章</a></li>
+          <li><a href="ch04.html">第 4 章</a></li>
+          <li><a href="ch05.html">第 5 章</a></li>
+          <li><a href="ch06.html">第 6 章</a></li>
+          <li><a href="ch07.html">第 7 章</a></li>
+          <li><a href="ch08.html">第 8 章</a></li>
+          <li><a href="ch09.html">第 9 章</a></li>
+          <li><a href="ch10.html">第 10 章</a></li>
+          <li><a href="ch11.html">第 11 章</a></li>
+          <li><a href="ch12.html">第 12 章</a></li>
+          <li><a href="ch13.html">第 13 章</a></li>
+          <li><a href="ch14.html">第 14 章</a></li>
+          <li><a href="ch15.html">第 15 章</a></li>
+          <li><a href="ch16.html">第 16 章</a></li>
+          <li><a href="ch17.html">第 17 章</a></li>
+          <li><a href="ch18.html">第 18 章</a></li>
+          <li><a href="ch19.html">第 19 章</a></li>
+          <li><a href="ch20.html">第 20 章</a></li>
+          <li><a href="ch21.html">第 21 章</a></li>
+          <li><a href="ch22.html">第 22 章</a></li>
+          <li><a href="ch23.html">第 23 章</a></li>
+          <li><a href="ch24.html">第 24 章</a></li>
+          <li><a href="ch25.html">第 25 章</a></li>
+          <li><a href="ch26.html">第 26 章</a></li>
+          <li><a href="ch27.html">第 27 章</a></li>
+          <li><a href="ch28.html">第 28 章</a></li>
+          <li><a href="../index.html#progress">阅读进度</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>资源</h4>
+        <ul>
+          <li><a href="#">GitHub 仓库</a></li>
+          <li><a href="#">反馈与建议</a></li>
+          <li><a href="#">参考文献</a></li>
+          <li><a href="#">MathJax 公式参考</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 《量子计算》. 保留所有权利.</p>
+      <p>Powered by ⚛ Quantum — 从经典到量子的旅程</p>
+    </div>
+  </footer>
+
+  <!-- Book JavaScript -->
+  <script src="/assets/js/book.js"></script>
+  <!-- Site JavaScript -->
+  <script src="/assets/js/site.js"></script>
+  <script src="/assets/js/tts-player.js" defer></script>
+</body>
+</html>
