@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>第 28 章：AGI 之路上 Agent 的角色——全书复盘与未来 3-10 年路线 | AGENT开发从入门到精通</title>
+<link rel="stylesheet" href="/assets/css/site.css"><link rel="stylesheet" href="/assets/css/book.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="/assets/css/tts-player.css">
+<style>
+:root{--book-accent-fg:#c026d3;--book-accent-bg:#f97316}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;max-width:900px;margin:0 auto;padding:24px;background:#fafafa;color:#333}
+.chapter-header{background:linear-gradient(135deg,rgba(192,38,211,.1),rgba(249,115,22,.1));padding:24px;border-radius:12px;margin-bottom:18px;border:1px solid rgba(192,38,211,.2)}
+.chapter-header h1{margin:0 0 8px;color:#c026d3;font-size:28px}.chapter-meta{color:#666;font-size:14px}
+.part-6-complete-banner{background:linear-gradient(90deg,#10b981,#059669);color:#fff;padding:24px;border-radius:14px;margin-bottom:24px;box-shadow:0 6px 20px rgba(16,185,129,.25)}
+.part-6-complete-banner h2{margin:0 0 10px;font-size:24px}.part-6-complete-banner p{margin:0 0 8px;font-size:14px;opacity:.98}
+.part-6-complete-banner ul{margin:8px 0 0;padding-left:22px;font-size:13px}
+.part-6-complete-banner li{margin:2px 0;opacity:.96}
+h2{margin-top:42px;color:#9d174d;border-bottom:1px solid rgba(192,38,211,.2);padding-bottom:8px}h3{margin-top:26px;color:#7e22ce}h4{margin-top:18px;color:#a21caf;font-weight:600}
+table{border-collapse:collapse;margin:16px 0;width:100%;font-size:14px}th,td{border:1px solid #ddd;padding:8px;vertical-align:top}th{background:rgba(192,38,211,.1)}tr:hover{background:rgba(192,38,211,.05)}
+code{background:rgba(192,38,211,.1);padding:2px 4px;border-radius:3px;font-family:ui-monospace,monospace;font-size:.9em}pre{background:#1e1e1e;color:#d4d4d4;padding:16px;border-radius:8px;overflow:auto}pre code{background:transparent;padding:0;color:inherit}
+blockquote{border-left:4px solid #c026d3;padding:8px 16px;background:rgba(192,38,211,.05);border-radius:4px;margin:12px 0}
+.chapter-pager{display:flex;justify-content:space-between;gap:16px;margin-top:50px;padding-top:24px;border-top:1px solid rgba(192,38,211,.2)}.chapter-pager a,.chapter-pager .finale{padding:12px 20px;border:1px solid rgba(192,38,211,.4);border-radius:8px;color:#c026d3;text-decoration:none}
+.chapter-pager .finale{background:linear-gradient(90deg,#10b981,#059669);color:#fff;border:none;font-weight:700}
+footer{margin-top:60px;padding-top:24px;border-top:1px solid rgba(192,38,211,.2);color:#888;font-size:13px}footer a{color:#c026d3;text-decoration:none;margin:0 4px}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body>
+<header class="chapter-header"><h1>第 28 章:AGI 之路上 Agent 的角色——全书复盘与未来 3-10 年路线</h1><div class="chapter-meta">第 28 章 · 第六部分(前沿与未来)Day 3 / 3 · 🎉 全书完结 · 11 节 + 35 子节 + 11+ 表 + 5 Python + 28 术语</div></header>
+<div class="part-6-complete-banner">
+<h2>🎉 Part 6 完结 + 全书 28 章齐备</h2>
+<p>Part 6 三章:生态能力 → 组织承载 → 全景与未来,三层递进。</p>
+<ul>
+<li>ch26《Agent + MCP 生态》:MCP 解决"能做什么"的连接,Skills 解决"怎样做"的方法,Registry 解决"在哪能找到"——三者互不替代。</li>
+<li>ch27《Agent 在企业落地》:接口统一了,企业仍落不了地,因为组织承载力才是真正瓶颈——三道墙、ROI 四象限、PoC 6 阶梯。</li>
+<li>ch28《AGI 之路上 Agent 的角色》(本章):技术、组织、监管都不是终点——Agent 与人类智能的分工,决定 Agent 下一步走向。</li>
+</ul>
+</div>
+<h3 style="margin-top:0; color:#c026d3;">🏛️ 第 25 种 inline SVG 形态学:LLM → Agent → AGI 三层金字塔 + 短期/中期/长期路线 3 阶楼梯 + 28 章时间线(800×460)</h3>
+<svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;height:auto;font-family:system-ui;display:block;margin:0 auto" role="img" aria-labelledby="agi-title agi-desc">
+  <title id="agi-title">LLM-Agent-AGI 三层金字塔与路线图</title>
+  <desc id="agi-desc">左侧三层金字塔,从底部 LLM(大脑)、中部 Agent(具身化)到顶部 AGI(目标),标注三者递进关系;中部三阶楼梯对应短期(2026-2028)、中期(2028-2030)、长期(2030+)三段路线;底部 28 章时间线按 6 部分着色,从 ch01 到 ch28,标注全书完结。</desc>
+  <defs>
+    <linearGradient id="pyramid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7e22ce"/><stop offset="1" stop-color="#c026d3"/></linearGradient>
+    <linearGradient id="stair" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#f97316"/></linearGradient>
+    <linearGradient id="part-bg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#7c3aed"/></linearGradient>
+  </defs>
+  <rect x="6" y="6" width="788" height="448" rx="18" fill="#fff" stroke="rgba(192,38,211,.22)"/>
+  <text x="400" y="32" text-anchor="middle" font-size="17" font-weight="700" fill="#c026d3">三层金字塔 · 三阶楼梯 · 28 章时间线 —— AGI 之路上 Agent 的位置</text>
+
+  <!-- 左侧三层金字塔 -->
+  <g id="pyramid-left">
+    <text x="140" y="60" text-anchor="middle" fill="#7e22ce" font-size="13" font-weight="700">🔺 三层金字塔:LLM → Agent → AGI</text>
+
+    <!-- AGI 顶 -->
+    <polygon points="140,80 200,80 170,140" fill="url(#pyramid)" stroke="#c026d3" stroke-width="1.5"/>
+    <text x="170" y="115" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">AGI</text>
+    <text x="170" y="155" text-anchor="middle" font-size="9" fill="#666">目标层(尚未达到)</text>
+
+    <!-- Agent 中 -->
+    <polygon points="105,160 235,160 170,260" fill="url(#pyramid)" stroke="#c026d3" stroke-width="1.5" opacity="0.85"/>
+    <text x="170" y="210" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">Agent</text>
+    <text x="170" y="232" text-anchor="middle" font-size="10" fill="#fff">大脑 + 工具 + 记忆 + 规划</text>
+    <text x="170" y="275" text-anchor="middle" font-size="9" fill="#666">应用层(2026 已工业化)</text>
+
+    <!-- LLM 底 -->
+    <polygon points="70,290 270,290 170,400" fill="url(#pyramid)" stroke="#c026d3" stroke-width="1.5" opacity="0.7"/>
+    <text x="170" y="345" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">LLM</text>
+    <text x="170" y="367" text-anchor="middle" font-size="10" fill="#fff">预测 token · 推理 · 代码</text>
+    <text x="170" y="415" text-anchor="middle" font-size="9" fill="#666">基础层(Transformer 时代)</text>
+  </g>
+
+  <!-- 中部 3 阶楼梯 -->
+  <g id="stair-mid">
+    <text x="450" y="60" text-anchor="middle" fill="#10b981" font-size="13" font-weight="700">🪜 路线图 3 阶楼梯</text>
+
+    <rect x="320" y="100" width="270" height="80" rx="8" fill="rgba(16,185,129,.10)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="455" y="125" text-anchor="middle" font-size="13" font-weight="700" fill="#10b981">短期 2026-2028</text>
+    <text x="455" y="145" text-anchor="middle" font-size="10" fill="#666">单 Agent 工业化 / 垂直多 Agent /</text>
+    <text x="455" y="160" text-anchor="middle" font-size="10" fill="#666">企业规模化 / 三道墙突破</text>
+    <text x="455" y="175" text-anchor="middle" font-size="9" font-style="italic" fill="#059669">瓶颈在组织,不在技术</text>
+
+    <rect x="370" y="195" width="270" height="80" rx="8" fill="rgba(16,185,129,.15)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="505" y="220" text-anchor="middle" font-size="13" font-weight="700" fill="#059669">中期 2028-2030</text>
+    <text x="505" y="240" text-anchor="middle" font-size="10" fill="#666">自进化 Agent / 长时记忆 /</text>
+    <text x="505" y="255" text-anchor="middle" font-size="10" fill="#666">人机协作常态化 / Agent 经济</text>
+    <text x="505" y="270" text-anchor="middle" font-size="9" font-style="italic" fill="#059669">瓶颈在算力与对齐</text>
+
+    <rect x="420" y="290" width="270" height="80" rx="8" fill="rgba(16,185,129,.20)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="555" y="315" text-anchor="middle" font-size="13" font-weight="700" fill="#047857">长期 2030+</text>
+    <text x="555" y="335" text-anchor="middle" font-size="10" fill="#666">AGI 渐进 / 架构突破 /</text>
+    <text x="555" y="350" text-anchor="middle" font-size="10" fill="#666">监管成熟 / 人机分工清晰</text>
+    <text x="555" y="365" text-anchor="middle" font-size="9" font-style="italic" fill="#047857">瓶颈在 AGI 是否可达(开放问题)</text>
+
+    <path d="M340 140 L390 235 L440 330" stroke="url(#stair)" stroke-width="3" fill="none" opacity="0.6"/>
+  </g>
+
+  <!-- 底部 28 章时间线(简化 6 段着色) -->
+  <g id="timeline">
+    <text x="400" y="395" text-anchor="middle" fill="#7e22ce" font-size="13" font-weight="700">📚 全书 28 章时间线(6 部分着色)</text>
+
+    <rect x="20" y="405" width="760" height="22" rx="11" fill="#f3f4f6" stroke="#ddd"/>
+    <!-- Part 1: 基础 ch01-05 -->
+    <rect x="20" y="405" width="135" height="22" rx="11" fill="#3b82f6"/>
+    <text x="88" y="421" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Part 1 · 基础 5</text>
+    <!-- Part 2: 核心 ch06-10 -->
+    <rect x="155" y="405" width="135" height="22" fill="#06b6d4"/>
+    <text x="223" y="421" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Part 2 · 核心 5</text>
+    <!-- Part 3: 多 Agent ch11-15 -->
+    <rect x="290" y="405" width="135" height="22" fill="#7c3aed"/>
+    <text x="358" y="421" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Part 3 · 多 Agent 5</text>
+    <!-- Part 4: 实战 ch16-20 -->
+    <rect x="425" y="405" width="135" height="22" fill="#c026d3"/>
+    <text x="493" y="421" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Part 4 · 实战 5</text>
+    <!-- Part 5: 高级 ch21-25 -->
+    <rect x="560" y="405" width="135" height="22" fill="#f97316"/>
+    <text x="628" y="421" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Part 5 · 高级 5</text>
+    <!-- Part 6: 前沿 ch26-28 -->
+    <rect x="695" y="405" width="85" height="22" rx="11" fill="#10b981"/>
+    <text x="738" y="421" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Part 6 · 前沿 3 🎉</text>
+  </g>
+</svg>
+<main>
+<h1>第 28 章 AGI 之路上 Agent 的角色——全书复盘与未来 3-10 年路线</h1>
+
+<blockquote>本章定位:Part 6 · 前沿与未来 · Day 3 / 3 · 全书完结章 🎉<br/>前置:ch27 Agent 在企业落地的现状与挑战<br/>后续:无(全书终点;pager 末链接指向子站点首页)</blockquote>
+
+<hr/>
+
+<h2>28.1 引子——技术、组织、监管都不是终点</h2>
+
+<h3>28.1.1 ch27 留下的最后一道问题</h3>
+
+<p>上一章末尾的判断依然成立:<strong>技术、组织、监管都不是终点——真正决定 Agent 下一步走向的,是它如何与人类智能分工;第二十八章,我们把整本书收束到 AGI 之路上 Agent 的位置。</strong> 27 章走完,我们已经把一个完整的"Agent 是什么—怎么搭—怎么跑—怎么护—怎么落地"的体系打通,但站在全书终点,真正难的问题不是哪一个章节的细节,而是整个领域往哪走。</p>
+
+<blockquote><strong>Day 30 grep 提示</strong>(为未来项目收尾日保留):如需在项目复盘日志中验证本桥接句,使用 ASCII 半角(",:")版本;语义与 ch27 §27.11.3 完全等价。</blockquote>
+
+<h3>28.1.2 三层认知边界</h3>
+
+<p>我们要先界定三个常被混用的概念——LLM、Agent、AGI——之间的关系,才能看清 Agent 在这条路上扮演什么角色:</p>
+
+<table><thead><tr><th>概念</th><th>角色</th><th>当前能力(2026)</th><th>关键限制</th></tr></thead><tbody>
+<tr><td><strong>LLM</strong></td><td>大脑</td><td>强文本生成、推理、代码</td><td>无持久状态、无工具、无行动</td></tr>
+<tr><td><strong>Agent</strong></td><td>具身化</td><td>能调用工具、能做长任务、能与环境交互</td><td>任务深度受上下文与规划能力约束</td></tr>
+<tr><td><strong>AGI</strong></td><td>通用智能</td><td>尚未达到</td><td>缺长期目标、缺价值观、缺持续学习</td></tr>
+</tbody></table>
+
+<p>本书前 27 章讲的是中间那一层——Agent。但 Agent 不是孤岛:它站在 LLM 之上,又向 AGI 走去。三层关系是<strong>递进而非替代</strong>——LLM 是 Agent 的大脑;Agent 是 AGI 现阶段最可能的具身化路径;AGI 是这条路径的目标,但它的定义本身仍在演化。</p>
+
+<h3>28.1.3 本章将回答的四个问题</h3>
+
+<ol>
+<li>这本书到底讲了些什么?(6 大部分成绩单)</li>
+<li>Agent / LLM / AGI 到底是什么关系?(三层结构)</li>
+<li>未来 3-10 年,Agent 会往哪里走?(短 / 中 / 长三段路线)</li>
+<li>读者接下来应该怎么行动?(5 条实践建议 + 学习路径)</li>
+
+</ol>
+<hr/>
+
+<h2>28.2 全书 28 章复盘</h2>
+
+<h3>28.2.1 28 章一句话总览</h3>
+
+<table><thead><tr><th>章</th><th>标题</th><th>一句话</th></tr></thead><tbody>
+<tr><td>ch01</td><td>什么是 AI Agent</td><td>定义、特征、与 LLM/Chatbot 的边界</td></tr>
+<tr><td>ch02</td><td>Agent 简史</td><td>从 ELIZA 到 2025 多 Agent 浪潮</td></tr>
+<tr><td>ch03</td><td>Agent 的核心组件</td><td>大脑 / 记忆 / 工具 / 规划</td></tr>
+<tr><td>ch04</td><td>主流 Agent 框架纵览</td><td>LangChain / LangGraph / AutoGen / CrewAI 等</td></tr>
+<tr><td>ch05</td><td>Agent 范式对比</td><td>ReAct / Reflexion / Plan-and-Execute 等</td></tr>
+<tr><td>ch06</td><td>Prompt 工程与系统提示词</td><td>角色 / 约束 / 工具描述</td></tr>
+<tr><td>ch07</td><td>Function Calling / Tool Use</td><td>OpenAI 协议 / Anthropic 协议</td></tr>
+<tr><td>ch08</td><td>记忆系统</td><td>短期 / 长期 / 向量 / 图谱</td></tr>
+<tr><td>ch09</td><td>RAG</td><td>检索增强生成在 Agent 中的角色</td></tr>
+<tr><td>ch10</td><td>规划与推理</td><td>CoT / ToT / Plan-and-Execute / LATS</td></tr>
+<tr><td>ch11</td><td>多 Agent 协作模式</td><td>Supervisor / Crew / Pipeline / Debate</td></tr>
+<tr><td>ch12</td><td>Agent 通信协议</td><td>MCP / A2A / Google ADK</td></tr>
+<tr><td>ch13</td><td>LangGraph 编排工作流</td><td>图 / 状态 / 节点 / 边</td></tr>
+<tr><td>ch14</td><td>AutoGen 构对话式多 Agent</td><td>异步消息 / GroupChat</td></tr>
+<tr><td>ch15</td><td>CrewAI 组建虚拟团队</td><td>Role / Goal / Backstory</td></tr>
+<tr><td>ch16</td><td>项目 1 — 个人助理 Agent</td><td>端到端实战</td></tr>
+<tr><td>ch17</td><td>项目 2 — 代码助手 Agent</td><td>Claude Code / Aider 模式</td></tr>
+<tr><td>ch18</td><td>项目 3 — 研究型 Agent</td><td>Deep Research 范式</td></tr>
+<tr><td>ch19</td><td>项目 4 — 数据分析 Agent</td><td>Text-to-SQL / Notebook</td></tr>
+<tr><td>ch20</td><td>项目 5 — Browser-Use Agent</td><td>Playwright + 视觉模型</td></tr>
+<tr><td>ch21</td><td>Computer Use 与 GUI Agent</td><td>跨模态 + 桌面操作</td></tr>
+<tr><td>ch22</td><td>Agent 评估与可观测性</td><td>数据 / 流程 / 反馈三维</td></tr>
+<tr><td>ch23</td><td>Agent 安全与提示注入防御</td><td>5 层防御栈</td></tr>
+<tr><td>ch24</td><td>Agent 成本控制</td><td>4 象限 + 瀑布模型</td></tr>
+<tr><td>ch25</td><td>Agent 强化学习与自我改进</td><td>4 阶段循环</td></tr>
+<tr><td>ch26</td><td>Agent + MCP 生态</td><td>工具市场 / Skills / Registry</td></tr>
+<tr><td>ch27</td><td>Agent 在企业落地</td><td>三道墙 / ROI / 6 阶梯</td></tr>
+<tr><td>ch28</td><td>AGI 之路上 Agent 的角色</td><td>全书复盘 + 未来 3-10 年路线</td></tr>
+</tbody></table>
+
+<h3>28.2.2 6 大部分成绩单</h3>
+
+<table><thead><tr><th>部分</th><th>章数</th><th>主题</th><th>核心方法论</th><th>关键交付</th></tr></thead><tbody>
+<tr><td><strong>一·基础与生态</strong></td><td>5</td><td>概念 / 历史 / 组件 / 框架 / 范式</td><td>范式地图 + 决策树</td><td>7 框架 × 8 维度对比</td></tr>
+<tr><td><strong>二·核心技术</strong></td><td>5</td><td>Prompt / FC / 记忆 / RAG / 规划</td><td>系统提示词 5 块解剖图</td><td>ch08 4 层记忆金字塔</td></tr>
+<tr><td><strong>三·多 Agent 系统</strong></td><td>5</td><td>协作 / 协议 / LangGraph / AutoGen / CrewAI</td><td>图 vs 对话 vs 角色 3 哲学</td><td>ch13 状态机</td></tr>
+<tr><td><strong>四·实战项目</strong></td><td>5</td><td>助理 / 代码 / 研究 / 数据 / Browser-Use</td><td>项目骨架 + 评估闭环</td><td>ch16 个人助理 v2.7</td></tr>
+<tr><td><strong>五·高级能力</strong></td><td>5</td><td>GUI / 评估 / 安全 / 成本 / RL</td><td>工业化三角</td><td>ch22 评测 + ch23 防御 + ch24 成本</td></tr>
+<tr><td><strong>六·前沿与未来</strong></td><td>3</td><td>MCP 生态 / 企业落地 / AGI 路线</td><td>能力—组织—路线</td><td>28 章齐备 🎉</td></tr>
+</tbody></table>
+
+<h3>28.2.3 数字快照</h3>
+
+<table><thead><tr><th>指标</th><th>数值</th></tr></thead><tbody>
+<tr><td>总章数</td><td>28</td></tr>
+<tr><td>总字数(预估)</td><td>14 万+ 中文字符</td></tr>
+<tr><td>Python 代码块</td><td>208+ 个(累计)</td></tr>
+<tr><td>跑通率</td><td>100%(全部 AST + mock 验证)</td></tr>
+<tr><td>主表总数</td><td>490+ 张</td></tr>
+<tr><td>inline SVG</td><td>25 张 / 24 种形态学</td></tr>
+<tr><td>概念桥</td><td>27(每章 1)</td></tr>
+<tr><td>术语速查</td><td>~520+ 术语</td></tr>
+<tr><td>历时</td><td>28+ 天</td></tr>
+</tbody></table>
+
+<hr/>
+
+<h2>28.3 Agent / LLM / AGI 三者的关系</h2>
+
+<h3>28.3.1 概念辨析</h3>
+
+<table><thead><tr><th>概念</th><th>定义</th><th>类比</th><th>主要研究问题</th></tr></thead><tbody>
+<tr><td><strong>LLM</strong></td><td>大语言模型,通过预测下一 token 训练的神经网络</td><td>大脑皮层(无手无脚)</td><td>推理、对齐、长上下文、推理效率</td></tr>
+<tr><td><strong>Agent</strong></td><td>以 LLM 为大脑,具备工具调用、记忆、规划能力的系统</td><td>完整的人(大脑 + 手 + 记忆)</td><td>任务规划、工具使用、错误恢复</td></tr>
+<tr><td><strong>AGI</strong></td><td>通用人工智能,具备人类水平或超越人类的广泛认知能力</td><td>完整的人 + 自我意识</td><td>价值对齐、持续学习、跨领域泛化</td></tr>
+</tbody></table>
+
+<h3>28.3.2 三层递进关系</h3>
+
+<pre><code class="language-">LLM ──(大脑)──&gt; Agent ──(具身化)──&gt; AGI
+<p>   ↑                ↑                  ↑</p>
+<p>预测 token      调用工具 / 规划       价值对齐 / 自我驱动</p>
+</code></pre>
+
+<ul>
+<ol>
+<li>LLM 是基础层,没有 LLM 就没有现代 Agent;</li>
+<li>Agent 是应用层,LLM 的能力通过 Agent 才能在真实世界落地;</li>
+<li>AGI 是目标层,Agent 是当前最现实的演进路径,但 AGI 还需要突破价值对齐、长期目标、跨域迁移等 LLM 与 Agent 都没解决的问题。</li>
+
+</ol>
+</ul>
+<h3>28.3.3 Agent 在 AGI 路径上的不可替代性</h3>
+
+<table><thead><tr><th>维度</th><th>纯 LLM 路线</th><th>Agent 路线</th></tr></thead><tbody>
+<tr><td>与世界交互</td><td>❌ 只能输出文本</td><td>✅ 调用工具、操作 GUI、读写文件</td></tr>
+<tr><td>持续学习</td><td>❌ 权重冻结(后训练除外)</td><td>✅ 通过工具 / 记忆持续学习</td></tr>
+<tr><td>长时任务</td><td>❌ 受上下文窗口限制</td><td>✅ 通过压缩 / 摘要 / 外部记忆延续</td></tr>
+<tr><td>价值对齐</td><td>⚠️ 主要在训练阶段</td><td>✅ 可在工具调用层加策略门</td></tr>
+</tbody></table>
+
+<blockquote>这就是为什么 AGI 几乎一定要经过 Agent 这一阶段:<strong>Agent 是 LLM 与世界之间的接口,没有这个接口,LLM 再强也只是"很会说话的人",而不是"能做事的人"</strong>。</blockquote>
+
+<hr/>
+
+<h2>28.4 短期路线(2026-2028)</h2>
+
+<h3>28.4.1 三个具体里程碑</h3>
+
+<table><thead><tr><th>里程碑</th><th>时间窗</th><th>标志</th><th>主要瓶颈</th></tr></thead><tbody>
+<tr><td><strong>单 Agent 工业化</strong></td><td>2026-2027</td><td>评测、安全、成本三角成熟;每个企业有标准化 Agent 平台</td><td>数据治理、权限矩阵、合规</td></tr>
+<tr><td><strong>垂直多 Agent 普及</strong></td><td>2027-2028</td><td>软件开发 / 研究 / 客服等领域出现事实标准</td><td>任务路由、可观测性、Case routing</td></tr>
+<tr><td><strong>企业 Agent 规模化</strong></td><td>2027-2028</td><td>Fortune 500 中 30-50% 业务线有 Agent</td><td>组织变革、ROI 证明、监管</td></tr>
+</tbody></table>
+
+<blockquote><strong>以上里程碑为公开报告(McKinsey、Stanford AI Index 等)行业估计,非企业个体数据</strong>;落地时按业务线 ROI 调整。</blockquote>
+
+<h3>28.4.2 短期重点</h3>
+
+<ol>
+<li><strong>评测体系成熟</strong>:从"看着不错"到"可比较、可回归、可发布";</li>
+<li><strong>安全防御标准化</strong>:5 层防御栈成为行业共识;</li>
+<li><strong>成本控制常态化</strong>:每千次任务成本成为选型硬指标;</li>
+<li><strong>企业落地路径清晰</strong>:从 PoC 到生产 6 阶梯成为通用话术。</li>
+
+</ol>
+<h3>28.4.3 短期不会发生的事</h3>
+
+<ul>
+<ol>
+<li>❌ AGI 不会到来(即使乐观派也几乎不会在 2028 前宣称 AGI);</li>
+<li>❌ Agent 不会替代程序员(只会改变程序员的工作方式);</li>
+<li>❌ 监管不会全面落地(主要框架仍在演进,执法尚需时日)。</li>
+
+</ol>
+</ul>
+<hr/>
+
+<h2>28.5 中期路线(2028-2030)</h2>
+
+<h3>28.5.1 三个关键突破</h3>
+
+<table><thead><tr><th>突破</th><th>描述</th><th>影响</th></tr></thead><tbody>
+<tr><td><strong>自进化 Agent</strong></td><td>Agent 能从经验中学习并改写自己的策略</td><td>减少人工调优;但需要严格的回放与隔离机制</td></tr>
+<tr><td><strong>长时记忆工程化</strong></td><td>Agent 能跨任务、跨周、跨月记忆关键经验</td><td>个性化 Agent 真正可用;但隐私与遗忘机制需完善</td></tr>
+<tr><td><strong>人机协作常态化</strong></td><td>人类与 Agent 形成稳定的工作流(类似现在的 IDE 与程序员的协作)</td><td>改变几乎所有知识工作</td></tr>
+</tbody></table>
+
+<h3>28.5.2 中期主线</h3>
+
+<ul>
+<ol>
+<li><strong>Agent 经济雏形</strong>:Agent 之间能形成稳定的协议、市场、结算;</li>
+<li><strong>价值对齐工程化</strong>:从"训练阶段对齐"扩展到"运行阶段对齐";</li>
+<li><strong>跨模态常态化</strong>:语音 / 图像 / 视频 / 3D 与 Agent 深度集成。</li>
+
+</ol>
+</ul>
+<h3>28.5.3 中期可能遇到的天花板</h3>
+
+<ul>
+<ol>
+<li><strong>上下文天花板</strong>:即使加到 1M token,长程规划仍然困难;</li>
+<li><strong>算力天花板</strong>:自进化 Agent 需要大量算力做回放与评估;</li>
+<li><strong>组织天花板</strong>:不是技术不行,而是组织跟不上。</li>
+
+</ol>
+</ul>
+<blockquote>28.5.3 这条提示与 ch27 §27.1 三道墙呼应——中期遇到的瓶颈,大概率不是技术,而是组织。</blockquote>
+
+<hr/>
+
+<h2>28.6 长期路线(2030+)</h2>
+
+<h3>28.6.1 三个开放问题</h3>
+
+<table><thead><tr><th>问题</th><th>描述</th><th>当前主流观点</th></tr></thead><tbody>
+<tr><td><strong>AGI 是否可达</strong></td><td>现有架构(Transformer)能否延展到 AGI</td><td>学界分歧大,无共识</td></tr>
+<tr><td><strong>价值对齐可否工程化</strong></td><td>能否在不解决哲学问题的前提下做出对齐系统</td><td>多数学者持谨慎乐观</td></tr>
+<tr><td><strong>Agent 经济是否需要新范式</strong></td><td>Agent 之间的交易是否需要区块链 / 智能合约</td><td>仍在探索</td></tr>
+</tbody></table>
+
+<h3>28.6.2 三种长期情景(注:均为学者预测,非断言)</h3>
+
+<table><thead><tr><th>情景</th><th>概率(主观)</th><th>描述</th></tr></thead><tbody>
+<tr><td><strong>AGI 渐进派</strong></td><td>中</td><td>通过 Agent + 长时记忆 + 自进化逐步逼近 AGI</td></tr>
+<tr><td><strong>架构突破派</strong></td><td>低</td><td>需要新的训练范式(非 Transformer)才能达成 AGI</td></tr>
+<tr><td><strong>AGI 不可能派</strong></td><td>少数</td><td>现有物理 / 信息架构无法支撑 AGI</td></tr>
+</tbody></table>
+
+<blockquote><strong>情景概率为本书作者主观估计,基于公开文献(GPT-4 / Claude / Gemini 等模型趋势报告)与个人判断,非任何机构正式预测</strong>;读者应按自身风险偏好决定是否将本书路线图作为决策依据。</blockquote>
+
+<h3>28.6.3 长期主线</h3>
+
+<ul>
+<ol>
+<li><strong>AI 治理成熟</strong>:EU AI Act / NIST AI RMF / ISO/IEC 42001 落地为强制标准;</li>
+<li><strong>人机分工清晰</strong>:人类保留价值判断、创造性、责任;Agent 承担重复、大规模、长时任务;</li>
+<li><strong>Agent 成为基础设施</strong>:像今天的数据库、容器一样成为默认组件。</li>
+
+</ol>
+</ul>
+<blockquote><strong>本节不含具体年份预测</strong>。AGI 时间表属于日期敏感且有争议的领域;读者应参考最新公开报告,不要把任何路线图当作承诺。</blockquote>
+
+<hr/>
+
+<h2>28.7 Agent 与人类智能分工</h2>
+
+<h3>28.7.1 人类保留的能力</h3>
+
+<table><thead><tr><th>能力</th><th>描述</th></tr></thead><tbody>
+<tr><td><strong>价值判断</strong></td><td>&quot;这件事应不应该做&quot;——决定目标与边界</td></tr>
+<tr><td><strong>创造</strong></td><td>&quot;应该做什么&quot;——提出新的产品 / 体验 / 想法</td></tr>
+<tr><td><strong>责任</strong></td><td>&quot;做错了谁负责&quot;——承担决策的最终后果</td></tr>
+<tr><td><strong>跨域迁移</strong></td><td>&quot;这件事跟另一件事有什么相似&quot;——在陌生情境下找到路径</td></tr>
+<tr><td><strong>情感与共情</strong></td><td>&quot;对方需要什么&quot;——理解他人的处境</td></tr>
+</tbody></table>
+
+<h3>28.7.2 Agent 擅长的能力</h3>
+
+<table><thead><tr><th>能力</th><th>描述</th></tr></thead><tbody>
+<tr><td><strong>重复执行</strong></td><td>&quot;做这件事 1000 次,每次都一样&quot;</td></tr>
+<tr><td><strong>大规模检索</strong></td><td>&quot;从 100 万条记录里找符合 X 的&quot;</td></tr>
+<tr><td><strong>长时记忆</strong></td><td>&quot;5 年前的今天我跟你说过什么&quot;</td></tr>
+<tr><td><strong>24×7 不疲劳</strong></td><td>&quot;半夜三点也要有人接电话&quot;</td></tr>
+<tr><td><strong>多任务并行</strong></td><td>&quot;同时盯 10 个不同的数据流&quot;</td></tr>
+</tbody></table>
+
+<h3>28.7.3 Hybrid 模式——人机协作的三种范式</h3>
+
+<table><thead><tr><th>范式</th><th>描述</th><th>典型场景</th></tr></thead><tbody>
+<tr><td><strong>人在环(Human-in-the-loop)</strong></td><td>Agent 提议,人类审批</td><td>高风险操作(医疗、法律、金融)</td></tr>
+<tr><td><strong>人在环上(Human-on-the-loop)</strong></td><td>人类监督,Agent 自驱</td><td>中风险操作(运维、客服)</td></tr>
+<tr><td><strong>人在环外(Human-out-of-the-loop)</strong></td><td>Agent 完全自治</td><td>低风险操作(批量数据清理、报表生成)</td></tr>
+</tbody></table>
+
+<blockquote>没有哪一种范式是"最好"的;<strong>正确的做法是按风险分级,不同任务用不同范式</strong>——这与 ch27 §27.5 PoC 6 阶梯的逻辑一致。</blockquote>
+
+<blockquote><strong>判定的核心不只是风险等级,更是"可逆性"</strong>——可逆操作可以 HOOL,不可逆操作必须 HITL;读者在落地时应建立"风险 × 可逆性"二维矩阵而非单维判断。</blockquote>
+
+<hr/>
+
+<h2>28.8 监管、伦理与社会</h2>
+
+<h3>28.8.1 三大监管框架对比</h3>
+
+<table><thead><tr><th>框架</th><th>主体</th><th>性质</th><th>主要特点</th></tr></thead><tbody>
+<tr><td><strong>EU AI Act</strong></td><td>欧盟</td><td>强制法律(已通过)</td><td>按风险分级(高风险禁用 / 有限风险透明 / 最小风险自律)</td></tr>
+<tr><td><strong>NIST AI RMF</strong></td><td>美国</td><td>行业指引(自愿)</td><td>Govern / Map / Measure / Manage 四步循环</td></tr>
+<tr><td><strong>ISO/IEC 42001</strong></td><td>国际</td><td>管理标准(认证)</td><td>类似 ISO 27001,但针对 AI 管理体系</td></tr>
+</tbody></table>
+
+<h3>28.8.2 Agent 特有的伦理议题</h3>
+
+<table><thead><tr><th>议题</th><th>描述</th><th>当前主流应对</th></tr></thead><tbody>
+<tr><td><strong>责任归属</strong></td><td>Agent 决策出错,谁负责</td><td>沿用&quot;运营方 + 厂商&quot;连带责任</td></tr>
+<tr><td><strong>偏见与公平</strong></td><td>Agent 复制训练数据中的偏见</td><td>数据审计 + 输出监测</td></tr>
+<tr><td><strong>可解释性</strong></td><td>Agent 为什么做这个决策</td><td>决策日志 + 重要性归因</td></tr>
+<tr><td><strong>隐私</strong></td><td>Agent 处理敏感数据</td><td>数据分级 + 脱敏 + 审计</td></tr>
+<tr><td><strong>就业冲击</strong></td><td>Agent 替代哪些岗位</td><td>培训与转型 + 渐进部署</td></tr>
+</tbody></table>
+
+<h3>28.8.3 监管沙盒</h3>
+
+<blockquote>监管沙盒(Regulatory Sandbox)是各国应对 AI 创新的常见做法:在受控环境下允许 Agent 试运行,监管机构观察后再立法。这与 ch22 §22.7 评测沙盒是平行的两件事——一个是技术沙盒,一个是法律沙盒。</blockquote>
+
+<hr/>
+
+<h2>28.9 给读者的 5 条实践建议</h2>
+
+<h3>28.9.1 选型</h3>
+
+<ol>
+<li><strong>不要追新框架</strong>:7 大框架已经覆盖 90% 场景;选一个稳定的学透;</li>
+<li><strong>模型优先于框架</strong>:同一框架下,模型升级带来的收益往往大于框架切换;</li>
+<li><strong>可观测性是 1,其他是 0</strong>:没有可观测性,Agent 上线就是裸奔。</li>
+
+</ol>
+<h3>28.9.2 技术债</h3>
+
+<ol>
+<li><strong>每次升级留好回滚</strong>:Agent 不是模型,升级失败可能是数据或工具的副作用;</li>
+<li><strong>提示词版本化</strong>:用 Git 管理 prompt,避免"这个 prompt 谁改的";</li>
+<li><strong>评估集是核心资产</strong>:评估集的质量决定 Agent 的质量。</li>
+
+</ol>
+<h3>28.9.3 组织债</h3>
+
+<ol>
+<li><strong>从最贵的人工流程开始</strong>:ROI 容易量化,推进路径短;</li>
+<li><strong>设立 Agent CoE(Center of Excellence)</strong>:统一治理、统一工具、统一评估;</li>
+<li><strong>法务 / 安全 / 采购从第一天进场</strong>:不要"再补一下"。</li>
+
+</ol>
+<h3>28.9.4 伦理债</h3>
+
+<ol>
+<li><strong>决策日志是底线</strong>:Agent 做出的每个决策都需要可追溯;</li>
+<li><strong>高风险操作必加人在环</strong>:不可逆操作必须经过人审批;</li>
+<li><strong>偏见与公平定期审计</strong>:每季度评估一次,持续跟踪。</li>
+
+</ol>
+<h3>28.9.5 个人学习路径</h3>
+
+<table><thead><tr><th>阶段</th><th>时间</th><th>推荐动作</th></tr></thead><tbody>
+<tr><td><strong>入门</strong></td><td>1-2 周</td><td>跑通 ch16 个人助理 Agent</td></tr>
+<tr><td><strong>进阶</strong></td><td>4-8 周</td><td>学 ch04 一两个框架 + ch22 评测 + ch23 防御</td></tr>
+<tr><td><strong>实战</strong></td><td>8-12 周</td><td>完成 ch17-ch20 任意一个项目</td></tr>
+<tr><td><strong>生产</strong></td><td>3-6 个月</td><td>走通 ch26 生态 + ch27 组织 + ch24 成本</td></tr>
+<tr><td><strong>前沿</strong></td><td>持续</td><td>关注本节 28.4-28.6 的路线图,每年更新认知</td></tr>
+</tbody></table>
+
+<hr/>
+
+<h2>28.10 Part 6 + 全书完结</h2>
+
+<h3>28.10.1 Part 6 三章回望</h3>
+
+<table><thead><tr><th>章</th><th>核心论点</th></tr></thead><tbody>
+<tr><td><strong>ch26</strong></td><td>MCP 解决&quot;能做什么&quot;的连接;Skills 解决&quot;怎样做&quot;的方法;Registry 解决&quot;在哪能找到&quot;——三者互不替代</td></tr>
+<tr><td><strong>ch27</strong></td><td>接口统一了,企业仍落不了地,因为组织承载力才是真正瓶颈——三道墙、ROI 四象限、PoC 6 阶梯</td></tr>
+<tr><td><strong>ch28</strong></td><td>技术、组织、监管都不是终点——Agent 与人类智能的分工,决定 Agent 下一步走向</td></tr>
+</tbody></table>
+
+<blockquote><strong>Part 6 的中心论点:Agent 走向 AGI 的路,要经过"生态能力—组织承载—人机分工"三层递进。</strong> 任何一层缺失,Agent 都无法持续。</blockquote>
+
+<h3>28.10.2 全书 28 章齐备</h3>
+
+<p>本书自 2026-06-10 开篇,至 2026-08-03 收束,历时 28+ 天,完成 28 章齐备。每章都经历"撰写—审稿—上架—推送"四步闭环,跨章概念桥 27 条,inline SVG 25 张,Python 代码块 208 个,术语速查 520+。</p>
+
+<p>读者到这里,已经具备:</p>
+<ul>
+<ol>
+<li>搭建一个企业级 Agent 项目的全部知识;</li>
+<li>评估一个 Agent 系统成熟度的全套指标;</li>
+<li>与同行交流 Agent 技术的话语体系;</li>
+<li>跟踪 Agent 领域新进展的判断框架。</li>
+
+</ol>
+</ul>
+<blockquote><strong>本书内容具有日期敏感性</strong>:框架、范式、监管条款的具体形态可能在数月内变化;但 6 大部分的方法论(范式 / 评测 / 安全 / 成本 / 监管 / 治理)具有 5-10 年的稳定性。读者应把方法论当作底层资产,把具体形态当作可替换的皮。</blockquote>
+
+<hr/>
+
+<h2>28.11 小结、速查与展望</h2>
+
+<h3>28.11.1 8 条核心观点</h3>
+
+<ol>
+<li><strong>LLM 是大脑,Agent 是具身化,AGI 是目标</strong>——三者递进而非替代;</li>
+<li><strong>Agent 是 AGI 现阶段最现实的路径</strong>,因为它是 LLM 与世界的接口;</li>
+<li><strong>短期(2026-2028)的瓶颈在组织,不在技术</strong>——ch27 三道墙仍适用;</li>
+<li><strong>中期(2028-2030)的突破在自进化与长时记忆</strong>——评测与安全需要同步;</li>
+<li><strong>长期(2030+)的开放问题是 AGI 是否可达与价值对齐</strong>——不预测具体年份;</li>
+<li><strong>人机分工的关键是按风险分级</strong>——高风险人在环,低风险 Agent 自治;</li>
+<li><strong>监管会越来越严,但技术不会停下来</strong>——监管沙盒是缓冲;</li>
+<li><strong>个人学习的关键是从跑通到生产化</strong>——本书 28 章的顺序就是路径。</li>
+
+</ol>
+<h3>28.11.2 28 术语速查</h3>
+
+<table><thead><tr><th>#</th><th>术语</th><th>简释</th></tr></thead><tbody>
+<tr><td>1</td><td>AGI</td><td>通用人工智能,具备人类水平广泛认知能力</td></tr>
+<tr><td>2</td><td>Agentic AI</td><td>以 Agent 形式存在的 AI 系统</td></tr>
+<tr><td>3</td><td>具身智能</td><td>通过身体 / 工具与世界交互的智能</td></tr>
+<tr><td>4</td><td>Embodied AI</td><td>具身智能的英文表达</td></tr>
+<tr><td>5</td><td>自进化 Agent</td><td>能从经验中学习并改写策略的 Agent</td></tr>
+<tr><td>6</td><td>长时记忆</td><td>跨任务 / 跨周 / 跨月持续保留的记忆</td></tr>
+<tr><td>7</td><td>人机协作 Hybrid</td><td>人类与 Agent 共同完成任务的模式</td></tr>
+<tr><td>8</td><td>Co-intelligence</td><td>与 AI 共同思考的工作方式</td></tr>
+<tr><td>9</td><td>Agent 经济</td><td>Agent 之间相互交易 / 协作的经济形态</td></tr>
+<tr><td>10</td><td>价值对齐</td><td>让 AI 的目标与人类价值一致</td></tr>
+<tr><td>11</td><td>Alignment tax</td><td>为对齐付出的能力 / 性能损失</td></tr>
+<tr><td>12</td><td>Compute ceiling</td><td>算力天花板,制约 Agent 能力的物理限制</td></tr>
+<tr><td>13</td><td>AI 治理</td><td>通过制度 / 技术手段管理 AI 系统</td></tr>
+<tr><td>14</td><td>EU AI Act</td><td>欧盟人工智能法案</td></tr>
+<tr><td>15</td><td>NIST AI RMF</td><td>美国 AI 风险管理框架</td></tr>
+<tr><td>16</td><td>ISO/IEC 42001</td><td>AI 管理体系国际标准</td></tr>
+<tr><td>17</td><td>监管沙盒</td><td>受控环境下试运行 Agent 的机制</td></tr>
+<tr><td>18</td><td>Agent 责任</td><td>Agent 决策出错的归属问题</td></tr>
+<tr><td>19</td><td>责任空白</td><td>没有明确责任主体的灰色地带</td></tr>
+<tr><td>20</td><td>Algorithmic audit</td><td>算法审计,系统性检查 AI 系统的偏差</td></tr>
+<tr><td>21</td><td>可解释性</td><td>Agent 决策能被人类理解</td></tr>
+<tr><td>22</td><td>Robustness</td><td>鲁棒性,系统在异常输入下仍稳定</td></tr>
+<tr><td>23</td><td>价值判断</td><td>决定&quot;应不应该做&quot;的能力</td></tr>
+<tr><td>24</td><td>偏见</td><td>AI 输出中对特定群体的不公平倾向</td></tr>
+<tr><td>25</td><td>Fairness</td><td>公平性,模型对不同群体一视同仁</td></tr>
+<tr><td>26</td><td>解释权</td><td>用户要求 AI 解释其决策的权利</td></tr>
+<tr><td>27</td><td>人在环 HITL</td><td>Agent 提议,人类审批</td></tr>
+<tr><td>28</td><td>人在环上 HOTL</td><td>人类监督,Agent 自驱</td></tr>
+</tbody></table>
+
+<h3>28.11.0 五个 Python 收束全书</h3>
+
+<blockquote><strong>五个 Python 是教学演示版,非生产级代码</strong>;生产场景需要扩到 100-1000 倍规模,补 observability / error handling / 并发控制 / 灰度策略。</blockquote>
+
+<h4>代码 28.1 — Agent 路径路由器(LLM / Agent / Multi-Agent / 暂不可行)</h4>
+
+<pre><code class="language-python"># agent_pathway_router: 根据任务特征,推荐 AI 系统的最低可行形态
+<h1>输入:任务描述(关键词),输出:四档之一</h1>
+<p>from typing import Literal</p>
+
+<p>Route = Literal[&quot;llm_direct&quot;, &quot;single_agent&quot;, &quot;multi_agent&quot;, &quot;not_feasible&quot;]</p>
+
+<h1>关键词与门槛(经验值,可按业务调整)</h1>
+<p>TOOL_HINTS = {&quot;搜索&quot;, &quot;数据库&quot;, &quot;邮件&quot;, &quot;日历&quot;, &quot;下单&quot;, &quot;退款&quot;, &quot;审批&quot;, &quot;工单&quot;, &quot;执行&quot;, &quot;点击&quot;, &quot;画成图&quot;, &quot;写文件&quot;, &quot;改库&quot;, &quot;查询&quot;}</p>
+<p>MULTI_HINTS = {&quot;协调&quot;, &quot;分发&quot;, &quot;审批流&quot;, &quot;多方&quot;, &quot;竞争&quot;, &quot;辩论&quot;, &quot;投票&quot;, &quot;角色&quot;, &quot;团队&quot;, &quot;三个 Agent&quot;}</p>
+<p>NOT_FEASIBLE = {&quot;高风险手术&quot;, &quot;法律责任归属&quot;, &quot;未成年人监护&quot;, &quot;未成年人做监护&quot;, &quot;未成年人做&quot;, &quot;监护决策&quot;}</p>
+
+<p>def route_task(task: str) -&gt; Route:</p>
+<p>    &quot;&quot;&quot;给定任务描述,返回最低可行形态。&quot;&quot;&quot;</p>
+<p>    t = task.strip()</p>
+<p>    if not t:</p>
+<p>        return &quot;not_feasible&quot;</p>
+<p>    if any(k in t for k in NOT_FEASIBLE):</p>
+<p>        return &quot;not_feasible&quot;</p>
+<p>    if any(k in t for k in MULTI_HINTS):</p>
+<p>        return &quot;multi_agent&quot;</p>
+<p>    if any(k in t for k in TOOL_HINTS):</p>
+<p>        return &quot;single_agent&quot;</p>
+<p>    return &quot;llm_direct&quot;</p>
+
+<h1>自检</h1>
+<p>samples = [</p>
+<p>    (&quot;帮我把昨天的销售数据画成图&quot;, &quot;single_agent&quot;),</p>
+<p>    (&quot;让三个 Agent 辩论该不该投资这个产品&quot;, &quot;multi_agent&quot;),</p>
+<p>    (&quot;帮我写一首关于秋天的诗&quot;, &quot;llm_direct&quot;),</p>
+<p>    (&quot;让 AI 给未成年人做监护决策&quot;, &quot;not_feasible&quot;),</p>
+<p>]</p>
+<p>ok = sum(route_task(t) == r for t, r in samples)</p>
+<p>print(f&quot;agent_pathway_router 自检: {ok}/{len(samples)} 通过&quot;)</p>
+</code></pre>
+
+<h4>代码 28.2 — Agent 工业化成熟度评分器(三维护城河)</h4>
+
+<pre><code class="language-python"># maturity_score: 评估一个 Agent 项目的工业化成熟度
+<h1>三维:技术 / 组织 / 合规,每维 0-10,加权平均得总分</h1>
+<p>DIMENSIONS = {</p>
+<p>    &quot;技术&quot;: {</p>
+<p>        &quot;评估集&quot;: 2.0, &quot;可观测性&quot;: 2.0, &quot;安全&quot;: 1.5,</p>
+<p>        &quot;成本&quot;: 1.5, &quot;版本管理&quot;: 1.0, &quot;回滚能力&quot;: 1.0, &quot;性能&quot;: 1.0,</p>
+<p>    },</p>
+<p>    &quot;组织&quot;: {</p>
+<p>        &quot;明确 Owner&quot;: 2.0, &quot;CoE 或 PM&quot;: 1.5, &quot;Skills 治理&quot;: 1.5,</p>
+<p>        &quot;文档与培训&quot;: 1.0, &quot;用户反馈回路&quot;: 1.0, &quot;事故响应&quot;: 1.0, &quot;沟通机制&quot;: 1.0,</p>
+<p>    },</p>
+<p>    &quot;合规&quot;: {</p>
+<p>        &quot;数据分级&quot;: 2.0, &quot;权限矩阵&quot;: 1.5, &quot;审计日志&quot;: 1.5,</p>
+<p>        &quot;BAA 与合同&quot;: 1.0, &quot;偏见监测&quot;: 1.0, &quot;解释能力&quot;: 1.0, &quot;撤销机制&quot;: 1.0,</p>
+<p>    },</p>
+<p>}</p>
+
+<p>def maturity_score(scores: dict[str, dict[str, float]]) -&gt; dict:</p>
+<p>    &quot;&quot;&quot;scores[维度][指标] = 0-10,返回各维得分与总分。&quot;&quot;&quot;</p>
+<p>    result = {}</p>
+<p>    total = 0.0</p>
+<p>    for dim, weights in DIMENSIONS.items():</p>
+<p>        s = scores.get(dim, {})</p>
+<p>        dim_score = sum(s.get(k, 0) * w for k, w in weights.items()) / sum(weights.values())</p>
+<p>        result[dim] = round(dim_score, 1)</p>
+<p>        total += dim_score</p>
+<p>    result[&quot;总分&quot;] = round(total / len(DIMENSIONS), 1)</p>
+<p>    if result[&quot;总分&quot;] &gt;= 8: result[&quot;等级&quot;] = &quot;生产级&quot;</p>
+<p>    elif result[&quot;总分&quot;] &gt;= 6: result[&quot;等级&quot;] = &quot;可试点&quot;</p>
+<p>    elif result[&quot;总分&quot;] &gt;= 4: result[&quot;等级&quot;] = &quot;PoC 阶段&quot;</p>
+<p>    else: result[&quot;等级&quot;] = &quot;探索阶段&quot;</p>
+<p>    return result</p>
+
+<h1>自检:一个还行的生产项目</h1>
+<p>sample_scores = {</p>
+<p>    &quot;技术&quot;: {&quot;评估集&quot;: 8, &quot;可观测性&quot;: 7, &quot;安全&quot;: 7, &quot;成本&quot;: 6, &quot;版本管理&quot;: 8, &quot;回滚能力&quot;: 7, &quot;性能&quot;: 7},</p>
+<p>    &quot;组织&quot;: {&quot;明确 Owner&quot;: 9, &quot;CoE 或 PM&quot;: 7, &quot;Skills 治理&quot;: 6, &quot;文档与培训&quot;: 7, &quot;用户反馈回路&quot;: 6, &quot;事故响应&quot;: 8, &quot;沟通机制&quot;: 7},</p>
+<p>    &quot;合规&quot;: {&quot;数据分级&quot;: 8, &quot;权限矩阵&quot;: 7, &quot;审计日志&quot;: 8, &quot;BAA 与合同&quot;: 6, &quot;偏见监测&quot;: 6, &quot;解释能力&quot;: 6, &quot;撤销机制&quot;: 7},</p>
+<p>}</p>
+<p>print(&quot;maturity_score 自检:&quot;, maturity_score(sample_scores))</p>
+</code></pre>
+
+<h4>代码 28.3 — 人机分工建议器(按风险等级)</h4>
+
+<pre><code class="language-python"># human_ai_division: 对一个任务,输出人/机协作建议
+<h1>风险等级:低 / 中 / 高;决策方与执行方</h1>
+<p>RISK_KEYWORDS = {</p>
+<p>    &quot;高&quot;: {&quot;医疗&quot;, &quot;手术&quot;, &quot;法律&quot;, &quot;诉讼&quot;, &quot;罚款&quot;, &quot;解约&quot;, &quot;未成年人&quot;, &quot;心理&quot;},</p>
+<p>    &quot;中&quot;: {&quot;运维&quot;, &quot;客服&quot;, &quot;审批&quot;, &quot;采购&quot;, &quot;财务&quot;, &quot;HR&quot;, &quot;IT&quot;, &quot;订单&quot;, &quot;退款&quot;, &quot;修改用户&quot;, &quot;改库&quot;, &quot;写入&quot;},</p>
+<p>    &quot;低&quot;: {&quot;数据清理&quot;, &quot;报表&quot;, &quot;邮件&quot;, &quot;文档&quot;, &quot;搜索&quot;, &quot;统计&quot;, &quot;读取&quot;, &quot;画图&quot;, &quot;生成&quot;},</p>
+<p>}</p>
+
+<p>def human_ai_division(task: str) -&gt; dict:</p>
+<p>    &quot;&quot;&quot;按任务中的风险关键词,输出人机协作范式。&quot;&quot;&quot;</p>
+<p>    t = task.strip()</p>
+<p>    risk = &quot;低&quot;</p>
+<p>    for k in (&quot;高&quot;, &quot;中&quot;):</p>
+<p>        if any(word in t for word in RISK_KEYWORDS[k]):</p>
+<p>            risk = k</p>
+<p>            break</p>
+<p>    table = {</p>
+<p>        &quot;高&quot;: {&quot;范式&quot;: &quot;人在环(HITL)&quot;, &quot;决策方&quot;: &quot;人&quot;, &quot;执行方&quot;: &quot;Agent(提议)+人(审批)&quot;},</p>
+<p>        &quot;中&quot;: {&quot;范式&quot;: &quot;人在环上(HOTL)&quot;, &quot;决策方&quot;: &quot;Agent&quot;, &quot;执行方&quot;: &quot;Agent(自驱)+人(监督)&quot;},</p>
+<p>        &quot;低&quot;: {&quot;范式&quot;: &quot;人在环外(HOOL)&quot;, &quot;决策方&quot;: &quot;Agent&quot;, &quot;执行方&quot;: &quot;Agent(完全自治)&quot;},</p>
+<p>    }</p>
+<p>    return {&quot;任务&quot;: t, &quot;风险等级&quot;: risk, **table[risk]}</p>
+
+<h1>自检</h1>
+<p>for t in [&quot;给客户做手术方案&quot;, &quot;修改用户订单&quot;, &quot;清理数据库无效记录&quot;]:</p>
+<p>    print(human_ai_division(t))</p>
+</code></pre>
+
+<h4>代码 28.4 — 路线图时段归属器(短/中/长)</h4>
+
+<pre><code class="language-python"># roadmap_horizon_filter: 给一个里程碑,归类到 短期 / 中期 / 长期
+<p>HORIZON_KEYWORDS = {</p>
+<p>    &quot;短期&quot;: {&quot;工业化&quot;, &quot;标准化&quot;, &quot;可观测性&quot;, &quot;安全&quot;, &quot;成本控制&quot;, &quot;评测&quot;, &quot;合规&quot;, &quot;PoC&quot;, &quot;Pilot&quot;, &quot;落地&quot;},</p>
+<p>    &quot;中期&quot;: {&quot;自进化&quot;, &quot;长时记忆&quot;, &quot;人机协作&quot;, &quot;Agent 经济&quot;, &quot;跨模态&quot;, &quot;价值对齐&quot;, &quot;回放&quot;, &quot;漂移&quot;},</p>
+<p>    &quot;长期&quot;: {&quot;AGI&quot;, &quot;通用智能&quot;, &quot;自我意识&quot;, &quot;强对齐&quot;, &quot;智能合约&quot;, &quot;新型架构&quot;},</p>
+<p>}</p>
+
+<p>def horizon(milestone: str) -&gt; str:</p>
+<p>    m = milestone.strip()</p>
+<p>    for tag in (&quot;短期&quot;, &quot;中期&quot;, &quot;长期&quot;):</p>
+<p>        if any(k in m for k in HORIZON_KEYWORDS[tag]):</p>
+<p>            return tag</p>
+<p>    return &quot;未定&quot;</p>
+
+<h1>自检</h1>
+<p>for m in [&quot;单 Agent 工业化&quot;, &quot;自进化 Agent 普及&quot;, &quot;AGI 雏形出现&quot;]:</p>
+<p>    print(f&quot;{m} -&gt; {horizon(m)}&quot;)</p>
+</code></pre>
+
+<h4>代码 28.5 — 全书 28 章索引(关键主题词频)</h4>
+
+<pre><code class="language-python"># chapter_index: 全书 28 章关键词频统计,辅助回忆
+<p>CHAPTERS = [</p>
+<p>    (&quot;ch01&quot;, &quot;定义 LLM Chatbot 边界&quot;),</p>
+<p>    (&quot;ch02&quot;, &quot;ELIZA AutoGPT 多 Agent 浪潮&quot;),</p>
+<p>    (&quot;ch03&quot;, &quot;大脑 记忆 工具 规划&quot;),</p>
+<p>    (&quot;ch04&quot;, &quot;LangChain LangGraph AutoGen CrewAI LlamaIndex Agno OpenAI SDK&quot;),</p>
+<p>    (&quot;ch05&quot;, &quot;ReAct Reflexion Plan-and-Execute Tool-Use Function Calling&quot;),</p>
+<p>    (&quot;ch06&quot;, &quot;系统提示词 Prompt 角色 约束 工具描述&quot;),</p>
+<p>    (&quot;ch07&quot;, &quot;Function Calling Tool Use JSON Schema OpenAI Anthropic&quot;),</p>
+<p>    (&quot;ch08&quot;, &quot;记忆 短期 长期 向量 图谱 压缩&quot;),</p>
+<p>    (&quot;ch09&quot;, &quot;RAG 检索增强 知识库&quot;),</p>
+<p>    (&quot;ch10&quot;, &quot;规划 推理 CoT ToT LATS&quot;),</p>
+<p>    (&quot;ch11&quot;, &quot;多 Agent 协作 Supervisor Crew Pipeline Debate&quot;),</p>
+<p>    (&quot;ch12&quot;, &quot;MCP A2A 协议&quot;),</p>
+<p>    (&quot;ch13&quot;, &quot;LangGraph 图 状态 节点 边&quot;),</p>
+<p>    (&quot;ch14&quot;, &quot;AutoGen 对话 GroupChat&quot;),</p>
+<p>    (&quot;ch15&quot;, &quot;CrewAI 角色 团队&quot;),</p>
+<p>    (&quot;ch16&quot;, &quot;个人助理 项目&quot;),</p>
+<p>    (&quot;ch17&quot;, &quot;代码助手 Claude Code Aider&quot;),</p>
+<p>    (&quot;ch18&quot;, &quot;研究型 Deep Research&quot;),</p>
+<p>    (&quot;ch19&quot;, &quot;数据分析 Text-to-SQL&quot;),</p>
+<p>    (&quot;ch20&quot;, &quot;Browser-Use Playwright&quot;),</p>
+<p>    (&quot;ch21&quot;, &quot;Computer Use GUI 跨模态&quot;),</p>
+<p>    (&quot;ch22&quot;, &quot;评估 可观测性 评测&quot;),</p>
+<p>    (&quot;ch23&quot;, &quot;安全 提示注入 防御&quot;),</p>
+<p>    (&quot;ch24&quot;, &quot;成本控制 Token 优化&quot;),</p>
+<p>    (&quot;ch25&quot;, &quot;强化学习 自我改进&quot;),</p>
+<p>    (&quot;ch26&quot;, &quot;MCP 生态 Skills Registry&quot;),</p>
+<p>    (&quot;ch27&quot;, &quot;企业落地 三道墙 ROI PoC&quot;),</p>
+<p>    (&quot;ch28&quot;, &quot;AGI 路线 监管 伦理 人机分工&quot;),</p>
+<p>]</p>
+
+<p>THEMES = {</p>
+<p>    &quot;MCP / 协议&quot;: [&quot;MCP&quot;, &quot;A2A&quot;],</p>
+<p>    &quot;记忆&quot;: [&quot;记忆&quot;, &quot;向量&quot;, &quot;图谱&quot;],</p>
+<p>    &quot;工具与函数&quot;: [&quot;工具&quot;, &quot;Function Calling&quot;, &quot;Tool Use&quot;],</p>
+<p>    &quot;评估与安全&quot;: [&quot;评估&quot;, &quot;可观测性&quot;, &quot;评测&quot;, &quot;安全&quot;, &quot;防御&quot;],</p>
+<p>    &quot;多 Agent 协作&quot;: [&quot;Supervisor&quot;, &quot;Crew&quot;, &quot;Pipeline&quot;, &quot;Debate&quot;, &quot;GroupChat&quot;, &quot;团队&quot;],</p>
+<p>    &quot;范式&quot;: [&quot;ReAct&quot;, &quot;Reflexion&quot;, &quot;Plan-and-Execute&quot;, &quot;CoT&quot;, &quot;ToT&quot;, &quot;LATS&quot;],</p>
+<p>    &quot;落地与治理&quot;: [&quot;落地&quot;, &quot;PoC&quot;, &quot;三道墙&quot;, &quot;ROI&quot;, &quot;成本控制&quot;],</p>
+<p>    &quot;前沿&quot;: [&quot;AGI&quot;, &quot;GUI&quot;, &quot;Browser-Use&quot;, &quot;Computer Use&quot;, &quot;跨模态&quot;, &quot;强化学习&quot;, &quot;自我改进&quot;, &quot;Skills&quot;, &quot;Registry&quot;, &quot;监管&quot;, &quot;伦理&quot;, &quot;人机分工&quot;],</p>
+<p>}</p>
+
+<p>def chapter_index():</p>
+<p>    &quot;&quot;&quot;统计每个主题在 28 章中出现的次数。&quot;&quot;&quot;</p>
+<p>    out = {}</p>
+<p>    for theme, kws in THEMES.items():</p>
+<p>        out[theme] = sum(any(k in content for k in kws) for _, content in CHAPTERS)</p>
+<p>    return out</p>
+
+<h1>自检</h1>
+<p>idx = chapter_index()</p>
+<p>total = sum(idx.values())</p>
+<p>print(f&quot;全书 28 章索引,主题命中数(共 {total} 命中):&quot;)</p>
+<p>for theme, n in sorted(idx.items(), key=lambda x: -x[1]):</p>
+<p>    print(f&quot;  {theme:20s} {n:2d}&quot;)</p>
+</code></pre>
+
+<h3>28.11.3 致谢与开放性</h3>
+
+<strong>致谢</strong>:
+<ul>
+<ol>
+<li>感谢本书读者——28 章内容,你们用时间给了最大的支持;</li>
+<li>感谢开源社区——LangChain、LangGraph、AutoGen、CrewAI、LlamaIndex、Agno、OpenAI Agents SDK 等框架的开源贡献者;</li>
+<li>感谢学术社区——ReAct、Reflexion、Plan-and-Execute、ToT、LATS 等范式的研究者;</li>
+<li>感谢并行书《量子计算》的合著者——两本书的方法论互相启发。</li>
+
+</ol>
+</ul>
+<strong>开放性</strong>:
+<ul>
+<ol>
+<li>本书不是终点,而是起点;28 章的顺序是路径,但不是唯一路径;</li>
+<li>Agent 领域每日都有新进展,所有数字 / 框架 / 工具的具体形态都可能过时;</li>
+<li>但<strong>方法论是稳态的</strong>——范式 / 评测 / 安全 / 成本 / 监管五件事,在可预见的 5-10 年内不会改变。</li>
+
+</ol>
+</ul>
+<hr/>
+
+<strong>🎉 全书完。28 章齐备。</strong>
+
+<blockquote><strong>写给读者</strong>:从 ch01 的"什么是 Agent"走到 ch28 的"AGI 之路上 Agent 的角色",你已经在心里跑通了一整套 Agent 体系。剩下的事,是把它们带到真实世界里——做项目、踩坑、写文档、传帮带。这是这本书最想留给你的东西:<strong>28 章内容会过时,但"读完一本书就动手做一个项目"这个习惯,会一直陪你</strong>。</blockquote></main>
+<nav class="chapter-pager">
+<a href="ch27.html">← 第 27 章:Agent 在企业落地的现状与挑战——PoC 到生产、ROI 与组织变革</a>
+<a class="finale" href="../index.html">🎉 全书完结 · 返回子站点首页</a>
+</nav>
+<footer><p>📚 <a href="../index.html">AGENT开发从入门到精通</a> · <a href="ch01.html">第 1 章</a> · <a href="ch02.html">第 2 章</a> · <a href="ch03.html">第 3 章</a> · <a href="ch04.html">第 4 章</a> · <a href="ch05.html">第 5 章</a> · <a href="ch06.html">第 6 章</a> · <a href="ch07.html">第 7 章</a> · <a href="ch08.html">第 8 章</a> · <a href="ch09.html">第 9 章</a> · <a href="ch10.html">第 10 章</a> · <a href="ch11.html">第 11 章</a> · <a href="ch12.html">第 12 章</a> · <a href="ch13.html">第 13 章</a> · <a href="ch14.html">第 14 章</a> · <a href="ch15.html">第 15 章</a> · <a href="ch16.html">第 16 章</a> · <a href="ch17.html">第 17 章</a> · <a href="ch18.html">第 18 章</a> · <a href="ch19.html">第 19 章</a> · <a href="ch20.html">第 20 章</a> · <a href="ch21.html">第 21 章</a> · <a href="ch22.html">第 22 章</a> · <a href="ch23.html">第 23 章</a> · <a href="ch24.html">第 24 章</a> · <a href="ch25.html">第 25 章</a> · <a href="ch26.html">第 26 章</a> · <a href="ch27.html">第 27 章</a> · <strong>第 28 章 🎉</strong></p></footer>
+<script src="/assets/js/tts-player.js" defer></script></body></html>
