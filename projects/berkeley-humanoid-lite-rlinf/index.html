@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Berkeley Humanoid Lite × RLInf — 人形机器人 VLA 与强化学习全栈实践，涵盖机器人建模、Isaac Lab 仿真、PPO/WBC、VLA 与自建硬件">
+  <title>Berkeley Humanoid Lite × RLInf 全栈实践 | kyokagong</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/profile.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <span class="brand-mark">KG</span>
+        <span>kyokagong</span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="../../index.html#projects" class="active">项目</a>
+        <a href="../../books/index.html">个人电子书</a>
+        <a href="../../about/index.html">About</a>
+        <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumb" aria-label="面包屑导航">
+      <a href="../../index.html">← 返回主页</a>
+      <span>/</span>
+      <a href="../../index.html#projects">开源项目</a>
+      <span>/</span>
+      <span>berkeley-humanoid-lite-rlinf</span>
+    </nav>
+
+    <section class="project-hero">
+      <div class="project-meta-row">
+        <span class="project-date">2025.10 – 至今</span>
+        <div class="tag-list">
+          <span class="tag tag-accent">Humanoid</span>
+          <span class="tag">RLInf</span>
+          <span class="tag">Isaac Lab</span>
+          <span class="tag">PPO / WBC</span>
+          <span class="tag">VLA</span>
+        </div>
+      </div>
+      <h1>Berkeley Humanoid Lite × RLInf：人形机器人 VLA / 强化学习全栈实践</h1>
+      <div class="project-cta-row">
+        <a class="btn btn-primary" href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener">
+          GitHub Branch ↗
+        </a>
+        <a class="btn" href="../../index.html#projects">查看全部项目</a>
+      </div>
+    </section>
+
+    <article class="article-body">
+      <section class="article-section">
+        <h2>项目概述</h2>
+        <p>
+          基于开源 <strong>Berkeley Humanoid Lite</strong> 开展人形机器人具身智能全栈实践。
+          从底层机械与机器人本体描述出发，贯通仿真建模、强化学习运动控制、VLA 数据闭环、RLInf 训练接入到策略导出与自建实体机器人搭建。
+        </p>
+      </section>
+
+      <section class="article-section">
+        <h2>全栈核心工作</h2>
+        <ul class="highlight-list">
+          <li><strong>机器人描述与碰撞体建模</strong>：完善人形机器人 URDF/资产描述与碰撞几何体配置，保障物理仿真精度与效率。</li>
+          <li><strong>Isaac Lab 仿真构建</strong>：在 NVIDIA Isaac Lab 中搭建大规模并行仿真环境与任务配置。</li>
+          <li><strong>PPO / WBC 运控训练</strong>：实现基于 PPO 的双足/全身运控与 Whole-Body Control（WBC）策略训练。</li>
+          <li><strong>VLA 数据采集与训练</strong>：搭建视觉-语言-动作（VLA）数据采集管线并完成模型训练。</li>
+          <li><strong>RLInf 接入与策略导出</strong>：将全流程接入 RLInf 框架，并实现可部署至真机的策略导出。</li>
+        </ul>
+      </section>
+
+      <section class="article-section">
+        <h2>自建人形机器人实机进展</h2>
+        <p>同步自建 <code>humanoid-robotic</code> 实体样机进行硬件装配、走线与联调验证：</p>
+        <div class="figure-grid">
+          <figure class="figure-card">
+            <button
+              type="button"
+              class="gallery-thumb-btn"
+              data-lightbox-src="../../assets/img/robots/humanoid-build-1.jpg"
+              data-lightbox-caption="自建 humanoid-robotic 双足结构与机载计算单元装配"
+              aria-label="放大查看自建人形机器人照片 1"
+            >
+              <img src="../../assets/img/robots/humanoid-build-1.jpg" alt="自建人形机器人双足与躯干装配实拍" loading="lazy">
+            </button>
+            <figcaption>自建 humanoid-robotic：双足执行器与躯干框架装配（点击查看大图）</figcaption>
+          </figure>
+
+          <figure class="figure-card">
+            <button
+              type="button"
+              class="gallery-thumb-btn"
+              data-lightbox-src="../../assets/img/robots/humanoid-build-2.jpg"
+              data-lightbox-caption="自建人形机器人整机悬吊与控制器联调"
+              aria-label="放大查看自建人形机器人照片 2"
+            >
+              <img src="../../assets/img/robots/humanoid-build-2.jpg" alt="自建人形机器人整机悬吊调试实拍" loading="lazy">
+            </button>
+            <figcaption>自建 humanoid-robotic：整机双臂双足悬吊与实机联调（点击查看大图）</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="article-section">
+        <h2>更多资料</h2>
+        <div class="note-box">
+          <strong>资料持续补充中</strong>：当前核心代码位于
+          <a href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener"><code>kyokagong/RLinf (feat/berkerley-humanoid)</code></a>。
+          后续将陆续补充 BOM 与装机笔记、Sim2Real 迁移记录及实机测试视频。
+        </div>
+      </section>
+
+      <nav class="pager" aria-label="项目切换">
+        <a class="pager-link prev" href="../rlinf-algorithms/index.html">
+          <span class="pager-dir">← 上一个项目</span>
+          <span class="pager-title">在 RLInf 上集成 BFM-zero / P-BFM 算法</span>
+        </a>
+        <a class="pager-link next" href="../ray-golang/index.html">
+          <span class="pager-dir">下一个项目 →</span>
+          <span class="pager-title">分布式计算框架 Ray 对 Golang 的支持</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>© 2026 kyokagong</span>
+      <div class="footer-links">
+        <a href="../../index.html">主页</a>
+        <a href="../../books/index.html">个人开源电子书</a>
+        <a href="../../about/index.html">About Me</a>
+        <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/profile.js"></script>
+</body>
+</html>

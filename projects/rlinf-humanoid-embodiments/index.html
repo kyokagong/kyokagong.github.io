@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="给 RLInf 添加人形机器人本体代码 — 接入元点机器人、Bumi、启元 Q1 等多款人形机器人运控训练能力">
+  <title>给 RLInf 添加人形机器人本体代码 | kyokagong</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/profile.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <span class="brand-mark">KG</span>
+        <span>kyokagong</span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="../../index.html#projects" class="active">项目</a>
+        <a href="../../books/index.html">个人电子书</a>
+        <a href="../../about/index.html">About</a>
+        <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumb" aria-label="面包屑导航">
+      <a href="../../index.html">← 返回主页</a>
+      <span>/</span>
+      <a href="../../index.html#projects">开源项目</a>
+      <span>/</span>
+      <span>rlinf-humanoid-embodiments</span>
+    </nav>
+
+    <section class="project-hero">
+      <div class="project-meta-row">
+        <span class="project-date">2026.10 – 至今</span>
+        <div class="tag-list">
+          <span class="tag tag-accent">RLInf</span>
+          <span class="tag">Humanoid</span>
+          <span class="tag">Locomotion</span>
+          <span class="tag">Real Robot</span>
+        </div>
+      </div>
+      <h1>给 RLInf 添加人形机器人本体代码</h1>
+      <div class="project-cta-row">
+        <a class="btn btn-primary" href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener">
+          GitHub Branch ↗
+        </a>
+        <a class="btn" href="../../index.html#projects">查看全部项目</a>
+      </div>
+    </section>
+
+    <article class="article-body">
+      <section class="article-section">
+        <h2>项目概述</h2>
+        <p>
+          面向具身智能训练框架 <strong>RLInf</strong> 扩展多款真实人形机器人本体支持。
+          通过个人采购的<strong>元点机器人</strong>，并结合合作导师实验室的 <strong>Bumi</strong> 与<strong>启元 Q1</strong> 硬件平台，
+          在 RLInf 上统一集成这些本体的运动控制训练能力。
+        </p>
+      </section>
+
+      <section class="article-section">
+        <h2>核心亮点</h2>
+        <ul class="highlight-list">
+          <li><strong>多本体适配扩展</strong>：覆盖元点机器人、Bumi、启元 Q1 等多款人形机器人硬件配置与本体描述。</li>
+          <li><strong>RLInf 运控训练集成</strong>：打通各本体在 RLInf 框架中的环境配置、动作空间映射与运控策略训练流程。</li>
+          <li><strong>实机动作迁移验证</strong>：在真实机器人本体上开展舞蹈/动态运控动作部署与验证（如启元 Q1 跳 G1 舞蹈）。</li>
+        </ul>
+      </section>
+
+      <section class="article-section">
+        <h2>实机演示</h2>
+        <div class="figure-grid">
+          <figure class="figure-card">
+            <button
+              type="button"
+              class="gallery-thumb-btn"
+              data-lightbox-src="../../assets/img/robots/qiyuan-q1-dance.jpg"
+              data-lightbox-caption="启元 Q1 实机运行 G1 舞蹈动作演示"
+              aria-label="放大查看启元 Q1 实机照片"
+            >
+              <img src="../../assets/img/robots/qiyuan-q1-dance.jpg" alt="启元 Q1 跳 G1 的舞蹈实机照片" loading="lazy">
+            </button>
+            <figcaption>启元 Q1 跳 G1 的舞蹈（点击查看大图）</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="article-section">
+        <h2>更多资料</h2>
+        <div class="note-box">
+          <strong>资料持续补充中</strong>：当前开发分支位于
+          <a href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener"><code>kyokagong/RLinf (feat/berkerley-humanoid)</code></a>。
+          后续将补充各本体 URDF/配置说明、训练脚本与更多实机视频。
+        </div>
+      </section>
+
+      <nav class="pager" aria-label="项目切换">
+        <a class="pager-link prev" href="../wammimic/index.html">
+          <span class="pager-dir">← 上一个项目</span>
+          <span class="pager-title">多种人形机器人的 Loco-manipulation 实现</span>
+        </a>
+        <a class="pager-link next" href="../rlinf-algorithms/index.html">
+          <span class="pager-dir">下一个项目 →</span>
+          <span class="pager-title">在 RLInf 上集成 BFM-zero / P-BFM 算法</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>© 2026 kyokagong</span>
+      <div class="footer-links">
+        <a href="../../index.html">主页</a>
+        <a href="../../books/index.html">个人开源电子书</a>
+        <a href="../../about/index.html">About Me</a>
+        <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/profile.js"></script>
+</body>
+</html>

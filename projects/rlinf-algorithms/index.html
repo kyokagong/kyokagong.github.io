@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="在 RLInf 上集成更多算法 — 集成 BFM-zero 与 P-BFM 算法，扩展 RLInf 的 RPO 运控训练能力">
+  <title>在 RLInf 上集成更多运控算法 | kyokagong</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/css/profile.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="../../index.html" class="brand">
+        <span class="brand-mark">KG</span>
+        <span>kyokagong</span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="../../index.html#projects" class="active">项目</a>
+        <a href="../../books/index.html">个人电子书</a>
+        <a href="../../about/index.html">About</a>
+        <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="breadcrumb" aria-label="面包屑导航">
+      <a href="../../index.html">← 返回主页</a>
+      <span>/</span>
+      <a href="../../index.html#projects">开源项目</a>
+      <span>/</span>
+      <span>rlinf-algorithms</span>
+    </nav>
+
+    <section class="project-hero">
+      <div class="project-meta-row">
+        <span class="project-date">2026.09 – 至今</span>
+        <div class="tag-list">
+          <span class="tag tag-accent">RLInf</span>
+          <span class="tag">BFM-zero</span>
+          <span class="tag">P-BFM</span>
+          <span class="tag">RPO</span>
+          <span class="tag">RL</span>
+        </div>
+      </div>
+      <h1>在 RLInf 上集成更多运控算法</h1>
+      <div class="project-cta-row">
+        <a class="btn btn-primary" href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener">
+          GitHub Branch ↗
+        </a>
+        <a class="btn" href="../../index.html#projects">查看全部项目</a>
+      </div>
+    </section>
+
+    <article class="article-body">
+      <section class="article-section">
+        <h2>项目概述</h2>
+        <p>
+          围绕具身智能强化学习框架 <strong>RLInf</strong> 扩展前沿行为基础模型与运控算法支持。
+          通过在 RLInf 中集成 <strong>BFM-zero</strong> 与 <strong>P-BFM</strong> 算法，
+          使框架具备在人形机器人上训练 <strong>RPO</strong> 运动控制策略的能力。
+        </p>
+      </section>
+
+      <section class="article-section">
+        <h2>核心亮点</h2>
+        <ul class="highlight-list">
+          <li><strong>BFM-zero 算法集成</strong>：将零样本行为基础模型（BFM-zero）训练与推理流程对接至 RLInf 框架。</li>
+          <li><strong>P-BFM 算法集成</strong>：补充 P-BFM 算法实现，丰富 RLInf 的无监督/通用运控策略学习能力。</li>
+          <li><strong>RPO 运控训练闭环</strong>：依托新增算法扩展，打通在 RLInf 上直接训练与评估 RPO 运动控制策略的完整链路。</li>
+        </ul>
+      </section>
+
+      <section class="article-section">
+        <h2>项目资料与实验记录</h2>
+        <div class="note-box">
+          <strong>资料持续补充中</strong>：代码实现托管于
+          <a href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener"><code>kyokagong/RLinf (feat/berkerley-humanoid)</code></a>。
+          后续将陆续补充算法结构说明、训练曲线与跨本体对比实验结果。
+        </div>
+
+        <!-- 后续补充模板（取消注释即可使用）：
+        <table class="spec-table">
+          <thead>
+            <tr><th>算法</th><th>训练环境</th><th>说明</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>BFM-zero</td><td>Isaac Lab / RLInf</td><td>...</td></tr>
+          </tbody>
+        </table>
+        -->
+      </section>
+
+      <nav class="pager" aria-label="项目切换">
+        <a class="pager-link prev" href="../rlinf-humanoid-embodiments/index.html">
+          <span class="pager-dir">← 上一个项目</span>
+          <span class="pager-title">给 RLInf 添加人形机器人本体代码</span>
+        </a>
+        <a class="pager-link next" href="../berkeley-humanoid-lite-rlinf/index.html">
+          <span class="pager-dir">下一个项目 →</span>
+          <span class="pager-title">Berkeley Humanoid Lite × RLInf 全栈实践</span>
+        </a>
+      </nav>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <span>© 2026 kyokagong</span>
+      <div class="footer-links">
+        <a href="../../index.html">主页</a>
+        <a href="../../books/index.html">个人开源电子书</a>
+        <a href="../../about/index.html">About Me</a>
+        <a href="https://github.com/kyokagong" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="../../assets/js/profile.js"></script>
+</body>
+</html>
