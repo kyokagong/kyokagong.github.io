@@ -660,6 +660,58 @@ main {
   aspect-ratio: 3 / 4;
 }
 
+.showcase-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-top: 16px;
+}
+
+.showcase-card {
+  margin: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.showcase-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.showcase-card .gallery-thumb-btn {
+  aspect-ratio: 4 / 3;
+}
+
+.showcase-card figcaption {
+  padding: 16px 20px;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  border-top: 1px solid #f3f4f6;
+}
+
+.showcase-card figcaption strong {
+  display: block;
+  color: var(--text);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.dream-quote {
+  margin: 18px 0 0;
+  padding: 18px 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
 .figure-card figcaption {
   padding: 10px 14px;
   font-size: 0.84rem;
