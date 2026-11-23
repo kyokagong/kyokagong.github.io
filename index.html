@@ -111,23 +111,24 @@
         <article class="project-card">
           <div class="project-card-top">
             <h3 class="project-card-title">
-              <a href="projects/wammimic/index.html">多种人形机器人的 Loco-manipulation 实现</a>
+              <a href="projects/wammimic/index.html">跨本体 WamMimic</a>
             </h3>
             <span class="project-date">2026.09 – 至今</span>
           </div>
           <p class="project-desc">
-            基于 Supermimic 结合 wholebodywam 的思想，探索并实现通过语音指令控制多种人形机器人执行日常家务任务。
+            结合 WAM 与 Mimic 实现语音控制人形机器人执行指定任务：基于 cosmos-predict2 预测人体五点与末端执行器，下游采用 model-based MorphMimic（含位置限制优化），并通过二阶段训练用 WAM 输出微调 Mimic。
           </p>
           <div class="project-card-footer">
             <div class="tag-list">
               <span class="tag tag-accent">Embodied AI</span>
-              <span class="tag">Loco-manipulation</span>
-              <span class="tag">Supermimic</span>
-              <span class="tag">WholeBodyWAM</span>
+              <span class="tag">Cosmos-Predict2</span>
+              <span class="tag">MorphMimic</span>
+              <span class="tag">WAM</span>
             </div>
             <div class="project-links">
               <a href="projects/wammimic/index.html">查看详情 →</a>
-              <a class="secondary-link" href="https://github.com/kyokagong/wammimic" target="_blank" rel="noopener">GitHub ↗</a>
+              <a class="secondary-link" href="https://github.com/kyokagong/wammimic" target="_blank" rel="noopener">训练 GitHub ↗</a>
+              <a class="secondary-link" href="https://github.com/kyokagong/embodied_edge" target="_blank" rel="noopener">部署 GitHub ↗</a>
             </div>
           </div>
         </article>
@@ -136,7 +137,7 @@
         <article class="project-card">
           <div class="project-card-top">
             <h3 class="project-card-title">
-              <a href="projects/rlinf-humanoid-embodiments/index.html">给 RLInf 添加人形机器人本体代码</a>
+              <a href="projects/rlinf-humanoid-embodiments/index.html">给 RLInf 添加人形机器人本体能力</a>
             </h3>
             <span class="project-date">2026.10 – 至今</span>
           </div>
@@ -160,12 +161,12 @@
         <article class="project-card">
           <div class="project-card-top">
             <h3 class="project-card-title">
-              <a href="projects/rlinf-algorithms/index.html">在 RLInf 上集成更多运控算法</a>
+              <a href="projects/rlinf-algorithms/index.html">在 RLInf 上集成更多算法</a>
             </h3>
             <span class="project-date">2026.09 – 至今</span>
           </div>
           <p class="project-desc">
-            在 RLInf 框架中集成 BFM-zero 与 P-BFM 算法，扩展 RLInf 训练人形机器人 RPO 运动控制策略的能力。
+            在 RLInf 中集成 BFM-zero 与 P-BFM 算法以支持 RPO 运控训练，当前采用扩展方式在独立项目 EmbodiedBein 中接入。
           </p>
           <div class="project-card-footer">
             <div class="tag-list">
@@ -173,10 +174,12 @@
               <span class="tag">BFM-zero</span>
               <span class="tag">P-BFM</span>
               <span class="tag">RPO</span>
+              <span class="tag">EmbodiedBein</span>
             </div>
             <div class="project-links">
               <a href="projects/rlinf-algorithms/index.html">查看详情 →</a>
-              <a class="secondary-link" href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener">GitHub ↗</a>
+              <a class="secondary-link" href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener">RLInf ↗</a>
+              <a class="secondary-link" href="https://github.com/kyokagong/EmbodiedBein" target="_blank" rel="noopener">EmbodiedBein ↗</a>
             </div>
           </div>
         </article>
@@ -287,7 +290,7 @@
             </video>
           </div>
           <figcaption class="gallery-caption">
-            <strong>人形机器人 Loco-manipulation 实机演示</strong>
+            <strong>跨本体 WamMimic 实机演示</strong>
             全身运控与动态动作实机视频
             <br>
             <a href="projects/wammimic/index.html">对应项目 →</a>

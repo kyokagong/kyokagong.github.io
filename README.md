@@ -40,9 +40,9 @@
 
 | 项目 | 方向 | 源码 |
 |:---|:---|:---|
-| [多种人形机器人的 Loco-manipulation 实现](./projects/wammimic/index.html) | Embodied AI / Loco-manipulation | [kyokagong/wammimic](https://github.com/kyokagong/wammimic) |
-| [给 RLInf 添加人形机器人本体代码](./projects/rlinf-humanoid-embodiments/index.html) | RLInf / Humanoid | [RLinf (feat/berkerley-humanoid)](https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid) |
-| [在 RLInf 上集成更多运控算法](./projects/rlinf-algorithms/index.html) | RLInf / BFM-zero / P-BFM | [RLinf (feat/berkerley-humanoid)](https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid) |
+| [跨本体 WamMimic](./projects/wammimic/index.html) | Cosmos-Predict2 / MorphMimic / WAM | [wammimic](https://github.com/kyokagong/wammimic) · [embodied_edge](https://github.com/kyokagong/embodied_edge) |
+| [给 RLInf 添加人形机器人本体能力](./projects/rlinf-humanoid-embodiments/index.html) | RLInf / Humanoid | [RLinf (feat/berkerley-humanoid)](https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid) |
+| [在 RLInf 上集成更多算法](./projects/rlinf-algorithms/index.html) | RLInf / BFM-zero / P-BFM / RPO | [RLinf](https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid) · [EmbodiedBein](https://github.com/kyokagong/EmbodiedBein) |
 | [Berkeley Humanoid Lite × RLInf 全栈实践](./projects/berkeley-humanoid-lite-rlinf/index.html) | Humanoid / VLA / Isaac Lab | [RLinf (feat/berkerley-humanoid)](https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid) |
 | [分布式计算框架 Ray 对 Golang 的支持](./projects/ray-golang/index.html) | Distributed Systems / Ray / Go | [ray (golang)](https://github.com/kyokagong/ray/tree/golang) |
 

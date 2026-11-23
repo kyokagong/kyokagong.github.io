@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="在 RLInf 上集成更多算法 — 集成 BFM-zero 与 P-BFM 算法，扩展 RLInf 的 RPO 运控训练能力">
+  <meta name="description" content="在 RLInf 上集成更多算法 — 集成 BFM-zero 与 P-BFM 算法支持 RPO 运控训练，并以扩展方式接入 EmbodiedBein">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://kyokagong.github.io/projects/rlinf-algorithms/">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="在 RLInf 上集成更多运控算法 | kyokagong">
+  <meta property="og:title" content="在 RLInf 上集成更多算法 | kyokagong">
   <meta property="og:url" content="https://kyokagong.github.io/projects/rlinf-algorithms/">
-  <title>在 RLInf 上集成更多运控算法 | kyokagong</title>
+  <title>在 RLInf 上集成更多算法 | kyokagong</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,13 +51,16 @@
           <span class="tag">BFM-zero</span>
           <span class="tag">P-BFM</span>
           <span class="tag">RPO</span>
-          <span class="tag">RL</span>
+          <span class="tag">EmbodiedBein</span>
         </div>
       </div>
-      <h1>在 RLInf 上集成更多运控算法</h1>
+      <h1>在 RLInf 上集成更多算法</h1>
       <div class="project-cta-row">
         <a class="btn btn-primary" href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener">
-          GitHub Branch ↗
+          RLInf Branch ↗
+        </a>
+        <a class="btn btn-accent" href="https://github.com/kyokagong/EmbodiedBein" target="_blank" rel="noopener">
+          EmbodiedBein ↗
         </a>
         <a class="btn" href="../../index.html#projects">查看全部项目</a>
       </div>
@@ -67,9 +70,7 @@
       <section class="article-section">
         <h2>项目概述</h2>
         <p>
-          围绕具身智能强化学习框架 <strong>RLInf</strong> 扩展前沿行为基础模型与运控算法支持。
-          通过在 RLInf 中集成 <strong>BFM-zero</strong> 与 <strong>P-BFM</strong> 算法，
-          使框架具备在人形机器人上训练 <strong>RPO</strong> 运动控制策略的能力。
+          围绕具身智能强化学习框架 <strong>RLInf</strong> 扩展前沿行为基础模型与运控算法支持：在 RLInf 上集成 <strong>BFM-zero</strong> 与 <strong>P-BFM</strong> 算法，从而具备在 RLInf 上训练 <strong>RPO</strong> 运控的能力。当前通过解耦扩展方式在独立项目 <strong>EmbodiedBein</strong> 中进行接入与演进。
         </p>
       </section>
 
@@ -77,8 +78,8 @@
         <h2>核心亮点</h2>
         <ul class="highlight-list">
           <li><strong>BFM-zero 算法集成</strong>：将零样本行为基础模型（BFM-zero）训练与推理流程对接至 RLInf 框架。</li>
-          <li><strong>P-BFM 算法集成</strong>：补充 P-BFM 算法实现，丰富 RLInf 的无监督/通用运控策略学习能力。</li>
-          <li><strong>RPO 运控训练闭环</strong>：依托新增算法扩展，打通在 RLInf 上直接训练与评估 RPO 运动控制策略的完整链路。</li>
+          <li><strong>P-BFM 算法集成</strong>：补充 P-BFM 算法实现，丰富 RLInf 的通用运控策略学习能力。</li>
+          <li><strong>RPO 运控训练与 EmbodiedBein 扩展接入</strong>：依托新增算法扩展打通 RPO 运控训练链路，并以模块化扩展方式集成至独立仓库 <code>EmbodiedBein</code>，便于持续迭代与复用。</li>
         </ul>
       </section>
 
@@ -95,16 +96,18 @@
       <section class="article-section">
         <h2>更多资料</h2>
         <div class="note-box">
-          <strong>资料持续补充中</strong>：代码实现托管于
-          <a href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener"><code>kyokagong/RLinf (feat/berkerley-humanoid)</code></a>。
-          后续将陆续补充算法结构说明、训练曲线与跨本体对比实验结果。
+          <strong>源码仓库</strong>：RLInf 分支位于
+          <a href="https://github.com/kyokagong/RLinf/tree/feat/berkerley-humanoid" target="_blank" rel="noopener"><code>kyokagong/RLinf (feat/berkerley-humanoid)</code></a>，
+          独立扩展接入仓库位于
+          <a href="https://github.com/kyokagong/EmbodiedBein" target="_blank" rel="noopener"><code>kyokagong/EmbodiedBein</code></a>。
+          后续将陆续补充算法结构说明与对比实验结果。
         </div>
       </section>
 
       <nav class="pager" aria-label="项目切换">
         <a class="pager-link prev" href="../rlinf-humanoid-embodiments/index.html">
           <span class="pager-dir">← 上一个项目</span>
-          <span class="pager-title">给 RLInf 添加人形机器人本体代码</span>
+          <span class="pager-title">给 RLInf 添加人形机器人本体能力</span>
         </a>
         <a class="pager-link next" href="../berkeley-humanoid-lite-rlinf/index.html">
           <span class="pager-dir">下一个项目 →</span>

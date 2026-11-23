@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="多种人形机器人的 Loco-manipulation 实现 — 基于 Supermimic 与 wholebodywam 思想实现语音控制人形机器人执行家务">
+  <meta name="description" content="跨本体 WamMimic — 基于 cosmos-predict2、MorphMimic 与二阶段 WAM+Mimic 训练实现语音控制人形机器人执行指定任务">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://kyokagong.github.io/projects/wammimic/">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="多种人形机器人的 Loco-manipulation 实现 | kyokagong">
+  <meta property="og:title" content="跨本体 WamMimic | kyokagong">
   <meta property="og:url" content="https://kyokagong.github.io/projects/wammimic/">
-  <title>多种人形机器人的 Loco-manipulation 实现 | kyokagong</title>
+  <title>跨本体 WamMimic | kyokagong</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -48,16 +48,19 @@
         <span class="project-date">2026.09 – 至今</span>
         <div class="tag-list">
           <span class="tag tag-accent">Embodied AI</span>
-          <span class="tag">Loco-manipulation</span>
+          <span class="tag">Cosmos-Predict2</span>
+          <span class="tag">MorphMimic</span>
+          <span class="tag">WAM</span>
           <span class="tag">Humanoid</span>
-          <span class="tag">Supermimic</span>
-          <span class="tag">WholeBodyWAM</span>
         </div>
       </div>
-      <h1>多种人形机器人的 Loco-manipulation 实现</h1>
+      <h1>跨本体 WamMimic</h1>
       <div class="project-cta-row">
         <a class="btn btn-primary" href="https://github.com/kyokagong/wammimic" target="_blank" rel="noopener">
-          GitHub Repository ↗
+          训练代码 (wammimic) ↗
+        </a>
+        <a class="btn btn-accent" href="https://github.com/kyokagong/embodied_edge" target="_blank" rel="noopener">
+          部署代码 (embodied_edge) ↗
         </a>
         <a class="btn" href="../../index.html#projects">查看全部项目</a>
       </div>
@@ -67,18 +70,16 @@
       <section class="article-section">
         <h2>项目概述</h2>
         <p>
-          <strong>wammimic</strong> 面向多款人形机器人的全身移动操作（Loco-manipulation）场景，
-          结合 <strong>Supermimic</strong> 与 <strong>wholebodywam</strong> 的设计思想，
-          探索通过自然语音指令驱动人形机器人完成日常家务任务的技术路径。
+          <strong>跨本体 WamMimic</strong> 基于 <strong>Mimic</strong> 结合 <strong>WAM</strong> 的思想，实现通过语音控制人形机器人执行指定任务的能力，并拆分为训练侧（<code>wammimic</code>）与边缘部署侧（<code>embodied_edge</code>）两个开源仓库协同推进。
         </p>
       </section>
 
       <section class="article-section">
-        <h2>核心亮点</h2>
+        <h2>核心技术方案</h2>
         <ul class="highlight-list">
-          <li><strong>跨本体 Loco-manipulation 架构</strong>：面向多种人形机器人形态设计统一的全身移动与操作控制流程。</li>
-          <li><strong>Supermimic × WholeBodyWAM 融合思路</strong>：将动作模仿与全身控制框架结合，兼顾下半身平衡移动与上半身灵巧操作。</li>
-          <li><strong>语音驱动家务执行</strong>：围绕语音指令解析到全身策略执行的闭环，推进人形机器人在家庭场景下的自主作业能力。</li>
+          <li><strong>Cosmos-Predict2 人体五点与末端预测</strong>：基于 <code>cosmos-predict2</code> 预测 human 五点（双手腕、胯、双脚踝）+ 末端执行器；将 Human 5 点送给下游 Mimic 模型，末端执行器直接执行，从而操控机器人完成指定任务。</li>
+          <li><strong>Model-based MorphMimic 优化</strong>：下游 Mimic 模型选用 model-based 的 <code>morphmimic</code>，并额外引入位置限制等优化约束，提升动作跟踪与稳定性。</li>
+          <li><strong>二阶段训练策略</strong>：WAM 与 Mimic 先分别基于各自数据独立训练，再利用 WAM 的预测输出数据对 Mimic 进行针对性微调，对齐上下游分布。</li>
         </ul>
       </section>
 
@@ -88,15 +89,18 @@
           <video controls playsinline preload="metadata" poster="../../assets/media/wammimic-demo-poster.jpg">
             <source src="../../assets/media/wammimic-demo.mp4" type="video/mp4">
           </video>
-          <div class="media-caption">人形机器人全身运控与 Loco-manipulation 实机演示视频</div>
+          <div class="media-caption">跨本体 WamMimic 全身运控实机演示视频</div>
         </div>
       </section>
 
       <section class="article-section">
         <h2>更多资料</h2>
         <div class="note-box">
-          <strong>资料持续补充中</strong>：核心源码托管于
-          <a href="https://github.com/kyokagong/wammimic" target="_blank" rel="noopener"><code>kyokagong/wammimic</code></a>，后续将陆续补充系统架构图与训练部署说明。
+          <strong>源码仓库</strong>：训练代码托管于
+          <a href="https://github.com/kyokagong/wammimic" target="_blank" rel="noopener"><code>kyokagong/wammimic</code></a>，
+          部署代码托管于
+          <a href="https://github.com/kyokagong/embodied_edge" target="_blank" rel="noopener"><code>kyokagong/embodied_edge</code></a>。
+          后续将持续补充架构图与更多任务演示。
         </div>
       </section>
 
@@ -104,7 +108,7 @@
         <span></span>
         <a class="pager-link next" href="../rlinf-humanoid-embodiments/index.html">
           <span class="pager-dir">下一个项目 →</span>
-          <span class="pager-title">给 RLInf 添加人形机器人本体代码</span>
+          <span class="pager-title">给 RLInf 添加人形机器人本体能力</span>
         </a>
       </nav>
     </article>
