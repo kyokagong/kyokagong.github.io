@@ -84,6 +84,71 @@
       </section>
 
       <section class="article-section">
+        <h2>Mimic 训练后评估结果（40,000 步 EMA 全动作留出评估）</h2>
+        <p>
+          全部三款机型（<code>q1</code> / <code>bumi</code> / <code>g1</code>）各 <strong>1,139 条</strong>留出动作，使用 EMA 权重，Motion 接口与混合来源五点 H10（<code>human</code>）接口各评估一次，共计 <strong>6,834 回合</strong>：
+        </p>
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>机型</th>
+              <th>接口</th>
+              <th>动作数</th>
+              <th>Survival</th>
+              <th>平均归一化回报</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>q1</code></td>
+              <td><code>motion</code></td>
+              <td>1139</td>
+              <td><strong>99.7366%</strong></td>
+              <td>0.942634</td>
+            </tr>
+            <tr>
+              <td><code>q1</code></td>
+              <td><code>human</code></td>
+              <td>1139</td>
+              <td><strong>99.7366%</strong></td>
+              <td>0.927312</td>
+            </tr>
+            <tr>
+              <td><code>bumi</code></td>
+              <td><code>motion</code></td>
+              <td>1139</td>
+              <td><strong>99.6488%</strong></td>
+              <td>0.912941</td>
+            </tr>
+            <tr>
+              <td><code>bumi</code></td>
+              <td><code>human</code></td>
+              <td>1139</td>
+              <td><strong>99.6488%</strong></td>
+              <td>0.898139</td>
+            </tr>
+            <tr>
+              <td><code>g1</code></td>
+              <td><code>motion</code></td>
+              <td>1139</td>
+              <td><strong>99.4732%</strong></td>
+              <td>0.923470</td>
+            </tr>
+            <tr>
+              <td><code>g1</code></td>
+              <td><code>human</code></td>
+              <td>1139</td>
+              <td><strong>99.3854%</strong></td>
+              <td>0.908342</td>
+            </tr>
+          </tbody>
+        </table>
+        <p style="margin-top: 10px; font-size: 0.85rem; color: var(--text-muted);">
+          注：以上为本地单种子仿真留出集评估结果，不代表真实硬件或多种子成功率。
+        </p>
+      </section>
+
+      <section class="article-section">
         <h2>实机与跨本体演示视频</h2>
         <div class="media-frame">
           <video controls playsinline preload="metadata" poster="../../assets/media/wammimic-demo-poster.jpg">
